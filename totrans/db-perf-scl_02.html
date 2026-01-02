@@ -1,0 +1,370 @@
+<html><head></head><body><div epub:type="chapter" role="doc-chapter"><div class="ChapterContextInformation"><div class="ContextInformation" id="b978-1-4842-9711-7_3"><div class="ChapterCopyright">© The Author(s) 2023</div><span class="ContextInformationAuthorEditorNames">F. C. Mendes et al.</span><span class="ContextInformationBookTitles"><span class="BookTitle">Database Performance at Scale</span></span><span class="ChapterDOI"><a href="https://doi.org/10.1007/978-1-4842-9711-7_3">https://doi.org/10.1007/978-1-4842-9711-7_3</a></span></div></div><!--Begin Abstract--><div class="MainTitleSection"><h1 class="ChapterTitle" lang="en">3. Database Internals: Hardware and Operating System Interactions</h1></div><div class="AuthorGroup"><div class="AuthorNames"><span class="Author"><span class="AuthorName">Felipe Cardeneti Mendes</span><sup><a href="#Aff5">1</a> <span class="ContactIcon"> </span></sup>, </span><span class="Author"><span class="AuthorName">Piotr Sarna</span><sup><a href="#Aff6">2</a></sup>, </span><span class="Author"><span class="AuthorName">Pavel Emelyanov</span><sup><a href="#Aff7">3</a></sup> and </span><span class="Author"><span class="AuthorName">Cynthia Dunlop</span><sup><a href="#Aff8">4</a></sup></span></div><div class="Affiliations"><div class="Affiliation" id="Aff5"><span class="AffiliationNumber">(1)</span><div class="AffiliationText">São Paulo, São Paulo, Brazil</div></div><div class="Affiliation" id="Aff6"><span class="AffiliationNumber">(2)</span><div class="AffiliationText">Pruszków, Poland</div></div><div class="Affiliation" id="Aff7"><span class="AffiliationNumber">(3)</span><div class="AffiliationText">Moscow, Russia</div></div><div class="Affiliation" id="Aff8"><span class="AffiliationNumber">(4)</span><div class="AffiliationText">Carpinteria, CA, USA</div></div><div class="ClearBoth"> </div></div></div><div class="ArticleOrChapterToc"><div class="TocLine"><a href="#Sec1">CPU</a></div><div class="TocLine"><a href="#Sec10">Memory</a></div><div class="TocLine"><a href="#Sec13">I/O</a></div><div class="TocLine"><a href="#Sec28">Networking</a></div><div class="TocLine"><a href="#Sec31">Summary</a></div></div><!--End Abstract--><div class="Fulltext">
+        <p class="Para" id="Par2">A <span id="ITerm1">database’s internal architecture</span> makes a tremendous impact on the latency it can achieve and the throughput it can handle. Being an extremely complex piece of software, a database doesn’t exist in a vacuum, but rather interacts with the environment, which includes the operating system and the hardware.</p>
+        <p class="Para" id="Par3">While it’s one thing to get massive <span id="ITerm2">terabyte-to-petabyte scale systems</span> up and running, it’s a whole other thing to make sure they are operating at peak efficiency. In fact, it’s usually more than just “one other thing.” Performance optimization of large distributed systems is usually a multivariate problem—combining aspects of the underlying hardware, networking, tuning operating systems, and finagling with layers of virtualization and application architectures.</p>
+        <p class="Para" id="Par4">Such a complex problem warrants exploration from multiple perspectives. This chapter begins the discussion of database internals by looking at ways that databases can optimize performance by taking advantage of modern hardware and operating systems. It covers how the database interacts with the operating system plus CPUs, memory, storage, and networking. Then, the next chapter shifts focus to algorithmic optimizations.<sup><a epub:type="noteref" href="#Fn1" id="Fn1_source" role="doc-noteref">1</a></sup></p>
+        <section class="Section1 RenderAsSection1" id="Sec1">
+          <h2 class="Heading">CPU</h2>
+          <p class="Para" id="Par6"><span id="ITerm3">Programming</span> books tell programmers that they have this CPU that can run processes or threads, and what <em class="EmphasisTypeItalic ">runs</em> means is that there’s some simple sequential instruction execution. Then there’s a footnote explaining that with multiple threads you might need to consider doing some synchronization. In fact, how things are actually executed inside CPU <span id="ITerm4">cores</span> is something completely different and much more complicated. It would be very difficult to program these machines if you didn’t have those abstractions from books, but they are a lie to some degree. How you can efficiently take advantage of CPU capabilities is still very important.</p>
+          <section class="Section2 RenderAsSection2" id="Sec2">
+            <h3 class="Heading">Share Nothing Across Cores</h3>
+            <p class="Para" id="Par7">Individual CPU cores aren’t getting any faster. Their clock speeds reached a performance plateau long ago. Now, the ongoing increase of CPU performance continues horizontally: by increasing the number of processing units. In turn, the increase in the number of cores means that performance now depends on coordination across multiple cores (versus the throughput of a single core).</p>
+            <div class="Para" id="Par8">On modern hardware, the performance of standard workloads depends more on the locking and coordination across cores than on the performance of an individual core. <span id="ITerm5">Software architects</span> face two unattractive alternatives:<div class="UnorderedList"><ul class="UnorderedListMarkBullet"><li>
+                <p class="Para" id="Par9">Coarse-grained locking, which will see application threads contend for control of the data and wait instead of producing useful work.</p>
+              </li><li>
+                <p class="Para" id="Par10">Fine-grained locking, which, in addition to being hard to program and debug, sees significant overhead even when no contention occurs due to the locking primitives themselves.</p>
+              </li></ul></div></div>
+            <p class="Para" id="Par11">Consider an <span id="ITerm6">SSD drive</span>. The typical time needed to communicate with an SSD on a modern NVMe device is quite lengthy—it’s about 20 μseconds. That’s enough time for the CPU to execute tens of thousands of instructions. Developers should consider it as a networked device but generally do not program in that way. Instead, they often use an API that is synchronous (we’ll return to this later), which produces a thread that can be blocked.</p>
+            <div class="Para" id="Par12">Looking at the image of the logical layout of an <span id="ITerm7">Intel Xeon Processor</span> (see Figure <span class="InternalRef"><a href="#Fig1">3-1</a></span>), it’s clear that this is also a networked device.<figure class="Figure" id="Fig1"><div class="MediaObject" id="MO1">
+                <img alt="" aria-describedby="d65e520" src="../images/541783_1_En_3_Chapter/541783_1_En_3_Fig1_HTML.jpg" style="width:32.48em"/><div class="TextObject" id="d65e520">
+                  <p class="Para" id="Par106">An illustration of Intel Xeon processor layout. Four Skylake processors are interconnected with Intel U P I in between and each consisting of D D R 4 D I M Ms.</p>
+                </div>
+                
+              </div><figcaption class="Caption" lang="en"><div class="CaptionContent"><span class="CaptionNumber">Figure 3-1</span>
+                  <p class="SimplePara">The logical layout of an <span id="ITerm8">Intel Xeon Processor</span></p>
+                </div></figcaption></figure></div>
+            <p class="Para" id="Par13">The cores are all connected by what is essentially a network—a dual ring interconnected architecture. There are two such rings and they are bidirectional. Why should developers use a synchronous API for that then? Since sharing information across cores requires costly locking, a shared-nothing model is perfectly worth considering. In such a model, all requests are sharded onto individual cores, one application thread is run per core, and communication depends on explicit message passing, not shared memory between threads. This design avoids slow, unscalable lock primitives and cache bounces.</p>
+            <p class="Para" id="Par14">Any sharing of resources across cores in modern processors must be handled explicitly. For example, when two requests are part of the same session and two CPUs each get a request that depends on the same session state, one CPU must explicitly forward the request to the other. Either CPU may handle either response. Ideally, your database provides facilities that limit the need for cross-core communication—but when communication is inevitable, it provides high-performance non-blocking communication primitives to ensure performance is not degraded.</p>
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec3">
+            <h3 class="Heading">Futures-Promises</h3>
+            <p class="Para" id="Par15">There are many solutions for coordinating work across multiple cores. Some are highly programmer-friendly and enable the development of software that works exactly as if it were running on a single core. For example, the classic UNIX process model is designed to keep each process in total isolation and relies on kernel code to maintain a separate virtual memory space per process. Unfortunately, this increases the overhead at the OS level.</p>
+            <p class="Para" id="Par16">There’s a model known as “<span id="ITerm9">futures and promises</span>.” A <em class="EmphasisTypeItalic ">future</em> is a data structure that represents some yet-undetermined result. A <em class="EmphasisTypeItalic ">promise</em> is the provider of this result. It can be helpful to think of a promise/future pair as a first-in first-out (FIFO) queue with a maximum length of one item, which may be used only once. The promise is the producing end of the queue, while the future is the consuming end. Like FIFOs, futures and promises decouple the data producer and the data consumer.</p>
+            <div class="Para" id="Par17">However, the optimized implementations of futures and promises need to take several considerations into account. While the standard implementation targets coarse-grained tasks that may block and take a long time to complete, optimized futures and promises are used to manage fine-grained, non-blocking tasks. In order to meet this requirement efficiently, they should:<div class="UnorderedList"><ul class="UnorderedListMarkBullet"><li>
+                <p class="Para" id="Par18">Require no locking</p>
+              </li><li>
+                <p class="Para" id="Par19">Not allocate memory</p>
+              </li><li>
+                <p class="Para" id="Par20">Support continuations</p>
+              </li></ul></div></div>
+            <p class="Para" id="Par21">Future-promise design eliminates the costs associated with maintaining individual threads by the OS and allows close to complete utilization of the CPU. On the other hand, it calls for user-space CPU scheduling and very likely limits the developer with voluntary preemption scheduling. The latter, in turn, is prone to generating phantom jams in popular producer-consumer programming templates.<sup><a epub:type="noteref" href="#Fn2" id="Fn2_source" role="doc-noteref">2</a></sup></p>
+            <p class="Para" id="Par23">Applying future-promise design to database internals has obvious benefits. First of all, database workloads can be naturally CPU-bound. For example, that’s typically the case with in-memory database engines, and aggregates’ evaluations also involve pretty intensive CPU work. Even for huge on-disk datasets, when the query time is typically dominated by the I/O, CPU should be considered. Parsing a query is a CPU-intensive task regardless of whether the workload is CPU-bound or storage-bound, and collecting, converting, and sending the data back to the user also calls for careful CPU <span id="ITerm10">utilization</span>. And last but not least: Processing the data always involves <em class="EmphasisTypeItalic ">a lot</em> of high-level operations and low-level instructions. Maintaining them in an optimal manner requires a good low-level programming paradigm and future-promises is one of the best choices. However, large instruction sets need even more care; this leads to “execution stages.”</p>
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec4">
+            <h3 class="Heading">Execution Stages</h3>
+            <p class="Para" id="Par24">Let’s dive deeper into CPU microarchitecture, because (as discussed previously) database engine CPUs typically need to deal with millions and billions of instructions, and it’s essential to help the poor thing with that. In a very simplified way, the microarchitecture of a modern x86 CPU—from the point of view of top-down analysis—consists of four major components: frontend, backend, branch speculation, and retiring.</p>
+            <section class="Section3 RenderAsSection3" id="Sec5">
+              <h4 class="Heading">Frontend</h4>
+              <p class="Para" id="Par25">The processor’s frontend is responsible for fetching and decoding instructions that are going to be <span id="ITerm11">executed</span>. It may become a bottleneck when there is either a latency problem or insufficient bandwidth. The former can be caused, for example, by instruction cache misses. The latter happens when the instruction decoders cannot keep up. In the latter case, the solution may be to attempt to make the hot path (or at least significant portions of it) fit in the <span id="ITerm12">decoded μop cache (DSB)</span> or be recognizable by the loop detector (LSD).</p>
+            </section>
+
+            <section class="Section3 RenderAsSection3" id="Sec6">
+              <h4 class="Heading">Branch Speculation</h4>
+              <p class="Para" id="Par26">Pipeline slots that the top-down analysis classifies as <em class="EmphasisTypeItalic ">bad speculation</em> are not stalled, but wasted. This happens when a branch is incorrectly predicted and the rest of the CPU executes a μop that eventually cannot be committed. The branch predictor is generally considered to be a part of the frontend. However, its <span id="ITerm13">problems</span> can affect the whole pipeline in ways beyond just causing the backend to be undersupplied by the instruction fetch and decode. (Note: Branch mispredictions are covered in more detail a bit later in this chapter.)</p>
+            </section>
+
+            <section class="Section3 RenderAsSection3" id="Sec7">
+              <h4 class="Heading">Backend</h4>
+              <p class="Para" id="Par27">The backend receives decoded μops and executes them. A stall may happen either because of an execution port being busy or a cache miss. At the lower level, a pipeline slot may be core bound either due to data dependency or an insufficient number of available execution units. Stalls caused by memory can be caused by cache misses at different levels of data cache, external memory latency, or bandwidth.</p>
+            </section>
+
+            <section class="Section3 RenderAsSection3" id="Sec8">
+              <h4 class="Heading">Retiring</h4>
+              <p class="Para" id="Par28">Finally, there are pipeline slots that get classified as <em class="EmphasisTypeItalic ">retiring</em>. They are the lucky ones that were able to execute and commit their μop without any problems. When 100 percent of the pipeline slots are able to retire without a stall, the program has achieved the maximum number of instructions per cycle for that model of the CPU. Although this is very desirable, it doesn’t mean that there’s no opportunity for improvement. Rather, it means that the CPU is fully utilized and the only way to improve the performance is to reduce the number of instructions.</p>
+            </section>
+
+            <section class="Section3 RenderAsSection3" id="Sec9">
+              <h4 class="Heading">Implications for Databases</h4>
+              <p class="Para" id="Par29">The way <span id="ITerm14">CPUs</span> are architectured has direct implications on the database design. It may very well happen that individual requests involve a lot of logic and relatively little data, which is a scenario that stresses the CPU significantly. This kind of workload will be completely dominated by the frontend—instruction cache misses in particular. If you think about this for a moment, it shouldn’t be very surprising. The pipeline that each request goes through is quite long. For example, write requests may need to go through transport protocol logic, query parsing code, look up in the caching layer, or be applied to the memtable, and so on.</p>
+              <p class="Para" id="Par30">The most obvious way to solve this is to attempt to reduce the amount of logic in the hot path. Unfortunately, this approach does not offer a huge potential for significant performance improvement. Reducing the number of instructions needed to perform a certain activity is a popular optimization practice, but a developer cannot make any code shorter infinitely. At some point, the code “freezes”—literally. There’s some minimal amount of instructions needed even to compare two strings and return the result. It’s impossible to perform that with a single instruction.</p>
+              <p class="Para" id="Par31">A higher-level way of dealing with instruction cache problems is called Staged Event-Driven Architecture (SEDA<span id="ITerm15"/><span id="ITerm16"/> for short). It’s an architecture that splits the request processing pipeline into a graph of stages—thereby decoupling the logic from the event and thread scheduling. This tends to yield greater performance improvements than the previous approach.</p>
+            </section>
+
+          </section>
+
+        </section>
+
+        <section class="Section1 RenderAsSection1" id="Sec10">
+          <h2 class="Heading">Memory</h2>
+          <p class="Para" id="Par32"><span id="ITerm17">Memory management</span><span id="ITerm18"/> is the central design point in all aspects of programming. Even comparing programming languages to one another always involves discussions about the way programmers are supposed to handle memory allocation and freeing. No wonder memory management design affects the performance of a database so much.</p>
+          <p class="Para" id="Par33">Applied to <span id="ITerm19">database engineering</span>, memory management typically falls into two related but independent subsystems: memory allocation and cache control. The former is in fact a very generic software engineering issue, so considerations about it are not extremely specific to databases (though they are crucial and are worth studying). As opposed to that, the latter topic is itself very broad, affected by the usage details and corner cases. Respectively, in the database world, cache control has its own flavor.</p>
+          <section class="Section2 RenderAsSection2" id="Sec11">
+            <h3 class="Heading">Allocation</h3>
+            <p class="Para" id="Par34">The manner in which programs or subsystems allocate and free memory lies at the core of <span id="ITerm20">memory management</span>. There are several approaches worth considering.</p>
+            <div class="Para" id="Par35">As illustrated by Figure <span class="InternalRef"><a href="#Fig2">3-2</a></span>, a so-called “<span id="ITerm21">log-structured allocation</span>” is known from filesystems where it puts sequential writes to a circular log on the persisting storage and handles updates the very same way. At some point, this filesystem must reclaim blocks that became obsolete entries in the log area to make some more space available for future writes. In a naive implementation, unused entries are reclaimed by rereading and rewriting the log from scratch; obsolete blocks are then skipped in the process.<figure class="Figure" id="Fig2"><div class="MediaObject" id="MO2">
+                <img alt="" aria-describedby="d65e765" src="../images/541783_1_En_3_Chapter/541783_1_En_3_Fig2_HTML.jpg" style="width:42.78em"/><div class="TextObject" id="d65e765">
+                  <p class="Para" id="Par107">An illustration of an allocation structure of data and superblock using logs. Four types of logs used are file, inode, directory, and inode map.</p>
+                </div>
+                
+              </div><figcaption class="Caption" lang="en"><div class="CaptionContent"><span class="CaptionNumber">Figure 3-2</span>
+                  <p class="SimplePara">A log-structured allocation puts sequential writes to a circular log on the persisting storage and handles updates the same way</p>
+                </div></figcaption></figure></div>
+            <p class="Para" id="Par36">A memory allocator for naive code can do something similar. In its simplest form, it would allocate the next block of memory by simply advancing a next-free pointer. Deallocation would just need to mark the allocated area as freed. One advantage of this approach is the speed of <span id="ITerm22">allocation</span>. Another is the simplicity and efficiency of deallocation if it happens in FIFO order or affects the whole allocation space. Stack memory allocations are later released in the order that’s reverse to allocation, so this is the most prominent and the most efficient example of such an approach.</p>
+            <p class="Para" id="Par37">Using linear allocators as general-purpose allocators can be more problematic because of the difficulty of space reclamation. To reclaim space, it’s not enough to just mark entries as free. This leads to memory fragmentation, which in turn outweighs the advantages of linear allocation. So, as with the filesystem, the memory must be reclaimed so that it only contains allocated entries and the free space can be used again. Reclamation requires moving allocated entries around—a process that changes and invalidates their previously known <span id="ITerm23">addresses</span>. In naive code, the locations of references to allocated entries (addresses stored as pointers) are unknown to the allocator. Existing references would have to be patched to make the allocator action transparent to the caller; that’s not feasible for a general-purpose allocator like malloc. Logging allocator use is tied to the programming language selection. Some RTTIs, like C++, can greatly facilitate this by providing move-constructors. However, passing pointers to libraries that are outside of your control (e.g., glibc) would still be an issue.</p>
+            <div class="Para" id="Par38">Another alternative is adopting a strategy of pool allocators, which provide allocation spaces for allocation of entries of a fixed size (see Figure <span class="InternalRef"><a href="#Fig3">3-3</a></span>). By limiting the allocation space that way, fragmentation can be reduced. A number of general-purpose allocators use pool allocators for small allocations. In some cases, those application spaces exist on a per-thread basis to eliminate the need for locking and improve CPU cache utilization.<figure class="Figure" id="Fig3"><div class="MediaObject" id="MO3">
+                <img alt="" aria-describedby="d65e811" src="../images/541783_1_En_3_Chapter/541783_1_En_3_Fig3_HTML.jpg" style="width:42.98em"/><div class="TextObject" id="d65e811">
+                  <p class="Para" id="Par108">An illustration of the allocation of data to arrays of slots. The three types of pool allocation arrays are full, partial, and free. The freed object slots are shaded.</p>
+                </div>
+                
+              </div><figcaption class="Caption" lang="en"><div class="CaptionContent"><span class="CaptionNumber">Figure 3-3</span>
+                  <p class="SimplePara">Pool allocators provide allocation spaces for allocation of entries of a fixed size. Fragmentation is reduced by limiting the allocation space</p>
+                </div></figcaption></figure></div>
+            <div class="Para" id="Par39">This <span id="ITerm24">pool allocation strategy</span><span id="ITerm25"/> provides two core benefits. First, it saves you from having to search for available memory space. Second, it alleviates memory fragmentation because it pre-allocates in memory a cache for use with a collection of object sizes. Here’s how it works to achieve that:<div class="OrderedList"><ol><li class="ListItem"><div class="ItemNumber">1.</div><div class="ItemContent">
+                  <p class="Para" id="Par40">The region for each of the sizes has fixed-size memory chunks that are suitable for the contained objects, and those chunks are all tracked by the allocator.</p>
+                </div><div class="ClearBoth"> </div></li><li class="ListItem"><div class="ItemNumber">2.</div><div class="ItemContent">
+                  <p class="Para" id="Par41">When it’s time for the allocator to allocate memory for a certain type of data object, it’s typically possible to use a free slot (chunk) in one of the existing memory slabs.<sup><a epub:type="noteref" href="#Fn3" id="Fn3_source" role="doc-noteref">3</a></sup></p>
+                </div><div class="ClearBoth"> </div></li><li class="ListItem"><div class="ItemNumber">3.</div><div class="ItemContent">
+                  <p class="Para" id="Par43">When it’s time for the allocator to free the object’s memory, it can simply move that slot over to the containing slab’s list of unused/free memory slots.</p>
+                </div><div class="ClearBoth"> </div></li><li class="ListItem"><div class="ItemNumber">4.</div><div class="ItemContent">
+                  <p class="Para" id="Par44">That memory slot (or some other free slot) will be removed from the list of free slots whenever there’s a call to create an object of the same type (or a call to allocate memory of the same size).</p>
+                </div><div class="ClearBoth"> </div></li></ol></div></div>
+            <p class="Para" id="Par45">The best allocation approach to pick heavily depends on the usage scenario. One great benefit of a <span id="ITerm26">log-structured approach</span><span id="ITerm27"/> is that it handles fragmentation of small sub-pools in a more efficient way. Pool allocators, on the other hand, generate less background load on the CPU because of the lack of compacting activity.</p>
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec12">
+            <h3 class="Heading">Cache Control</h3>
+            <p class="Para" id="Par46">When it comes to memory management in a software application that stores lots of data on disk, you cannot overlook the topic of cache control. <span id="ITerm28">Caching</span><span id="ITerm29"/> is always a must in data processing, and it’s crucial to decide what and where to cache.</p>
+            <p class="Para" id="Par47">If caching is done at the I/O level, for both read/write and mmap, caching can become the responsibility of the kernel. The majority of the system’s memory is given over to the page cache. The kernel decides which pages should be evicted when memory runs low, decides when pages need to be written back to disk, and controls read-ahead. The application can provide some guidance to the kernel using the <span class="EmphasisFontCategoryNonProportional ">madvise(2)</span> and <span class="EmphasisFontCategoryNonProportional ">fadvise(2)</span> system calls.</p>
+            <p class="Para" id="Par48">The main advantage of letting the kernel control caching is that great effort has been invested by the kernel developers over many decades into tuning the algorithms used by the cache. Those algorithms are used by thousands of different applications and are generally effective. The disadvantage, however, is that these algorithms are general-purpose and not tuned to the application. The kernel must guess how the application will behave next. Even if the application knows differently, it usually has no way to help the kernel guess correctly. This results in the wrong pages being evicted, I/O scheduled in the wrong order, or read-ahead scheduled for data that will not be consumed in the near future.</p>
+            <p class="Para" id="Par49">Next, doing the caching at the I/O level interacts with the topic often referred to as IMR—<em class="EmphasisTypeItalic ">in memory representation</em>. No wonder that the format in which data is stored on disk differs from the form the same data is allocated in memory as objects. The simplest reason that it’s not the same is byte-ordering. With that in mind, if the data is cached once it’s read from the disk, it needs to be further converted or parsed into the object used in memory. This can be a waste of CPU cycles, so applications may choose to cache at the object level.</p>
+            <p class="Para" id="Par50">Choosing to cache at the object level <span id="ITerm30">affects</span> a lot of other design points. With that, the cache management is all on the application side including cross-core synchronization, data coherence, invalidation, and so on. Next, since objects can be (and typically are) much smaller than the average I/O size, caching millions and billions of those objects requires a collection selection that can handle it (you’ll learn about this quite soon). Finally, caching on the object level greatly affects the way I/O is done.</p>
+          </section>
+
+        </section>
+
+        <section class="Section1 RenderAsSection1" id="Sec13">
+          <h2 class="Heading">I/O</h2>
+          <p class="Para" id="Par51">Unless the database engine is an in-memory one, it will have to keep the data on external storage. There can be many options to do that, including local disks, network-attached storage, distributed file- and object- storage systems, and so on. The term “<span id="ITerm31">I/O</span><span id="ITerm32"/>” typically refers to accessing data on local storage—disks or filesystems (that, in turn, are located on disks as well). And in general, there are four choices for accessing files on a Linux server: read/write, mmap, Direct I/O (DIO) read/write, and Asynchronous I/O (AIO/DIO, because this I/O is rarely used in cached mode).</p>
+          <section class="Section2 RenderAsSection2" id="Sec14">
+            <h3 class="Heading">Traditional Read/Write</h3>
+            <p class="Para" id="Par52">The <span id="ITerm33">traditional method</span> is to use the <span class="EmphasisFontCategoryNonProportional ">read(2</span><em class="EmphasisTypeItalic ">)</em> and <span class="EmphasisFontCategoryNonProportional ">write(2)</span> system calls. In a modern implementation, the read system call (or one of its many variants—<span class="EmphasisFontCategoryNonProportional ">pread</span>, <span class="EmphasisFontCategoryNonProportional ">readv</span>, <span class="EmphasisFontCategoryNonProportional ">preadv</span>, etc.) asks the kernel to read a section of a file and copy the data into the calling process address space. If all of the requested data is in the page cache, the kernel will copy it and return immediately; otherwise, it will arrange for the disk to read the requested data into the page cache, block the calling thread, and when the data is available, it will resume the thread and copy the data. A write, on the other hand, will usually<sup>1</sup> just copy the data into the page cache; the kernel will write back the page cache to disk some time afterward.</p>
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec15">
+            <h3 class="Heading">mmap</h3>
+            <p class="Para" id="Par53">An alternative and more modern method is to memory-map the file into the application address space using the <span class="EmphasisFontCategoryNonProportional ">mmap(2)</span> system <span id="ITerm34">call</span>. This causes a section of the address space to refer directly to the page cache pages that contain the file’s data. After this preparatory step, the application can access file data using the processor’s memory read and memory write instructions. If the requested data happens to be in cache, the kernel is completely bypassed and the read (or write) is performed at memory speed. If a cache miss occurs, then a page-fault happens and the kernel puts the active thread to sleep while it goes off to read the data for that page. When the data is finally available, the memory-management unit is programmed so the newly read data is accessible to the thread, which is then awoken.</p>
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec16">
+            <h3 class="Heading">Direct I/O (DIO)</h3>
+            <div class="Para" id="Par54">Both traditional read/write and mmap involve the kernel page cache and defer the scheduling of I/O to the kernel. When the application wants to schedule I/O itself (for reasons that we will explain later), it can use <span id="ITerm35">Direct I/O</span>, as shown in Figure <span class="InternalRef"><a href="#Fig4">3-4</a></span>. This involves opening the file with the <span class="EmphasisFontCategoryNonProportional ">O_DIRECT</span> flag; further activity will use the normal read and write family of system calls. However, their behavior is now altered: Instead of accessing the cache, the disk is accessed directly, which means that the calling thread will be put to sleep unconditionally. Furthermore, the disk controller will copy the data directly to userspace, bypassing the kernel.<figure class="Figure" id="Fig4"><div class="MediaObject" id="MO4">
+                <img alt="" aria-describedby="d65e1037" src="../images/541783_1_En_3_Chapter/541783_1_En_3_Fig4_HTML.jpg" style="width:42.98em"/><div class="TextObject" id="d65e1037">
+                  <p class="Para" id="Par109">An illustration of input and output of app, thread, kernel, and disk. The app reads and writes data to the kernel. The D M A data and the context switch are used between the app and the disk.</p>
+                </div>
+                
+              </div><figcaption class="Caption" lang="en"><div class="CaptionContent"><span class="CaptionNumber">Figure 3-4</span>
+                  <p class="SimplePara">Direct I/O involves opening the file with the O_DIRECT flag; further activity will use the normal read and write family of system calls, but their behavior is now <span id="ITerm36">altered</span></p>
+                </div></figcaption></figure></div>
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec17">
+            <h3 class="Heading">Asynchronous I/O (AIO/DIO)</h3>
+            <div class="Para" id="Par55">A refinement of Direct I/O, Asynchronous Direct <span id="ITerm37">I/O</span><span id="ITerm38"/>, behaves similarly but prevents the calling thread from blocking (see Figure <span class="InternalRef"><a href="#Fig5">3-5</a></span>). Instead, the application thread schedules Direct I/O operations using the <span class="EmphasisFontCategoryNonProportional ">io_submit(2)</span> system call, but the thread is not blocked; the I/O operation runs in parallel with normal thread execution. A separate system call, <span class="EmphasisFontCategoryNonProportional ">io_getevents(2)</span>, waits for and collects the results of completed I/O operations. Like DIO, the kernel’s page cache is bypassed, and the disk controller is responsible for copying the data directly to userspace.<figure class="Figure" id="Fig5"><div class="MediaObject" id="MO5">
+                <img alt="" aria-describedby="d65e1090" src="../images/541783_1_En_3_Chapter/541783_1_En_3_Fig5_HTML.jpg" style="width:42.98em"/><div class="TextObject" id="d65e1090">
+                  <p class="Para" id="Par110">An illustration of input and output of app, thread, kernel, and disk. The app reads and writes data to the kernel. The D M A data is used between the app and the disk.</p>
+                </div>
+                
+              </div><figcaption class="Caption" lang="en"><div class="CaptionContent"><span class="CaptionNumber">Figure 3-5</span>
+                  <p class="SimplePara">A refinement of Direct I/O, Asynchronous Direct I/O behaves similarly but prevents the calling thread from <span id="ITerm39">blocking</span></p>
+                </div></figcaption></figure></div>
+            <div class="FormalPara FormalParaRenderingStyle1 ParaTypeImportant" id="FPar1">
+              <div class="Heading">Note: io_uring</div>
+              <p class="Para FirstParaInFormalPara" id="Par56">The API to perform asynchronous I/O appeared in Linux long ago, and it was warmly met by the community. However, as it often happens, real-world usage quickly revealed many inefficiencies, such as blocking under some circumstances (despite the name), the need to call the kernel too often, and poor support for canceling the submitted requests. Eventually, it became clear that the updated requirements were not compatible with the existing API and the need for a new one arose.</p>
+              <p class="Para" id="Par57">This is how the <span class="EmphasisFontCategoryNonProportional ">io_uring()</span> API appeared. It provides the same facilities as AIO does, but in a much more convenient and performant way (it also has notably better documentation). Without diving into implementation details, let’s just say that it exists and is preferred over the legacy AIO.</p>
+            </div>
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec18">
+            <h3 class="Heading">Understanding the Tradeoffs</h3>
+            <div class="Para" id="Par58">The different access methods share some characteristics and differ in others. Table <span class="InternalRef"><a href="#Tab1">3-1</a></span> summarizes these characteristics, which are discussed further in this section.<div class="Table" id="Tab1"><div class="Caption" lang="en"><div class="CaptionContent"><span class="CaptionNumber">Table 3-1</span>
+                  <p class="SimplePara">Comparing Different I/O <span id="ITerm40">Access Methods</span></p>
+                </div></div><table style="border-collapse: collapse;border-top: 0.5pt solid ; border-bottom: 0.5pt solid ; border-left: 0.5pt solid ; border-right: 0.5pt solid ; "><colgroup><col class="tcol1 align-left"/><col class="tcol2 align-left"/><col class="tcol3 align-left"/><col class="tcol4 align-left"/><col class="tcol5 align-left"/></colgroup><thead><tr><th style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Characteristic</p>
+                    </th><th style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">R/W</p>
+                    </th><th style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">mmap</p>
+                    </th><th style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">DIO</p>
+                    </th><th style="border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">AIO/DIO</p>
+                    </th></tr></thead><tbody><tr><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Cache control</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Kernel</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Kernel</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">User</p>
+                    </td><td style="border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">User</p>
+                    </td></tr><tr><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Copying</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Yes</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">No</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">No</p>
+                    </td><td style="border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">No</p>
+                    </td></tr><tr><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">MMU activity</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Low</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">High</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">None</p>
+                    </td><td style="border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">None</p>
+                    </td></tr><tr><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">I/O scheduling</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Kernel</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Kernel</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Mixed</p>
+                    </td><td style="border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">User</p>
+                    </td></tr><tr><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Thread scheduling</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Kernel</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Kernel</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Kernel</p>
+                    </td><td style="border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">User</p>
+                    </td></tr><tr><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">I/O alignment</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Automatic</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Automatic</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Manual</p>
+                    </td><td style="border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Manual</p>
+                    </td></tr><tr><td style="border-right: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Application complexity</p>
+                    </td><td style="border-right: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Low</p>
+                    </td><td style="border-right: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Low</p>
+                    </td><td style="border-right: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Moderate</p>
+                    </td><td style="text-align: left;">
+                      <p class="SimplePara">High</p>
+                    </td></tr></tbody></table></div></div>
+            <section class="Section3 RenderAsSection3" id="Sec19">
+              <h4 class="Heading">Copying and MMU Activity</h4>
+              <p class="Para" id="Par59">One of the benefits of the <span id="ITerm41">mmap method</span> is that if the data is in cache, then the kernel is bypassed completely. The kernel does not need to copy data from the kernel to userspace and back, so fewer processor cycles are spent on that activity. This benefits workloads that are mostly in cache (for example, if the ratio of storage size to RAM size is close to 1:1).</p>
+              <p class="Para" id="Par60">The downside of mmap, however, occurs when data is not in the cache. This usually happens when the ratio of storage size to RAM size is significantly higher than 1:1. Every page that is brought into the cache causes another page to be evicted. Those pages have to be inserted into and removed from the page tables; the kernel has to scan the page tables to isolate inactive pages, making them candidates for eviction, and so forth. In addition, mmap requires memory for the page tables. On x86 processors, this requires 0.2 percent of the size of the mapped files. This seems low, but if the application has a 100:1 ratio of storage to memory, the result is that 20 percent of memory (0.2% * 100) is devoted to page tables.</p>
+            </section>
+
+            <section class="Section3 RenderAsSection3" id="Sec20">
+              <h4 class="Heading">I/O Scheduling</h4>
+              <div class="Para" id="Par61">One of the problems with letting the kernel control caching (with the mmap and read/write access methods) is that the application loses control of <span id="ITerm42">I/O scheduling</span><span id="ITerm43"/>. The kernel picks whichever block of data it deems appropriate and schedules it for write or read. This can result in the following problems:<div class="UnorderedList"><ul class="UnorderedListMarkBullet"><li>
+                  <p class="Para" id="Par62"><strong class="EmphasisTypeBold ">A write storm.</strong> When the kernel schedules large amounts of writes, the disk will be busy for a long while and impact read latency.</p>
+                </li><li>
+                  <p class="Para" id="Par63"><strong class="EmphasisTypeBold ">The kernel cannot distinguish between “important” and “unimportant” I/O.</strong> I/O belonging to background tasks can overwhelm foreground tasks, impacting their latency<sup>2</sup></p>
+                </li></ul></div></div>
+              <p class="Para" id="Par64">By bypassing the kernel page cache, the application takes on the burden of scheduling I/O. This doesn’t mean that the problems are solved, but it does mean that the problems <em class="EmphasisTypeItalic ">can</em> be solved—with sufficient attention and effort.</p>
+              <p class="Para" id="Par65">When using Direct I/O, each thread controls when to issue I/O. However, the kernel controls when the thread runs, so responsibility for issuing I/O is shared between the kernel and the application. With AIO/DIO, the application is in full control of when I/O is issued.</p>
+            </section>
+
+            <section class="Section3 RenderAsSection3" id="Sec21">
+              <h4 class="Heading">Thread Scheduling</h4>
+              <p class="Para" id="Par66">An I/O intensive application using mmap or read/write cannot guess what its cache hit rate will be. Therefore, it has to run a large number of threads (significantly larger than the core count of the machine it is running on). Using too few threads, they may all be waiting for the disk leaving the processor underutilized. Since each thread usually has at most one disk I/O outstanding, the number of running threads must be around the concurrency of the storage subsystem multiplied by some small factor in order to keep the disk fully occupied. However, if the cache hit rate is sufficiently high, then these large numbers of threads will contend with each other for the limited number of cores.</p>
+              <p class="Para" id="Par67">When using Direct I/O, this problem is somewhat <span id="ITerm44">mitigated</span>. The application knows exactly when a thread is blocked on I/O and when it can run, so the application can adjust the number of running threads according to runtime conditions.</p>
+              <p class="Para" id="Par68">With AIO/DIO, the application has full control over both running threads and waiting I/O (the two are completely divorced), so it can easily adjust to in-memory or disk-bound conditions or anything in between.</p>
+            </section>
+
+            <section class="Section3 RenderAsSection3" id="Sec22">
+              <h4 class="Heading">I/O Alignment</h4>
+              <p class="Para" id="Par69">Storage devices have a block size; all I/O must be performed in multiples of this block size which is typically 512 or 4096 bytes. Using read/write or mmap, the kernel performs the alignment automatically; a small read or write is expanded to the correct block boundary by the kernel before it is issued.</p>
+              <p class="Para" id="Par70">With DIO, it is up to the <span id="ITerm45">application</span> to perform block alignment. This incurs some complexity, but also provides an advantage: The kernel will usually over-align to a 4096 byte boundary even when a 512-byte boundary suffices. However, a user application using DIO can issue 512-byte aligned reads, which results in saving bandwidth on small items.</p>
+            </section>
+
+            <section class="Section3 RenderAsSection3" id="Sec23">
+              <h4 class="Heading">Application Complexity</h4>
+              <p class="Para" id="Par71">While the previous discussions favored AIO/DIO for I/O intensive applications, that method comes with a significant cost: complexity. Placing the responsibility of cache management on the application means it can make better choices than the kernel and make those choices with less overhead. However, those algorithms need to be written and tested. Using asynchronous I/O requires that the application is written using callbacks, coroutines, or a similar method, and often reduces the reusability of many available libraries.</p>
+            </section>
+
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec24">
+            <h3 class="Heading">Choosing the Filesystem and/or Disk</h3>
+            <p class="Para" id="Par72">Beyond performing the I/O itself, the database design must consider the medium against which this I/O is done. In many <span id="ITerm46">cases</span>, the choice is often between a filesystem or a raw block device, which in turn can be a choice of a traditional spinning disk or an SSD drive. In cloud environments, however, there can be the third option because local drives are always ephemeral—which imposes strict requirements on the replication.</p>
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec25">
+            <h3 class="Heading">Filesystems vs Raw Disks</h3>
+            <p class="Para" id="Par73">This decision can be approached from two angles: management costs and performance.</p>
+            <p class="Para" id="Par74">If you’re accessing the storage as a raw block device, all the difficulties with block allocation and reclamation are on the application side. We touched on this topic slightly earlier when we talked about memory management. The same set of challenges apply to RAM as well as disks.</p>
+            <p class="Para" id="Par75">A connected, though very <span id="ITerm47">different</span>, challenge is providing data integrity in case of crashes. Unless the database is purely in-memory, the I/O should be done in a way that avoids losing data or reading garbage from disk after a restart. Modern filesystems, however, provide both and are very mature to trust the efficiency of allocations and integrity of data. Accessing raw block devices unfortunately lacks those features (so they need to be implemented at the same quality on the application side).</p>
+            <p class="Para" id="Par76">From the performance point of view, the difference is not that drastic. On one hand, writing data to a file is always accompanied by associated metadata updates. This consumes both disk space and I/O bandwidth. However, some modern filesystems provide a very good balance of performance and efficiency, almost eliminating the I/O latency. (One of the most prominent examples is XFS. Another really good and mature piece of software is Ext4). The great ally in this camp is the <span class="EmphasisFontCategoryNonProportional ">fallocate(2)</span> system call that makes the filesystem preallocate space on disk. When used, filesystems also have a chance to make full use of the extents mechanisms, thus bringing the QoS of using files to the same performance level as when using raw block devices.</p>
+            <section class="Section3 RenderAsSection3" id="Sec26">
+              <h4 class="Heading">Appending Writes</h4>
+              <p class="Para" id="Par77">The database may have a heavy reliance on appends to files or require in-place updates of individual file blocks. Both approaches need special attention from the system architect because they call for different properties from the underlying system.</p>
+              <p class="Para" id="Par78">On one hand, appending writes requires careful interaction with the filesystem so that metadata updates (file size, in particular) do not dominate the regular I/O. On the other hand, appending writes (being sort of cache-oblivious algorithms) handle the disk overwriting difficulties in a natural manner. Contrary to this, in-place updates cannot happen at random offsets and sizes because disks may not tolerate this kind of workload, even if they’re used in a raw block device manner (not via a filesystem).</p>
+              <p class="Para" id="Par79">That being said, let’s dive even deeper into the stack and descend into the hardware level.</p>
+            </section>
+
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec27">
+            <h3 class="Heading">How Modern SSDs Work</h3>
+            <p class="Para" id="Par80">Like other computational resources, disks are limited in the speed they can provide. This speed is typically measured as a two-dimensional value with <em class="EmphasisTypeItalic ">Input/Output Operations per Second</em> <span id="ITerm48">(IOPS)</span><span id="ITerm49"/> and <em class="EmphasisTypeItalic ">bytes per second</em> (throughput). Of course, these parameters are not cut in stone even for each particular disk, and the maximum number of requests or bytes greatly depends on the requests’ distribution, queuing and concurrency, buffering or caching, disk age, and many other factors. So when performing I/O, a disk must always balance between two inefficiencies—overwhelming the disk with requests and underutilizing it.</p>
+            <p class="Para" id="Par81">Overwhelming the disk should be avoided because when the disk is full of requests it cannot distinguish between the criticality of certain requests over others. Of course, all requests are important, but it makes sense to prioritize latency-sensitive requests. For example, ScyllaDB serves real-time queries that need to be completed in single-digit milliseconds or less and, in parallel, it processes terabytes of data for compaction, streaming, decommission, and so forth. The former have strong latency sensitivity; the latter are less so. Good I/O maintenance that tries to maximize the I/O bandwidth while keeping latency as low as possible for latency-sensitive tasks is complicated enough to become a standalone component called the <em class="EmphasisTypeItalic "><span id="ITerm50">I/O Scheduler</span></em>.</p>
+            <p class="Para" id="Par82">When evaluating a disk, you would most likely be looking at its four parameters—read/write IOPS and read/write throughput (such as in MB/s). Comparing these numbers to one another is a popular way of claiming one disk is better than the other and estimating the aforementioned “bandwidth capacity” of the drive by applying Little’s Law. With that, the I/O Scheduler’s job is to provide a certain level of concurrency inside the disk to get maximum bandwidth from it, but not to make this concurrency too high in order to prevent the disk from queueing requests internally for longer than needed.</p>
+            <div class="Para" id="Par83">For instance, Figure <span class="InternalRef"><a href="#Fig6">3-6</a></span> illustrates how read request latency depends on the intensity of small reads (challenging disk IOPS capacity) vs the intensity of large writes (pursuing the disk bandwidth). The latency value is color-coded, and the “interesting area” is painted in cyan—this is where the latency stays below 1 millisecond. The drive measured is the NVMe disk that comes with the AWS EC2 i3en.3xlarge instance.<figure class="Figure" id="Fig6"><div class="MediaObject" id="MO6">
+                <img alt="" aria-describedby="d65e1529" src="../images/541783_1_En_3_Chapter/541783_1_En_3_Fig6_HTML.jpg" style="width:42.82em"/><div class="TextObject" id="d65e1529">
+                  <p class="Para" id="Par111">Two graphs of p 50 and p 95 latency from 0 to 1 G B per second. The graphs depict a decreasing trend. Two shaded strips are given to the right of the graphs.</p>
+                </div>
+                
+              </div><figcaption class="Caption" lang="en"><div class="CaptionContent"><span class="CaptionNumber">Figure 3-6</span>
+                  <p class="SimplePara">Bandwidth/latency graphs showing how read request latency depends on the intensity of small reads (challenging disk IOPS capacity) vs the intensity of large writes (pursuing the disk bandwidth)</p>
+                </div></figcaption></figure></div>
+            <p class="Para" id="Par84">This drive demonstrates almost perfect half-duplex behavior—increasing the read intensity several times requires roughly the same reduction in write intensity to keep the disk operating at the same <span id="ITerm51">speed</span>.</p>
+            <div class="FormalPara FormalParaRenderingStyle1 ParaTypeImportant" id="FPar2">
+              <div class="Heading">Tip: How to Measure Your Own Disk Behavior Under Load</div>
+              <p class="Para FirstParaInFormalPara" id="Par85">The better you understand how your own disks perform under load, the better you can tune them to capitalize on their “sweet spot.” One way to do this is with Diskplorer,<sup><a epub:type="noteref" href="#Fn4" id="Fn4_source" role="doc-noteref">4</a></sup> an open-source disk latency/bandwidth exploring toolset. By using Linux fio under the hood it runs a battery of measurements to discover performance characteristics for a specific hardware configuration, giving you an at-a-glance view of how server storage I/O will behave under load.</p>
+              <p class="Para" id="Par87">For a walkthrough of how to use this tool, see the Linux Foundation video, “Understanding Storage I/O Under Load.”<sup><a epub:type="noteref" href="#Fn5" id="Fn5_source" role="doc-noteref">5</a></sup></p>
+            </div>
+          </section>
+
+        </section>
+
+        <section class="Section1 RenderAsSection1" id="Sec28">
+          <h2 class="Heading">Networking</h2>
+          <p class="Para" id="Par89">The <span id="ITerm52">conventional networking functionality</span> available in Linux is remarkably full-featured, mature, and performant. Since the database rarely imposes severe per-ping latency requirements, there are very few surprises that come from it when properly configured and used. Nonetheless, some considerations still need to be made.</p>
+          <p class="Para" id="Par90">As explained by David Ahern, “<span id="ITerm53">Linux</span><span id="ITerm54"/> will process a fair amount of packets in the context of whatever is running on the CPU at the moment the IRQ is handled. System accounting will attribute those CPU cycles to any process running at that moment even though that process is not doing any work on its behalf. For example, ‘top’ can show a process that appears to be using 99+% CPU, but in reality, 60 percent of that time is spent processing packets—meaning the process is really only getting 40 percent of the CPU to make progress on its workload.”<sup><a epub:type="noteref" href="#Fn6" id="Fn6_source" role="doc-noteref">6</a></sup></p>
+          <div class="Para" id="Par92">However, for truly networking-<span id="ITerm55">intensive applications</span>, the Linux stack is constrained:<div class="UnorderedList"><ul class="UnorderedListMarkBullet"><li>
+              <p class="Para" id="Par93"><strong class="EmphasisTypeBold ">Kernel space implementation:</strong> Separation of the network stack into kernel space means that costly context switches are needed to perform network operations, and that data copies must be performed to transfer data from kernel buffers to user buffers and vice versa.</p>
+            </li><li>
+              <p class="Para" id="Par94"><strong class="EmphasisTypeBold ">Time sharing:</strong> Linux is a time-sharing system, and so must rely on slow, expensive interrupts to notify the kernel that there are new packets to be processed.</p>
+            </li><li>
+              <p class="Para" id="Par95"><strong class="EmphasisTypeBold ">Threaded model:</strong> The Linux kernel is heavily threaded, so all data structures are protected with locks. While a huge effort has made Linux very scalable, this is not without limitations and contention occurs at large core counts. Even without contention, the locking primitives themselves are relatively slow and impact networking performance.</p>
+            </li></ul></div></div>
+          <p class="Para" id="Par96">As before, the way to overcome this limitation is to move the packet processing to the userspace. There are plenty of out-of-kernel <span id="ITerm56">implementations</span> of the TCP algorithm that are worth considering.</p>
+          <section class="Section2 RenderAsSection2" id="Sec29">
+            <h3 class="Heading">DPDK</h3>
+            <p class="Para" id="Par97">One of the generic approaches that’s often referred to in the networking area is the poll mode vs interrupt model. When a packet arrives, the system may have two options for how to get informed—set up and interrupt from the hardware (or, in the case of the userspace <span id="ITerm57">implementation</span>, from the kernel file descriptor using the <em class="EmphasisTypeItalic ">poll</em> family of system calls) or keep polling the network card on its own from time to time until the packet is noticed.</p>
+            <p class="Para" id="Par98">The famous userspace network toolkit, called <em class="EmphasisTypeItalic ">DPDK</em>, is designed specifically for fast packet processing, usually in fewer than 80 CPU cycles per packet.<sup><a epub:type="noteref" href="#Fn7" id="Fn7_source" role="doc-noteref">7</a></sup> It integrates seamlessly with Linux in order to take advantage of high-performance hardware.</p>
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec30">
+            <h3 class="Heading">IRQ Binding</h3>
+            <p class="Para" id="Par100">As stated earlier, packet processing may take up to 60 percent of the CPU time, which is way too much. This percentage leaves too few CPU ticks for the database work itself. Even though in this case the backpressure mechanism would most likely keep the external activity off and the system would likely find its <span id="ITerm58">balance</span>, the resulting system throughput would likely be unacceptable.</p>
+            <p class="Para" id="Par101">System architects may consider the non-symmetrical CPU approach to mitigate this. If you’re letting the Linux kernel process network packets, there are several ways to localize this processing on separate CPUs.</p>
+            <p class="Para" id="Par102">The simplest way is to bind the IRQ processing from the NIC to specific cores or hyper-threads. Linux uses two-step processing of incoming packets called IRQ and soft-IRQ. If the IRQs are properly bound to cores, the soft-IRQ also happens on those cores—thus completely localizing the processing.</p>
+            <p class="Para" id="Par103">For huge-scale nodes running tens to hundred(s) of cores, the number of network-only cores may become literally more than one. In this case, it might make sense to localize processing even further by assigning cores from different NUMA nodes and teaching the NIC to balance the traffic between those using the receive packet steering facility of the Linux kernel.</p>
+          </section>
+
+        </section>
+
+        <section class="Section1 RenderAsSection1" id="Sec31">
+          <h2 class="Heading">Summary</h2>
+          <p class="Para" id="Par104">This chapter introduced a number of ways that database engineering decisions enable database users to squeeze more power out of modern infrastructure. For CPUs, the chapter talked about taking advantage of multicore servers by limiting resource sharing across cores and using future-promise design to coordinate work across cores. The chapter also provided a specific example of how low-level CPU architecture has direct implications on the database.</p>
+          <p class="Para" id="Par105">Moving on to memory, you read about two related but independent subsystems: memory allocation and cache control. For I/O, the chapter discussed Linux options such as traditional read/write, mmap, Direct I/O (DIO) read/write, and Asynchronous I/O—including the various tradeoffs of each. This was followed by a deep dive into how modern SSDs work and how a database can take advantage of a drive’s unique characteristics. Finally, you looked at constraints associated with the Linux networking stack and explored alternatives such as DPDK and <span id="ITerm59">IRQ</span> binding. The next chapter shifts the focus from hardware interactions to algorithmic optimizations: pure software challenges.</p>
+        </section>
+
+      <div class="License LicenseSubType-cc-by"><a href="https://creativecommons.org/licenses/by/4.0"><img alt="Creative Commons" src="../css/cc-by.png"/></a>
+            <p class="SimplePara"><strong class="EmphasisTypeBold ">Open Access</strong> This chapter is licensed under the terms of the Creative Commons Attribution 4.0 International License (<span class="ExternalRef"><a href="http://creativecommons.org/licenses/by/4.0/"><span class="RefSource">http://​creativecommons.​org/​licenses/​by/​4.​0/​</span></a></span>), which permits use, sharing, adaptation, distribution and reproduction in any medium or format, as long as you give appropriate credit to the original author(s) and the source, provide a link to the Creative Commons license and indicate if changes were made.</p>
+            <p class="SimplePara">The images or other third party material in this chapter are included in the chapter's Creative Commons license, unless indicated otherwise in a credit line to the material. If material is not included in the chapter's Creative Commons license and your intended use is not permitted by statutory regulation or exceeds the permitted use, you will need to obtain permission directly from the copyright holder.</p>
+          </div><aside aria-label="Footnotes" class="FootnoteSection" epub:type="footnotes"><div class="Heading">Footnotes</div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn1_source">1</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn1" role="doc-footnote"><p class="Para" id="Par5">This chapter draws from material originally published on the Seastar site (<span class="ExternalRef"><a href="https://seastar.io/"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">https://seastar.io/</span></span></a></span>) and the ScyllaDB blog (<span class="ExternalRef"><a href="https://www.scylladb.com/blog/"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">https://www.scylladb.com/blog/</span></span></a></span>). It is used here with permission of ScyllaDB.</p></div><div class="ClearBoth"> </div></div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn2_source">2</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn2" role="doc-footnote"><p class="Para" id="Par22">Watch the Linux Foundation video, “Exploring Phantom Traffic Jams in Your Data Flows,” on YouTube (<span class="ExternalRef"><a href="http://www.youtube.com/watch?v=IXS_Afb6Y4o"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">www.youtube.com/watch?v=IXS_Afb6Y4o</span></span></a></span>) and/or read the corresponding article on the ScyllaDB blog (<span class="ExternalRef"><a href="http://www.scylladb.com/2022/04/19/exploring-phantom-jams-in-your-data-flow/"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">www.scylladb.com/2022/04/19/exploring-phantom-jams-in-your-data-flow/</span></span></a></span>).</p></div><div class="ClearBoth"> </div></div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn3_source">3</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn3" role="doc-footnote"><p class="Para" id="Par42">We are using the term “slab” to mean one or more contiguous memory pages that contain pre-allocated chunks of memory.</p></div><div class="ClearBoth"> </div></div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn4_source">4</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn4" role="doc-footnote"><p class="Para" id="Par86">You can access Diskplorer at <span class="ExternalRef"><a href="https://github.com/scylladb/diskplorer"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">https://github.com/scylladb/diskplorer</span></span></a></span>. This project contains instructions on how to generate a graph of your own.</p></div><div class="ClearBoth"> </div></div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn5_source">5</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn5" role="doc-footnote"><p class="Para" id="Par88">Watch the video on YouTube (<span class="ExternalRef"><a href="http://www.youtube.com/watch?v=Am-nXO6KK58"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">www.youtube.com/watch?v=Am-nXO6KK58</span></span></a></span>).</p></div><div class="ClearBoth"> </div></div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn6_source">6</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn6" role="doc-footnote"><p class="Para" id="Par91">For the source and additional detail, see David Ahern’s, “The CPU Cost of Networking on a Host” (<span class="ExternalRef"><a href="https://people.kernel.org/dsahern/the-cpu-cost-of-networking-on-a-host"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">https://people.kernel.org/dsahern/the-cpu-cost-of-networking-on-a-host</span></span></a></span>).</p></div><div class="ClearBoth"> </div></div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn7_source">7</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn7" role="doc-footnote"><p class="Para" id="Par99">For details, see the Linux Foundation’s page on DPDK (Data Plane Developers Kit) at <span class="ExternalRef"><a href="http://www.dpdk.org"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">www.dpdk.org</span></span></a></span>.</p></div><div class="ClearBoth"> </div></div></aside></div></div></body></html>

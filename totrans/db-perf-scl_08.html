@@ -1,0 +1,490 @@
+<html><head></head><body><div epub:type="chapter" role="doc-chapter"><div class="ChapterContextInformation"><div class="ContextInformation" id="b978-1-4842-9711-7_9"><div class="ChapterCopyright">© The Author(s) 2023</div><span class="ContextInformationAuthorEditorNames">F. C. Mendes et al.</span><span class="ContextInformationBookTitles"><span class="BookTitle">Database Performance at Scale</span></span><span class="ChapterDOI"><a href="https://doi.org/10.1007/978-1-4842-9711-7_9">https://doi.org/10.1007/978-1-4842-9711-7_9</a></span></div></div><!--Begin Abstract--><div class="MainTitleSection"><h1 class="ChapterTitle" lang="en">9. Benchmarking</h1></div><div class="AuthorGroup"><div class="AuthorNames"><span class="Author"><span class="AuthorName">Felipe Cardeneti Mendes</span><sup><a href="#Aff5">1</a> <span class="ContactIcon"> </span></sup>, </span><span class="Author"><span class="AuthorName">Piotr Sarna</span><sup><a href="#Aff6">2</a></sup>, </span><span class="Author"><span class="AuthorName">Pavel Emelyanov</span><sup><a href="#Aff7">3</a></sup> and </span><span class="Author"><span class="AuthorName">Cynthia Dunlop</span><sup><a href="#Aff8">4</a></sup></span></div><div class="Affiliations"><div class="Affiliation" id="Aff5"><span class="AffiliationNumber">(1)</span><div class="AffiliationText">São Paulo, São Paulo, Brazil</div></div><div class="Affiliation" id="Aff6"><span class="AffiliationNumber">(2)</span><div class="AffiliationText">Pruszków, Poland</div></div><div class="Affiliation" id="Aff7"><span class="AffiliationNumber">(3)</span><div class="AffiliationText">Moscow, Russia</div></div><div class="Affiliation" id="Aff8"><span class="AffiliationNumber">(4)</span><div class="AffiliationText">Carpinteria, CA, USA</div></div><div class="ClearBoth"> </div></div></div><div class="ArticleOrChapterToc"><div class="TocLine"><a href="#Sec1">Latency or Throughput: Choose Your Focus</a></div><div class="TocLine"><a href="#Sec2">Less Is More (at First): Taking a Phased Approach</a></div><div class="TocLine"><a href="#Sec3">Benchmarking Do’s and Don’ts</a></div><div class="TocLine"><a href="#Sec18">Reporting Do’s and Don’ts</a></div><div class="TocLine"><a href="#Sec22">Special Considerations for Various Benchmarking Goals</a></div><div class="TocLine"><a href="#Sec27">Beyond the Usual Benchmark</a></div><div class="TocLine"><a href="#Sec31">Summary</a></div></div><!--End Abstract--><div class="Fulltext">
+        <p class="Para" id="Par2">We won’t sugarcoat it: database benchmarking is hard. There are many moving parts and nuances to consider and manage—and a bit of homework is required to really see what a database is capable of and measure it properly. It’s not easy to properly generate system load to reflect your real-life scenarios.<sup><a epub:type="noteref" href="#Fn1" id="Fn1_source" role="doc-noteref">1</a></sup> It’s often not obvious how to correctly measure and analyze the end results. And after extracting benchmarking results, you need to be able to read them, understand potential performance bottlenecks, analyze potential performance improvements, and possibly dive into other issues. You need to make your benchmarking results meaningful, ensure they are easily reproducible, and also be able to clearly explain these results to your team and other interested parties in a way that reflects your business needs. There’s also hard mathematics involved: statistics and queueing theory to help with black boxes and measurements, not to mention <span id="ITerm1">domain-specific knowledge</span> of the system internals of the servers, platforms, operating systems, and the software running on it.</p>
+        <p class="Para" id="Par4">But when performance is a top priority, careful—and sometimes frequent—benchmarking is essential. And in the long run, it <em class="EmphasisTypeItalic ">will</em> pay off. An effective benchmark can save you from even worse pains, like the high-pressure database migration project that ensues after you realize—too late—that your existing solution can’t support the latest phase of company growth with acceptable latencies and/or throughput.</p>
+        <p class="Para" id="Par5">The goal of this chapter is to share strategies that ease the pain slightly and, more importantly, increase the chances that the pain pays off by helping you select options that meet your performance needs. The chapter begins by looking at the two key types of benchmarks and highlighting critical considerations for each objective. Then, it presents a phased approach that should help you expose problems faster and with lower costs. Next, it dives into the do’s and don’ts of benchmark planning, execution, and reporting, with a focus on lessons learned from the best and worst benchmarks we’ve witnessed over the past several years. Finally, the chapter closes with a look at some less common benchmarking approaches you might want to consider for specialized needs.</p>
+        <section class="Section1 RenderAsSection1" id="Sec1">
+          <h2 class="Heading">Latency or Throughput: Choose Your Focus</h2>
+          <div class="Para" id="Par6">When benchmarking, you need to decide upfront whether you want to focus on throughput or latency. <span id="ITerm2">Latency</span> is measured in both cases. But here’s the difference:<div class="UnorderedList"><ul class="UnorderedListMarkBullet"><li>
+              <p class="Para" id="Par7"><strong class="EmphasisTypeBold ">Throughput focus</strong>: You measure the maximum throughput by sending a new request as soon as the previous request completes. This helps you understand the highest number of IOPS that the database can sustain. Throughput-focused benchmarks are often the focus for analytics use cases (fraud detection, cybersecurity, etc.)</p>
+            </li><li>
+              <p class="Para" id="Par8"><strong class="EmphasisTypeBold ">Latency focus</strong>: You assess how many IOPS the database can handle without compromising latency. This is usually the focus for most user-facing and real-time applications.</p>
+            </li></ul></div></div>
+          <p class="Para" id="Par9">Throughput tests are quite common, but latency tests are a better choice if you already know the desired throughput (e.g., 1M OPS). This is especially true if your production system must meet a specific latency goal (for example, the 99.99 percentile should have a read latency of less than 10ms).</p>
+          <div class="Para" id="Par10">If you’re focused solely on latency, you need to measure and compare latency at the same throughput rates. If you know only that database A can handle 30K OPS with a certain P99 latency and database B can handle 50K OPS with a slightly higher P99 latency, you can’t really say which one is “more efficient.” For a fair comparison, you would need to measure each database’s latencies at either 30K OPS or 50K OPS—or both. Even better, you would track latency across a broader span of intervals (e.g., measuring at 10K OPS increments up until when neither database could achieve the required P99 latency, as demonstrated in Figure <span class="InternalRef"><a href="#Fig1">9-1</a></span>.)<figure class="Figure" id="Fig1"><div class="MediaObject" id="MO1">
+              <img alt="" aria-describedby="d65e486" src="../images/541783_1_En_9_Chapter/541783_1_En_9_Fig1_HTML.jpg" style="width:42.82em"/><div class="TextObject" id="d65e486">
+                <p class="Para" id="Par161">A line graph titled, 3 node cluster, 100 percent writes, latencies, plots six categories. One of the resources maxed out, in all categories. Only one line named, Scylla 4.4.3 90% stayed below the 5 milliseconds line.</p>
+              </div>
+              
+            </div><figcaption class="Caption" lang="en"><div class="CaptionContent"><span class="CaptionNumber">Figure 9-1</span>
+                <p class="SimplePara">A latency-oriented <span id="ITerm3">benchmark</span></p>
+              </div></figcaption></figure></div>
+          <p class="Para" id="Par11">Not all latency benchmarks need to take that form, however. Consider the example of an AdTech company with a real-time bidding use case. For them, a request that takes longer than 31ms is absolutely useless because it will fall outside of the bidding window. It’s considered a timeout. And any request that is 30ms or less is fine; a 2ms response is not any more valuable to them than a 20ms response. They care only about which requests time out and which don’t.</p>
+          <div class="Para" id="Par12">Their benchmarking needs are best served by a latency benchmark measuring how many OPS were generating timeouts over time. For example, Figure <span class="InternalRef"><a href="#Fig2">9-2</a></span> shows that the first database in their benchmark (the top line) resulted in over 100K timeouts a second around 11:30; the other (the horizontal line near the bottom) experienced only around 200 timeouts at that same point in time, and throughout the duration of that test.<figure class="Figure" id="Fig2"><div class="MediaObject" id="MO2">
+              <img alt="" aria-describedby="d65e524" src="../images/541783_1_En_9_Chapter/541783_1_En_9_Fig2_HTML.jpg" style="width:42.82em"/><div class="TextObject" id="d65e524">
+                <p class="Para" id="Par162">A line graph illustrates that the first database in their benchmark, represented by a top line, resulted in over 100 K timeouts a second around 11 30, the other, represented by the horizontal line near the bottom, experienced only around 200 timeouts at that same point in time, and throughout the duration of that test.</p>
+              </div>
+              
+            </div><figcaption class="Caption" lang="en"><div class="CaptionContent"><span class="CaptionNumber">Figure 9-2</span>
+                <p class="SimplePara">A latency-oriented benchmark measuring how many OPS were generating timeouts over <span id="ITerm4">time</span></p>
+              </div></figcaption></figure></div>
+          <div class="Para" id="Par13">For contrast, Figure <span class="InternalRef"><a href="#Fig3">9-3</a></span> shows an example of a throughput benchmark.<figure class="Figure" id="Fig3"><div class="MediaObject" id="MO3">
+              <img alt="" aria-describedby="d65e553" src="../images/541783_1_En_9_Chapter/541783_1_En_9_Fig3_HTML.jpg" style="width:42.8em"/><div class="TextObject" id="d65e553">
+                <p class="Para" id="Par163">A triple bar graph titled, 3 node cluster, maximum throughout, has five categories. One of the resources maxed out, in all categories.</p>
+              </div>
+              
+            </div><figcaption class="Caption" lang="en"><div class="CaptionContent"><span class="CaptionNumber">Figure 9-3</span>
+                <p class="SimplePara">A throughput-oriented benchmark</p>
+              </div></figcaption></figure></div>
+          <div class="Para" id="Par14">With a throughput benchmark, you want to see one of the resources (e.g., the CPU or disk) maxing out in order to understand how much the database can deliver under extreme load conditions. If you don’t reach this level, it’s a sign that you’re not really effectively benchmarking the database’s throughput. For example, Figure <span class="InternalRef"><a href="#Fig4">9-4</a></span> demonstrates the load of two clusters during a benchmark run. Note how one cluster is fully utilized whereas the other is very close to reaching its limits.<figure class="Figure" id="Fig4"><div class="MediaObject" id="MO4">
+              <img alt="" aria-describedby="d65e587" src="../images/541783_1_En_9_Chapter/541783_1_En_9_Fig4_HTML.jpg" style="width:31em"/><div class="TextObject" id="d65e587">
+                <p class="Para" id="Par164">A graph is titled load, one cluster reached the top and remained flat at the top and drops sharply at the end. Another cluster stays just below the top, remain flat and drops sharply at the end.</p>
+              </div>
+              
+            </div><figcaption class="Caption" lang="en"><div class="CaptionContent"><span class="CaptionNumber">Figure 9-4</span>
+                <p class="SimplePara">Two clusters’ load comparison: one fully maxed out and another very close to reaching its <span id="ITerm5">limit</span></p>
+              </div></figcaption></figure></div>
+        </section>
+
+        <section class="Section1 RenderAsSection1" id="Sec2">
+          <h2 class="Heading">Less Is More (at First): Taking a Phased Approach</h2>
+          <p class="Para" id="Par15">With either focus, the number one rule of benchmarking is to start simple. Always keep a laser focus on the specific questions you want the benchmark to answer (more on that shortly). But, realize that it could take a number of phases—each with a fair amount of trial and error—to get meaningful <span id="ITerm6">results</span>.</p>
+          <div class="Para" id="Par16">What could go wrong? A lot. For example:<div class="UnorderedList"><ul class="UnorderedListMarkBullet"><li>
+              <p class="Para" id="Par17">Your client might be a bottleneck</p>
+            </li><li>
+              <p class="Para" id="Par18">Your database sizing might need adjustment</p>
+            </li><li>
+              <p class="Para" id="Par19">Your tests might need tuning</p>
+            </li><li>
+              <p class="Para" id="Par20">A sandbox environment could have very different resources than a production one</p>
+            </li><li>
+              <p class="Para" id="Par21">Your testing methodology might be too artificial to predict reality</p>
+            </li></ul></div></div>
+          <p class="Para" id="Par22">If you start off with too much complexity, it will be a nightmare to discover what’s going wrong and pinpoint the source of the problem. For example, assume you want to test if a database can handle 1M OPS of traffic from your client with a P99 latency of 1ms or less. However, you notice the latencies are exceeding the expected threshold. You might spend days adjusting database configurations to no avail, then eventually figure out that the problem stemmed from a bug in client-side concurrency. This would have been much more readily apparent if you started out with just a fraction of that throughput. In addition to avoiding frustration and lost time, you would have saved your team a lot of unnecessary infrastructure <span id="ITerm7">costs</span>.</p>
+          <p class="Para" id="Par23">As a general rule of thumb, consider at least two phases of benchmarking: one with a specialized stress tool and one with your real workload (or at least a sampling of it—e.g., sending 30 percent of your queries to a cluster for benchmarking). For each phase, start super small (at around 10 percent of the throughput you ultimately want to test), troubleshoot as needed, then gradually increase the scope until you reach your target loads. Keep optimization in mind throughout. Do you need to add more servers or more clients to achieve a certain throughput? Or are you limited (by budget or infrastructure) to a fixed hardware <span id="ITerm8">configuration</span>? Can you achieve your performance goals with less?</p>
+          <p class="Para" id="Par24">The key is to move incrementally. Of course, the exact approach will vary from situation to situation. Consider a leading travel company’s approach. Having recently moved from PostgreSQL to Cassandra, they were quite experienced benchmarkers when they decided to evaluate Cassandra alternatives. The goal was to test the new database candidate’s raw speed and performance, along with its support for their specific workloads.</p>
+          <p class="Para" id="Par25">First, they stood up a five-node cluster and ran database comparisons with synthetic traffic from cassandra-stress. This gave them confidence that the new database could meet their performance needs with <em class="EmphasisTypeItalic ">some</em> workloads. However, their real workloads are nothing like even customized cassandra-stress workloads. They experience highly variable and unpredictable traffic (for example, massive surges and disruptions stemming from a volcanic eruption). For a more realistic assessment, they started shadowing production traffic. This second phase of benchmarking provided the added confidence they needed to move forward with the migration.</p>
+          <p class="Para" id="Par26">Finally, they used the same shadowed traffic to determine the best deployment option. Moving to a larger 21-node cluster, they tested across cloud provider A and cloud provider B on bare metal. They also experimented with many different options on cloud provider B: various storage options, CPUs, and so on.</p>
+          <p class="Para" id="Par27">The bottom line here: Start simple, confirm, then scale incrementally. It’s safer and ultimately faster. <span id="ITerm9">Plus</span>, you’ll save on costs. As you move through the process, check if you need to tweak your setup during your testing. Once you are eventually satisfied with the results, scale your infrastructure accordingly to meet your defined criteria.</p>
+        </section>
+
+        <section class="Section1 RenderAsSection1" id="Sec3">
+          <h2 class="Heading">Benchmarking Do’s and Don’ts</h2>
+          <p class="Para" id="Par28">The specific step-by-step instructions for how to configure and run a benchmark vary across databases and benchmarking tools, so we’re not going to get into that. Instead, let’s look at some of the more universal “do’s and don’ts” based on what we’ve seen in the field.</p>
+          <div class="FormalPara FormalParaRenderingStyle1 ParaTypeImportant" id="FPar1">
+            <div class="Heading">Tip</div>
+            <p class="Para FirstParaInFormalPara" id="Par29">If you haven’t done so yet, be sure to review the chapters on drivers, infrastructure, and topology considerations before you begin benchmarking.</p>
+          </div>
+          <section class="Section2 RenderAsSection2" id="Sec4">
+            <h3 class="Heading">Know What’s Under the Hood of Your Database (Or Find Someone Who Knows)</h3>
+            <p class="Para" id="Par30">Understand and anticipate what parts of the system your chosen workload will affect and how. How will it stress your CPUs? Your memory? Your disks? Your network? Do you know if the database automatically analyzes the system it’s running on and prioritizes application requests as opposed to internal tasks? What’s going on as far as background operations and how these may skew your results? And why does all this matter if you’re just trying to run a benchmark?</p>
+            <p class="Para" id="Par31">Let’s take the example of compaction with <span id="ITerm10">LSM-tree based databases</span>. As we’ll cover in Chapter <span class="ExternalRef"><a href="541783_1_En_11_Chapter.xhtml"><span class="RefSource">11</span></a></span>, compactions do have a significant impact on performance. But compactions are unlikely to kick in if you run a benchmark for just a few minutes. Given that compactions have dramatically different performance impacts on different databases, it’s essential to know that they will occur and ensure that tests last long enough to measure their impact.</p>
+            <p class="Para" id="Par32">The important thing here is to try to understand the system that you’re benchmarking. The better you understand it, the better you can plan tests and interpret the results. If there are vendors and/or user groups behind the database you’re benchmarking, try to probe them for a quick overview of how the database works and what you should watch out for. Otherwise, you might overlook something that comes back to haunt you, such as finding out that your projected scale was too optimistic. Or, you might freak out over some KPI that’s really a non-issue.</p>
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec5">
+            <h3 class="Heading">Choose an Environment That Takes Advantage of the Database’s Potential</h3>
+            <p class="Para" id="Par33">This is really a corollary to the previous tip. With a firm understanding of your <span id="ITerm11">database’s superpowers</span>, you can design benchmark scenarios that fully reveal its potential. For example, if you want to compare two databases designed for commodity hardware, don’t worry about benchmarking them on a broad array of powerful servers. But if you’re comparing a database that’s architected to take advantage of powerful servers, you’d be remiss to benchmark it only on commodity hardware (or even worse, using a Docker image on a laptop). That would be akin to test driving a race car on the crowded streets of New York City rather than your local equivalent of the Autobahn highway.</p>
+            <p class="Para" id="Par34">Likewise, if you think some aspect of the database or your data modeling will be problematic for your use case, now’s the time to push it to the limits and assess its true impact. For example, if you think a subset of your data might have imbalanced access patterns due to user trends, use the benchmark phase to reproduce that and assess the impacts.</p>
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec6">
+            <h3 class="Heading">Use an Environment That Represents Production</h3>
+            <p class="Para" id="Par35">Benchmarking in the wrong environment can easily lead to an order-of-magnitude performance <span id="ITerm12">difference</span>. For example, a laptop might achieve 20K OPS where a dedicated server could easily achieve 200K OPS. Unless you intend to have your production system running on a laptop, do not benchmark (or run comparisons) on a laptop.</p>
+            <p class="Para" id="Par36">If you are using shared hardware in a containerized/virtualized environment, be aware that one guest can increase latency in other guests. As a result, you’ll typically want to ensure that hardware resources are dedicated to your database and that you avoid resource overcommitment by any means possible.</p>
+            <p class="Para" id="Par37">Also, don’t overlook the environment for your load generators. If you underprovision load generators, the load generators themselves will be the bottleneck. Another consideration: Ensure that the database and the data loader are not running under the same nodes. Pushing and pulling data is resource <span id="ITerm13">intensive</span>, so the loader will definitely steal resources from the database. This will impact your results with any database.</p>
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec7">
+            <h3 class="Heading">Don’t Overlook Observability</h3>
+            <p class="Para" id="Par38">Having <span id="ITerm14">observability</span> into KPIs beyond throughput and latency is critical for identifying and troubleshooting issues. For instance, you might not be hitting the cache as much as intended. Or a network interface might be overwhelmed with data to the point that it interferes with latency. Observability is also your primary tool for validating that you’re not being overly optimistic—or pessimistic—when reviewing results. You may discover that even read requests served from disk, with a cold cache, are within your latency requirements.</p>
+            <div class="FormalPara FormalParaRenderingStyle1 ParaTypeImportant" id="FPar2">
+              <div class="Heading">Note</div>
+              <p class="Para FirstParaInFormalPara" id="Par39">For extensive discussion on this topic, see Chapter <span class="ExternalRef"><a href="541783_1_En_10_Chapter.xhtml"><span class="RefSource">10</span></a></span>.</p>
+            </div>
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec8">
+            <h3 class="Heading">Use Standardized Benchmarking Tools Whenever Feasible</h3>
+            <div class="Para" id="Par40">Don’t waste resources building—and debugging and maintaining—your own version of a benchmarking tool that has already been solved for. The community has developed an impressive set of <span id="ITerm15">tools</span> that can cover a wide range of needs. For example:<div class="UnorderedList"><ul class="UnorderedListMarkBullet"><li>
+                <p class="Para" id="Par41">YCSB<sup><a epub:type="noteref" href="#Fn2" id="Fn2_source" role="doc-noteref">2</a></sup></p>
+              </li><li>
+                <p class="Para" id="Par43">TPC-C<sup><a epub:type="noteref" href="#Fn3" id="Fn3_source" role="doc-noteref">3</a></sup></p>
+              </li><li>
+                <p class="Para" id="Par45">NdBench<sup><a epub:type="noteref" href="#Fn4" id="Fn4_source" role="doc-noteref">4</a></sup></p>
+              </li><li>
+                <p class="Para" id="Par47">Nosqlbench<sup><a epub:type="noteref" href="#Fn5" id="Fn5_source" role="doc-noteref">5</a></sup></p>
+              </li><li>
+                <p class="Para" id="Par49">pgbench<sup><a epub:type="noteref" href="#Fn6" id="Fn6_source" role="doc-noteref">6</a></sup></p>
+              </li><li>
+                <p class="Para" id="Par51">TLP-stress<sup><a epub:type="noteref" href="#Fn7" id="Fn7_source" role="doc-noteref">7</a></sup></p>
+              </li><li>
+                <p class="Para" id="Par53">Cassandra-stress<sup><a epub:type="noteref" href="#Fn8" id="Fn8_source" role="doc-noteref">8</a></sup></p>
+              </li><li>
+                <p class="Para" id="Par55">and more…</p>
+              </li></ul></div></div>
+            <p class="Para" id="Par56">They are all relatively the same and provide similar configuration parameters. Your task is to understand which one better reflects the workload you are interested in and how to run it properly. When in doubt, consult with your vendor for specific tooling compatible with your database of <span id="ITerm16">choice</span>.</p>
+            <div class="Para" id="Par57">Of course, these options won’t cover everything. It makes sense to develop your own tools if:<div class="UnorderedList"><ul class="UnorderedListMarkBullet"><li>
+                <p class="Para" id="Par58">Your workloads look nothing like the ones offered by standard tools (for example, you rely on multiple operations that are not natively supported by the tools)</p>
+              </li><li>
+                <p class="Para" id="Par59">It helps you test against real (or more realistic) workloads in the later phases of your benchmarking strategy</p>
+              </li></ul></div></div>
+            <p class="Para" id="Par60">Ideally, the final stages of your benchmarking would involve connecting your application to the database and seeing how it responds to your real workload. But what if, for example, you are comparing two databases that require you to implement the application logic in two totally different ways? In this case, the different application logic implementations could influence your results as much as the difference in databases. Again, we recommend starting small: Testing just the basic functionality of the application against both targets (following each one’s best practices) and seeing what the initial results look like.</p>
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec9">
+            <h3 class="Heading">Use Representative Data Models, Datasets, and Workloads</h3>
+            <p class="Para" id="Par61">As you progress past the initial “does this even work” phase of your benchmarking, it soon becomes critical to gravitate to representative data models, datasets, and workloads. The closer you approximate your production environment, the better you can trust that your results accurately represent what you will experience in production.</p>
+            <section class="Section3 RenderAsSection3" id="Sec10">
+              <h4 class="Heading">Data Models</h4>
+              <p class="Para" id="Par62">Tools such as <span id="ITerm17">cassandra-stress</span><span id="ITerm18"/> use a default data model that does not completely reflect what most teams use in production. For example, the cassandra-stress default data model has a replication factor set to 1 and uses <span class="EmphasisFontCategoryNonProportional ">LOCAL_ONE</span> as a consistency level. Although cassandra-stress is a convenient way to get some initial performance impressions, it is critical to benchmark the same/similar data model that you will use in production. That’s why we recommend using a custom data model and tuning your consistency level and queries. cassandra-stress and other benchmarking tools commonly provide ways to specify a user profile, where you can specify your own schema, queries, replication factor, request distribution and sizes, throughput rates, number of clients, and other aspects.</p>
+            </section>
+
+            <section class="Section3 RenderAsSection3" id="Sec11">
+              <h4 class="Heading">Dataset Size</h4>
+              <p class="Para" id="Par63">If you run the benchmark with a dataset that’s smaller than your production dataset, you may have misleading or incorrect results due to the reduced number of I/O <span id="ITerm19">operations</span>. Eventually, you should configure a test that realistically reflects a fraction of your production dataset size corresponding to your current scale.</p>
+            </section>
+
+            <section class="Section3 RenderAsSection3" id="Sec12">
+              <h4 class="Heading">Workloads</h4>
+              <p class="Para" id="Par64">Run the benchmark using a load that <span id="ITerm20">represents</span>, as closely as possible, your anticipated production workload. This includes the queries submitted by the load generator. When you use the right type of queries, they are distributed over the cluster and the ratio between reads and writes remains relatively constant.</p>
+              <p class="Para" id="Par65">The read/write ratio is important. Different combinations will impact your disk in different ways. If you want results representative of production, use a realistic workload mix.</p>
+              <p class="Para" id="Par66">Eventually, you will max out your storage I/O throughput and starve your disk, which causes requests to start queuing on the database. If you continue pushing past that point, latency will increase. When you hit that point of increased latency with unsatisfactory results, stop, reflect on what happened, analyze how you can improve, and iterate through the test again. Rinse and repeat as <span id="ITerm21">needed</span>.</p>
+              <div class="Para" id="Par67">Here are some tips on creating realistic workloads for common use cases:<div class="UnorderedList"><ul class="UnorderedListMarkBullet"><li>
+                  <p class="Para" id="Par68"><strong class="EmphasisTypeBold ">Ingestion</strong>: Ingest data as fast as possible for at least a few hours, and do it in a way that doesn’t produce timeouts or errors. The goal here is to ensure that you’ve got a stable system, capable of keeping up with your expected traffic rate for long periods.</p>
+                </li><li>
+                  <p class="Para" id="Par69"><strong class="EmphasisTypeBold ">Real-time bidding</strong>: Use bulk writes coming in after hours or constantly low background loads; the core of the workload is a lot of reads with extremely strict latency requirements (perhaps below a specific threshold).</p>
+                </li><li>
+                  <p class="Para" id="Par70"><strong class="EmphasisTypeBold ">Time series</strong>: Use heavy and constant writes to ever-growing partitions split and bucketed by time windows; reads tend to focus on the latest rows and/or a specific range of time.</p>
+                </li><li>
+                  <p class="Para" id="Par71"><strong class="EmphasisTypeBold ">Metadata store</strong>: Use writes occasionally, but focus on random reads representing users accessing your site. There’s usually good cacheability here.</p>
+                </li><li>
+                  <p class="Para" id="Par72"><strong class="EmphasisTypeBold ">Analytics</strong>: Periodically write a lot of information and perform a lot of full table scans (perhaps in parallel with some of the other workloads).</p>
+                </li></ul></div></div>
+              <p class="Para" id="Par73">The bottom line is to try to emulate what your workloads look like and run something that’s meaningful to you.</p>
+            </section>
+
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec13">
+            <h3 class="Heading">Exercise Your Cache Realistically</h3>
+            <p class="Para" id="Par74">Unless you can absolutely guarantee that your workload has a high cache hit rate frequency, be pessimistic and exercise it well.</p>
+            <p class="Para" id="Par75">You might be running workloads, getting great <span id="ITerm22">results</span>, and seeing cache hits all the way up to 90 percent. That’s great. But is this the way you’re going to be running in practice all the time? Do you have periods throughout the day when your cache is not going to be that warm, maybe because there’s something else running? In real-life situations, you will likely have times when the cache is colder or even super cold (e.g., after an upgrade or after a hardware failure). Consider testing those scenarios in the benchmark as well.</p>
+            <p class="Para" id="Par76">If you want to make sure that all requests are coming from the disk, you can disable the cache altogether. However, be aware that this is typically an extreme situation, as most workloads (one way or another) exercise some caching. Sometimes you can create a cold cache situation by just restarting the nodes or restarting the processes.</p>
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec14">
+            <h3 class="Heading">Look at Steady State</h3>
+            <p class="Para" id="Par77">Most databases behave differently in real life than they do in short transient test situations. They usually run for days or years—so when you test a database for two minutes, you’re <span id="ITerm23">probably</span> not getting a deep understanding of how it behaves, unless you are working in memory only. Also, when you’re working with a database that is built to serve tens or hundreds of terabytes—maybe even petabytes—know that it’s going to behave rather differently at various data levels. Requests become more expensive, especially read requests. If you’re testing something that only serves a gigabyte, it really isn’t the same as testing something that’s serving a terabyte.</p>
+            <div class="Para" id="Par78">Figure <span class="InternalRef"><a href="#Fig5">9-5</a></span> exemplifies the importance of looking at steady state. Can you tell what throughput is being sustained by the database in question?<figure class="Figure" id="Fig5"><div class="MediaObject" id="MO5">
+                <img alt="" aria-describedby="d65e1131" src="../images/541783_1_En_9_Chapter/541783_1_En_9_Fig5_HTML.jpg" style="width:42.82em"/><div class="TextObject" id="d65e1131">
+                  <p class="Para" id="Par165">A graph titled, Requests served. A line rises sharply, drops slightly, and remains flat for the rest of the duration.</p>
+                </div>
+                
+              </div><figcaption class="Caption" lang="en"><div class="CaptionContent"><span class="CaptionNumber">Figure 9-5</span>
+                  <p class="SimplePara">A throughput graph that is not focused on steady state</p>
+                </div></figcaption></figure></div>
+            <p class="Para" id="Par79">Well, if you look just at the first minute, it seems that it’s serving 40K OPS. But if you wait for a few minutes, the throughput <span id="ITerm24">decreases</span>.</p>
+            <p class="Para" id="Par80">Whenever you want to make a statement about the maximum throughput that your database can handle, do that from a steady state. Make sure that you’re inserting an amount of data that is meaningful, not just a couple of gigabytes, and make sure that it runs for enough time so it’s a realistic scenario. After you are satisfied with how many requests can be sustained over a prolonged period of time, consider adding noise, such as scaling clients, and introducing failure situations.</p>
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec15">
+            <h3 class="Heading">Watch Out for Client-Side Bottlenecks</h3>
+            <p class="Para" id="Par81">One of the most common <span id="ITerm25">mistakes</span> with benchmarks is overlooking the fact that the bottleneck could be coming from the application side. You might have to tune your application clients to allow for a higher concurrency. You may also be running many application pods on the same tenant—with all instances contending for the same hardware resources. Make sure your application is running in a proper environment, as is your database.</p>
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec16">
+            <h3 class="Heading">Also Watch Out for Networking Issues</h3>
+            <p class="Para" id="Par82"><span id="ITerm26">Networking issues</span> could also muddle the results of your benchmarking. If the database is consuming too much softirq from processing, this will degrade your performance. You can detect this by analyzing CPU interrupt shares, for example. And you can typically resolve it by using CPU pinning, which tells the system that all network interrupts should be handled by specific CPUs that are not being used by the <span id="ITerm27">database</span>.</p>
+            <p class="Para" id="Par83">Similarly, running your application through a slow link, such as routing traffic via the Internet rather than via a private link, can easily introduce a networking bottleneck.</p>
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec17">
+            <h3 class="Heading">Document Meticulously to Ensure Repeatability</h3>
+            <p class="Para" id="Par84">It’s difficult to anticipate when or why you might want to repeat a benchmark. Maybe you want to assess the impact of optimizations you made after getting some great tips at the vendor’s user conference. Maybe you just learned that your company was acquired and you should prepare to support ten times your current throughput—or much stricter latency SLAs. Perhaps you learned about a cool new database that’s API-compatible with your current one, and you’re curious how the performance stacks up. Or maybe you have a new boss with a strong preference for another database and you suddenly need to re-justify your decision with a head-to-head comparison.</p>
+            <p class="Para" id="Par85">Whatever the reason you’re <span id="ITerm28">repeating</span> a benchmark scenario, one thing is certain: You will be immensely appreciative of the time that you previously spent documenting exactly what you did and why.</p>
+          </section>
+
+        </section>
+
+        <section class="Section1 RenderAsSection1" id="Sec18">
+          <h2 class="Heading">Reporting Do’s and Don’ts</h2>
+          <p class="Para" id="Par86">So you’ve completed your benchmark and you’ve gathered all sorts of data—what’s the best way to report it? Don’t skimp on this final, yet critical step. Clear and compelling reporting is critical for convincing others to support your recommended course of action—be it embarking on a database migration, changing your configuration or data modeling, or simply sticking with what’s working well for you.</p>
+          <p class="Para" id="Par87">Here are some reporting-focused do’s and <span id="ITerm29">don’ts</span>.</p>
+          <section class="Section2 RenderAsSection2" id="Sec19">
+            <h3 class="Heading">Be Careful with Aggregations</h3>
+            <div class="Para" id="Par88">When it comes to aggregations, proceed with extreme caution. You could report the result of a benchmark by saying something like “I ran this benchmark for three days, and this is my throughput.” However, this overlooks a lot of critical information. For example, consider the two graphs presented in Figures <span class="InternalRef"><a href="#Fig6">9-6</a></span> and <span class="InternalRef"><a href="#Fig7">9-7</a></span>.<figure class="Figure" id="Fig6"><div class="MediaObject" id="MO6">
+                <img alt="" aria-describedby="d65e1245" src="../images/541783_1_En_9_Chapter/541783_1_En_9_Fig6_HTML.jpg" style="width:42.82em"/><div class="TextObject" id="d65e1245">
+                  <p class="Para" id="Par166">A graph titled, Requests served. A line rises sharply, drops slightly, remains flat for a longer duration, and finally drops sharply.</p>
+                </div>
+                
+              </div><figcaption class="Caption" lang="en"><div class="CaptionContent"><span class="CaptionNumber">Figure 9-6</span>
+                  <p class="SimplePara">Lower baseline throughput that’s almost constant and predictable throughout a ten-minute period</p>
+                </div></figcaption></figure><figure class="Figure" id="Fig7"><div class="MediaObject" id="MO7">
+                <img alt="" aria-describedby="d65e1273" src="../images/541783_1_En_9_Chapter/541783_1_En_9_Fig7_HTML.jpg" style="width:42.82em"/><div class="TextObject" id="d65e1273">
+                  <p class="Para" id="Par167">A graph titled, Requests served. A line rises sharply, drops slightly, remains bumpier for a longer duration, and finally drops sharply.</p>
+                </div>
+                
+              </div><figcaption class="Caption" lang="en"><div class="CaptionContent"><span class="CaptionNumber">Figure 9-7</span>
+                  <p class="SimplePara">A bumpier path to a similar throughput at the <span id="ITerm30">end</span></p>
+                </div></figcaption></figure></div>
+            <p class="Para" id="Par89">Both of these loads have roughly the same throughput at the end. Figure <span class="InternalRef"><a href="#Fig6">9-6</a></span> shows lower baseline throughput—but it’s constant and very predictable throughout the period. The OPS in Figure <span class="InternalRef"><a href="#Fig7">9-7</a></span> dip much lower than the first baseline, but it also spikes to a much higher value. The behavior shown in Figure <span class="InternalRef"><a href="#Fig6">9-6</a></span> is obviously more desirable. But if you aggregate your results, it would be really hard to notice a difference.</p>
+            <p class="Para" id="Par90">Another aggregation mistake is aggregating tail latencies: taking the average of P99 latencies from multiple load generators. The correct way to determine the percentiles over multiple load generators is to merge the latency distribution of each load generator and then determine the percentiles. If that isn’t an option, then the next best alternative is to take the maximum (the P99, for example) of each of the load generators. The actual P99 will be equal to or smaller than the maximum P99.</p>
+            <div class="Para" id="Par91">For example, assume you have the following clients:<div class="UnorderedList"><ul class="UnorderedListMarkBullet"><li>
+                <p class="Para" id="Par92">Client1: 100 total requests: 98 of them took 1ms, 2 took <span id="ITerm31">3ms</span></p>
+              </li><li>
+                <p class="Para" id="Par93">Client2: 100 total requests: 99 of them took 30ms, 1 took 31ms</p>
+              </li></ul></div></div>
+            <p class="Para" id="Par94">The 99th percentile in the first example is 3 milliseconds. The 99th percentile for the second client is 30 milliseconds. Average that out, and you get 16.5 milliseconds. However, the true 99th percentile is acquired by putting those two arrays together and taking the 99th percentile from there. The actual 99th percentile was 30 milliseconds. That 16.5 millisecond “average” is meaningless—it doesn’t correlate to anything in reality.</p>
+            <p class="Para" id="Par95">Also, do not blindly trust only your application latencies. In general, when evaluating benchmarking results, be sure to consult your database-reported latencies to rule out bottlenecks related to the database itself. Situations where the database latencies are within your specific thresholds, but the client-side results deviate from your expected numbers are fairly common—and may indicate a problem on either the network or at the client side.</p>
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec20">
+            <h3 class="Heading">Don’t Assume People Will Believe You</h3>
+            <p class="Para" id="Par96">Assume that any claim you make will be met with a healthy dose of skepticism. One of the best ways to combat this is to share fine granularity details about your setup. Just reporting something like “Our cluster has a P99 which is lower than 1ms” is not sufficient.</p>
+            <p class="Para" id="Par97">A better statement is: “We set up three cluster nodes with 3x i3.4xlarge (16vCPU, 122GiB RAM, up to 10Gbps network, 2x1.9TB NVMe). For loaders, we used 3x c5n.9xlarge (36vCPU, 96GiB RAM, up to 50Gbps network). Here’s the graph of our P99 over time. Here’s the benchmarking profile used to stress the given workload.”</p>
+            <div class="Para" id="Par98">Also, provide enough detail so that the benchmark can be repeated. For example, for a Cassandra benchmark, consider including details such as:<div class="UnorderedList"><ul class="UnorderedListMarkBullet"><li>
+                <p class="Para" id="Par99">JVM <span id="ITerm32">settings</span></p>
+              </li><li>
+                <p class="Para" id="Par100">Any non-default settings used in <span class="EmphasisFontCategoryNonProportional ">cassandra.yaml</span></p>
+              </li><li>
+                <p class="Para" id="Par101">Cassandra-stress parameters (driver version, replication factor, compaction strategy, etc.)</p>
+              </li><li>
+                <p class="Para" id="Par102">Exactly how you inserted data, warmed up the cache, and so on</p>
+              </li></ul></div></div>
+            <div class="Para" id="Par103">Finally, keep in mind that the richer your reports, the easier it is for someone to support your recommendation that option A is preferable to option B. For example, if you’re looking into how two different databases compare on the same hardware, you might share details in Table <span class="InternalRef"><a href="#Tab1">9-1</a></span> in addition to the standard throughput and latency <span id="ITerm33">graphs</span>.<div class="Table" id="Tab1"><div class="Caption" lang="en"><div class="CaptionContent"><span class="CaptionNumber">Table 9-1</span>
+                  <p class="SimplePara">Communicating the Results of Comparing Two Different Databases on the Same Hardware</p>
+                </div></div><table style="border-collapse: collapse;border-top: 0.5pt solid ; border-bottom: 0.5pt solid ; border-left: 0.5pt solid ; border-right: 0.5pt solid ; "><colgroup><col class="tcol1 align-left"/><col class="tcol2 align-left"/><col class="tcol3 align-left"/><col class="tcol4 align-left"/><col class="tcol5 align-left"/></colgroup><thead><tr><th style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Test</p>
+                    </th><th style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Database A</p>
+                    </th><th style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Database B</p>
+                    </th><th style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Difference</p>
+                    </th><th style="border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Better Is:</p>
+                    </th></tr></thead><tbody><tr><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Time to populate</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">5h 21m 29s</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">4h 27m 19s</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">20%</p>
+                    </td><td style="border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Lower</p>
+                    </td></tr><tr><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Time to compact</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">7h 32m</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">21m</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">21x</p>
+                    </td><td style="border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Lower</p>
+                    </td></tr><tr><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Total quiesce time (populate and compact)</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">12h 43m</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">4h 48m</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">2.68x</p>
+                    </td><td style="border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Lower</p>
+                    </td></tr><tr><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Read throughput</p>
+                      <p class="SimplePara">(small dataset)</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">51,267 reads/second</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">124,958 reads/second</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">2.43x</p>
+                    </td><td style="border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Higher</p>
+                    </td></tr><tr><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Read throughput</p>
+                      <p class="SimplePara">(medium dataset)</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">7,363 reads/second</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">6,958 reads/second</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">-5%</p>
+                    </td><td style="border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Higher</p>
+                    </td></tr><tr><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Read throughput</p>
+                      <p class="SimplePara">(large dataset)</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">5,089 reads/second</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">5,592 reads/second</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">9.8%</p>
+                    </td><td style="border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Higher</p>
+                    </td></tr><tr><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Reads during writes</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">547 reads/second</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">920 reads/second</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">68%</p>
+                    </td><td style="border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Higher</p>
+                    </td></tr><tr><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">99.9th latency</p>
+                      <p class="SimplePara">(at 5,000 writes/second)</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">130.3 milliseconds</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">11.9 milliseconds</p>
+                    </td><td style="border-right: 0.5pt solid ; border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">10.9x</p>
+                    </td><td style="border-bottom: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">Lower</p>
+                    </td></tr><tr><td style="border-right: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">99.9th latency</p>
+                      <p class="SimplePara">(at 10,000 writes/second)</p>
+                    </td><td style="border-right: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">153.3 milliseconds</p>
+                    </td><td style="border-right: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">16.9 milliseconds</p>
+                    </td><td style="border-right: 0.5pt solid ; text-align: left;">
+                      <p class="SimplePara">9.0x</p>
+                    </td><td style="text-align: left;">
+                      <p class="SimplePara">Lower</p>
+                    </td></tr></tbody></table></div></div>
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec21">
+            <h3 class="Heading">Take Coordinated Omission Into Account</h3>
+            <p class="Para" id="Par104">A common problem when measuring latencies is the <em class="EmphasisTypeItalic ">coordinated omission</em> problem, which causes the worst latencies to be omitted from the measurements and, as a consequence, renders the higher percentiles <span id="ITerm34">useless</span>.</p>
+            <p class="Para" id="Par105">Gil Tene coined this term to describe what happens when a measuring system inadvertently coordinates with the system being measured in a way that avoids measuring outliers and misses sending requests.<sup><a epub:type="noteref" href="#Fn9" id="Fn9_source" role="doc-noteref">9</a></sup></p>
+            <p class="Para" id="Par107">Here’s a great analogy by Ivan Prisyazhynyy:<sup><a epub:type="noteref" href="#Fn10" id="Fn10_source" role="doc-noteref">10</a></sup></p>
+            <p class="Para" id="Par109">“Let’s imagine a coffee-fueled office. Each hour a worker has to make a coffee run to the local coffee shop. But what if there’s a road closure in the middle of the day? You have to wait a few hours to go on that run. Not only is that hour’s particular coffee runner late, but all the other coffee runs get backed up for hours behind that. Sure, it takes the same amount of time to get the coffee once the road finally opens, but if you don’t measure that gap caused by the road closure, you’re missing measuring the total delay in getting your team their coffee. And, of course, in the meanwhile you will be woefully undercaffeinated.”</p>
+            <p class="Para" id="Par110">Prisyazhynyy notes that most standard benchmarking tools now account for coordinated omission (e.g., cassandra-stress and YCSB do; TLP-stress did not at the time of writing). However, by default, they do not <em class="EmphasisTypeItalic ">respect</em> coordinated omissions, so anyone using these tools still needs to be vigilant about spotting and combatting coordinated omission. We strongly recommend reading his complete article. But, for brevity’s sake, here’s his conclusion:</p>
+            <p class="Para" id="Par111">“We found that the best implementation involves a static schedule with queueing and latency correction, and we showed how those approaches can be combined together to effectively solve coordinated omission issues: queueing with correction or simulation, or queueless with <span id="ITerm35">simulation</span>.</p>
+            <div class="Para" id="Par112">To mitigate coordinated omission effects, you must:<div class="UnorderedList"><ul class="UnorderedListMarkBullet"><li>
+                <p class="Para" id="Par113">Explicitly set the throughput target, the number of worker threads, the total number of requests to send, or the total test duration</p>
+              </li><li>
+                <div class="Para" id="Par114">Explicitly set the mode of latency measurement<div class="UnorderedList"><ul class="UnorderedListMarkBullet"><li>
+                    <p class="Para" id="Par115">Correct for queueing implementations</p>
+                  </li><li>
+                    <p class="Para" id="Par116">Simulate non-queuing implementations</p>
+                  </li></ul></div></div>
+              </li></ul></div></div>
+            <div class="Para" id="Par117">For example, for YCSB the correct flags are:<div class="UnorderedList"><ul class="UnorderedListMarkNone"><li>
+                <p class="Para ParaOneEmphasisChild" id="Par118"><em class="EmphasisTypeItalic EmphasisFontCategoryNonProportional ">-target 120000 -threads 840 -p recordcount=1000000000 -p measurement.interval=both</em></p>
+              </li></ul></div></div>
+            <div class="Para" id="Par119">For cassandra-stress, they are:<div class="UnorderedList"><ul class="UnorderedListMarkNone"><li>
+                <p class="Para ParaOneEmphasisChild" id="Par120"><span class="EmphasisFontCategoryNonProportional ">duration=3600s -rate fixed=100000/s threads=840”</span></p>
+              </li></ul></div></div>
+            <p class="Para" id="Par121">Beyond these tips, there are even more parameters that impact coordinated omissions. We strongly recommend that you seek recommendations from your vendor, Stack Overflow, or other community resources.</p>
+          </section>
+
+        </section>
+
+        <section class="Section1 RenderAsSection1" id="Sec22">
+          <h2 class="Heading">Special Considerations for Various Benchmarking Goals</h2>
+          <p class="Para" id="Par122">Many database benchmarks are performed primarily so the team can check a “due diligence” box in the selection process. Since you’re now pretty deep into a book focused on database performance, we assume that’s not <em class="EmphasisTypeItalic ">your</em> team. You have some lofty performance goals and you know that benchmarking is key to achieving them. So what exactly are you hoping to achieve with your latest and greatest benchmark? Here are some common reasons and use cases, as well as tips and caveats for each.</p>
+          <section class="Section2 RenderAsSection2" id="Sec23">
+            <h3 class="Heading">Preparing for Growth</h3>
+            <p class="Para" id="Par123">You just learned that your application is expected to handle increased traffic—perhaps as a result of a <span id="ITerm36">merger/acquisition</span>, from some unexpected publicity or market movement, or just the slow and steady accumulation of more users over time. Is your database up to the task? You may want to test how your database scales under pressure. How long does it take to add more resources? What about scaling it up?</p>
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec24">
+            <h3 class="Heading">Comparing Different Databases</h3>
+            <p class="Para" id="Par124">Maybe you have the luxury of architecting an application with “the best” database from the ground up. Maybe you’ve hit the wall with your existing database and need to justify a potentially painful and costly migration. Or maybe you’re curious if it’s worth it to move across your existing database vendor’s various offerings. It’s critical to know how each database is built and understand both how to test its strengths as well as how to assess the true impact of its <span id="ITerm37">constraints</span>.</p>
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec25">
+            <h3 class="Heading">Comparing the Same Database on Different Infrastructure</h3>
+            <p class="Para" id="Par125">Your preferred cloud vendor just released a shiny new series of instances with the potential for great power. But will you see any impact given your database and your workloads? Could vertical scaling reduce the size of your clusters (and the scope of your maintenance headaches)?</p>
+            <p class="Para" id="Par126">Pay attention to any configuration changes that might be needed (and sometimes unintended!) between both infrastructure settings. Recognize that some level of tuning will inevitably be required to ensure you get the maximum out of each.</p>
+            <p class="Para" id="Par127">Also keep in mind that some databases have limits as to how far they can scale. Some databases will be more efficient if you horizontally scale using smaller nodes. Others will excel when they’re run on larger capacity nodes.</p>
+            <p class="Para" id="Par128">Finally, consider the application latency. In some cases, you can “bring” a testing application with you to the same cloud environment and reproduce it as if it were a local datacenter in order to reduce network RTT. In other cases, you might need to account for network latency on top of the results you received. If the application is in a separate environment, that can contribute to additional latency toward the database.</p>
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec26">
+            <h3 class="Heading">Assessing the Impact of a Data Modeling or Database Configuration Change</h3>
+            <p class="Para" id="Par129">Say you just started reworking your data model and want to “unit test” it to check if you’re going down the right path. Your team is debating among different options and wants an objective assessment of how much they will optimize—or undermine—your performance.</p>
+            <p class="Para" id="Par130">In this case, you have to consider a multitude of aspects. For instance, while assessing the impact of encryption-in-transit on your <span id="ITerm38">workload</span>, you might collect the initial tests while the database was running with a hot cache. Then, after applying the necessary changes, you restart your database and get higher latencies as a result. You might think, “Oh no! The encryption setting is really hurting my latency!” But, you forgot that restarting the cluster to apply the change also cleared the cache—and upon restarting your tests, you’re basically reading from disk. In the end, after warming up the cache, you notice the encryption option barely impacted your latency. Whew!</p>
+          </section>
+
+        </section>
+
+        <section class="Section1 RenderAsSection1" id="Sec27">
+          <h2 class="Heading">Beyond the Usual Benchmark</h2>
+          <p class="Para" id="Par131">Considering that you’re now many chapters deep into this book, you’re clearly quite obsessed. Perhaps you want to put your database to some less common or more extreme tests? Here are a few options.</p>
+          <section class="Section2 RenderAsSection2" id="Sec28">
+            <h3 class="Heading">Benchmarking Admin Operations</h3>
+            <p class="Para" id="Par132">Even if you don’t anticipate expanding capacity often or dramatically, checking how long it takes to add a new node or increase your cluster capacity certainly falls under the realm of “due <span id="ITerm39">diligence</span>.” And if you do expect sudden and significant increases, it’s a good idea to test something more extreme—like how rapidly you can double capacity.</p>
+            <p class="Para" id="Par133">Keep in mind that databases must stream data into new nodes, and that this will consume some CPU time, along with disk I/O and networking bandwidth—so it’s important to assess this in a safe and controlled environment.</p>
+            <p class="Para" id="Par134">Other admin operations you might want to benchmark include the time required to replace nodes as well as the latency impacts of compaction and other background operations. For example, in Cassandra or <span id="ITerm40">ScyllaDB</span>, you might look into how repair operations running in the background impact the live workload. If you notice that the operation causes latency increases, you might be able to schedule a time window to run repairs weekly or run them with a lower <span id="ITerm41">intensity</span>.</p>
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec29">
+            <h3 class="Heading">Testing Disaster Recovery</h3>
+            <p class="Para" id="Par135">You need to test your ability to sustain regular life events. Nodes will crash. Disks will become corrupt. And network cables will be disconnected. That will happen for sure—and it could very well be during the worst possible time (e.g., Black Friday or during the big game you’re streaming to millions). You need to account for potential disasters and test capacity planning with reduced nodes, a network partition, or other undesired events. This has the added benefit of teaching you about the true capabilities of the system’s resiliency.</p>
+            <p class="Para" id="Par136">Also, test the time and effort required to restore from a backup. Yes, this requires spending a fair bit of time and money on what’s essentially a fire drill. But knowing what to expect in a time of crisis is quite valuable—and avoiding databases with unacceptable recovery times can be <span id="ITerm42">priceless</span>.</p>
+            <p class="Para" id="Par137">If you’re running on the cloud, you might think you’re safe from disaster. “I’ll just spin up another cluster and move forward. Right?” Wrong! Apart from the data migration itself, there are a ton of other things that can go wrong. You’ll need to reconnect all network VPCs, redo all the networking configuration between the application and database, and so on. You may also run out of instances of the desired type in a given region or availability zone. Did you ever go to the supermarket to buy a basic item, say toilet paper, and find empty shelves because everybody suddenly started filling their carts with it (e.g., due to a disaster)? This can happen to anything, even virtual instances. It’s best to test disaster scenarios to gain a better understanding of what issues you could experience—and practice how you’ll react.</p>
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec30">
+            <h3 class="Heading">Benchmarking at Extreme Scale</h3>
+            <p class="Para" id="Par138">Benchmarks performed at petabyte scale can help you understand how a particular database handles <span id="ITerm43">extremely</span> large workloads that your company expects (or at least hopes) to encounter. However, such benchmarks can be challenging to design and execute.</p>
+            <p class="Para" id="Par139">The ScyllaDB engineering team recently decided to perform a petabyte-scale benchmark on a rather short timeline. We constructed a 20-node ScyllaDB cluster and loaded it with 1PB (replicated) of user data and 1TB of application data. The user workload was ~5 million TPS, and we measured two variants of it: one read-only and another with 80 percent reads and 20 percent writes. Since this workload simulated online analytics, high throughput was critical. At the same time, we ran a smaller 200,000 TPS application workload with 50 percent reads and 50 percent writes. Since this workload represented online transaction processing, low latency was prioritized over high throughput.</p>
+            <div class="Para" id="Par140">To give you an idea of what this involved from a setup perspective, we provisioned 20 x i3en.metal AWS instances for the ScyllaDB cluster. Each instance had:<div class="UnorderedList"><ul class="UnorderedListMarkBullet"><li>
+                <p class="Para" id="Par141">96 vCPUs</p>
+              </li><li>
+                <p class="Para" id="Par142">768 GiB RAM</p>
+              </li><li>
+                <p class="Para" id="Par143">60 TB NVMe disk space</p>
+              </li><li>
+                <p class="Para" id="Par144">100 Gbps network bandwidth</p>
+              </li></ul></div></div>
+            <div class="Para" id="Par145">For the load generators, we used 50 x c5n.9xlarge AWS instances. Each instance had:<div class="UnorderedList"><ul class="UnorderedListMarkBullet"><li>
+                <p class="Para" id="Par146">36 vCPUs</p>
+              </li><li>
+                <p class="Para" id="Par147">96 GiB RAM</p>
+              </li><li>
+                <p class="Para" id="Par148">50 Gbps network bandwidth</p>
+              </li></ul></div></div>
+            <div class="Para" id="Par149">If you’re thinking about performing your own extreme-scale benchmark, here are some lessons learned that you might want to consider:<div class="UnorderedList"><ul class="UnorderedListMarkBullet"><li>
+                <p class="Para" id="Par150"><strong class="EmphasisTypeBold ">Provisioning</strong>: It took a few days to find an availability zone in AWS that had sufficient instance types for a petabyte-scale benchmark. If you plan to deploy such a large cluster, make sure to provision your resources well ahead.</p>
+              </li><li>
+                <p class="Para" id="Par151"><strong class="EmphasisTypeBold ">Hardware tuning/interrupt handling</strong>: At the time, our default assignment of cores to I/O queue handling wasn’t optimized for this extreme scenario. Interrupt handling CPUs had to be manually assigned to maximize throughput.</p>
+              </li><li>
+                <p class="Para" id="Par152"><strong class="EmphasisTypeBold ">Hardware tuning/CPU power governor</strong>: We needed to set the CPU power governor on each node to “performance” to maximize the performance of the system.</p>
+              </li><li>
+                <p class="Para" id="Par153"><strong class="EmphasisTypeBold ">cassandra-stress</strong>: cassandra-stress was not designed for this scale (the default population distribution is too small). Be prepared to experiment with non-default settings if you’re aiming to create and iterate through a petabyte <span id="ITerm44">dataset</span>.</p>
+              </li></ul></div></div>
+          </section>
+
+        </section>
+
+        <section class="Section1 RenderAsSection1" id="Sec31">
+          <h2 class="Heading">Summary</h2>
+          <div class="Para" id="Par154">Benchmarking is tedious and painstaking, so make sure that you have clear goals and effective reporting to ensure the work pays off. Some of the top tips we shared include:<div class="UnorderedList"><ul class="UnorderedListMarkBullet"><li>
+              <p class="Para" id="Par155">Start small so you don’t end up wasting time and money.</p>
+            </li><li>
+              <p class="Para" id="Par156">Understand your database in order to craft tests that showcase its strengths and assess whether you can live with its weaknesses.</p>
+            </li><li>
+              <p class="Para" id="Par157">Rely on standard tools to start, but be sure to work up to representative data models, datasets, and workloads.</p>
+            </li><li>
+              <p class="Para" id="Par158">Get your monitoring stack in shape prior to benchmarking, and use it to benchmark strategically (e.g., to exercise your cache realistically).</p>
+            </li><li>
+              <p class="Para" id="Par159">Plan to dedicate a good amount of time to crafting convincing reports and beware of challenges such as coordinated omission.</p>
+            </li></ul></div></div>
+          <p class="Para" id="Par160">The next chapter dives into best practices for the ongoing monitoring that is critical to interpreting many benchmarking <span id="ITerm45">results</span>, as well as preventing and troubleshooting performance issues in production.</p>
+        </section>
+
+      <div class="License LicenseSubType-cc-by"><a href="https://creativecommons.org/licenses/by/4.0"><img alt="Creative Commons" src="../css/cc-by.png"/></a>
+            <p class="SimplePara"><strong class="EmphasisTypeBold ">Open Access</strong> This chapter is licensed under the terms of the Creative Commons Attribution 4.0 International License (<span class="ExternalRef"><a href="http://creativecommons.org/licenses/by/4.0/"><span class="RefSource">http://​creativecommons.​org/​licenses/​by/​4.​0/​</span></a></span>), which permits use, sharing, adaptation, distribution and reproduction in any medium or format, as long as you give appropriate credit to the original author(s) and the source, provide a link to the Creative Commons license and indicate if changes were made.</p>
+            <p class="SimplePara">The images or other third party material in this chapter are included in the chapter's Creative Commons license, unless indicated otherwise in a credit line to the material. If material is not included in the chapter's Creative Commons license and your intended use is not permitted by statutory regulation or exceeds the permitted use, you will need to obtain permission directly from the copyright holder.</p>
+          </div><aside aria-label="Footnotes" class="FootnoteSection" epub:type="footnotes"><div class="Heading">Footnotes</div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn1_source">1</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn1" role="doc-footnote"><p class="Para" id="Par3">For an example of realistic benchmarking executed with impressive mastery, see Brian Taylor’s talk, “How Optimizely (Safely) Maximizes Database Concurrency,” at <span class="ExternalRef"><a href="http://www.youtube.com/watch?v=cSiVoX_nq1s"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">www.youtube.com/watch?v=cSiVoX_nq1s</span></span></a></span>.</p></div><div class="ClearBoth"> </div></div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn2_source">2</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn2" role="doc-footnote"><p class="Para" id="Par42"><span class="ExternalRef"><a href="https://github.com/brianfrankcooper/YCSB"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">https://github.com/brianfrankcooper/YCSB</span></span></a></span></p></div><div class="ClearBoth"> </div></div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn3_source">3</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn3" role="doc-footnote"><p class="Para" id="Par44"><span class="ExternalRef"><a href="http://tpc.org/tpcc/default5.asp"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">http://tpc.org/tpcc/default5.asp</span></span></a></span></p></div><div class="ClearBoth"> </div></div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn4_source">4</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn4" role="doc-footnote"><p class="Para" id="Par46"><span class="ExternalRef"><a href="https://github.com/Netflix/ndbench"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">https://github.com/Netflix/ndbench</span></span></a></span></p></div><div class="ClearBoth"> </div></div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn5_source">5</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn5" role="doc-footnote"><p class="Para" id="Par48"><span class="ExternalRef"><a href="https://github.com/nosqlbench/nosqlbench"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">https://github.com/nosqlbench/nosqlbench</span></span></a></span></p></div><div class="ClearBoth"> </div></div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn6_source">6</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn6" role="doc-footnote"><p class="Para" id="Par50"><span class="ExternalRef"><a href="http://www.postgresql.org/docs/current/pgbench.html"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">www.postgresql.org/docs/current/pgbench.html</span></span></a></span></p></div><div class="ClearBoth"> </div></div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn7_source">7</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn7" role="doc-footnote"><p class="Para" id="Par52"><span class="ExternalRef"><a href="https://github.com/thelastpickle/tlp-stress"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">https://github.com/thelastpickle/tlp-stress</span></span></a></span></p></div><div class="ClearBoth"> </div></div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn8_source">8</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn8" role="doc-footnote"><p class="Para" id="Par54"><span class="ExternalRef"><a href="https://github.com/scylladb/scylla-tools-java/tree/master/tools/stress"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">https://github.com/scylladb/scylla-tools-java/tree/master/tools/stress</span></span></a></span></p></div><div class="ClearBoth"> </div></div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn9_source">9</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn9" role="doc-footnote"><p class="Para" id="Par106">See Tene’s talk, “<em class="EmphasisTypeItalic ">How NOT to Measure Latency” (</em><span class="ExternalRef"><a href="https://www.youtube.com/watch?v=lJ8ydIuPFeU"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">https://www.youtube.com/watch?v=lJ8ydIuPFeU</span></span></a></span>)</p></div><div class="ClearBoth"> </div></div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn10_source">10</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn10" role="doc-footnote"><p class="Para" id="Par108">See Prisyazhynyy’s blog, “On Coordinated Omission” (<span class="ExternalRef"><a href="https://www.scylladb.com/2021/04/22/on-coordinated-omission/"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">https://www.scylladb.com/2021/04/22/on-coordinated-omission/</span></span></a></span>)</p></div><div class="ClearBoth"> </div></div></aside></div></div></body></html>

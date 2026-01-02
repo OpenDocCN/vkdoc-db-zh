@@ -1,0 +1,405 @@
+<html><head></head><body><div epub:type="chapter" role="doc-chapter"><div class="ChapterContextInformation"><div class="ContextInformation" id="b978-1-4842-9711-7_6"><div class="ChapterCopyright">© The Author(s) 2023</div><span class="ContextInformationAuthorEditorNames">F. C. Mendes et al.</span><span class="ContextInformationBookTitles"><span class="BookTitle">Database Performance at Scale</span></span><span class="ChapterDOI"><a href="https://doi.org/10.1007/978-1-4842-9711-7_6">https://doi.org/10.1007/978-1-4842-9711-7_6</a></span></div></div><!--Begin Abstract--><div class="MainTitleSection"><h1 class="ChapterTitle" lang="en">6. Getting Data Closer</h1></div><div class="AuthorGroup"><div class="AuthorNames"><span class="Author"><span class="AuthorName">Felipe Cardeneti Mendes</span><sup><a href="#Aff5">1</a> <span class="ContactIcon"> </span></sup>, </span><span class="Author"><span class="AuthorName">Piotr Sarna</span><sup><a href="#Aff6">2</a></sup>, </span><span class="Author"><span class="AuthorName">Pavel Emelyanov</span><sup><a href="#Aff7">3</a></sup> and </span><span class="Author"><span class="AuthorName">Cynthia Dunlop</span><sup><a href="#Aff8">4</a></sup></span></div><div class="Affiliations"><div class="Affiliation" id="Aff5"><span class="AffiliationNumber">(1)</span><div class="AffiliationText">São Paulo, São Paulo, Brazil</div></div><div class="Affiliation" id="Aff6"><span class="AffiliationNumber">(2)</span><div class="AffiliationText">Pruszków, Poland</div></div><div class="Affiliation" id="Aff7"><span class="AffiliationNumber">(3)</span><div class="AffiliationText">Moscow, Russia</div></div><div class="Affiliation" id="Aff8"><span class="AffiliationNumber">(4)</span><div class="AffiliationText">Carpinteria, CA, USA</div></div><div class="ClearBoth"> </div></div></div><div class="ArticleOrChapterToc"><div class="TocLine"><a href="#Sec1">Databases as Compute Engines</a></div><div class="TocLine"><a href="#Sec24">Edge Computing</a></div><div class="TocLine"><a href="#Sec31">Summary</a></div></div><!--End Abstract--><div class="Fulltext">
+        <p class="Para" id="Par2">Location, location, location. Sometimes it’s just as important to database performance as it is to real estate. Just as the location of a home influences how quickly it sells, the location of where data “lives” and is processed also matters for response times and latencies.</p>
+        <p class="Para" id="Par3">Pushing more logic into the database can often reduce network latency (and costs, e.g., when your infrastructure provider charges for ingress/egress network traffic) while taking advantage of the database’s powerful compute capability. And redistributing database logic from fewer powerful datacenters to more minimalist ones that are closer to users is another move that can yield discernable performance gains under the right conditions.</p>
+        <p class="Para" id="Par4">This chapter explores the opportunities in both of these shifts. First, it looks at databases as <span id="ITerm1">compute engines</span> with a focus on user-defined functions and user-defined aggregates. It then goes deeper into <span id="ITerm2">WebAssembly</span>, which is now increasingly being used to implement user-defined functions and aggregates (among many other things). Finally, the chapter ventures to the edge—exploring what you stand to gain by moving your database servers quite close to your users, as well as what potential pitfalls you need to negotiate in this scenario.</p>
+        <section class="Section1 RenderAsSection1" id="Sec1">
+          <h2 class="Heading">Databases as Compute Engines</h2>
+          <p class="Para" id="Par5">Modern databases offer many more capabilities than just storing and retrieving data. Some of them are nothing short of operating systems, capable of streaming, modifying, encrypting, authorizing, authenticating, and virtually anything else with data they manage.</p>
+          <p class="Para" id="Par6"><span id="ITerm3">Data locality</span><span id="ITerm4"/> is the holy grail of distributed systems. The less you need to move data around, the more time can be spent on performing meaningful operations on it—without excessive bandwidth costs. That’s why it makes sense to try to push more logic into the database itself, letting it process as much as possible locally, then return the results to the users, or some middleware, for further processing. It makes even more sense when you consider that database nodes generally run on powerful hardware, with lots of RAM and fast I/O devices. This usually translates to formidable <span id="ITerm5">CPU power</span>. Dedicated large data processing frameworks aside (e.g., Apache Spark, which is out of scope for this book), regular database engines almost always support some level of <span id="ITerm6">user-defined computations</span>. These can be classified into two major sections: user-defined functions/procedures and user-defined aggregates.</p>
+          <p class="Para" id="Par7">Note that the definitions vary. Some database vendors use the general name “functions” to mean both aggregate and scalar functions. Others actually mean “<span id="ITerm7">scalar functions</span>” when they reference “functions,” and use the name “aggregates” for “aggregate functions.” That’s the convention applied to this chapter.</p>
+          <section class="Section2 RenderAsSection2" id="Sec2">
+            <h3 class="Heading">User-Defined Functions and Procedures</h3>
+            <p class="Para" id="Par8">In contrast to native <span id="ITerm8">functions</span>, often implemented in database engines (think <span class="EmphasisFontCategoryNonProportional ">lowercase()</span>, <span class="EmphasisFontCategoryNonProportional ">now()</span>, <span class="EmphasisFontCategoryNonProportional ">concat()</span>, type casting, algebraic operations, and friends), user-defined functions are provided by the users of the database (e.g., the developers building applications). A “procedure” is substantially identical to a function in this context, except it does not return any result; instead, it has side effects.</p>
+            <div class="Para" id="Par9">The exact interface of allowing users to define their own functions or procedures varies wildly between database vendors. Still, several <span id="ITerm9">core strategies</span>, listed here, are often implemented:<div class="OrderedList"><ol><li class="ListItem"><div class="ItemNumber">1.</div><div class="ItemContent">
+                  <p class="Para" id="Par10">A set of hardcoded native functions, not extensible, but at least composable. For example, casting a type to string, concatenating it with a predefined suffix, and then hashing it.</p>
+                </div><div class="ClearBoth"> </div></li><li class="ListItem"><div class="ItemNumber">2.</div><div class="ItemContent">
+                  <p class="Para" id="Par11">A custom scripting language, dedicated and vendor-locked to a specific database, allowing users to write and execute simple programs on the data.</p>
+                </div><div class="ClearBoth"> </div></li><li class="ListItem"><div class="ItemNumber">3.</div><div class="ItemContent">
+                  <p class="Para" id="Par12">Supporting a single general-purpose embeddable language of choice. For example, Lisp, Lua, ChaiScript, Squirrel, or WebAssembly might be used for this purpose. Note: You’ll explore WebAssembly in more depth a little later in this chapter.</p>
+                </div><div class="ClearBoth"> </div></li><li class="ListItem"><div class="ItemNumber">4.</div><div class="ItemContent">
+                  <p class="Para" id="Par13">Supporting a variety of pluggable embeddable languages. A good example is Apache Cassandra and its support of Java (native language) and JavaScript<sup><a epub:type="noteref" href="#Fn1" id="Fn1_source" role="doc-noteref">1</a></sup> as well as pluggable backend-loaded via .jar files.</p>
+                </div><div class="ClearBoth"> </div></li></ol></div></div>
+            <p class="Para" id="Par16">The first on the list is the least flexible, offers the worst developer experience, and has the lowest security risk. The last has the most flexibility, offers the best developer experience, and also harbors the most potential for being a security risk worthy of its own CVE number.</p>
+            <p class="Para" id="Par17"><span id="ITerm10">Scalar functions</span> are usually invoked per each row, at least for row-oriented databases, which is usually the case for SQL. You might wonder if the computations can’t simply be performed by end users on their machines. That’s a valid point. The main advantage of that approach is fantastic scalability regardless of how many users perform data transformations (if they do it locally on their own machines, then the database cluster does not get overloaded).</p>
+            <div class="Para" id="Par18">There are several great reasons to push the <span id="ITerm11">computations</span> closer to where the data is stored:<div class="UnorderedList"><ul class="UnorderedListMarkBullet"><li>
+                <p class="Para" id="Par19">Databases have more context to efficiently cache the computed results. Imagine tens of thousands of users asking for the same function to be applied on a certain set of rows. That result can be computed just once and then distributed to all interested parties.</p>
+              </li><li>
+                <p class="Para" id="Par20">If the computed results are considerably smaller than their input (think about returning just lengths of text values), it’s better to save bandwidth and send over only the final results.</p>
+              </li><li>
+                <p class="Para" id="Par21">Certain housekeeping operations (e.g., deleting data older than a week) can be efficiently performed locally, without fetching any information to the clients for validation.</p>
+              </li><li>
+                <p class="Para" id="Par22">If the processing is done on database servers, the instruction cache residing on that database’s CPU chip is likely to be scorching hot with opcodes responsible for carrying out the computations for each row. And as a rule of thumb, hot cache translates to faster code execution and lower latency.</p>
+              </li><li>
+                <p class="Para" id="Par23">Some computations are not trivially distributed to users. If they involve cryptographic private <span id="ITerm12">keys</span> stored on the database servers, it might actually be impossible to run the code anywhere but on the server itself.</p>
+              </li><li>
+                <p class="Para" id="Par24">If the data on which computations are performed is sensitive (e.g., it falls under infamous, ever-changing European data protection laws such as GDPR), it might be illegal to send raw data to the users. In such cases, running an encryption function server-side can be a way for users to obtain obfuscated, legal data.</p>
+              </li></ul></div></div>
+            <section class="Section3 RenderAsSection3" id="Sec3">
+              <h4 class="Heading">Determinism</h4>
+              <p class="Para" id="Par25">In distributed <span id="ITerm13">environments</span>, idempotence (discussed in Chapter <span class="ExternalRef"><a href="541783_1_En_5_Chapter.xhtml"><span class="RefSource">5</span></a></span>) is an important attribute that makes it possible to send requests in a speculative manner, potentially increasing performance. Thus, it is better to make sure that user-defined functions are deterministic. In other words, a user-defined function’s value should only depend on the value of its arguments, and not on the value of any external factors like time, date, pseudo-random seed, and so on.</p>
+              <p class="Para" id="Par26">A perfect example of a non-deterministic function is <span class="EmphasisFontCategoryNonProportional ">now()</span>. Calling it twice might yield the same value if you’re fast enough, but it’s generally not guaranteed since its result is time-dependent. If possible, it’s a good idea to program the user-defined functions in a deterministic way and mark them as such. For time/date, this might involve computing the results based on a timestamp passed as a parameter rather than using built-in time utilities. For pseudo-random sampling, the seed could also be passed as a parameter, as opposed to relying on sources of entropy provided by the user-defined function runtime.</p>
+            </section>
+
+            <section class="Section3 RenderAsSection3" id="Sec4">
+              <h4 class="Heading">Latency</h4>
+              <p class="Para" id="Par27">Running user-provided code on your database clusters is potentially dangerous in aspects other than security. Most embedded <span id="ITerm14">languages</span> are Turing-complete, and customarily allow the developers to use loops, recursion, and other similar techniques in their code. That’s risky. An undetected infinite loop may serve as a denial-of-service attack, forcing the database servers to endlessly process a function and block other tasks from used resources. And even if the user-defined function author did not have malicious intentions, some computations simply consume a lot of CPU time and memory.</p>
+              <p class="Para" id="Par28">In a way, a user-defined function should be thought of as a potential “noisy neighbor”<sup><a epub:type="noteref" href="#Fn2" id="Fn2_source" role="doc-noteref">2</a></sup> and its resources should be as limited as possible. For some use cases, a simple hard limit on memory and CPU time used is enough to ensure that the performance of other database tasks does not suffer from a “noisy” user-defined function. However, sometimes, a more specific solution is required—for example, splitting a user-function definition into smaller time bits, assigning priorities to user-defined functions, and so on.</p>
+              <p class="Para" id="Par30">One interesting metering mechanism was applied by Wasmtime,<sup><a epub:type="noteref" href="#Fn3" id="Fn3_source" role="doc-noteref">3</a></sup> a WebAssembly runtime. Code running in a <span id="ITerm15">WebAssembly</span> instance consumes <em class="EmphasisTypeItalic ">fuel,</em><sup><a epub:type="noteref" href="#Fn4" id="Fn4_source" role="doc-noteref">4</a></sup> a synthetic unit used for tracking how fast an instance exhausts system resources. When an instance runs out of fuel, the runtime does one of the preconfigured actions—either “refills” and lets the code execution continue or decides that the task reached its quota and terminates it.</p>
+            </section>
+
+            <section class="Section3 RenderAsSection3" id="Sec5">
+              <h4 class="Heading">Just-in-Time Compilation (JIT)</h4>
+              <p class="Para" id="Par33">Languages used for user-defined functions are often either interpreted (e.g., Lua) or represented in bytecode that runs on a virtual machine (e.g., WebAssembly). Both of these approaches can benefit from just-in-time <span id="ITerm16">compilation</span><span id="ITerm17"/>. It’s a broad topic, but the essence of it is that during runtime, the code of user-defined functions can be compiled to another, more efficient representation, and optimized along the way. This may mean translating bytecode to machine code the program runs on (e.g., x86-64 instructions), or compiling the source code represented in an interpreted language to machine code.</p>
+              <p class="Para" id="Par34">JIT is a very powerful tool, but it’s not a silver bullet—compilation and additional optimization can be an expensive process in terms of resources. A small user-defined function may take less than a millisecond to run, but recompiling it can cause a sudden spike in CPU and memory usage, as well as a multi-millisecond delay in the processing—resulting in high tail latency. It should therefore be a conscious decision to either enable just-in-time compilation for user-defined functions if the language allows it, or disable it altogether.</p>
+            </section>
+
+            <section class="Section3 RenderAsSection3" id="Sec6">
+              <h4 class="Heading">Examples</h4>
+              <p class="Para" id="Par35">Let’s take a look at a few examples of user-defined functions. The function serving as the example operates on floating point numbers; given two parameters, it returns the sum of them, inverted. Given 5 and 7, it should return 1/5+1/7, which is approximately 0.34285714285.</p>
+              <div class="Para" id="Par36">Here’s how it could be defined in <span id="ITerm18">Apache Cassandra</span><span id="ITerm19"/>, which allows user-defined function definitions to be provided in Java, its native language, as well as in other languages:<div class="ProgramCode" id="PC1">
+                <div class="LineGroup">
+                  <div class="FixedLine">CREATE OR REPLACE FUNCTION add_inverse(val1 double, val2 double)</div>
+                  <div class="FixedLine">    RETURNS NULL ON NULL INPUT</div>
+                  <div class="FixedLine">    RETURNS double LANGUAGE java</div>
+                  <div class="FixedLine">    AS '</div>
+                  <div class="FixedLine">        return (val1 == 0 || val2 == 0)</div>
+                  <div class="FixedLine">            ? Double.NaN</div>
+                  <div class="FixedLine">            : (1/val1 + 1/val2);</div>
+                  <div class="FixedLine">   ';</div>
+                </div>
+              </div></div>
+              <p class="Para" id="Par37">Let’s take a closer look at the definition. The first line is straightforward: it includes the function’s name, parameters, and its types. It also specifies that if a function definition with that name already exists, it should be replaced. Next, it explicitly declares what happens if any of the parameters is <span class="EmphasisFontCategoryNonProportional ">null</span>, which is a valid value for any type. The function can either return <span class="EmphasisFontCategoryNonProportional ">null</span> <em class="EmphasisTypeItalic ">without calling the function at all</em> or allow <span class="EmphasisFontCategoryNonProportional ">null</span> and let the source code handle it explicitly (the syntax for that is <span class="EmphasisFontCategoryNonProportional ">CALLED ON NULL INPUT</span>). This explicit declaration is required by Apache Cassandra.</p>
+              <p class="Para" id="Par38">That declaration is then followed by the return type and chosen language—from which you can correctly deduce that multiple languages are supported. Then comes the function body. The only non-obvious decision made by the programmer was how to handle <span class="EmphasisFontCategoryNonProportional ">0</span> as a parameter. Since the type <span id="ITerm20">system</span> implemented in Apache Cassandra already handles NaN,<sup><a epub:type="noteref" href="#Fn5" id="Fn5_source" role="doc-noteref">5</a></sup> it’s a decent candidate (next to positive/negative infinity).</p>
+              <div class="Para" id="Par40">The newly created function can be easily tested by creating a table, filling it with a few values, and inspecting the result:<div class="ProgramCode" id="PC2">
+                <div class="LineGroup">
+                  <div class="FixedLine">CREATE TABLE test(v1 double PRIMARY KEY, v2 double);</div>
+                  <div class="FixedLine">INSERT INTO test(v1, v2) VALUES (5, 7);</div>
+                  <div class="FixedLine">INSERT INTO test(v1, v2) VALUES (2, 2);</div>
+                  <div class="FixedLine">INSERT INTO test(v1) VALUES (9);</div>
+                  <div class="FixedLine">INSERT INTO test(v1, v2) VALUES (7, 0);</div>
+                </div>
+                <div class="LineGroup">
+                  <div class="FixedLine">SELECT v1, v2, add_inverse(v1, v2) FROM test;</div>
+                </div>
+                <div class="LineGroup">
+                  <div class="FixedLine">cassandra@cqlsh:test&gt; SELECT v1, v2, add_inverse(v1, v2) FROM test;</div>
+                </div>
+                <div class="LineGroup">
+                  <div class="FixedLine"> v1 | v2   | test.add_inverse(v1, v2)</div>
+                  <div class="FixedLine">----+------+--------------------------</div>
+                  <div class="FixedLine">  9 | null |                     null</div>
+                  <div class="FixedLine">  5 |    7 |                 0.342857</div>
+                  <div class="FixedLine">  2 |    2 |                        1</div>
+                  <div class="FixedLine">  7 |    0 |                      NaN</div>
+                </div>
+              </div></div>
+              <p class="Para" id="Par41">From the performance perspective, is offloading such a simple function to the database servers worth it? Not likely—the computations are fairly cheap, so users shouldn’t have an issue deriving these values themselves, immediately after receiving the data. The database servers, on the other hand, may need to initialize a runtime for user-defined <span id="ITerm21">functions</span>, since these functions are often sandboxed for security purposes. That runtime initialization takes time and other resources. Offloading such computations makes much more sense if the data is aggregated server-side, which is discussed in the next section (on user-defined aggregates).</p>
+            </section>
+
+            <section class="Section3 RenderAsSection3" id="Sec7">
+              <h4 class="Heading">Best Practices</h4>
+              <div class="Para" id="Par42">Before you learn about user-defined aggregates, which unleash the true potential of user-defined functions, it’s important to sum up a few <span id="ITerm22">best practices</span> for setting up user-defined functions in your database management system:<div class="OrderedList"><ol><li class="ListItem"><div class="ItemNumber">1.</div><div class="ItemContent">
+                    <p class="Para" id="Par43">Evaluate if you need user-defined functions at all—compare the latency (and general performance) of queries utilizing user-defined functions vs computing everything client-side (assuming that’s even possible).</p>
+                  </div><div class="ClearBoth"> </div></li><li class="ListItem"><div class="ItemNumber">2.</div><div class="ItemContent">
+                    <p class="Para" id="Par44">Test if offloading computations to the database servers scales. Look at metrics like CPU utilization to assess how well your database system can handle thousands of users requesting additional computations.</p>
+                  </div><div class="ClearBoth"> </div></li><li class="ListItem"><div class="ItemNumber">3.</div><div class="ItemContent">
+                    <p class="Para" id="Par45">Recognize that since user-defined functions are likely going to be executed on the “fast path,” they need to be optimized and benchmarked as well! Consider the performance best practices for the language you’re using for user-defined function implementation.</p>
+                  </div><div class="ClearBoth"> </div></li><li class="ListItem"><div class="ItemNumber">4.</div><div class="ItemContent">
+                    <p class="Para" id="Par46">Make sure to properly handle any errors or exceptional cases in your user-defined function to avoid disrupting the operation of the rest of the database system.</p>
+                  </div><div class="ClearBoth"> </div></li><li class="ListItem"><div class="ItemNumber">5.</div><div class="ItemContent">
+                    <p class="Para" id="Par47">Consider using built-in functions whenever possible instead of creating a user-defined function. The built-in functions may be more optimized and efficient.</p>
+                  </div><div class="ClearBoth"> </div></li><li class="ListItem"><div class="ItemNumber">6.</div><div class="ItemContent">
+                    <p class="Para" id="Par48">Keep your user-defined functions simple and modular, breaking up complex tasks into smaller, more manageable functions that can be easily tested and reused.</p>
+                  </div><div class="ClearBoth"> </div></li><li class="ListItem"><div class="ItemNumber">7.</div><div class="ItemContent">
+                    <p class="Para" id="Par49">Properly document your user-defined functions so that other users of the database <span id="ITerm23">system</span> can understand how they work and how to use them correctly.</p>
+                  </div><div class="ClearBoth"> </div></li></ol></div></div>
+            </section>
+
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec8">
+            <h3 class="Heading">User-Defined Aggregates</h3>
+            <p class="Para" id="Par50">The greatest potential for user-defined functions lies in them being building blocks for <span id="ITerm24">user-defined aggregates</span>. <span id="ITerm25">Aggregate functions</span> operate on multiple rows or columns, sometimes on entire tables or databases.</p>
+            <div class="Para" id="Par51">Moving this kind of operation closer to where the data lies makes perfect sense. Imagine 1TB worth of database rows that need to be aggregated into a single value: the sum of their values. When a thousand users request all these rows in order to perform the aggregation <span id="ITerm26">client-side</span>, the following happens:<div class="OrderedList"><ol><li class="ListItem"><div class="ItemNumber">1.</div><div class="ItemContent">
+                  <p class="Para" id="Par52">A total of a petabyte of data is sent over the network to each user.</p>
+                </div><div class="ClearBoth"> </div></li><li class="ListItem"><div class="ItemNumber">2.</div><div class="ItemContent">
+                  <p class="Para" id="Par53">Each user performs extensive computations, expensive in terms of RAM and CPU, that lead to exactly the same result as the other users.</p>
+                </div><div class="ClearBoth"> </div></li></ol></div></div>
+            <p class="Para" id="Par54">If the aggregation is performed by the database servers, it not only avoids a petabyte of traffic; it also saves computing power for the users (which is a considerably greener solution). If the computation is properly cached, it only needs to be performed once. This is a major win in terms of performance, and many use cases can immediately benefit from pushing the aggregate computations closer to the data. This is especially important for analytic workloads that tend to process large volumes of data in order to produce useful statistics and feedback—a process that is its own type of aggregation.</p>
+            <section class="Section3 RenderAsSection3" id="Sec9">
+              <h4 class="Heading">Built-In Aggregates</h4>
+              <p class="Para" id="Par55">Databases that allow creating user-defined aggregates usually also provide a few traditional <span id="ITerm27">built-in aggregation functions</span>: the (in)famous <span class="EmphasisFontCategoryNonProportional ">COUNT(*)</span>, but also <span class="EmphasisFontCategoryNonProportional ">MAX</span>, <span class="EmphasisFontCategoryNonProportional ">MIN</span>, <span class="EmphasisFontCategoryNonProportional ">SUM</span>, <span class="EmphasisFontCategoryNonProportional ">AVG</span>, and others. Such functions take into account multiple rows or values and return an aggregated result. The result may be a single value. Or, it could also be a set of values if the input is divided into smaller classes. One example of such an operation is SQL’s <span class="EmphasisFontCategoryNonProportional ">GROUP BY</span> <span id="ITerm28">statement</span>, which applies the aggregation to multiple disjoint groups of values.</p>
+              <p class="Para" id="Par56">Built-in aggregates should be preferred over user-defined ones whenever possible—they are likely <span id="ITerm29">written</span> in the language native to the database server, already optimized, and secure. Still, the set of predefined aggregate functions is often very basic and doesn’t allow users to perform the complex computations that make user-defined aggregates such a powerful tool.</p>
+            </section>
+
+            <section class="Section3 RenderAsSection3" id="Sec10">
+              <h4 class="Heading">Components</h4>
+              <p class="Para" id="Par57">User-defined aggregates are customarily built on top of user-defined scalar functions. The details heavily depend on the database system, but the following <span id="ITerm30">components</span> are definitely worth mentioning.</p>
+              <section class="Section4 RenderAsSection4" id="Sec11">
+                <h5 class="Heading">Initial Value</h5>
+                <p class="Para" id="Par58">An aggregation needs to start somewhere, and it’s up to the user to provide an initial value from which the final result will eventually be computed. In the case of the <span class="EmphasisFontCategoryNonProportional ">COUNT</span> <span id="ITerm31">function</span><span id="ITerm32"/>, which returns the number of rows or values in a table, a natural candidate for the initial value is <span class="EmphasisFontCategoryNonProportional ">0</span>. In the case of <span class="EmphasisFontCategoryNonProportional ">AVG</span>, which computes the arithmetic mean from all column values, the initial state could consist of two variables: The total number of values, initialized to <span class="EmphasisFontCategoryNonProportional ">0</span>, and the total sum of values, also initialized to <span class="EmphasisFontCategoryNonProportional ">0</span>.</p>
+              </section>
+
+              <section class="Section4 RenderAsSection4" id="Sec12">
+                <h5 class="Heading">State Transition Function</h5>
+                <p class="Para" id="Par59">The core of each user-defined aggregate is its state transition function. This function is called for each new value that needs to be processed, and each time it is called, it returns the new state of the aggregation. Following the <span class="EmphasisFontCategoryNonProportional ">COUNT</span> <span id="ITerm33">function</span><span id="ITerm34"/> example, its state transition function simply increments the number of rows by one. The state transition function of the <span class="EmphasisFontCategoryNonProportional ">AVG</span> aggregate just adds the current value to the total sum and increments the total number of values by one.</p>
+              </section>
+
+              <section class="Section4 RenderAsSection4" id="Sec13">
+                <h5 class="Heading">Final Function</h5>
+                <p class="Para" id="Par60">The final function is an optional feature for user-defined aggregates. Its sole purpose is to transform the final state of the aggregation to something else. For <span class="EmphasisFontCategoryNonProportional ">COUNT</span>, no further transformations are required. The user is simply interested in the final state of the aggregation (the number of values), so the final function doesn’t need to be present; it can be assumed to be an identity function. However, in the case of <span class="EmphasisFontCategoryNonProportional ">AVG</span>, the final function is what makes the result useful to the user. It transforms the final state—the total number of values and its total <span id="ITerm35">sum</span>—and produces the arithmetic mean by simply dividing one by the other, handling the special case of avoiding dividing by zero.</p>
+              </section>
+
+              <section class="Section4 RenderAsSection4" id="Sec14">
+                <h5 class="Heading">Reduce Function</h5>
+                <p class="Para" id="Par61">The reduce function is an interesting optional addition to the user-defined aggregates world, especially for distributed databases. It can be thought of as another state transition function, but one that can combine two partial states into one.</p>
+                <p class="Para" id="Par62">With the help of a <span id="ITerm36">reduce function</span>, computations of the user-defined aggregate can be distributed to multiple database nodes, in a map-reduce<sup><a epub:type="noteref" href="#Fn6" id="Fn6_source" role="doc-noteref">6</a></sup> fashion. This, in turn, can bring massive performance gains, because the computations suddenly become concurrent. Note that this optimization is not always possible—if the state transition function is not commutative, distributing the partial computations may yield an incorrect result.</p>
+                <p class="Para" id="Par64">In order to better imagine what a reduce function can look like, let’s go back to the <span class="EmphasisFontCategoryNonProportional ">AVG</span> example. A partial state for <span class="EmphasisFontCategoryNonProportional ">AVG</span> can be represented as <em class="EmphasisTypeItalic ">(n, s)</em>, where <em class="EmphasisTypeItalic ">n</em> is the number of values, and <em class="EmphasisTypeItalic ">s</em> is the sum of them. Reducing two partial states into the new valid state can be performed by simply adding the corresponding values: <em class="EmphasisTypeItalic ">(n</em><sub><em class="EmphasisTypeItalic ">1</em></sub><em class="EmphasisTypeItalic ">, s</em><sub><em class="EmphasisTypeItalic ">1</em></sub><em class="EmphasisTypeItalic ">) + (n</em><sub><em class="EmphasisTypeItalic ">2</em></sub><em class="EmphasisTypeItalic ">, s</em><sub><em class="EmphasisTypeItalic ">2</em></sub><em class="EmphasisTypeItalic ">) → (n</em><sub><em class="EmphasisTypeItalic ">1</em></sub><em class="EmphasisTypeItalic ">+ n</em><sub><em class="EmphasisTypeItalic ">2</em></sub><em class="EmphasisTypeItalic ">, s</em><sub><em class="EmphasisTypeItalic ">1</em></sub> <em class="EmphasisTypeItalic ">+ s</em><sub><em class="EmphasisTypeItalic ">2</em></sub><em class="EmphasisTypeItalic ">)</em>. An optional reduce function can be defined (e.g., in ScyllaDB’s user-defined aggregate implementation<sup><a epub:type="noteref" href="#Fn7" id="Fn7_source" role="doc-noteref">7</a></sup>).</p>
+                <p class="Para" id="Par66">The user-defined aggregates support is not standardized among database vendors and each database has its own quirks and implementation details. For instance, in PostgreSQL, you can also implement a “moving” aggregate<sup><a epub:type="noteref" href="#Fn8" id="Fn8_source" role="doc-noteref">8</a></sup> by providing yet another set of functions and parameters: <span class="EmphasisFontCategoryNonProportional ">msfunc</span>, <span class="EmphasisFontCategoryNonProportional ">minvfunc</span>, <span class="EmphasisFontCategoryNonProportional ">mstype</span>, and <span class="EmphasisFontCategoryNonProportional ">minitcond</span>. Still, the general idea remains unchanged: Let the users push aggregation logic as close to the data as possible.</p>
+              </section>
+
+            </section>
+
+            <section class="Section3 RenderAsSection3" id="Sec15">
+              <h4 class="Heading">Examples</h4>
+              <p class="Para" id="Par68">Let’s create a custom integer arithmetic mean implementation in PostgreSQL.</p>
+              <p class="Para" id="Par69">That’s going to be done by providing a state transition function, called <span class="EmphasisFontCategoryNonProportional ">sfunc</span> in PostgreSQL <span id="ITerm37">nomenclature</span>, <span class="EmphasisFontCategoryNonProportional ">finalfunc</span> for the final function, initial value (<span class="EmphasisFontCategoryNonProportional ">initcond</span>), and the state type—<span class="EmphasisFontCategoryNonProportional ">stype</span>. All of the functions will be implemented in SQL, PostgreSQL’s native query language.</p>
+              <section class="Section4 RenderAsSection4" id="Sec16">
+                <h5 class="Heading">State Transition Function</h5>
+                <div class="Para" id="Par70">The <span id="ITerm38">state transition function</span>, called <span id="ITerm39"><span class="EmphasisFontCategoryNonProportional ">accumulate</span></span><span id="ITerm40"/>, accepts a new integer value (the second parameter) and applies it to the existing state (the first parameter). As mentioned earlier in this chapter, a simple implementation keeps two variables in the state—the current sum of all values, and their count. Thus, transitioning to the next state simply means that the sum is incremented by the current value, and the total count is increased by one.<div class="ProgramCode" id="PC3">
+                  <div class="LineGroup">
+                    <div class="FixedLine">CREATE OR REPLACE FUNCTION accumulate(integer[], integer) RETURNS integer[]</div>
+                    <div class="FixedLine">    AS 'select array[$1[1] + $2, $1[2] + 1];'</div>
+                    <div class="FixedLine">    LANGUAGE SQL</div>
+                    <div class="FixedLine">    IMMUTABLE</div>
+                    <div class="FixedLine">    RETURNS NULL ON NULL INPUT;</div>
+                  </div>
+                </div></div>
+              </section>
+
+              <section class="Section4 RenderAsSection4" id="Sec17">
+                <h5 class="Heading">Final Function</h5>
+                <div class="Para" id="Par71">The <span id="ITerm41">final function</span><span id="ITerm42"/> divides the total sum of values by the total count of them, special-casing an average of <span class="EmphasisFontCategoryNonProportional ">0</span> values, which should be just <span class="EmphasisFontCategoryNonProportional ">0</span>. The final function returns a floating point number because that’s how the aggregate function is going to represent an arithmetic mean.<div class="ProgramCode" id="PC4">
+                  <div class="LineGroup">
+                    <div class="FixedLine">CREATE OR REPLACE FUNCTION divide(integer[]) RETURNS float8</div>
+                    <div class="FixedLine">    AS 'select case when $1[2]=0 then 0 else $1[1]::float/$1[2] end;'</div>
+                    <div class="FixedLine">    LANGUAGE SQL</div>
+                    <div class="FixedLine">    IMMUTABLE</div>
+                    <div class="FixedLine">    RETURNS NULL ON NULL INPUT;</div>
+                  </div>
+                </div></div>
+              </section>
+
+              <section class="Section4 RenderAsSection4" id="Sec18">
+                <h5 class="Heading">Aggregate Definition</h5>
+                <div class="Para" id="Par72">With all the building blocks in place, the user-defined <span id="ITerm43">aggregate</span> can now be declared:<div class="ProgramCode" id="PC5">
+                  <div class="LineGroup">
+                    <div class="FixedLine">CREATE OR REPLACE AGGREGATE alternative_avg(integer)</div>
+                    <div class="FixedLine">(</div>
+                    <div class="FixedLine">    sfunc = accumulate,</div>
+                    <div class="FixedLine">    stype = integer[],</div>
+                    <div class="FixedLine">    finalfunc = divide,</div>
+                    <div class="FixedLine">    initcond = '{0, 0}'</div>
+                    <div class="FixedLine">);</div>
+                  </div>
+                </div></div>
+                <p class="Para" id="Par73">In addition to declaring the state transition function and the final function, the state type is also declared to be an array of integers (which will always keep two values in the implementation), as well as the initial condition that sets both counters, the total sum and the total number of values, to <span class="EmphasisFontCategoryNonProportional ">0</span>.</p>
+                <div class="Para" id="Par74">That’s it! Since the <span class="EmphasisFontCategoryNonProportional ">AVG</span> aggregate for integers happens to be built-in, that gives you the perfect opportunity to validate if the implementation is correct:<div class="ProgramCode" id="PC6">
+                  <div class="LineGroup">
+                    <div class="FixedLine">postgres=# CREATE TABLE t(v INTEGER);</div>
+                    <div class="FixedLine">postgres=# INSERT INTO t VALUES (3), (5), (9);</div>
+                    <div class="FixedLine">postgres=# SELECT * FROM t;</div>
+                    <div class="FixedLine"> v</div>
+                    <div class="FixedLine">---</div>
+                    <div class="FixedLine"> 3</div>
+                    <div class="FixedLine"> 5</div>
+                    <div class="FixedLine"> 9</div>
+                    <div class="FixedLine">(3 rows)</div>
+                  </div>
+                  <div class="LineGroup">
+                    <div class="FixedLine">postgres=# SELECT AVG(v), alternative_avg(v) FROM t;</div>
+                    <div class="FixedLine">        avg         |  alternative_avg</div>
+                    <div class="FixedLine">--------------------+-------------------</div>
+                    <div class="FixedLine"> 5.6666666666666667 | 5.666666666666667</div>
+                    <div class="FixedLine">(1 row)</div>
+                  </div>
+                </div></div>
+                <p class="Para" id="Par75">Voilà. Remember that while creating an alternative implementation for <span class="EmphasisFontCategoryNonProportional ">AVG</span> is a great academic example of user-defined aggregates, for production use it’s almost always better to stick to the built-in aggregates whenever they’re available.</p>
+              </section>
+
+              <section class="Section4 RenderAsSection4" id="Sec19">
+                <h5 class="Heading">Distributed User-Defined Aggregate</h5>
+                <div class="Para" id="Par76">For completeness, let’s take a look at an almost identical implementation of a custom average function, but one accommodated to be <span id="ITerm44">distributed</span> over multiple nodes. This time, ScyllaDB will be used as a reference, since its implementation of user-defined aggregates includes an extension for distributing the <span id="ITerm45">computations</span> in a map-reduce manner. Here’s the complete source code:<div class="ProgramCode" id="PC7">
+                  <div class="LineGroup">
+                    <div class="FixedLine">CREATE FUNCTION accumulate(acc tuple&lt;bigint, int&gt;, val int)</div>
+                    <div class="FixedLine">RETURNS NULL ON NULL INPUT</div>
+                    <div class="FixedLine">RETURNS tuple&lt;bigint, int&gt;</div>
+                    <div class="FixedLine">LANGUAGE lua</div>
+                    <div class="FixedLine">AS $$</div>
+                    <div class="FixedLine">  return { acc[1]+val, acc[2]+1 }</div>
+                    <div class="FixedLine">$$;</div>
+                  </div>
+                  <div class="LineGroup">
+                    <div class="FixedLine">CREATE FUNCTION reduce(acc tuple&lt;bigint, int&gt;, acc2 tuple&lt;bigint, int&gt;)</div>
+                    <div class="FixedLine">RETURNS NULL ON NULL INPUT</div>
+                    <div class="FixedLine">RETURNS tuple&lt;bigint, int&gt;</div>
+                    <div class="FixedLine">LANGUAGE lua</div>
+                    <div class="FixedLine">AS $$</div>
+                    <div class="FixedLine">  return { acc[1]+acc2[1], acc[2]+acc2[2] }</div>
+                    <div class="FixedLine">$$;</div>
+                  </div>
+                  <div class="LineGroup">
+                    <div class="FixedLine">CREATE FUNCTION divide(acc tuple&lt;bigint, int&gt;)</div>
+                    <div class="FixedLine">RETURNS NULL ON NULL INPUT</div>
+                    <div class="FixedLine">RETURNS double</div>
+                    <div class="FixedLine">LANGUAGE lua</div>
+                    <div class="FixedLine">AS $$</div>
+                    <div class="FixedLine">  return acc[1]/acc[2]</div>
+                    <div class="FixedLine">$$;</div>
+                  </div>
+                  <div class="LineGroup">
+                    <div class="FixedLine">CREATE AGGREGATE alternative_avg(int)</div>
+                    <div class="FixedLine">SFUNC accumulate</div>
+                    <div class="FixedLine">STYPE tuple&lt;bigint, int&gt;</div>
+                    <div class="FixedLine">REDUCEFUNC reduce</div>
+                    <div class="FixedLine">FINALFUNC divide</div>
+                    <div class="FixedLine">INITCOND (0, 0);</div>
+                  </div>
+                </div></div>
+                <p class="Para" id="Par77">ScyllaDB’s native query language, CQL, is extremely similar to SQL, even in its acronym. It’s easy to see that most of the source code corresponds to the PostgreSQL implementation from the previous paragraph. ScyllaDB does not allow defining user-defined functions in CQL, but it does support Lua, a popular lightweight embeddable language, as well as WebAssembly. Since this book is expected to be read mostly by human beings (and occasionally ChatGPT once it achieves full consciousness), Lua was chosen for this example due to the fact it’s much more concise.</p>
+                <div class="Para" id="Par78">The most notable difference is the <span class="EmphasisFontCategoryNonProportional ">reduce</span> function, declared in the aggregate under the <span class="EmphasisFontCategoryNonProportional ">REDUCEFUNC</span> <span id="ITerm46">keyword</span><span id="ITerm47"/>. This function accepts two partial states and returns another (composed) state. What ScyllaDB servers can do if this function is present is the following:<div class="OrderedList"><ol><li class="ListItem"><div class="ItemNumber">1.</div><div class="ItemContent">
+                      <p class="Para" id="Par79">Divide the domain (e.g., all rows in the database) into multiple pieces and ask multiple servers to partially aggregate them, and then send back the result.</p>
+                    </div><div class="ClearBoth"> </div></li><li class="ListItem"><div class="ItemNumber">2.</div><div class="ItemContent">
+                      <p class="Para" id="Par80">Apply the reduce function to combine partial results into the single final result.</p>
+                    </div><div class="ClearBoth"> </div></li><li class="ListItem"><div class="ItemNumber">3.</div><div class="ItemContent">
+                      <p class="Para" id="Par81">Return the final result to the user.</p>
+                    </div><div class="ClearBoth"> </div></li></ol></div></div>
+                <p class="Para" id="Par82">Thus, by providing the reduce function, the user also allows <span id="ITerm48">ScyllaDB</span> to compute the aggregate concurrently on multiple machines. This can reduce the query execution time by orders of magnitude compared to a large query that only gets executed on a single server.</p>
+                <p class="Para" id="Par83">In this particular case, it might even be preferable to provide a user-defined alternative for a user-defined function in order to increase its concurrency—unless the built-in primitives also come with their reduce functions out of the box. That’s the case in ScyllaDB, but not necessarily in other databases that offer similar capabilities.</p>
+              </section>
+
+            </section>
+
+            <section class="Section3 RenderAsSection3" id="Sec20">
+              <h4 class="Heading">Best Practices</h4>
+              <div class="Para" id="Par84"><div class="OrderedList"><ol><li class="ListItem"><div class="ItemNumber">1.</div><div class="ItemContent">
+                    <p class="Para" id="Par85">If the computations can be efficiently represented with built-in aggregates, do so—or at least benchmark whether a custom implementation is any faster. User-defined aggregates are very <span id="ITerm49">expressive</span>, but usually come with a cost of overhead compared to built-in implementations.</p>
+                  </div><div class="ClearBoth"> </div></li><li class="ListItem"><div class="ItemNumber">2.</div><div class="ItemContent">
+                    <p class="Para" id="Par86">Research if user-defined aggregates can be customized in order to better fit specific use cases—for example, if the computations can be distributed to multiple database nodes, or if the database allows configuring its caches to store the intermediate results of user-defined aggregates somewhere.</p>
+                  </div><div class="ClearBoth"> </div></li><li class="ListItem"><div class="ItemNumber">3.</div><div class="ItemContent">
+                    <p class="Para" id="Par87">Always test the performance of your user-defined aggregates thoroughly before using them in production. This will help to ensure that they are efficient and can handle the workloads that you expect them to.</p>
+                  </div><div class="ClearBoth"> </div></li><li class="ListItem"><div class="ItemNumber">4.</div><div class="ItemContent">
+                    <p class="Para" id="Par88">Measure the cluster-wide effects of using user-defined aggregates in your workloads. Similar to full table scans, aggregates are a costly operation and it’s important to ensure that they respect the quality of service of other workloads, not overloading the database nodes beyond what’s acceptable in your <span id="ITerm50">system</span>.</p>
+                  </div><div class="ClearBoth"> </div></li></ol></div></div>
+            </section>
+
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec21">
+            <h3 class="Heading">WebAssembly for User-Defined Functions</h3>
+            <p class="Para" id="Par89"><span id="ITerm51">WebAssembly</span><span id="ITerm52"/>, also known as Wasm, is a binary format for representing executable code, designed to be easily embedded into other projects. It turns out that WebAssembly is also a perfect candidate for user-defined functions on the backend, thanks to its ease of integration, performance, and popularity.</p>
+            <div class="Para" id="Par90">There are multiple great books and articles<sup><a epub:type="noteref" href="#Fn9" id="Fn9_source" role="doc-noteref">9</a></sup> on WebAssembly, and they all agree that first and foremost, it’s a misnomer—WebAssembly’s usefulness ranges way beyond web applications. It’s actually a solid general-purpose language that has already become the default choice for an embedded language around the world. It ticks all the boxes:<div class="UnorderedList"><ul class="UnorderedListMarkNone"><li>
+                <p class="Para" id="Par92">☒ It’s open-source, with a thriving community</p>
+              </li><li>
+                <p class="Para" id="Par93">☒ It’s portable</p>
+              </li><li>
+                <p class="Para" id="Par94">☒ It’s isolated by default, with everything running in a sandboxed environment</p>
+              </li><li>
+                <p class="Para" id="Par95">☒ It’s fast, comparable to native CPU code in terms of performance</p>
+              </li></ul></div></div>
+            <section class="Section3 RenderAsSection3" id="Sec22">
+              <h4 class="Heading">Runtime</h4>
+              <div class="Para" id="Par96"><span id="ITerm53">WebAssembly</span> is compiled to bytecode. This bytecode is designed to run on a virtual machine, which is usually part of a larger development environment called a <span id="ITerm54">runtime</span>. There are multiple implementations of WebAssembly runtimes, most notably:<div class="UnorderedList"><ul class="UnorderedListMarkBullet"><li>
+                  <p class="Para" id="Par97">Wasmtime</p>
+                  <p class="Para" id="Par98"><span class="ExternalRef"><a href="https://wasmtime.dev/"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">https://wasmtime.dev/</span></span></a></span></p>
+                  <p class="Para" id="Par99">A fast and secure runtime for WebAssembly, implemented in Rust, backed by the Bytecode Alliance<sup><a epub:type="noteref" href="#Fn10" id="Fn10_source" role="doc-noteref">10</a></sup> nonprofit organization.</p>
+                </li><li>
+                  <p class="Para" id="Par101">Wasmer.io</p>
+                  <p class="Para" id="Par102"><span class="ExternalRef"><a href="https://wasmer.io/"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">https://wasmer.io/</span></span></a></span></p>
+                  <p class="Para" id="Par103">Another open-source initiative implemented in Rust; maintainers of the WAPM<sup><a epub:type="noteref" href="#Fn11" id="Fn11_source" role="doc-noteref">11</a></sup> project, which is a Wasm package manager.</p>
+                </li><li>
+                  <p class="Para" id="Par105">WasmEdge:</p>
+                  <p class="Para" id="Par106"><span class="ExternalRef"><a href="https://wasmedge.org/"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">https://wasmedge.org/</span></span></a></span></p>
+                  <p class="Para" id="Par107">Runtime implemented in C++, general-purpose, but focused on edge computing.</p>
+                </li><li>
+                  <p class="Para" id="Par108">V8:</p>
+                  <p class="Para" id="Par109"><span class="ExternalRef"><a href="https://v8.dev/"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">https://v8.dev/</span></span></a></span></p>
+                  <p class="Para" id="Par110">Google’s monolith JavaScript runtime; written in C++, comes with WebAssembly support as well.</p>
+                </li></ul></div></div>
+              <p class="Para" id="Par111">Also, since the WebAssembly specification is public, feel free to implement your own! Beware though: The standard is still in heavy development, changing rapidly every day.</p>
+            </section>
+
+            <section class="Section3 RenderAsSection3" id="Sec23">
+              <h4 class="Heading">Back to Latency</h4>
+              <p class="Para" id="Par112">Each runtime is free to define its own performance characteristics and guarantees. One interesting feature introduced in Wasmtime is the concept of <em class="EmphasisTypeItalic ">fuel</em>, already mentioned in the earlier discussion of user-defined <span id="ITerm55">functions</span>. Combined with the fact that Wasmtime provides an optional asynchronous interface for running WebAssembly modules, it gives users an opportunity to fine-tune the runtime to their latency requirements.</p>
+              <p class="Para" id="Par113">When Wasmtime starts executing a given WebAssembly function, this unit of execution is assigned a certain amount of fuel. Each execution step exhausts a small amount of fuel—at the time of writing this paragraph, it simply consumes one unit of fuel on each WebAssembly bytecode instruction, excluding a few flow control instructions like branching. Once the execution unit runs out of fuel, it yields. After that happens, one of the preconfigured actions is taken: either the execution unit is terminated, or its tank gets refilled and it’s allowed to get back to whatever it was computing. This mechanism allows the developer to control not only the total amount of CPU time that a single function execution can take, but also how often the execution should yield and hand over the CPU for other tasks. Thus, configuring fuel management the right way prevents function executions from taking over the CPU for too long. That helps maintain low, predictable latency in the whole system.</p>
+              <p class="Para" id="Par114">Another interesting aspect of WebAssembly is its portability. The fact that the code can be distributed to multiple places and it’s guaranteed to run properly in multiple environments makes it a great candidate for moving not only data, but also computations, closer to the user.</p>
+              <p class="Para" id="Par115">Pushing the database logic from enormous datacenters to smaller ones, located closer to end users, got its own buzzy name: edge computing.</p>
+            </section>
+
+          </section>
+
+        </section>
+
+        <section class="Section1 RenderAsSection1" id="Sec24">
+          <h2 class="Heading">Edge Computing</h2>
+          <div class="Para" id="Par116">Since the <span id="ITerm56">Internet of Things (IoT)</span> became a thing, the term <em class="EmphasisTypeItalic ">edge computing</em> needs disambiguation. This paragraph is (unfortunately?) <em class="EmphasisTypeItalic ">not</em> about:<div class="UnorderedList"><ul class="UnorderedListMarkBullet"><li>
+              <p class="Para" id="Par117">Utilizing the combined computing power of smart fridges in your area</p>
+            </li><li>
+              <p class="Para" id="Par118">Creating a data mesh from your local network of Bluetooth light bulbs</p>
+            </li><li>
+              <p class="Para" id="Par119">Integrating your smart watch into a Raft cluster in witness mode</p>
+            </li></ul></div></div>
+          <p class="Para" id="Par120">The <em class="EmphasisTypeItalic ">edge</em> described in this paragraph is of a more boring kind. It still means performing computations on servers, but on ones closer to the user (e.g., located in a local Equinix datacenter in Warsaw, rather than Amazon’s <span class="EmphasisFontCategoryNonProportional ">eu-central-1</span> in Frankfurt).</p>
+          <section class="Section2 RenderAsSection2" id="Sec25">
+            <h3 class="Heading">Performance</h3>
+            <p class="Para" id="Par121">What does edge computing have to do with database <span id="ITerm57">performance</span>? It brings the data closer to the user, and closer physical distance translates to lower latency. On the other hand, having your database cluster distributed to multiple locations has its downsides as well. Moving large amounts of data between those regions might be costly, as cloud vendors tend to charge for cross-region traffic. If the latency between database nodes reaches hundreds of milliseconds, which is the customer grade latency between Northern America and Europe (unless you can afford Hibernia Express<sup><a epub:type="noteref" href="#Fn12" id="Fn12_source" role="doc-noteref">12</a></sup>), they can get out of sync easily. Even a few round-trips—and distributed consensus algorithms alone require at least two—can cause delays that exceed the comfort zone of one second. Failure detection mechanisms are also affected since packet loss occurs much more often when the cluster spans multiple geographical locations.</p>
+            <p class="Para" id="Par123"><span id="ITerm58">Database drivers</span> for edge-friendly databases need to be aware of all these limitations mentioned. In particular, they need to be extra careful to pick the closest region whenever possible, minimizing the latency and the chance of failure.</p>
+          </section>
+
+          <section class="Section2 RenderAsSection2" id="Sec26">
+            <h3 class="Heading">Conflict-Free Replicated Data Types</h3>
+            <div class="Para" id="Par124">CRDT (conflict-free replicated data <span id="ITerm59">types</span><span id="ITerm60"/>) is an interesting way of dealing with inconsistencies. It’s a family of data structures designed to have the following <span id="ITerm61">characteristics</span>:<div class="UnorderedList"><ul class="UnorderedListMarkBullet"><li>
+                <p class="Para" id="Par125">Users can update database replicas independently, without coordinating with other database servers.</p>
+              </li><li>
+                <p class="Para" id="Par126">There exists an algorithm to automatically resolve conflicts that might occur when the same data is independently written to multiple replicas <span id="ITerm62">concurrently</span>.</p>
+              </li><li>
+                <p class="Para" id="Par127">Replicas are allowed to be in different states, but they are guaranteed to eventually converge to a common state.</p>
+              </li></ul></div></div>
+            <p class="Para" id="Par128">The concept of CRDT gained traction along with edge computing because the two complement each other. The database is allowed to keep replicas in multiple places and allows them to act without central coordination—but at the same time, users can assume that <em class="EmphasisTypeItalic ">eventually</em> the database state is going to become consistent.</p>
+            <p class="Para" id="Par129">A few interesting data structures that fit the definition of CRDT are discussed next.</p>
+            <section class="Section3 RenderAsSection3" id="Sec27">
+              <h4 class="Heading">G-Counter</h4>
+              <p class="Para" id="Par130"><span id="ITerm63">Grow-only counter</span><span id="ITerm64"/>. Usually implemented as an array of counters, keeping a local counter value per each database node. Two array states from different nodes can be merged by taking the maximum of each respective field. The actual value of the G-Counter is simply a sum of all local counters.</p>
+            </section>
+
+            <section class="Section3 RenderAsSection3" id="Sec28">
+              <h4 class="Heading">PN-Counter</h4>
+              <p class="Para" id="Par131"><span id="ITerm65">Positive-Negative counter</span>, brilliantly implemented by keeping two G-Counter instances—one for accumulating positive <span id="ITerm66">values</span>, the other for negative ones. The final value is obtained by subtracting one from the other.</p>
+            </section>
+
+            <section class="Section3 RenderAsSection3" id="Sec29">
+              <h4 class="Heading">G-Set</h4>
+              <p class="Para" id="Par132">Grow-only <span id="ITerm67">set</span>, that is, one that forbids the removal of elements. Converging two G-Sets is a simple set union since values are never removed from a G-Set. One flavor of G-Set is G-Map, where an entry, key, and value associated with the key cannot be removed once added.</p>
+            </section>
+
+            <section class="Section3 RenderAsSection3" id="Sec30">
+              <h4 class="Heading">LWW-Set</h4>
+              <p class="Para" id="Par133"><span id="ITerm68">Last-write-wins set</span><span id="ITerm69"/> (and map, accordingly). This is a combination of two G-Sets, one gathering added elements and the other containing removed ones. Conflict resolution is based on a set union of the “added” G-Set, minus the union of the “removed” G-Set, but timestamps are also taken into account. A value exists if its timestamp in the “added” set is larger than its timestamp in the “removed” set, or if it’s not present in the “removed” set at all.</p>
+              <p class="Para" id="Par134">The list is obviously not exhaustive, and countless other CRDTs exist. You’re hereby encouraged to do research on the topic if you found it interesting!</p>
+              <p class="Para" id="Par135">CRDTs are not just theoretical structures; they are very much used in practice. Variants of conflict-free replicated data <span id="ITerm70">types</span> are common among databases that offer eventual consistency, like Apache Cassandra and ScyllaDB. Their writes have last-write-wins semantics for conflict resolution, and their implementation of counters is based on the idea of a PN-Counter.</p>
+            </section>
+
+          </section>
+
+        </section>
+
+        <section class="Section1 RenderAsSection1" id="Sec31">
+          <h2 class="Heading">Summary</h2>
+          <p class="Para" id="Par136">At this point, it should be clear that there are a number of ways to improve performance by using a database a bit unconventionally, as well as understanding (and tapping) specialized capabilities built into the database and its drivers. Let’s shift gears and look at the top “do’s and don’ts” that we recommend for ensuring that your database is performing at its best. The next chapter begins this discussion by focusing on infrastructure options (CPUs, memory, storage, and networking) and deployment models.</p>
+        </section>
+
+      <div class="License LicenseSubType-cc-by"><a href="https://creativecommons.org/licenses/by/4.0"><img alt="Creative Commons" src="../css/cc-by.png"/></a>
+            <p class="SimplePara"><strong class="EmphasisTypeBold ">Open Access</strong> This chapter is licensed under the terms of the Creative Commons Attribution 4.0 International License (<span class="ExternalRef"><a href="http://creativecommons.org/licenses/by/4.0/"><span class="RefSource">http://​creativecommons.​org/​licenses/​by/​4.​0/​</span></a></span>), which permits use, sharing, adaptation, distribution and reproduction in any medium or format, as long as you give appropriate credit to the original author(s) and the source, provide a link to the Creative Commons license and indicate if changes were made.</p>
+            <p class="SimplePara">The images or other third party material in this chapter are included in the chapter's Creative Commons license, unless indicated otherwise in a credit line to the material. If material is not included in the chapter's Creative Commons license and your intended use is not permitted by statutory regulation or exceeds the permitted use, you will need to obtain permission directly from the copyright holder.</p>
+          </div><aside aria-label="Footnotes" class="FootnoteSection" epub:type="footnotes"><div class="Heading">Footnotes</div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn1_source">1</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn1" role="doc-footnote"><p class="Para" id="Par14">It’s also a great example of the CVE risk: <span class="ExternalRef"><a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-44521"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-44521</span></span></a></span></p><p class="Para" id="Par15"><span class="ExternalRef"><a href="https://jfrog.com/blog/cve-2021-44521-exploiting-apache-cassandra-user-defined-functions-for-remote-code-execution/"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">https://jfrog.com/blog/cve-2021-44521-exploiting-apache-cassandra-user-defined-functions-for-remote-code-execution/</span></span></a></span></p></div><div class="ClearBoth"> </div></div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn2_source">2</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn2" role="doc-footnote"><p class="Para" id="Par29">See the Microsoft Azure documentation on the Noisy Neighbor antipattern (<span class="ExternalRef"><a href="https://learn.microsoft.com/en-us/azure/architecture/antipatterns/noisy-neighbor/noisy-neighbor"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">https://learn.microsoft.com/en-us/azure/architecture/antipatterns/noisy-neighbor/noisy-neighbor</span></span></a></span>).</p></div><div class="ClearBoth"> </div></div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn3_source">3</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn3" role="doc-footnote"><p class="Para" id="Par31">See the Bytecode Alliance documentation at <span class="ExternalRef"><a href="https://wasmtime.dev"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">https://wasmtime.dev</span></span></a></span>.</p></div><div class="ClearBoth"> </div></div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn4_source">4</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn4" role="doc-footnote"><p class="Para" id="Par32">See the Wasmtime docs (<span class="ExternalRef"><a href="https://docs.wasmtime.dev/api/wasmtime/struct.Store.html#method.fuel_consumed"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">https://docs.wasmtime.dev/api/wasmtime/struct.Store.html#method.fuel_consumed</span></span></a></span>).</p></div><div class="ClearBoth"> </div></div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn5_source">5</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn5" role="doc-footnote"><p class="Para" id="Par39">Not-a-number</p></div><div class="ClearBoth"> </div></div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn6_source">6</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn6" role="doc-footnote"><p class="Para" id="Par63">MapReduce is a framework for processing parallelizable problems across large datasets.</p></div><div class="ClearBoth"> </div></div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn7_source">7</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn7" role="doc-footnote"><p class="Para" id="Par65">See the ScyllaDB documentation on ScyllaDB CQL Extensions (<span class="ExternalRef"><a href="https://github.com/scylladb/scylladb/blob/master/docs/cql/cql-extensions.md#reducefunc-for-uda"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">https://github.com/scylladb/scylladb/blob/master/docs/cql/cql-extensions.md#reducefunc-for-uda</span></span></a></span>).</p></div><div class="ClearBoth"> </div></div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn8_source">8</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn8" role="doc-footnote"><p class="Para" id="Par67">See the PostgreSQL documentation on User-Defined Aggregates (<span class="ExternalRef"><a href="https://www.postgresql.org/docs/current/xaggr.html#XAGGR-MOVING-AGGREGATES"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">https://www.postgresql.org/docs/current/xaggr.html#XAGGR-MOVING-AGGREGATES</span></span></a></span>).</p></div><div class="ClearBoth"> </div></div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn9_source">9</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn9" role="doc-footnote"><p class="Para" id="Par91">For example, “WebAssembly: The Definitive Guide” by Brian Sletten, “Programming WebAssembly with Rust” by Kevin Hoffman, or “ScyllaDB’s Take on WebAssembly for User-Defined Functions” by Piotr Sarna.</p></div><div class="ClearBoth"> </div></div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn10_source">10</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn10" role="doc-footnote"><p class="Para" id="Par100"><span class="ExternalRef"><a href="https://bytecodealliance.org/"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">https://bytecodealliance.org/</span></span></a></span></p></div><div class="ClearBoth"> </div></div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn11_source">11</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn11" role="doc-footnote"><p class="Para" id="Par104"><span class="ExternalRef"><a href="https://wapm.io/"><span class="RefSource"><span class="EmphasisFontCategoryNonProportional ">https://wapm.io/</span></span></a></span></p></div><div class="ClearBoth"> </div></div><div class="Footnote"><span class="FootnoteNumber"><a href="#Fn12_source">12</a></span><div class="FootnoteContent" epub:type="footnote" id="Fn12" role="doc-footnote"><p class="Para" id="Par122">A submarine link between Canada, Ireland, and the UK, offering sub-60ms latency.</p></div><div class="ClearBoth"> </div></div></aside></div></div></body></html>
