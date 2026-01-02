@@ -1,4 +1,5 @@
 +   [面向 MongoDB 开发者的 CosmosDB 教程](docs/cosmos-mongo-dev/README.md)
++   [大规模数据库性能指南](docs/db-perf-scl/README.md)
 +   [MongoDB 权威指南](docs/def-guide-mongo/README.md)
 +   [MySQL 专家级教程](docs/exp-mysql/README.md)
 +   [InnoDB 集群入门指南](docs/intro-innodb-clus/README.md)
