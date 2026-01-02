@@ -1,0 +1,928 @@
+- en: 6. Getting Data Closer
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '[Databases as Compute Engines](#Sec1)[Edge Computing](#Sec24)[Summary](#Sec31)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Location, location, location. Sometimes it’s just as important to database performance
+    as it is to real estate. Just as the location of a home influences how quickly
+    it sells, the location of where data “lives” and is processed also matters for
+    response times and latencies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Pushing more logic into the database can often reduce network latency (and costs,
+    e.g., when your infrastructure provider charges for ingress/egress network traffic)
+    while taking advantage of the database’s powerful compute capability. And redistributing
+    database logic from fewer powerful datacenters to more minimalist ones that are
+    closer to users is another move that can yield discernable performance gains under
+    the right conditions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This chapter explores the opportunities in both of these shifts. First, it looks
+    at databases as compute engines with a focus on user-defined functions and user-defined
+    aggregates. It then goes deeper into WebAssembly, which is now increasingly being
+    used to implement user-defined functions and aggregates (among many other things).
+    Finally, the chapter ventures to the edge—exploring what you stand to gain by
+    moving your database servers quite close to your users, as well as what potential
+    pitfalls you need to negotiate in this scenario.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Databases as Compute Engines
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Modern databases offer many more capabilities than just storing and retrieving
+    data. Some of them are nothing short of operating systems, capable of streaming,
+    modifying, encrypting, authorizing, authenticating, and virtually anything else
+    with data they manage.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Data locality is the holy grail of distributed systems. The less you need to
+    move data around, the more time can be spent on performing meaningful operations
+    on it—without excessive bandwidth costs. That’s why it makes sense to try to push
+    more logic into the database itself, letting it process as much as possible locally,
+    then return the results to the users, or some middleware, for further processing.
+    It makes even more sense when you consider that database nodes generally run on
+    powerful hardware, with lots of RAM and fast I/O devices. This usually translates
+    to formidable CPU power. Dedicated large data processing frameworks aside (e.g.,
+    Apache Spark, which is out of scope for this book), regular database engines almost
+    always support some level of user-defined computations. These can be classified
+    into two major sections: user-defined functions/procedures and user-defined aggregates.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that the definitions vary. Some database vendors use the general name “functions”
+    to mean both aggregate and scalar functions. Others actually mean “scalar functions”
+    when they reference “functions,” and use the name “aggregates” for “aggregate
+    functions.” That’s the convention applied to this chapter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: User-Defined Functions and Procedures
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In contrast to native functions, often implemented in database engines (think
+    `lowercase()`, `now()`, `concat()`, type casting, algebraic operations, and friends),
+    user-defined functions are provided by the users of the database (e.g., the developers
+    building applications). A “procedure” is substantially identical to a function
+    in this context, except it does not return any result; instead, it has side effects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The exact interface of allowing users to define their own functions or procedures
+    varies wildly between database vendors. Still, several core strategies, listed
+    here, are often implemented:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A set of hardcoded native functions, not extensible, but at least composable.
+    For example, casting a type to string, concatenating it with a predefined suffix,
+    and then hashing it.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: A custom scripting language, dedicated and vendor-locked to a specific database,
+    allowing users to write and execute simple programs on the data.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Supporting a single general-purpose embeddable language of choice. For example,
+    Lisp, Lua, ChaiScript, Squirrel, or WebAssembly might be used for this purpose.
+    Note: You’ll explore WebAssembly in more depth a little later in this chapter.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Supporting a variety of pluggable embeddable languages. A good example is Apache
+    Cassandra and its support of Java (native language) and JavaScript^([1](#Fn1))
+    as well as pluggable backend-loaded via .jar files.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The first on the list is the least flexible, offers the worst developer experience,
+    and has the lowest security risk. The last has the most flexibility, offers the
+    best developer experience, and also harbors the most potential for being a security
+    risk worthy of its own CVE number.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Scalar functions are usually invoked per each row, at least for row-oriented
+    databases, which is usually the case for SQL. You might wonder if the computations
+    can’t simply be performed by end users on their machines. That’s a valid point.
+    The main advantage of that approach is fantastic scalability regardless of how
+    many users perform data transformations (if they do it locally on their own machines,
+    then the database cluster does not get overloaded).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are several great reasons to push the computations closer to where the
+    data is stored:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Databases have more context to efficiently cache the computed results. Imagine
+    tens of thousands of users asking for the same function to be applied on a certain
+    set of rows. That result can be computed just once and then distributed to all
+    interested parties.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If the computed results are considerably smaller than their input (think about
+    returning just lengths of text values), it’s better to save bandwidth and send
+    over only the final results.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Certain housekeeping operations (e.g., deleting data older than a week) can
+    be efficiently performed locally, without fetching any information to the clients
+    for validation.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If the processing is done on database servers, the instruction cache residing
+    on that database’s CPU chip is likely to be scorching hot with opcodes responsible
+    for carrying out the computations for each row. And as a rule of thumb, hot cache
+    translates to faster code execution and lower latency.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Some computations are not trivially distributed to users. If they involve cryptographic
+    private keys stored on the database servers, it might actually be impossible to
+    run the code anywhere but on the server itself.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If the data on which computations are performed is sensitive (e.g., it falls
+    under infamous, ever-changing European data protection laws such as GDPR), it
+    might be illegal to send raw data to the users. In such cases, running an encryption
+    function server-side can be a way for users to obtain obfuscated, legal data.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Determinism
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In distributed environments, idempotence (discussed in Chapter [5](541783_1_En_5_Chapter.xhtml))
+    is an important attribute that makes it possible to send requests in a speculative
+    manner, potentially increasing performance. Thus, it is better to make sure that
+    user-defined functions are deterministic. In other words, a user-defined function’s
+    value should only depend on the value of its arguments, and not on the value of
+    any external factors like time, date, pseudo-random seed, and so on.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A perfect example of a non-deterministic function is `now()`. Calling it twice
+    might yield the same value if you’re fast enough, but it’s generally not guaranteed
+    since its result is time-dependent. If possible, it’s a good idea to program the
+    user-defined functions in a deterministic way and mark them as such. For time/date,
+    this might involve computing the results based on a timestamp passed as a parameter
+    rather than using built-in time utilities. For pseudo-random sampling, the seed
+    could also be passed as a parameter, as opposed to relying on sources of entropy
+    provided by the user-defined function runtime.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Latency
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Running user-provided code on your database clusters is potentially dangerous
+    in aspects other than security. Most embedded languages are Turing-complete, and
+    customarily allow the developers to use loops, recursion, and other similar techniques
+    in their code. That’s risky. An undetected infinite loop may serve as a denial-of-service
+    attack, forcing the database servers to endlessly process a function and block
+    other tasks from used resources. And even if the user-defined function author
+    did not have malicious intentions, some computations simply consume a lot of CPU
+    time and memory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In a way, a user-defined function should be thought of as a potential “noisy
+    neighbor”^([2](#Fn2)) and its resources should be as limited as possible. For
+    some use cases, a simple hard limit on memory and CPU time used is enough to ensure
+    that the performance of other database tasks does not suffer from a “noisy” user-defined
+    function. However, sometimes, a more specific solution is required—for example,
+    splitting a user-function definition into smaller time bits, assigning priorities
+    to user-defined functions, and so on.
+  prefs: []
+  type: TYPE_NORMAL
+- en: One interesting metering mechanism was applied by Wasmtime,^([3](#Fn3)) a WebAssembly
+    runtime. Code running in a WebAssembly instance consumes *fuel,*^([4](#Fn4)) a
+    synthetic unit used for tracking how fast an instance exhausts system resources.
+    When an instance runs out of fuel, the runtime does one of the preconfigured actions—either
+    “refills” and lets the code execution continue or decides that the task reached
+    its quota and terminates it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Just-in-Time Compilation (JIT)
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Languages used for user-defined functions are often either interpreted (e.g.,
+    Lua) or represented in bytecode that runs on a virtual machine (e.g., WebAssembly).
+    Both of these approaches can benefit from just-in-time compilation. It’s a broad
+    topic, but the essence of it is that during runtime, the code of user-defined
+    functions can be compiled to another, more efficient representation, and optimized
+    along the way. This may mean translating bytecode to machine code the program
+    runs on (e.g., x86-64 instructions), or compiling the source code represented
+    in an interpreted language to machine code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: JIT is a very powerful tool, but it’s not a silver bullet—compilation and additional
+    optimization can be an expensive process in terms of resources. A small user-defined
+    function may take less than a millisecond to run, but recompiling it can cause
+    a sudden spike in CPU and memory usage, as well as a multi-millisecond delay in
+    the processing—resulting in high tail latency. It should therefore be a conscious
+    decision to either enable just-in-time compilation for user-defined functions
+    if the language allows it, or disable it altogether.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Let’s take a look at a few examples of user-defined functions. The function
+    serving as the example operates on floating point numbers; given two parameters,
+    it returns the sum of them, inverted. Given 5 and 7, it should return 1/5+1/7,
+    which is approximately 0.34285714285.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s how it could be defined in Apache Cassandra, which allows user-defined
+    function definitions to be provided in Java, its native language, as well as in
+    other languages:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Let’s take a closer look at the definition. The first line is straightforward:
+    it includes the function’s name, parameters, and its types. It also specifies
+    that if a function definition with that name already exists, it should be replaced.
+    Next, it explicitly declares what happens if any of the parameters is `null`,
+    which is a valid value for any type. The function can either return `null` *without
+    calling the function at all* or allow `null` and let the source code handle it
+    explicitly (the syntax for that is `CALLED ON NULL INPUT`). This explicit declaration
+    is required by Apache Cassandra.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: That declaration is then followed by the return type and chosen language—from
+    which you can correctly deduce that multiple languages are supported. Then comes
+    the function body. The only non-obvious decision made by the programmer was how
+    to handle `0` as a parameter. Since the type system implemented in Apache Cassandra
+    already handles NaN,^([5](#Fn5)) it’s a decent candidate (next to positive/negative
+    infinity).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The newly created function can be easily tested by creating a table, filling
+    it with a few values, and inspecting the result:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: From the performance perspective, is offloading such a simple function to the
+    database servers worth it? Not likely—the computations are fairly cheap, so users
+    shouldn’t have an issue deriving these values themselves, immediately after receiving
+    the data. The database servers, on the other hand, may need to initialize a runtime
+    for user-defined functions, since these functions are often sandboxed for security
+    purposes. That runtime initialization takes time and other resources. Offloading
+    such computations makes much more sense if the data is aggregated server-side,
+    which is discussed in the next section (on user-defined aggregates).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Best Practices
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Before you learn about user-defined aggregates, which unleash the true potential
+    of user-defined functions, it’s important to sum up a few best practices for setting
+    up user-defined functions in your database management system:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Evaluate if you need user-defined functions at all—compare the latency (and
+    general performance) of queries utilizing user-defined functions vs computing
+    everything client-side (assuming that’s even possible).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Test if offloading computations to the database servers scales. Look at metrics
+    like CPU utilization to assess how well your database system can handle thousands
+    of users requesting additional computations.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Recognize that since user-defined functions are likely going to be executed
+    on the “fast path,” they need to be optimized and benchmarked as well! Consider
+    the performance best practices for the language you’re using for user-defined
+    function implementation.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Make sure to properly handle any errors or exceptional cases in your user-defined
+    function to avoid disrupting the operation of the rest of the database system.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Consider using built-in functions whenever possible instead of creating a user-defined
+    function. The built-in functions may be more optimized and efficient.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Keep your user-defined functions simple and modular, breaking up complex tasks
+    into smaller, more manageable functions that can be easily tested and reused.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Properly document your user-defined functions so that other users of the database
+    system can understand how they work and how to use them correctly.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: User-Defined Aggregates
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The greatest potential for user-defined functions lies in them being building
+    blocks for user-defined aggregates. Aggregate functions operate on multiple rows
+    or columns, sometimes on entire tables or databases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Moving this kind of operation closer to where the data lies makes perfect sense.
+    Imagine 1TB worth of database rows that need to be aggregated into a single value:
+    the sum of their values. When a thousand users request all these rows in order
+    to perform the aggregation client-side, the following happens:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A total of a petabyte of data is sent over the network to each user.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Each user performs extensive computations, expensive in terms of RAM and CPU,
+    that lead to exactly the same result as the other users.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If the aggregation is performed by the database servers, it not only avoids
+    a petabyte of traffic; it also saves computing power for the users (which is a
+    considerably greener solution). If the computation is properly cached, it only
+    needs to be performed once. This is a major win in terms of performance, and many
+    use cases can immediately benefit from pushing the aggregate computations closer
+    to the data. This is especially important for analytic workloads that tend to
+    process large volumes of data in order to produce useful statistics and feedback—a
+    process that is its own type of aggregation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Built-In Aggregates
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Databases that allow creating user-defined aggregates usually also provide
+    a few traditional built-in aggregation functions: the (in)famous `COUNT(*)`, but
+    also `MAX`, `MIN`, `SUM`, `AVG`, and others. Such functions take into account
+    multiple rows or values and return an aggregated result. The result may be a single
+    value. Or, it could also be a set of values if the input is divided into smaller
+    classes. One example of such an operation is SQL’s `GROUP BY` statement, which
+    applies the aggregation to multiple disjoint groups of values.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Built-in aggregates should be preferred over user-defined ones whenever possible—they
+    are likely written in the language native to the database server, already optimized,
+    and secure. Still, the set of predefined aggregate functions is often very basic
+    and doesn’t allow users to perform the complex computations that make user-defined
+    aggregates such a powerful tool.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Components
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: User-defined aggregates are customarily built on top of user-defined scalar
+    functions. The details heavily depend on the database system, but the following
+    components are definitely worth mentioning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Initial Value
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'An aggregation needs to start somewhere, and it’s up to the user to provide
+    an initial value from which the final result will eventually be computed. In the
+    case of the `COUNT` function, which returns the number of rows or values in a
+    table, a natural candidate for the initial value is `0`. In the case of `AVG`,
+    which computes the arithmetic mean from all column values, the initial state could
+    consist of two variables: The total number of values, initialized to `0`, and
+    the total sum of values, also initialized to `0`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: State Transition Function
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: The core of each user-defined aggregate is its state transition function. This
+    function is called for each new value that needs to be processed, and each time
+    it is called, it returns the new state of the aggregation. Following the `COUNT`
+    function example, its state transition function simply increments the number of
+    rows by one. The state transition function of the `AVG` aggregate just adds the
+    current value to the total sum and increments the total number of values by one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Final Function
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: The final function is an optional feature for user-defined aggregates. Its sole
+    purpose is to transform the final state of the aggregation to something else.
+    For `COUNT`, no further transformations are required. The user is simply interested
+    in the final state of the aggregation (the number of values), so the final function
+    doesn’t need to be present; it can be assumed to be an identity function. However,
+    in the case of `AVG`, the final function is what makes the result useful to the
+    user. It transforms the final state—the total number of values and its total sum—and
+    produces the arithmetic mean by simply dividing one by the other, handling the
+    special case of avoiding dividing by zero.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reduce Function
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: The reduce function is an interesting optional addition to the user-defined
+    aggregates world, especially for distributed databases. It can be thought of as
+    another state transition function, but one that can combine two partial states
+    into one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: With the help of a reduce function, computations of the user-defined aggregate
+    can be distributed to multiple database nodes, in a map-reduce^([6](#Fn6)) fashion.
+    This, in turn, can bring massive performance gains, because the computations suddenly
+    become concurrent. Note that this optimization is not always possible—if the state
+    transition function is not commutative, distributing the partial computations
+    may yield an incorrect result.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In order to better imagine what a reduce function can look like, let’s go back
+    to the `AVG` example. A partial state for `AVG` can be represented as *(n, s)*,
+    where *n* is the number of values, and *s* is the sum of them. Reducing two partial
+    states into the new valid state can be performed by simply adding the corresponding
+    values: *(n*[*1*]*, s*[*1*]*) + (n*[*2*]*, s*[*2*]*) → (n*[*1*]*+ n*[*2*]*, s*[*1*]
+    *+ s*[*2*]*)*. An optional reduce function can be defined (e.g., in ScyllaDB’s
+    user-defined aggregate implementation^([7](#Fn7))).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The user-defined aggregates support is not standardized among database vendors
+    and each database has its own quirks and implementation details. For instance,
+    in PostgreSQL, you can also implement a “moving” aggregate^([8](#Fn8)) by providing
+    yet another set of functions and parameters: `msfunc`, `minvfunc`, `mstype`, and
+    `minitcond`. Still, the general idea remains unchanged: Let the users push aggregation
+    logic as close to the data as possible.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Examples
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Let’s create a custom integer arithmetic mean implementation in PostgreSQL.
+  prefs: []
+  type: TYPE_NORMAL
+- en: That’s going to be done by providing a state transition function, called `sfunc`
+    in PostgreSQL nomenclature, `finalfunc` for the final function, initial value
+    (`initcond`), and the state type—`stype`. All of the functions will be implemented
+    in SQL, PostgreSQL’s native query language.
+  prefs: []
+  type: TYPE_NORMAL
+- en: State Transition Function
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: The state transition function, called `accumulate`, accepts a new integer value
+    (the second parameter) and applies it to the existing state (the first parameter).
+    As mentioned earlier in this chapter, a simple implementation keeps two variables
+    in the state—the current sum of all values, and their count. Thus, transitioning
+    to the next state simply means that the sum is incremented by the current value,
+    and the total count is increased by one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Final Function
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: The final function divides the total sum of values by the total count of them,
+    special-casing an average of `0` values, which should be just `0`. The final function
+    returns a floating point number because that’s how the aggregate function is going
+    to represent an arithmetic mean.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: Aggregate Definition
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'With all the building blocks in place, the user-defined aggregate can now be
+    declared:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: In addition to declaring the state transition function and the final function,
+    the state type is also declared to be an array of integers (which will always
+    keep two values in the implementation), as well as the initial condition that
+    sets both counters, the total sum and the total number of values, to `0`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'That’s it! Since the `AVG` aggregate for integers happens to be built-in, that
+    gives you the perfect opportunity to validate if the implementation is correct:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Voilà. Remember that while creating an alternative implementation for `AVG`
+    is a great academic example of user-defined aggregates, for production use it’s
+    almost always better to stick to the built-in aggregates whenever they’re available.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Distributed User-Defined Aggregate
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'For completeness, let’s take a look at an almost identical implementation of
+    a custom average function, but one accommodated to be distributed over multiple
+    nodes. This time, ScyllaDB will be used as a reference, since its implementation
+    of user-defined aggregates includes an extension for distributing the computations
+    in a map-reduce manner. Here’s the complete source code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: ScyllaDB’s native query language, CQL, is extremely similar to SQL, even in
+    its acronym. It’s easy to see that most of the source code corresponds to the
+    PostgreSQL implementation from the previous paragraph. ScyllaDB does not allow
+    defining user-defined functions in CQL, but it does support Lua, a popular lightweight
+    embeddable language, as well as WebAssembly. Since this book is expected to be
+    read mostly by human beings (and occasionally ChatGPT once it achieves full consciousness),
+    Lua was chosen for this example due to the fact it’s much more concise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The most notable difference is the `reduce` function, declared in the aggregate
+    under the `REDUCEFUNC` keyword. This function accepts two partial states and returns
+    another (composed) state. What ScyllaDB servers can do if this function is present
+    is the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Divide the domain (e.g., all rows in the database) into multiple pieces and
+    ask multiple servers to partially aggregate them, and then send back the result.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Apply the reduce function to combine partial results into the single final result.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Return the final result to the user.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Thus, by providing the reduce function, the user also allows ScyllaDB to compute
+    the aggregate concurrently on multiple machines. This can reduce the query execution
+    time by orders of magnitude compared to a large query that only gets executed
+    on a single server.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this particular case, it might even be preferable to provide a user-defined
+    alternative for a user-defined function in order to increase its concurrency—unless
+    the built-in primitives also come with their reduce functions out of the box.
+    That’s the case in ScyllaDB, but not necessarily in other databases that offer
+    similar capabilities.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Best Practices
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: If the computations can be efficiently represented with built-in aggregates,
+    do so—or at least benchmark whether a custom implementation is any faster. User-defined
+    aggregates are very expressive, but usually come with a cost of overhead compared
+    to built-in implementations.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Research if user-defined aggregates can be customized in order to better fit
+    specific use cases—for example, if the computations can be distributed to multiple
+    database nodes, or if the database allows configuring its caches to store the
+    intermediate results of user-defined aggregates somewhere.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Always test the performance of your user-defined aggregates thoroughly before
+    using them in production. This will help to ensure that they are efficient and
+    can handle the workloads that you expect them to.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Measure the cluster-wide effects of using user-defined aggregates in your workloads.
+    Similar to full table scans, aggregates are a costly operation and it’s important
+    to ensure that they respect the quality of service of other workloads, not overloading
+    the database nodes beyond what’s acceptable in your system.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: WebAssembly for User-Defined Functions
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: WebAssembly, also known as Wasm, is a binary format for representing executable
+    code, designed to be easily embedded into other projects. It turns out that WebAssembly
+    is also a perfect candidate for user-defined functions on the backend, thanks
+    to its ease of integration, performance, and popularity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are multiple great books and articles^([9](#Fn9)) on WebAssembly, and
+    they all agree that first and foremost, it’s a misnomer—WebAssembly’s usefulness
+    ranges way beyond web applications. It’s actually a solid general-purpose language
+    that has already become the default choice for an embedded language around the
+    world. It ticks all the boxes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: ☒ It’s open-source, with a thriving community
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ☒ It’s portable
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ☒ It’s isolated by default, with everything running in a sandboxed environment
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ☒ It’s fast, comparable to native CPU code in terms of performance
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Runtime
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'WebAssembly is compiled to bytecode. This bytecode is designed to run on a
+    virtual machine, which is usually part of a larger development environment called
+    a runtime. There are multiple implementations of WebAssembly runtimes, most notably:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Wasmtime
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`https://wasmtime.dev/`](https://wasmtime.dev/)'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: A fast and secure runtime for WebAssembly, implemented in Rust, backed by the
+    Bytecode Alliance^([10](#Fn10)) nonprofit organization.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Wasmer.io
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`https://wasmer.io/`](https://wasmer.io/)'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Another open-source initiative implemented in Rust; maintainers of the WAPM^([11](#Fn11))
+    project, which is a Wasm package manager.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'WasmEdge:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`https://wasmedge.org/`](https://wasmedge.org/)'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Runtime implemented in C++, general-purpose, but focused on edge computing.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'V8:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[`https://v8.dev/`](https://v8.dev/)'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Google’s monolith JavaScript runtime; written in C++, comes with WebAssembly
+    support as well.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Also, since the WebAssembly specification is public, feel free to implement
+    your own! Beware though: The standard is still in heavy development, changing
+    rapidly every day.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Back to Latency
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Each runtime is free to define its own performance characteristics and guarantees.
+    One interesting feature introduced in Wasmtime is the concept of *fuel*, already
+    mentioned in the earlier discussion of user-defined functions. Combined with the
+    fact that Wasmtime provides an optional asynchronous interface for running WebAssembly
+    modules, it gives users an opportunity to fine-tune the runtime to their latency
+    requirements.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When Wasmtime starts executing a given WebAssembly function, this unit of execution
+    is assigned a certain amount of fuel. Each execution step exhausts a small amount
+    of fuel—at the time of writing this paragraph, it simply consumes one unit of
+    fuel on each WebAssembly bytecode instruction, excluding a few flow control instructions
+    like branching. Once the execution unit runs out of fuel, it yields. After that
+    happens, one of the preconfigured actions is taken: either the execution unit
+    is terminated, or its tank gets refilled and it’s allowed to get back to whatever
+    it was computing. This mechanism allows the developer to control not only the
+    total amount of CPU time that a single function execution can take, but also how
+    often the execution should yield and hand over the CPU for other tasks. Thus,
+    configuring fuel management the right way prevents function executions from taking
+    over the CPU for too long. That helps maintain low, predictable latency in the
+    whole system.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another interesting aspect of WebAssembly is its portability. The fact that
+    the code can be distributed to multiple places and it’s guaranteed to run properly
+    in multiple environments makes it a great candidate for moving not only data,
+    but also computations, closer to the user.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Pushing the database logic from enormous datacenters to smaller ones, located
+    closer to end users, got its own buzzy name: edge computing.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Edge Computing
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Since the Internet of Things (IoT) became a thing, the term *edge computing*
+    needs disambiguation. This paragraph is (unfortunately?) *not* about:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Utilizing the combined computing power of smart fridges in your area
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Creating a data mesh from your local network of Bluetooth light bulbs
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Integrating your smart watch into a Raft cluster in witness mode
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The *edge* described in this paragraph is of a more boring kind. It still means
+    performing computations on servers, but on ones closer to the user (e.g., located
+    in a local Equinix datacenter in Warsaw, rather than Amazon’s `eu-central-1` in
+    Frankfurt).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Performance
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: What does edge computing have to do with database performance? It brings the
+    data closer to the user, and closer physical distance translates to lower latency.
+    On the other hand, having your database cluster distributed to multiple locations
+    has its downsides as well. Moving large amounts of data between those regions
+    might be costly, as cloud vendors tend to charge for cross-region traffic. If
+    the latency between database nodes reaches hundreds of milliseconds, which is
+    the customer grade latency between Northern America and Europe (unless you can
+    afford Hibernia Express^([12](#Fn12))), they can get out of sync easily. Even
+    a few round-trips—and distributed consensus algorithms alone require at least
+    two—can cause delays that exceed the comfort zone of one second. Failure detection
+    mechanisms are also affected since packet loss occurs much more often when the
+    cluster spans multiple geographical locations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Database drivers for edge-friendly databases need to be aware of all these limitations
+    mentioned. In particular, they need to be extra careful to pick the closest region
+    whenever possible, minimizing the latency and the chance of failure.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Conflict-Free Replicated Data Types
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'CRDT (conflict-free replicated data types) is an interesting way of dealing
+    with inconsistencies. It’s a family of data structures designed to have the following
+    characteristics:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Users can update database replicas independently, without coordinating with
+    other database servers.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: There exists an algorithm to automatically resolve conflicts that might occur
+    when the same data is independently written to multiple replicas concurrently.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Replicas are allowed to be in different states, but they are guaranteed to eventually
+    converge to a common state.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The concept of CRDT gained traction along with edge computing because the two
+    complement each other. The database is allowed to keep replicas in multiple places
+    and allows them to act without central coordination—but at the same time, users
+    can assume that *eventually* the database state is going to become consistent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A few interesting data structures that fit the definition of CRDT are discussed
+    next.
+  prefs: []
+  type: TYPE_NORMAL
+- en: G-Counter
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Grow-only counter. Usually implemented as an array of counters, keeping a local
+    counter value per each database node. Two array states from different nodes can
+    be merged by taking the maximum of each respective field. The actual value of
+    the G-Counter is simply a sum of all local counters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PN-Counter
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Positive-Negative counter, brilliantly implemented by keeping two G-Counter
+    instances—one for accumulating positive values, the other for negative ones. The
+    final value is obtained by subtracting one from the other.
+  prefs: []
+  type: TYPE_NORMAL
+- en: G-Set
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Grow-only set, that is, one that forbids the removal of elements. Converging
+    two G-Sets is a simple set union since values are never removed from a G-Set.
+    One flavor of G-Set is G-Map, where an entry, key, and value associated with the
+    key cannot be removed once added.
+  prefs: []
+  type: TYPE_NORMAL
+- en: LWW-Set
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Last-write-wins set (and map, accordingly). This is a combination of two G-Sets,
+    one gathering added elements and the other containing removed ones. Conflict resolution
+    is based on a set union of the “added” G-Set, minus the union of the “removed”
+    G-Set, but timestamps are also taken into account. A value exists if its timestamp
+    in the “added” set is larger than its timestamp in the “removed” set, or if it’s
+    not present in the “removed” set at all.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The list is obviously not exhaustive, and countless other CRDTs exist. You’re
+    hereby encouraged to do research on the topic if you found it interesting!
+  prefs: []
+  type: TYPE_NORMAL
+- en: CRDTs are not just theoretical structures; they are very much used in practice.
+    Variants of conflict-free replicated data types are common among databases that
+    offer eventual consistency, like Apache Cassandra and ScyllaDB. Their writes have
+    last-write-wins semantics for conflict resolution, and their implementation of
+    counters is based on the idea of a PN-Counter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: At this point, it should be clear that there are a number of ways to improve
+    performance by using a database a bit unconventionally, as well as understanding
+    (and tapping) specialized capabilities built into the database and its drivers.
+    Let’s shift gears and look at the top “do’s and don’ts” that we recommend for
+    ensuring that your database is performing at its best. The next chapter begins
+    this discussion by focusing on infrastructure options (CPUs, memory, storage,
+    and networking) and deployment models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[![Creative Commons](../css/cc-by.png)](https://creativecommons.org/licenses/by/4.0)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Open Access** This chapter is licensed under the terms of the Creative Commons
+    Attribution 4.0 International License ([http://​creativecommons.​org/​licenses/​by/​4.​0/​](http://creativecommons.org/licenses/by/4.0/)),
+    which permits use, sharing, adaptation, distribution and reproduction in any medium
+    or format, as long as you give appropriate credit to the original author(s) and
+    the source, provide a link to the Creative Commons license and indicate if changes
+    were made.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The images or other third party material in this chapter are included in the
+    chapter's Creative Commons license, unless indicated otherwise in a credit line
+    to the material. If material is not included in the chapter's Creative Commons
+    license and your intended use is not permitted by statutory regulation or exceeds
+    the permitted use, you will need to obtain permission directly from the copyright
+    holder.
+  prefs: []
+  type: TYPE_NORMAL

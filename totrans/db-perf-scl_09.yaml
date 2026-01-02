@@ -1,0 +1,829 @@
+- en: 10. Monitoring
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '[Taking a Proactive Approach](#Sec1)[Tracking Core Database KPIs](#Sec2)[Creating
+    Effective Custom Alerts](#Sec8)[Walking Through Sample Scenarios](#Sec9)[Monitoring
+    Options](#Sec12)[Summary](#Sec17)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Databases require ongoing care and attention, especially when performance is
+    a priority and the data being stored is growing rapidly and/or changing frequently.
+    Adverse events that could place the business at risk—for example, node failures
+    or a misbehaving client—will inevitably occur. Given the complexity of both databases
+    and data-intensive applications, it’s not a matter of *if* some combination of
+    factors ends up degrading performance, but *when*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Enter observability and monitoring. A proactive approach is the key to understanding
+    and optimizing your baseline performance, catching emerging issues before your
+    end-users feel the pain, and reacting fast when they do. This chapter helps you
+    determine where to focus your monitoring efforts—with examples from different
+    use cases—offers tips for exploring issues as they emerge, and details how you
+    might proceed when your key performance indicators (KPIs) are trending in the
+    wrong direction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Taking a Proactive Approach
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Monitoring often doesn’t become a priority until something goes wrong. Users
+    start complaining about slowness, the system runs out of space, or your application
+    simply stops responding.
+  prefs: []
+  type: TYPE_NORMAL
+- en: At that point, monitoring is a vital tool for digging into the problem, understanding
+    the root cause, and hopefully verifying that your mitigation attempts were successful.
+    Having insightful monitoring and knowing what to look for is invaluable at this
+    point. But what’s even more helpful is the knowledge gained by monitoring performance
+    over time, even when everything was humming along nicely.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you have a good grasp of how your database generally behaves when it works
+    well, it’s much easier to spot the problem when it’s unhealthy. For example, if
+    you see a spike in request concurrency but you know that your system always properly
+    applies a concurrency limiter, then you might focus your investigation on background
+    operations that may be slowing down your database. Or, maybe your application
+    got scaled out to handle more traffic, therefore breaking your previous client-side
+    assumptions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Monitoring trends over time can also help you predict and plan for peaks. For
+    instance, assume you’re a streaming media company. If you know that last year’s
+    version of a big sporting event drew over 25M active users when you had 250M subscribers,
+    you can use that data to make some predictions as to how much traffic you might
+    need to support this year—now that you have almost twice as many subscribers.
+    It’s a similar case for retail, fraud detection, or any other industry that experiences
+    “Black Friday” surges. One of the best ways to prepare for the next peak is to
+    understand what happened during the previous one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Making monitoring a regular routine rather than an emergency response can also
+    help you spot potential issues as they emerge—and avoid them causing a crisis.
+    For example, one of the most common database mistakes is failing to carefully
+    watch disk utilization. By the time you realize that the system is running out
+    of storage space, it might be too late to respond.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As a nice side effect, monitoring can also provide a window into how your data
+    and application usage are evolving. For example, if you note a steady increase
+    in data volume and/or IOPs, you might consider benchmarking your database against
+    what’s feasible in the next year. Maybe you’re already built for that scale, or
+    maybe you need to think about your options for increasing capacity. Additionally,
+    assessing what’s required to achieve the expected latencies at the likely new
+    scale also helps you predict and plan for the associated cost increase.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Note: Do You Need to Monitor a DBaaS?'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You selected a DBaaS because you didn’t want to worry about your database, right?
+    So does that mean you don’t have to worry about monitoring? Yes … and no.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You *should* rest assured that your vendor of choice is carefully watching
+    over your instance with a great deal of automation as well as expertise. If you’re
+    not confident that this is the case, you might want to consider rethinking your
+    DBaaS vendor. But even if you *are* confident, it’s still advisable to keep a
+    close eye on database performance. To earn and retain your trust, your DBaaS vendor
+    should offer full transparency into what they’re monitoring. At a minimum, you
+    should understand:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Which KPIs are correlated to your team’s greatest performance concerns
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: What triggers them to review KPIs, take action internally, and notify you of
+    an issue
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: What level of effort they make in order to guarantee these KPIs
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: It’s probably overkill to keep a DBaaS monitoring dashboard open on one of your
+    monitors 24/7\. But at least know enough for a basic level of confidence that
+    your database—and your DBaaS vendor—are both doing their job.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Tracking Core Database KPIs
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Less is more when you’re tracking database KPIs. We recommend zeroing in on
+    a small set of KPIs in each area (cluster, infrastructure, application) that really
+    matter to your business. Then, showcase those core KPIs prominently in a dashboard
+    and set alerts to trigger when they reach levels that you believe warrant an immediate
+    response. Be brutally honest here. It’s much better to have one custom alert you’ll
+    really act on than 30 you’ll ignore. If you won’t address it immediately, it’s
+    “noise” that will desensitize the team to even the most critical issues.
+  prefs: []
+  type: TYPE_NORMAL
+- en: What about all other KPIs? They’ll be key when it’s time to a) optimize your
+    baseline performance, b) see what’s needed to maintain that performance at a greater
+    scale, or c) diagnose an emerging performance issue.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Rather than try to cover every KPI for every popular high-performance database,
+    let’s take a critical look at what we’ve found are the most common and critical
+    ones for meeting throughput and latency expectations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Database Cluster KPIs
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: These are metrics that provide insight into a database cluster’s health. This
+    bucket might cover things like I/O queues, task groups, internal errors, reads/writes,
+    timeouts and errors, replicas, cache, and change data capture.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The ultimate goal of monitoring a cluster is to ensure a steady state “healthy
+    system.” Before looking at specific KPIs, consider what an ideal cluster state
+    looks like for your database. For example, with a wide column database like ScyllaDB
+    or Cassandra, your target might be:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: All nodes are up and running
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: There are no alerts indicating that a KPI you care about has exceeded the acceptable
+    threshold
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Clients are driving traffic to all nodes and shards in a balanced manner
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Connections are balanced (your driver might balance them automatically)
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The amount of traffic to the various shards is roughly the same
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The queries are spread out across the shards
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Requests for a partition/row are balanced (e.g., you don’t have a “hot partition”
+    with 50 percent of read requests going to a single partition)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Partitions are balanced (e.g., you don’t have an average partition size of .5
+    MB and a few partitions that are 10GB)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The cache hit rate (rows read from the cache) follows a specific distribution
+    pattern
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Disk utilization has enough room to accommodate growth and other background
+    operations, such as compactions
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Here are some specific KPIs to look into regarding your cluster health:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Node availability**: Indicates if a node is online and responding through
+    liveness checks. This can be used to assess whether the node is available on the
+    network and to the rest of the cluster. If the cluster has one or more nodes that
+    are unavailable, this means that the cluster has fewer resources to process its
+    workload, which could result in increased latencies. Note that just because a
+    node is available does not necessarily mean it is healthy.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Average read/write latencies**: Tells you the average latencies per operation
+    type. This is a good way of knowing how your cluster delivers part of the requests,
+    but there is more than meets the eye when you inspect it closely (for example,
+    P99 latencies).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**P99 read/write latencies**: Provides insight into the latency of the 99th
+    percentile of requests in your cluster. Most performance-sensitive use cases aim
+    at keeping P99 latencies (and sometimes P999 latencies) within acceptable ranges
+    for the business case.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Requests per second**: Specifies how many operations per second your database
+    is processing. This KPI, along with latency, is crucial to assess how the cluster
+    processes the intended workloads. A sudden drop in throughput might indicate a
+    network failure, misbehaving clients, or simply when a given high throughput workload
+    processing finished.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Timeouts**: Reveals if any timeouts have recently occurred on the cluster.
+    A timeout is not a bad sign per se. But the team might want to consider how to
+    tackle them from the application side and how to stop timeouts from becoming common
+    on a busy system. A cluster’s timeout rates will usually spike when it is malfunctioning.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Caching**: This can vary from how much data your cache contains to how much
+    data is being read from the cache (as opposed to the disk). The latter measurement
+    will help you assess how the database is using its caching system and if any tuning
+    is required for it. It could also explain some latency spikes, which would be
+    correlated to reads primarily hitting the disk.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Connections**: It is crucial to understand how your database is being accessed
+    over the network. Knowing how many connections are currently active on the database
+    can help you gauge application connectivity issues and understand if connections
+    are balanced throughout the cluster (to catch whether a node is malfunctioning
+    or overloaded).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Garbage Collector (GC)** **pauses**: If you’re using a database that requires
+    GC pauses to purge unused memory objects, pay close attention to how GC pauses
+    may be affecting your latencies and throughput. In general, a GC pause is a small
+    fraction of time when a database is unavailable to process its work. That means
+    that long GC pauses may be wasting resources and hurting your workload.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: What to Look for at Different Levels (Datacenter, Node, CPU/Shard)
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Monitoring solutions will typically provide different views of your distributed
+    topology. For example, a global view of your P99 latencies within a multi-regional
+    active-active deployment will quickly help you identify whether your entire infrastructure
+    is stable and operational. However, when things go wrong, you may need a different
+    level of granularity in order to identify the culprit.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The higher the level of detail you choose, the more data points and information
+    you will have. However, it is not always a good idea to navigate through your
+    monitoring solution with a high level of detail until you identify possible suspects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When investigating an unknown problem, we recommend that you initiate your research
+    with the datacenter-level view if you have a multi-regional topology. This allows
+    you to isolate whether a problem is specifically confined to a single region or
+    whether the problem in question affects all regions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once you have isolated the impacted location, the next step is to look into
+    the data points on a per-node level. This will reveal whether any specific replica
+    may be misbehaving, receiving more requests, experiencing an imbalance, or suffering
+    from higher latencies than the others.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For most databases, a per-node view is the lowest possible level. However,
+    databases with a shard-per-core architecture offer an additional granularity:
+    the CPU level. Switching your observability to the CPU level makes sense once
+    you have identified the main suspects of your performance problem. Otherwise,
+    it will simply show you too many data points that might look unintelligible at
+    first glance. However, when used properly, a per-CPU level view can greatly empower
+    your observability and troubleshooting skills.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Three Industry-Specific Examples
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Here are a few examples of how cluster monitoring approaches vary across industries
+    and use cases:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**AdTech**: AdTech is one of the most recognizable use cases that relies heavily
+    on sub-millisecond latencies. For example, in real-time bidding, a single millisecond
+    spike might be all it takes to miss a targeted ad opportunity. As a result, these
+    use cases often monitor P99, P999, and even P9999 latencies and set up very aggressive
+    custom alerting thresholds so that spikes can be identified and addressed immediately.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Streaming media**: Streaming media use cases typically serve several distinct
+    media types across several tenants, often through different regions. At a region,
+    data balancing is critical since a single bottlenecked shard can introduce a widespread
+    impact.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Blockchain**: Blockchain solutions are typically required to store, compute,
+    and analyze large amounts of data. As the blockchain in question grows, tracking
+    the history of transactions at fast speeds may become very challenging. This specific
+    use case focuses on two main drivers: storage growth and disk I/O performance.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Application KPIs
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Your distributed database is the single most important stateful component in
+    your infrastructure. It is therefore no surprise that many database vendors invest
+    a lot of time and effort into improving and bundling observability capabilities
+    within their products. However, monitoring a database alone can only do so much.
+    There will always be an application (or an entire infrastructure) behind it which,
+    if not observed properly, may cause important business impacts. Application KPIs
+    are the key to exposing things like query issues, poor data models, and unexpected
+    driver behavior.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here are some important KPIs to look into regarding your application (client
+    side):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Latency**: High P99 latency on your client side does not necessarily mean
+    that there’s a problem with your database latency. Client-side latencies will
+    typically be slightly higher than your database latencies due to the natural network
+    round-trip delays involved when communicating to and from your database. However,
+    this metric alone does not help you identify the actual culprit. Look at whether
+    your application is behaving erratically or whether it is simply bottlenecked
+    (in which case, you can scale it out as necessary).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**CPU consumption**: High CPU consumption could stem from several causes. Maybe
+    your client is simply overwhelmed, unable to keep up with the pace of incoming
+    requests. Maybe your request balancing is not appropriate. Maybe a “noisy neighbor”
+    is stealing your CPU capacity, among other things. In general, if you suspect
+    that the root cause of the high CPU consumption is due to an inefficiency in your
+    code, you could collect tracepoints on your code or use advanced Heat Map profiling
+    tools, such as perf.^([1](#Fn1)) Otherwise, simply scaling out your application
+    deployments or moving the application to another host might be enough to resolve
+    the problem.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Network IRQs**: Applications that need to achieve a high throughput with
+    low latencies can be rather network intensive. As a result, a high network IRQ
+    consumption may prevent your application from fully maximizing the intended rate
+    of requests you initially projected. Use low-level CPU observability tools to
+    check your softirq consumption, such as the `top` and `htop` commands available
+    in most Linux platforms. Another mechanism employed to stop IRQs from undermining
+    your performance involves CPU-pinning or simply scaling out your application to
+    run on different host machines.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Readiness/liveness**: Any application is prone to bugs and infrastructure
+    failures. Readiness and liveness probes will help you identify when a specific
+    set of your distributed application may start to misbehave and—in many situations—will
+    automatically redeploy or restart the faulty client. Readiness and liveness probes
+    are standard for Kubernetes stateless applications. Whenever your application
+    pods start to misbehave, your Kubernetes controller will typically take action
+    to move it back into a healthy state. Applications that frequently restart due
+    to readiness or liveness problems may indicate problematic logic, a memory leak,
+    or other issues. Check your application or Kubernetes logs for more details on
+    the actual cause of such events.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**GC pauses**: Many applications are developed in programming languages that
+    experience garbage collection pauses while freeing up memory. Depending on its
+    aggressiveness, it can cause CPU spikes (preventing your application from keeping
+    up with its incoming rate) or introduce severe latency spikes. It indicates either
+    a problematic memory management algorithm, or an inefficiency with your garbage
+    collector overall. Consider spreading out your application to run with more independent
+    clients and see if that improves the situation.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Infrastructure/Hardware KPIs
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Keeping an eye on the database and application sounds reasonable, but what about
+    the underlying hardware and infrastructure? Keeping it all healthy and humming
+    is the top priority of infrastructure teams. After all, what good does tuning
+    and monitoring a database do if the server that powers it goes offline due to
+    a weeks-long malfunction that went unnoticed?
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here are the top infrastructure/hardware KPIs that are relevant from a database
+    perspective:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Disk space utilization**: A database, being a stateful application, certainly
+    has disk space utilization as a top priority KPI. It’s extremely dangerous to
+    have disks reaching full capacity because the database has no option other than
+    to shed requests. A database might even shut itself down to avoid unintentional
+    data loss. Keeping disk utilization well under control is crucial to a healthy,
+    performant database.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Disk bandwidth utilization**: Apart from the disk space utilization, monitor
+    how disks are being actively used and performing. In a world of multi-gigabyte
+    RAM, disk bandwidth cannot fall behind; otherwise, you might risk increased latencies
+    or even a complete failure due to disks being unable to attend to requests within
+    acceptable timeframes.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**CPU utilization**: This is the one and only metric that counts…or is it?
+    CPU utilization can be looked at from different perspectives. On the one hand,
+    the OS might say that a CPU is 100 percent busy and therefore it has certainly
+    reached its limit and cannot possibly accept more work. Right? Wrong! A busy CPU
+    does not always mean that the system has reached its limits. Databases such as
+    ScyllaDB have internal mechanisms to prioritize user workloads over background
+    internal processes such as compactions and repairs. In such a system, it is actually
+    expected to see CPU utilization at 100 percent most of the time—and it does not
+    mean that the system has reached its limits!'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Memory utilization**: No one wants to see a database swapping to disk since
+    it can become very detrimental to performance. Heavy memory pressure can trigger
+    your database to crash (or get its process killed) if the underlying operating
+    system runs out of memory. In general, database nodes should be the only memory-hungry
+    resource running on a given server and the system must be configured to avoid
+    swapping unless strictly necessary.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Network availability**: A distributed database heavily relies on networking
+    in order to communicate with other nodes to replicate your data, liveness information,
+    and—at the same time—serve your application queries. Network failures may introduce
+    a split-brain situation, or make node(s) completely inaccessible momentarily,
+    whereas hitting network bandwidth limits may result in additional latency to your
+    workloads.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Creating Effective Custom Alerts
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Most tools you use to monitor databases provide built-in alerting systems with
+    predefined rules that should meet most users’ needs. But what if you’d sleep better
+    with more specialized monitoring rules and alerts in place?
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, start by understanding what you want to monitor, then see how that can
+    be achieved using existing metrics (or a combination of them). After selecting
+    the metric(s) that will drive the custom alert, think about the frequency of checks
+    and set a threshold for the possible values. For instance, maybe you think that
+    a workload crossing its expected peak for one minute is acceptable, three minutes
+    should trigger warnings, and five minutes indicates something is definitely wrong.
+    Set your monitoring system accordingly and bind the appropriate alerting channels
+    for each type of alert.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Also, make good use of alerting channels! Be sure to tag and appropriately direct
+    each level of alert to its own set of target channels. You don’t want the alerting
+    system automation to silently drop a message on a random Slack channel in the
+    middle of the night if the production system is down.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Walking Through Sample Scenarios
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: To help you see how these principles translate into practice, here are two sample
+    scenarios.
+  prefs: []
+  type: TYPE_NORMAL
+- en: One Replica Is Lagging in Acknowledging Requests
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Assume that you’re looking at the dashboard in Figure [10-1](#Fig1) and notice
+    that one replica is taking much longer than all the others to acknowledge requests.
+    Since the application’s incoming request rate is constant (you’re not throttling
+    requests), the other replicas will also start suffering after some time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../images/541783_1_En_10_Chapter/541783_1_En_10_Fig1_HTML.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: A graph of writes per second versus instance. The writes per second range between
+    14 an d 23.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure 10-1
+  prefs: []
+  type: TYPE_NORMAL
+- en: One replica taking much longer than all the others to acknowledge requests
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To see what’s going on here, let’s look at the foreground and background write
+    queues. But first: what’s a foreground and background queue? Foreground queues
+    are requests that the application directed to the specified node, but were not
+    yet acknowledged back to the client. That is, the requests were received, but
+    are waiting to be processed because the database is currently busy serving other
+    requests. Background queues are application requests that were already acknowledged
+    back to the application, but still require additional work in the database before
+    they can be considered done. Delays replicating data across nodes are typically
+    the reason for high background queues. High foreground and background queues both
+    correlate with high latencies.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: So what’s the true problem here? Figure [10-2](#Fig2) indicates that the application
+    is overloading the system. It’s sending more requests than the database can handle.
+    And since the running time of a single task in a distributed system is governed
+    by the slowest node, the entire system will throttle down to the speed of that
+    slow node.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../images/541783_1_En_10_Chapter/541783_1_En_10_Fig2_HTML.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'A line graph of foreground writes per instance from 0 to 200 versus time from
+    18 : 30 hours to 19 : 55 hours. Most of the lines are below 40 writes per instance.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure 10-2
+  prefs: []
+  type: TYPE_NORMAL
+- en: Foreground writes per shard
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure [10-3](#Fig3) shows that the background queues in other nodes start climbing
+    right after one node gets overwhelmed with requests it can’t handle. This makes
+    sense, because the busy node is clearly taking longer to acknowledge requests
+    sent to it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../images/541783_1_En_10_Chapter/541783_1_En_10_Fig3_HTML.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'A line graph of background writes per instance from 0 to 17.5 versus time from
+    18 : 30 hours to 19 : 55 hours. Most of the lines are below 15 writes per instance.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure 10-3
+  prefs: []
+  type: TYPE_NORMAL
+- en: Background writes per shard
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are a couple of options for resolving this. First, consider modifying
+    the application to throttle requests. If you can’t do that, then scale out the
+    cluster to give it more capacity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Disappointing P99 Read Latencies
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Assume that you’re looking at the dashboard shown in Figure [10-4](#Fig4) and
+    notice that the read latencies seem disappointing. The P99 read latency is 40ms
+    most of the time, with a spike above 100ms under some circumstances. What’s going
+    on here?
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../images/541783_1_En_10_Chapter/541783_1_En_10_Fig4_HTML.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'A line graph of read latency by instance from 0 to 120 milliseconds versus
+    time from 20 : 05 hours to 21 : 05 hours. The highest latency is 112 at around
+    20 : 48 hours.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure 10-4
+  prefs: []
+  type: TYPE_NORMAL
+- en: Disappointing P99 read latencies
+  prefs: []
+  type: TYPE_NORMAL
+- en: To analyze this, let’s look at the internal cache metrics. The Reads with Misses
+    graph in Figure [10-5](#Fig5) shows that the reads aren’t hitting the cache—they’re
+    all going to disk instead. Fetching information from the disk is an order of magnitude
+    slower than doing so from memory. At this point, you know something weird is going
+    on.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../images/541783_1_En_10_Chapter/541783_1_En_10_Fig5_HTML.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'A line graph of reads with misses from 0 to 70 versus time from 20 : 05 hours
+    to 21 : 05 hours. It starts from 0 then rises to around 65, becomes almost flat
+    till 21 : 05 hours and then drops to 0.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure 10-5
+  prefs: []
+  type: TYPE_NORMAL
+- en: Database reads with cache misses; reads are going to disk instead of cache
+  prefs: []
+  type: TYPE_NORMAL
+- en: Similarly, Figure [10-6](#Fig6) shows the cache hits. You can see that almost
+    no requests are being served by the cache. This is a likely indication that the
+    workload in question heavily relies on reading cold (uncached) data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../images/541783_1_En_10_Chapter/541783_1_En_10_Fig6_HTML.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'A line graph of reads with no misses from 0 to 500 versus time from 20 : 05
+    hours to 21 : 05 hours. It starts from around 10 then rises sharply to around
+    500, and then drops sharply to around 10.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure 10-6
+  prefs: []
+  type: TYPE_NORMAL
+- en: Database reads with cache hits
+  prefs: []
+  type: TYPE_NORMAL
+- en: To investigate further, look at the Active SSTable Reads graph in Figure [10-7](#Fig7).
+    Here, you can see that the amount of active read requests going to the disk is
+    quite high.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../images/541783_1_En_10_Chapter/541783_1_En_10_Fig7_HTML.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'A line graph of active S S table reads from 0 to 200 versus time from 20 :
+    05 hours to 21 : 05 hours. Most of the reads are between 30 and 150.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure 10-7
+  prefs: []
+  type: TYPE_NORMAL
+- en: Active SSTable Reads graph showing that the amount of active read requests going
+    to the disk is quite high
+  prefs: []
+  type: TYPE_NORMAL
+- en: On the Queued Reads graph in Figure [10-8](#Fig8), you can see there’s a bit
+    of queuing. This queuing means that the underlying storage system can’t keep up
+    with the request rate. Requests need to wait longer before being served—and latency
+    increases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../images/541783_1_En_10_Chapter/541783_1_En_10_Fig8_HTML.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'A line graph of queued reads from 0 to 3.5 versus time from 20 : 05 hours to
+    21 : 05 hours. Most of the reads are between 0 and 1.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure 10-8
+  prefs: []
+  type: TYPE_NORMAL
+- en: Queued Reads graph demonstrates that several requests are getting queued
+  prefs: []
+  type: TYPE_NORMAL
+- en: How do you resolve this? Review your queries and access patterns to use the
+    cache more efficiently. This is where query analysis is helpful. For example,
+    with CQL, you could look at the distribution of inserts, reads, deletes, and updates,
+    the number of connections per node or shard, and how many rows you’re currently
+    reading. If available, also check whether your queries are following the relevant
+    best practices (for CQL, this could be using prepared statements, token-aware
+    queries, paged queries, and so on).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Also, watch out for queries that require nodes across datacenters to participate
+    before requests are considered successful. Cross-datacenter traffic is usually
+    more expensive in terms of latencies and actual cost. Figure [10-9](#Fig9) shows
+    an example of how to identify queries traversing to remote regions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../images/541783_1_En_10_Chapter/541783_1_En_10_Fig9_HTML.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'A graph of cross data center queries per second versus time from 20 : 05 hours
+    to 21 : 05 hours. The cross data line starts from 0, rises sharply to around 32,
+    becomes stable till 21 : 00 hours and then drops sharply to 0.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure 10-9
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tracking cross-datacenter traffic, which is usually more expensive in terms
+    of latencies and cost
+  prefs: []
+  type: TYPE_NORMAL
+- en: Monitoring Options
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Once you have a good grasp of what you’re looking for, how do you find it? There
+    are a number of tools and technologies available; here’s a quick rundown of the
+    pros and cons of common options.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Database Vendor’s Monitoring Stack
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Under most circumstances, your database’s bundled monitoring solution should
+    be sufficient for gaining insight into how the database is performing. It is typically
+    the recommended solution for a number of reasons. Since it was engineered by your
+    vendor, it likely contains many of the details you should care about the most.
+    Moreover, if you turn to your vendor with a performance problem that you’re unable
+    to diagnose on your own, the vendor is likely to request visibility through their
+    provided solution. For that reason, we recommend that you always deploy your vendor’s
+    monitoring stack—even if you plan to use another solution you prefer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Build Your Own Dashboards and Alerting (Grafana, Grafana Loki)
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: What if the vendor-provided monitoring stack doesn’t allow you customization
+    options and the ability to create additional monitors that could yield additional
+    insight into your use case, application, or database? In this case, it’s great
+    to have the flexibility of going open-source to build your own monitoring stack
+    by stitching together every monitor and chart that you need.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Just keep in mind that a vendor’s monitoring system is usually tuned to provide
+    valuable metrics that are commonly used during troubleshooting. It’s still important
+    to keep that foundation operational alongside the additional monitoring options
+    you and your team decide to use.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Third-Party Database Monitoring Tools
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Some teams might already be using a database monitoring tool that’s built and
+    maintained by someone other than their database vendor. If it’s a tool you’re
+    already familiar with, you get the benefit of working with a familiar solution
+    that’s probably already integrated into your existing monitoring framework. However,
+    you might need to manually build and track all the relevant dashboards you want,
+    which can be tedious and time-consuming. Other potential drawbacks of implementing
+    a third-party monitoring tool can be the lack of vendor support and the risk of
+    your dashboards becoming obsolete whenever your vendor implements a new metric
+    or changes the meaning of a metric.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Full Stack Application Performance Monitoring (APM) Tool
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A full-stack APM system collects remote metrics and aggregates them in a central
+    solution that provides insight across different types of services and products.
+    An organization might use an APM tool for a global view of all assets, services,
+    and nodes across a portfolio. It is the preferred way for larger companies to
+    manage infrastructure, and it certainly has its benefits. It’s usually serverless
+    and only a client is required to push information to the centralized service.
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, a centralized solution requires a subscription and constant internet
+    access. You might also be charged per device and have less flexibility on how
+    to customize metrics collection, create panels and alerts, and so on. APM platforms
+    usually offer a wide range of plugins that can be tailor-made to monitor products.
+    But not all of them are created the same, so your mileage may vary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Teams often ask if their favorite observability solution can impact their performance.
+    Yes, it can. We have learned from experience that some observability or monitoring
+    solutions, especially those that require an agent to be installed on top of your
+    database nodes, may introduce performance problems. In one extreme example, we
+    saw an agent totally hanging the database process, introducing a real business
+    outage. Whenever installing third-party solutions that could directly interact
+    with your database process, ensure that you first consult with your vendor about
+    its compatibility and support.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This chapter began by recommending that you make monitoring a regular habit
+    so that you’re well-prepared to spot emerging issues and effectively diagnose
+    the problem when something goes wrong. It outlined a number of KPIs that have
+    proven helpful for tracking business-critical enterprise deployments. For each
+    KPI, it explained what to look for and offered some tips for how to react when
+    the trends indicate a problem. The chapter offered some high-level guidelines
+    for creating custom alerts. Finally, we walked through two sample monitoring scenarios
+    and shared our take on the pros and cons of different monitoring platform options.
+    The next (and final) chapter looks at the performance impacts of common admin
+    operations and offers some tips on how you might mitigate them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[![Creative Commons](../css/cc-by.png)](https://creativecommons.org/licenses/by/4.0)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Open Access** This chapter is licensed under the terms of the Creative Commons
+    Attribution 4.0 International License ([http://​creativecommons.​org/​licenses/​by/​4.​0/​](http://creativecommons.org/licenses/by/4.0/)),
+    which permits use, sharing, adaptation, distribution and reproduction in any medium
+    or format, as long as you give appropriate credit to the original author(s) and
+    the source, provide a link to the Creative Commons license and indicate if changes
+    were made.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The images or other third party material in this chapter are included in the
+    chapter's Creative Commons license, unless indicated otherwise in a credit line
+    to the material. If material is not included in the chapter's Creative Commons
+    license and your intended use is not permitted by statutory regulation or exceeds
+    the permitted use, you will need to obtain permission directly from the copyright
+    holder.
+  prefs: []
+  type: TYPE_NORMAL

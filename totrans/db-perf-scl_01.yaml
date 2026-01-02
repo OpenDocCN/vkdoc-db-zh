@@ -1,0 +1,1107 @@
+- en: 2. Your Project, Through the Lens of Database Performance
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '[Workload Mix (Read/Write Ratio)](#Sec1)[Item Size](#Sec7)[Item Type](#Sec8)[Dataset
+    Size](#Sec9)[Throughput Expectations](#Sec10)[Latency Expectations](#Sec11)[Concurrency](#Sec12)[Connected
+    Technologies](#Sec13)[Demand Fluctuations](#Sec14)[ACID Transactions](#Sec15)[Consistency
+    Expectations](#Sec16)[Geographic Distribution](#Sec17)[High-Availability Expectations](#Sec18)[Summary](#Sec19)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The specific database performance constraints and optimization opportunities
+    your team will face vary wildly based on your specific workload, application,
+    and business expectations. This chapter is designed to get you and your team talking
+    about how much you can feasibly optimize your performance, spotlight some specific
+    lessons related to common situations, and also help you set realistic expectations
+    if you’re saddled with burdens like large payload sizes and strict consistency
+    requirements. The chapter starts by looking at technical factors, such as the
+    read/write ratio of your workload, item size/type, and so on. Then, it shifts
+    over to business considerations like consistency requirements and high availability
+    expectations. Throughout, the chapter talks about database attributes that have
+    proven to be helpful—or limiting—in different contexts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since this chapter covers a broad range of scenarios, not everything will be
+    applicable to your specific project and workload. Feel free to skim this chapter
+    and focus on the sections that seem most relevant.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Workload Mix (Read/Write Ratio)
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Whether it’s read-heavy, write-heavy, evenly-mixed, delete-heavy, and so on,
+    understanding and accommodating your read/write ratio is a critical but commonly
+    overlooked aspect of database performance. Some databases shine with read-heavy
+    workloads, others are optimized for write-heavy situations, and some are built
+    to accommodate both. Selecting, or sticking with, one that’s a poor fit for your
+    current and future situation will be a significant burden that will be difficult
+    to overcome, no matter how strategically you optimize everything else.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There’s also a significant impact to cost. That might not seem directly related
+    to performance, but if you can’t afford (or get approval for) the infrastructure
+    that you truly need to support your workload, this will clearly limit your performance.^([1](#Fn1))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tip
+  prefs: []
+  type: TYPE_NORMAL
+- en: Not sure what your workload looks like? This is one of many situations where
+    observability is your friend. If your existing database doesn’t help you profile
+    your workload, consider if it’s feasible to try your workloads on a compatible
+    database that enables deeper visibility.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Write-Heavy Workloads
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'If you have a write-heavy workload, we strongly recommend a database that stores
+    data in immutable files (e.g., Cassandra, ScyllaDB, and others that use LSM trees).^([2](#Fn2))
+    These databases optimize write speed because: 1) writes are sequential, which
+    is faster in terms of disk I/O and 2) writes are performed immediately, without
+    first worrying about reading or updating existing values (like databases that
+    rely on B-trees do). As a result, you can typically write a lot of data with very
+    low latencies.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, if you opt for a write-optimized database, be prepared for higher storage
+    requirements and the potential for slower reads. When you work with immutable
+    files, you’ll need sufficient storage to keep all the immutable files that build
+    up until compaction runs.^([3](#Fn3)) You can mitigate the storage needs to some
+    extent by choosing compaction strategies carefully. Plus, storage is relatively
+    inexpensive these days.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The potential for read amplification is generally a more significant concern
+    with write-optimized databases (given all the files to search through, more disk
+    reads are required per read request).
+  prefs: []
+  type: TYPE_NORMAL
+- en: But read performance doesn’t necessarily need to suffer. You can often minimize
+    this tradeoff with a write-optimized database that implements its own caching
+    subsystem (as opposed to those that rely on the operating system’s built-in cache),
+    enabling fast reads to coexist alongside extremely fast writes. Bypassing the
+    underlying OS with a performance-focused built-in cache should speed up your reads
+    nicely, to the point where the latencies are nearly comparable to read-optimized
+    databases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: With a write-heavy workload, it’s also essential to have extremely fast storage,
+    such as NVMe drives, if your peak throughput is high. Having a database that can
+    *theoretically* store values rapidly ultimately won’t help if the disk itself
+    can’t keep pace.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Another consideration: beware that write-heavy workloads can result in surprisingly
+    high costs as you scale. Writes cost around five times more than reads under some
+    vendors’ pricing models. Before you invest too much effort in performance optimizations,
+    and so on, it’s a good idea to price your solution at scale and make sure it’s
+    a good long-term fit.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Read-Heavy Workloads
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: With read-heavy workloads, things change a bit. B-tree databases (such as DynamoDB)
+    are optimized for reads (that’s the payoff for the extra time required to update
+    values on the write path). However, the advantage that read-optimized databases
+    offer for reads is generally not as significant as the advantage that write-optimized
+    databases offer for writes, especially if the write-optimized database uses internal
+    caching to make up the difference (as noted in the previous section).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Careful data modeling will pay off in spades for optimizing your reads. So
+    will careful selection of read consistency (are eventually consistent reads acceptable
+    as opposed to strongly consistent ones?), locating your database near your application,
+    and performing a thorough analysis of your query access patterns. Thinking about
+    your access patterns is especially crucial for success with a read-heavy workload.
+    Consider aspects such as the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: What is the nature of the data that the application will be querying mostly
+    frequently? Does it tolerate potentially stale reads or does it require immediate
+    consistency?
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How frequently is it accessed (e.g., is it frequently-accessed “hot” data that
+    is likely cached, or is it rarely-accessed “cold” data)?
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Does it require aggregations, JOINs, and/or querying flexibility on fields that
+    are not part of your primary key component?
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Speaking of primary keys, what is the level of cardinality?
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For example, assume that your use case requires dynamic querying capabilities
+    (such as type-ahead use cases, report-building solutions, etc.) where you frequently
+    need to query data from columns other than your primary/hash key component. In
+    this case, you might find yourself performing full table scans all too frequently,
+    or relying on too many indexes. Both of these, in one way or another, may eventually
+    undermine your read performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: On the infrastructure side, selecting servers with high memory footprints is
+    key for enabling low read latencies if you will mostly serve data that is frequently
+    accessed. On the other hand, if your reads mostly hit cold data, you will want
+    a nice balance between your storage speeds and memory. In fact, many distributed
+    databases typically reserve some memory space specifically for caching indexes;
+    this way, reads that inevitably require going to disk won’t waste I/O by scanning
+    through irrelevant data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'What if the use case requires reading from both hot and cold data at the same
+    time? And what if you have different latency requirements for each set of data?
+    Or what if you want to mix a real-time workload on top of your analytics workload
+    for the very same dataset? Situations like this are quite common. There’s no one-size-fits-all
+    answer, but here are a few important tips:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some databases will allow you to read data without polluting your cache (e.g.,
+    filling it up with data that is unlikely to be requested again). Using such a
+    mechanism is especially important when you’re running large scans while simultaneously
+    serving real-time data. If the large scans were allowed to override the previously
+    cached entries that the real-time workload required, those reads would have to
+    go through disk and get repopulated into the cache again. This would effectively
+    waste precious processing time and result in elevated latencies.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For use cases requiring a distinction between hot/cold data storage (for cost
+    savings, different latency requirements, or both), then solutions using *tiered
+    storage* (a method of prioritizing data storage based on a range of requirements,
+    such as performance and costs) are likely a good fit.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Some databases will permit you to prioritize some workloads over others. If
+    that’s not sufficient, you can go one step further and completely isolate such
+    workloads logically.^([4](#Fn4))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You might not need all your reads. At ScyllaDB, we’ve come across a number
+    of cases where teams are performing reads that they don’t really need. For example,
+    by using a read-before-write approach to avoid race conditions where multiple
+    clients are trying to update the same value with different updates at the same
+    time. The details of the solution aren’t relevant here, but it is important to
+    note that, by rethinking their approach, they were able to shave latencies off
+    their writes as well as speed up the overall response by eliminating the unnecessary
+    read. The moral here: Getting new eyes on your existing approaches might surface
+    a way to unlock unexpected performance optimizations.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Mixed Workloads
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'More evenly mixed access patterns are generally even more complex to analyze
+    and accommodate. In general, the reason that mixed workloads are so complex in
+    nature is due to the fact that there are two competing workloads from the database
+    perspective. Databases are essentially made for just two things: reading and writing.
+    The way that different databases handle a variety of competing workloads is what
+    truly differentiates one solution from another. As you test and compare databases,
+    experiment with different read/write ratios so you can adequately prepare yourself
+    for scenarios when your access patterns may change.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Be sure to consider nuances like whether your reads are from cold data (data
+    not often accessed) or hot data (data that’s accessed often and likely cached).
+    Analytics use cases tend to read cold data frequently because they need to process
+    large amounts of data. In this case, disk speeds are very important for overall
+    performance. Plus, you’ll want a comfortably large amount of memory so that the
+    database’s cache can hold the data that you need to process. On the other hand,
+    if you frequently access hot data, most of your data will be served from the cache,
+    in such a way that the disk speeds become less important (although not negligible).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tip
+  prefs: []
+  type: TYPE_NORMAL
+- en: Not sure if your reads are from cold or hot data? Take a look at the ratio of
+    cache misses in your monitoring dashboards. For more on monitoring, see Chapter
+    [10](541783_1_En_10_Chapter.xhtml).
+  prefs: []
+  type: TYPE_NORMAL
+- en: If your ratio of cache misses is higher than hits, this means that reads need
+    to frequently hit the disks in order to look up your data. This may happen because
+    your database is underprovisioned in memory space, or simply because the application
+    access patterns often read infrequently accessed data. It is important to understand
+    the performance implications here. If you’re frequently reading from cold data,
+    there’s a risk that I/O will become the bottleneck—for writes as well as reads.
+    In that case, if you need to improve performance, adding more nodes or switching
+    your storage medium to a faster solution could be helpful.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As noted earlier, write-optimized databases can improve read latency via internal
+    caching, so it’s not uncommon for a team with, say, 60 percent reads and 40 percent
+    writes to opt for a write-optimized database. Another option is to boost the latency
+    of reads with a write-optimized database: If your database supports it, dedicate
+    extra “shares” of resources to the reads so that your read workload is prioritized
+    when there is resource contention.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Delete-Heavy Workloads
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: What about delete-heavy workloads, such as using your database as a durable
+    queue (saving data from a producer until the consumer accesses it, deleting it,
+    then starting the cycle over and over again)? Here, you generally want to avoid
+    databases that store data in immutable files and use tombstones to mark rows and
+    columns that are slated for deletion. The most notable examples are Cassandra
+    and other Cassandra-compatible databases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tombstones consume cache space and disk resources, and the database needs to
+    search through all these tombstones to reach the live data. For many workloads,
+    this is not a problem. But for delete-heavy workloads, generating an excessive
+    amount of tombstones will, over time, significantly degrade your read latencies.
+    There are ways and mechanisms to mitigate the impact of tombstones.^([5](#Fn5))
+    However, in general, if you have a delete-heavy workload, it may be best to use
+    a different database.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is important to note that occasional deletes are generally fine on Cassandra
+    and Cassandra-compatible databases. Just be aware of the fact that deletes on
+    append-only databases result in tombstone writes. As a result, these may incur
+    read amplification, elevating your read latencies. Tombstones and data eviction
+    in these types of databases are potentially long and complex subjects that perhaps
+    could have their own dedicated chapter. However, the high-level recommendation
+    is to exercise caution if you have a potentially delete-heavy pattern that you
+    might later read from, and be sure to combine it with a compaction strategy tailored
+    for efficient data eviction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: All that being said, it is interesting to note that some teams have successfully
+    implemented delete-heavy workloads on top of Cassandra and Cassandra-like databases.
+    The performance overhead carried by tombstones is generally circumvented by a
+    combination of data modeling, a careful study of how deletes are performed, avoiding
+    reads that potentially scan through a large set of deleted data, and careful tuning
+    over the underlying table’s compaction strategy to ensure that tombstones get
+    evicted in a timely manner. For example, Tencent Games used the Time Window Compaction
+    Strategy to aggressively expire tombstones and use it as the foundation for a
+    time series distributed queue.^([6](#Fn6))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Competing Workloads (Real-Time vs Batch)
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: If you’re working with two different types of workloads—one more latency-sensitive
+    than the other—the ideal solution is to have the database dedicate more resources
+    to the more latency-sensitive workloads to keep them from faltering due to insufficient
+    resources. This is commonly the case when you are attempting to balance OLTP (real-time)
+    workloads, which are user-facing and require low latency responses, with OLAP
+    (analytical) workloads, which can be run in batch mode and are more focused on
+    throughput (see Figure [2-1](#Fig1)). Or, you can prioritize analytics. Both are
+    technically feasible; it just boils down to what’s most important for your use
+    case.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../images/541783_1_En_2_Chapter/541783_1_En_2_Fig1_HTML.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: A block diagram of O L T P and OLAP. A database cluster sends and receives data
+    to and from an O L T P client and an O L A P client.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure 2-1
+  prefs: []
+  type: TYPE_NORMAL
+- en: OLTP vs OLAP workloads
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For example, assume you have a web server database with analytics. It must
+    support two workloads:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The main workload consists of queries triggered by a user clicking or navigating
+    on some areas of the web page. Here, users expect high responsiveness, which usually
+    translates to requirements for low latency. You need low timeouts with load shedding
+    as your overload response, and you would like to have a lot of dedicated resources
+    available whenever this workload needs them.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A second workload drives analytics being run periodically to collect some statistics
+    or to aggregate some information that should be presented to users. This involves
+    a series of computations. It’s a lot less sensitive to latency than the main workload;
+    it’s more throughput oriented. You can have fairly large timeouts to accommodate
+    for always full queues. You would like to throttle requests under load so the
+    computation is stable and controllable. And finally, you would like the workload
+    to have very few dedicated resources and use mostly unused resources to achieve
+    better cluster utilization.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Running on the same cluster, such workloads would be competing for resources.
+    As system utilization rises, the database must strictly prioritize which activities
+    get what specific share of resources under contention. There are a few different
+    ways you can handle this. Physical isolation, logical isolation, and scheduled
+    isolation can all be acceptable choices under the right circumstances. Chapter
+    [8](541783_1_En_8_Chapter.xhtml) covers these options.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Item Size
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The size of the items you are storing in the database (average payload size)
+    will dictate whether your workload is CPU bound or storage bound. For example,
+    running 100K OPS with an average payload size of 90KB is much different than achieving
+    the same throughput with a 1KB payload. Higher payloads require more processing,
+    I/O, and network traffic than smaller payloads.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Without getting too deep into database internals here, one notable impact is
+    on the page cache. Assuming a default page cache size of 4KB, the database would
+    have to serve several pages for the largest payload—that’s much more I/O to issue,
+    process, merge, and serve back to the application clients. With the 1KB example,
+    you could serve it from a single-page cache entry, which is less taxing from a
+    compute resource perspective. Conversely, having a large number of smaller-sized
+    items may introduce CPU overhead compared to having a smaller number of larger
+    items because the database must process each arriving item individually.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In general, the larger the payload gets, the more cache activity you will have.
+    Most write-optimized databases will store your writes in memory before persisting
+    that information to the disk (in fact, that’s one of the reasons why they are
+    write-optimized). Larger payloads deplete the available cache space more frequently,
+    and this incurs a higher flushing activity to persist the information on disk
+    in order to release space for more incoming writes. Therefore, more disk I/O is
+    needed to persist that information. If you don’t size this properly, it can become
+    a bottleneck throughout this repetitive process.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When you’re working with extremely large payloads, it’s important to set realistic
+    latency and throughput expectations. If you need to serve 200KB payloads, it’s
+    unlikely that any database will enable you to achieve single-digit millisecond
+    latencies. Even if the entire dataset is served from cache, there’s a physical
+    barrier between your client and the database: networking. The network between
+    them will eventually throttle your transfer speeds, even with an insanely fast
+    client and database. Eventually, this will impact throughput as well as latency.
+    As your latency increases, your client will eventually throttle down and you won’t
+    be able to achieve the same throughput that you could with smaller payload sizes.
+    The requests would be stalled, queuing in the network.^([7](#Fn7))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Generally speaking, databases should not be used to store large blobs. We’ve
+    seen people trying to store gigabytes of data within a single-key in a database—and
+    this isn’t a great idea. If your item size is reaching this scale, consider alternative
+    solutions. One solution is to use CDNs. Another is to store the largest chunk
+    of your payload size in cold storage like Amazon S3 buckets, Google Cloud storage,
+    or Azure blob storage. Then, use the database as a metadata lookup: It can read
+    the data and fetch an identifier that will help find the data in that cold storage.
+    For example, this is the strategy used by a game developer converting extremely
+    large (often in the gigabyte range) content to popular gaming platforms. They
+    store structured objects with blobs that are referenced by a content hash. The
+    largest payload is stored within a cloud vendor Object Storage solution, whereas
+    the content hash is stored in a distributed NoSQL database.^([8](#Fn8))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that some databases impose hard limits on item size. For example, DynamoDB
+    currently has a maximum item size of 400KB. This might not suit your needs. On
+    top of that, if you’re using an in-memory solution such as Redis, larger keys
+    will quickly deplete your memory. In this case, it might make sense to hash/compress
+    such large objects prior to storing them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: No matter which database you choose, the smaller your payload, the greater your
+    chances of introducing memory fragmentation. This might reduce your memory efficiency,
+    which might in turn elevate costs because the database won’t be able to fully
+    utilize its available memory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Item Type
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The item type has a large impact on compression, which in turn impacts your
+    storage utilization. If you’re frequently storing text, expect to take advantage
+    of a high compression ratio. But, that’s not the case for random and uncommon
+    blob sequences. Here, compression is unlikely to make a measurable reduction in
+    your storage footprint. If you’re concerned about your use case’s storage utilization,
+    using a compression-friendly item type can make a big difference.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If your use case dictates a certain item type, consider databases that are optimized
+    for that type. For example, if you need to frequently process JSON data that you
+    can’t easily transform, a document database like MongoDB might be a better option
+    than a Cassandra-compatible database. If you have JSON with some common fields
+    and others that vary based on user input, it might be complicated—though possible—to
+    model them in Cassandra. However, you’d incur a penalty from serialization/deserialization
+    overhead required on the application side.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As a general rule of thumb, choose the data type that’s the minimum needed to
+    store the type of data you need. For example, you don’t need to store a year as
+    a `bigint`. If you define a field as a `bigint`, most databases allocate relevant
+    memory address spaces for holding it. If you can get by with a smaller type of
+    `int`, do it—you’ll save bytes of memory, which could add up at scale. Even if
+    the database you use doesn’t pre-allocate memory address spaces according to data
+    types, choosing the correct one is still a nice way to have an organized data
+    model—and also to avoid future questions around why a particular data type was
+    chosen as opposed to another.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Many databases support additional item types which suit a variety of use cases.
+    Collections, for example, allow you to store sets, lists, and maps (key-value
+    pairs) under a single column in wide column databases. Such data types are often
+    misused, and lead to severe performance problems. In fact, most of the data modeling
+    problems we’ve come across involve misuse of collections. Collections are meant
+    to store a small amount of information (such as phone numbers of an individual
+    or different home/business addresses). However, collections with hundreds of thousands
+    of entries are unfortunately not as rare as you might expect. They end up introducing
+    a severe de-serialization overhead on the database. At best, this translates to
+    higher latencies. At worst, this makes the data entirely unreadable due to the
+    latency involved when scanning through the high number of items under such columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Some databases also support user created fields, such as User-Defined Types
+    (UDTs) in Cassandra. UDTs can be a great ally for reducing the de-serialization
+    overhead when you combine several columns into one. Think about it: Would you
+    rather de-serialize four Boolean columns individually or a single column with
+    four Boolean values? UDTs will typically shine on deserializing several values
+    as a single column, which may give you a nice performance boost.^([9](#Fn9)) Just
+    like collections, however, UDTs should not be misused—and misusing UDTs can lead
+    to the same severe impacts that are incurred by collections.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: UDTs are quite extensively covered in Chapter [6](541783_1_En_6_Chapter.xhtml).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Dataset Size
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Knowing your dataset size is important for selecting appropriate infrastructure
+    options. For example, AWS cloud instances have a broad array of NVMe storage offerings.
+    Having a good grasp of how much storage you need can help you avoid selecting
+    an instance that causes performance to suffer (if you end up with insufficient
+    storage) or that’s wasteful from a cost perspective (if you overprovision).
+  prefs: []
+  type: TYPE_NORMAL
+- en: It’s important to note that your selected storage size should not be equal to
+    your total dataset size. You also need to factor in replication and growth—plus
+    steer clear of 100 percent storage utilization.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, let’s assume you have 3TB of already compressed data. The bare
+    minimum to support a workload is your current dataset size multiplied by your
+    anticipated replication. If you have 3TB of data with the common replication factor
+    of three, that gives you 9TB. If you naively deployed this on three nodes supporting
+    3TB of data each, you’d hit near 100 percent disk utilization which, of course,
+    is not optimal.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Instead, if you factor in some free space and minimal room for growth, you’d
+    want to start with at least six nodes of that size—each storing only 1.5TB of
+    data. This gives you around 50 percent utilization. On the other hand, if your
+    database cannot support that much data per node (every database has a limit) or
+    if you do not foresee much future data growth, you could have six nodes supporting
+    2TB each, which would store approximately 1.5TB per replica under a 75 percent
+    utilization. Remember: Factoring in your growth is critical for avoiding unpleasant
+    surprises in production, from an operational as well as a budget perspective.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: We very intentionally discussed the dataset size from a *compressed* data standpoint.
+    Be aware that some database vendors measure your storage utilization with respect
+    to *uncompressed* data. This often leads to confusion. If you’re moving data from
+    one database solution to another and your data is uncompressed (or you’re not
+    certain it’s compressed), consider loading a small fraction of your total dataset
+    beforehand in order to determine its compression ratio. Effective compression
+    can dramatically reduce your storage footprint.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you’re working on a very fluid project and can’t define or predict your dataset
+    size, a serverless database deployment model might be a good option to provide
+    easy flexibility and scaling. But, be aware that rapid increases in overall dataset
+    size and/or IOPS (depending on the pricing model) could cause the price to skyrocket
+    exponentially. Even if you don’t explicitly pay a penalty for storing a large
+    dataset, you might be charged a premium for the many operations that are likely
+    associated with that large dataset. Serverless is discussed more in Chapter [7](541783_1_En_7_Chapter.xhtml).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Throughput Expectations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Your expected throughput and latency should be your “north star” from database
+    and infrastructure selection all the way to monitoring. Let’s start with throughput.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you’re serious about database performance, it’s essential to know what throughput
+    you’re trying to achieve—and “high throughput” is not an acceptable answer. Specifically,
+    try to get all relevant stakeholders’ agreement on your target number of *peak*
+    read operations per second and *peak* write operations per second *for each workload*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s unravel that a little. First, be sure to separate read throughput vs write
+    throughput. A database’s read path is usually quite distinct from its write path.
+    It stresses different parts of the infrastructure and taps different database
+    internals. And the client/user experience of reads is often quite different than
+    that of writes. Lumping them together into a meaningless number won’t help you
+    much with respect to performance measurement or optimization. The main use for
+    average throughput is in applying Little’s Law (more on that in the “Concurrency”
+    section a little later in this chapter).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Another caveat: The same database’s past or current throughput with one use
+    case is no guarantee of future results with another—even if it’s the same database
+    hosted on identical infrastructure. There are too many different factors at play
+    (item size, access patterns, concurrency… all the things in this chapter, really).
+    What’s a great fit for one use case could be quite inappropriate for another.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Also, note the emphasis on *peak* operations per second. If you build and optimize
+    with an average in mind, you likely won’t be able to service beyond the upper
+    ranges of that average. Focus on the peak throughput that you need to sustain
+    to cover your core needs and business patterns—including surges. Realize that
+    databases can often “boost” to sustain short bursts of exceptionally high load.
+    However, to be safe, it’s best to plan for your likely peaks and reserve boosting
+    for atypical situations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Also, be sure not to confuse concurrency with throughput. *Throughput* is the
+    speed at which the database can perform read or write operations; it’s measured
+    in the number of read or write operations per second. *Concurrency* is the number
+    of requests that the client sends to the database at the same time (which, in
+    turn, will eventually translate to a given number of concurrent requests queuing
+    at the database for execution). Concurrency is expressed as a hard number, not
+    a rate over a period of time. Not every request that is born at the same time
+    will be able to be processed by the database at the same time. Your client could
+    send 150K requests to the database, all at once. The database might blaze through
+    all these concurrent requests if it’s running at 500K OPS. Or, it might take a
+    while to process them if the database throughput tops out at 50K OPS.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'It is generally possible to increase throughput by increasing your cluster
+    size (and/or power). But, you also want to pay special attention to concurrency,
+    which will be discussed in more depth later in this chapter as well as in Chapter
+    [5](541783_1_En_5_Chapter.xhtml). For the most part, high concurrency is essential
+    for achieving impressive performance. But if the clients end up overwhelming the
+    database with a concurrency that it can’t handle, throughput will suffer, then
+    latency will rise as a side effect. A friendly reminder that transcends the database
+    world: No system, distributed or not, supports unlimited concurrency. Period.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Even though scaling a cluster boosts your database processing capacity, remember
+    that the application access patterns directly contribute to how much impact that
+    will ultimately make. One situation where scaling a cluster may not provide the
+    desired throughput increase is during a *hot partition*^([10](#Fn10)) situation,
+    which causes traffic to be primarily targeted to a specific set of replicas. In
+    these cases, throttling the access to such hot keys is fundamental for preserving
+    the system’s overall performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Latency Expectations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Latency is a more complex challenge than throughput: You can increase throughput
+    by adding more nodes, but there’s no simple solution for reducing latency. The
+    lower the latency you need to achieve, the more important it becomes to understand
+    and explore database tradeoffs and internal database optimizations that can help
+    you shave milliseconds or microseconds off latencies. Database internals, driver
+    optimizations, efficient CPU utilization, sufficient RAM, efficient data modeling…
+    everything matters.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: As with throughput, aim for all relevant stakeholders’ agreement on the acceptable
+    latencies. This is usually expressed as latency for a certain percentile of requests.
+    For performance-sensitive workloads, tracking at the 99th percentile (P99) is
+    common. Some teams go even higher, such as the P9999, which refers to the 99.99th
+    percentile.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As with throughput, avoid focusing on *average* (mean) or median (P50) latency
+    measurements. Average latency is a theoretical measurement that is not directly
+    correlated to anything systems or users experience in reality. Averages conceal
+    outliers: Extreme deviations from the norm that may have a large and unexpected
+    impact on overall system performance, and hence on user experience.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, look at the discrepancy between average latencies and P99 latencies
+    in Figure [2-2](#Fig2) (different colors represent different database nodes).
+    P99 latencies were often double the average for reads, and even worse for writes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../images/541783_1_En_2_Chapter/541783_1_En_2_Fig2_HTML.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Six database graphs of average read or write latency versus instance. In the
+    first graph, average read latency is mostly between 2 and 6 milliseconds.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure 2-2
+  prefs: []
+  type: TYPE_NORMAL
+- en: A sample database monitoring dashboard. Note the difference between average
+    and P99 latencies
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that monitoring systems are sometimes configured in ways that omit outliers.
+    For example, if a monitoring system is calibrated to measure latency on a scale
+    of 0 to 1000ms, it is going to overlook any larger measurements—thus failing to
+    detect the serious issues of query timeouts and retries.
+  prefs: []
+  type: TYPE_NORMAL
+- en: P99 and above percentiles are not perfect.^([11](#Fn11)) But for latency-sensitive
+    use cases, they’re the number you’ll want to keep in mind as you are selecting
+    your infrastructure, benchmarking, monitoring, and so on.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Also, be clear about what exactly is involved in the P99 you are looking to
+    achieve. Database latency is the time that elapses between when the database receives
+    a request, processes it, and sends back an appropriate response. Client-side latency
+    is broader: Here, the measurement starts with the client sending the request and
+    ends with the client receiving the database’s response. It includes the network
+    time and client-side processing. There can be quite a discrepancy between database
+    latency and client-side latency; a ten times higher client-side latency isn’t
+    all that uncommon (although clearly not desirable). There could be many culprits
+    to blame for a significantly higher client-side latency than database latency:
+    excessive concurrency, inefficient application architecture, coding issues, and
+    so on. But that’s beyond the scope of this discussion—beyond the scope of this
+    book, even.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The key point here is that your team and all the stakeholders need to be on
+    the same page regarding what you’re measuring. For example, say you’re given a
+    read latency requirement of 15ms. You work hard to get your database to achieve
+    that and report that you met the expectation—then you learn that stakeholders
+    actually expect 15ms for the full client-side latency. Back to the drawing board.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Ultimately, it’s important to track both database latency and client-side latency.
+    You can optimize the database all you want, but if the application is introducing
+    latency issues from the client side, a fast database won’t have much impact. Without
+    visibility into both the database and the client-side latencies, you’re essentially
+    flying half blind.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Concurrency
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: What level of concurrency should your database be prepared to handle? Depending
+    on the desired qualities of service from the database cluster, concurrency must
+    be judiciously balanced to reach appropriate throughput and latency values. Otherwise,
+    requests will pile up waiting to be processed—causing latencies to spike, timeouts
+    to rise, and the overall user experience to degrade.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Little’s Law establishes that:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: L=λW
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: where λ is the average throughput, W is the average latency, and L represents
+    the total number of requests either being processed or on queue at any given moment
+    when the cluster reaches steady state. Given that your throughput and latency
+    targets are usually fixed, you can use Little’s Law to estimate a realistic concurrency.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, if you want a system to serve 500,000 requests per second at 2.5ms
+    average latency, the best concurrency is around 1,250 in-flight requests. As you
+    approach the saturation limit of the system—around 600,000 requests per second
+    for read requests—increases in concurrency will keep constant since this is the
+    physical limit of the database. Every new in-flight request will only cause increased
+    latency. In fact, if you approximate 600,000 requests per second as the physical
+    capacity of this database, you can calculate the expected average latency at a
+    particular concurrency point. For example, at 6,120 in-flight requests, the average
+    latency is expected to be 6120/600,000 = 10ms.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Past the maximum throughput, increasing concurrency will increase latency. Conversely,
+    reducing concurrency will reduce latency, provided that this reduction does not
+    result in a decrease in throughput.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In some use cases, it’s fine for queries to pile up on the client side. But
+    many times it’s not. In those cases, you can scale out your cluster or increase
+    the concurrency on the application side—at least to the point where the latency
+    doesn’t suffer. It’s a delicate balancing act.^([12](#Fn12))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Connected Technologies
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A database can’t rise above the slowest-performing link in your distributed
+    data system. Even if your database is processing reads and writes at blazing speeds,
+    it won’t ultimately matter much if it interacts with an event-streaming platform
+    that’s not optimized for performance or involves transformations from a poorly-configured
+    Apache Spark instance, for example.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is just one of many reasons that taking a comprehensive and proactive approach
+    to monitoring (more on this in Chapter [10](541783_1_En_10_Chapter.xhtml)) is
+    so important. Given the complexity of databases and distributed data systems,
+    it’s hard to guess what component is to blame for a problem. Without a window
+    into the state of the broader system, you could naively waste amazing amounts
+    of time and resources trying to optimize something that won’t make any difference.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you’re looking to optimize an existing data system, don’t overlook the performance
+    gains you can achieve by reviewing and tuning its connected components. Or, if
+    your monitoring efforts indicate that a certain component is to blame for your
+    client-side performance problems but you feel you’ve hit your limit with it, explore
+    what’s required to replace it with a more performant alternative. Use benchmarking
+    to determine the severity of the impact from a performance perspective.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Also, note that some database offerings may have ecosystem limitations. For
+    example, if you’re considering a serverless deployment model, be aware that some
+    Change Data Capture (CDC) connectors, drivers, and so on, might not be supported.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Demand Fluctuations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Databases might experience a variety of different demand fluctuations, ranging
+    from predictable moderate fluctuations to unpredictable and dramatic spikes. For
+    instance, the world’s most watched sporting event experiences different fluctuations
+    than a food delivery service, which experiences different fluctuations than an
+    ambulance-tracking service—and all require different strategies and infrastructure.
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, let’s look at the predictable fluctuations. With predictability, it’s
+    much easier to get ahead of the issue. If you’re expected to support periodic
+    big events that are known in advance (Black Friday, sporting championships, ticket
+    on sales, etc.), you should have adequate time to scale up your cluster for each
+    anticipated spike. That means you can tailor your normal topology for the typical
+    day-in, day-out demands without having to constantly incur the costs and admin
+    burden of having that larger scale topology.
+  prefs: []
+  type: TYPE_NORMAL
+- en: On the other side of the spikiness spectrum, there’s applications with traffic
+    with dramatic peaks and valleys across the course of each day. For example, consider
+    food delivery businesses, which face a sudden increase around lunch, followed
+    by a few hours of minimal traffic, then a second spike at dinner time (and sometimes
+    breakfast the following morning). Expanding the cluster for each spike—even with
+    “autoscaling” (more on autoscaling later in this chapter)—is unlikely to deliver
+    the necessary performance gain fast enough. In these cases, you should provision
+    an infrastructure that supports the peak traffic.
+  prefs: []
+  type: TYPE_NORMAL
+- en: But not all spikes are predictable. Certain industries—such as emergency services,
+    news, and social media—are susceptible to sudden massive spikes. In this case,
+    a good preventative strategy is to control your concurrency on the client side,
+    so it doesn’t overwhelm your database. However, controlling concurrency might
+    not be an option for use cases with strict end-to-end latency requirements. You
+    can also scramble to scale out your clusters as fast as feasible when the spike
+    occurs. This is going to be markedly simpler if you’re on the cloud than if you’re
+    on-prem. If you can start adding nodes immediately, increase capacity incrementally—with
+    a close eye on your monitoring results—and keep going until you’re satisfied with
+    the results, or until the peak has subsided. Unfortunately, there is a real risk
+    that you won’t be able to sufficiently scale out before the spike ends. Even if
+    the ramp up begins immediately, you need to account for the time it takes to get
+    data over to add new nodes, stream data to them, and rebalance the cluster.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you’re selecting a new database and anticipate frequent and sharp spikes,
+    be sure to rigorously test how your top contenders respond under realistic conditions.
+    Also, consider the costs of maintaining acceptable performance throughout these
+    peaks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The word “autoscaling” insinuates that your database cluster auto-magically
+    expands based on the traffic it is receiving. Not so. It’s simply a robot enabling/disabling
+    capacity that’s pre-provisioned for you based on your target table settings. Even
+    if you’re not using this capacity, you might be paying for the convenience of
+    having it set aside and ready to go. Also, it’s important to realize that it’s
+    not instantaneous. It takes upwards of 2.5 hours to go from 0 rps to 40k.^([13](#Fn13))
+    This is not ideal for unexpected or extreme spikes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Autoscaling is best when:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Load changes have high amplitude
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The rate of change is in the magnitude of hours
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The load peak is narrow relative to the baseline^([14](#Fn14))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ACID Transactions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Does your use case require you to process a logical unit of work with ACID (atomic,
+    consistent, isolated, and durable) properties? These transactions, which are historically
+    the domain of RDBMS, bring a severe performance hit.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is true that distributed ACID compliant databases do exist—and that the past
+    few years have brought some distinct progress in the effort to minimize the performance
+    impact (e.g., through row-level locks or column-level locking and better conflict
+    resolution algorithms). However, some level of penalty will still exist.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As a general guidance, if you have an ACID-compliant use case, pay special attention
+    to your master nodes; these can easily become your bottlenecks since they will
+    often be your primary query coordinators (more on this in Appendix A). In addition,
+    if at all possible, try to ensure that the majority of your transactions are isolated
+    to the minimum amount of resources. For example, a transaction spanning a single
+    row may involve a specific set of replicas, whereas a transaction involving several
+    keys may span your cluster as a whole—inevitably increasing your latency. It is
+    therefore important to understand which types of transactions your target database
+    supports. Some vendors may support a mix of approaches, while others excel at
+    specific ones. For instance, MongoDB introduced multi-document transactions on
+    sharded clusters in its version 4.2; prior to that, it supported only multi-document
+    transactions on replica sets.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If it’s critical to support transactions in a more performant manner, sometimes
+    it’s possible to rethink your data model and reimplement a use case in a way that
+    makes it suitable for a database that’s not ACID compliant. For example, one team
+    who started out with Postgres for all their use cases faced skyrocketing business
+    growth. This is a very common situation with startups that begin small and then
+    suddenly find themselves in a spot where they are unable to handle a spike in
+    growth in a cost-effective way. They were able to move their use cases to NoSQL
+    by conducting a careful data-modeling analysis and rethinking their use cases,
+    access patterns, and the real business need of what truly required ACID and what
+    did not. This certainly isn’t a quick fix, but in the right situation, it can
+    pay off nicely.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Another option to consider: Performance-focused NoSQL databases like Cassandra
+    aim to support isolated conditional updates with capabilities such as lightweight
+    transactions that allow “atomic compare and set” operations. That is, the database
+    checks if a condition is true, and if so, it conducts the transaction. If the
+    condition is not met, the transaction is not completed. They are named “lightweight”
+    since they do not truly lock the database for the transaction. Instead, they use
+    a consensus protocol to ensure there is agreement between the nodes to commit
+    the change. This capability was introduced by Cassandra and it’s supported in
+    several ways across different Cassandra-compatible databases. If this is something
+    you expect to use, it’s worth exploring the documentation to understand the differences.^([15](#Fn15))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, it’s important to note that lightweight transactions have their limits.
+    They can’t support complex use cases like a retail transaction that updates the
+    inventory only after a sale is completed with a successful payment. And just like
+    ACID-compliant databases, lightweight transactions have their own performance
+    implications. As a result, the choice of whether to use them will greatly depend
+    on the amount of ACID compliance that your use case requires.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'DynamoDB is a prime example of how the need for transactions will require more
+    compute resources (read: money). As a result, use cases relying heavily on ACID
+    will fairly often require much more infrastructure power to satisfy heavy usage
+    requirements. In the DynamoDB documentation, AWS recommends that you ensure the
+    database is configured for auto-scaling or that it has enough read/write capacity
+    to account for the additional overhead of transactions.^([16](#Fn16))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Consistency Expectations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Most NoSQL databases opt for eventual consistency to gain performance. This
+    is in stark contrast to the RDBMS model, where ACID compliance is achieved in
+    the form of transactions, and, because everything is in a single node, the effort
+    on locking and avoiding concurrency clashes is often minimized. When deciding
+    between a database with strong or eventual consistency, you have to make a hard
+    choice. Do you want to sacrifice scalability and performance or can you accept
+    the risk of sometimes serving stale data?
+  prefs: []
+  type: TYPE_NORMAL
+- en: Can your use case tolerate eventual consistency, or is strong consistency truly
+    required? Your choice really boils down to how much risk your application—and
+    your business—can tolerate with respect to inconsistency. For example, a retailer
+    who (understandably) requires consistent pricing might want to pay the price for
+    consistent writes upfront during a weekly catalog update so that they can later
+    serve millions of low-latency read requests under more relaxed consistency levels.
+    In other cases, it’s more important to ingest data quickly and pay the price for
+    consistency later (for example, in the playback tracking use case that’s common
+    in streaming platforms—where the database needs to record the last viewing position
+    for many users concurrently). Or maybe both are equally important. For example,
+    consider a social media platform that offers live chat. Here, you want consistency
+    on both writes and reads, but you likely don’t need the highest consistency (the
+    impact of an inconsistency here is likely much less than with a financial report).
+  prefs: []
+  type: TYPE_NORMAL
+- en: In some cases, “tunable consistency” will help you achieve a balance between
+    strong consistency and performance. This gives you the ability to tune the consistency
+    at the query level to suit what you’re trying to achieve. You can have some queries
+    relying on a quorum of replicas, then have other queries that are much more relaxed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Regardless of your consistency requirements, you need to be aware of the implications
+    involved when selecting a given consistency level. Databases that offer tunable
+    consistency may be a blessing or a curse if you don’t know what you are doing.
+    Consider a NoSQL deployment spanning three different regions, with three nodes
+    each (nine nodes in total). A QUORUM read would essentially have to traverse two
+    different regions in order to be acknowledged back to the client. In that sense,
+    if your Network Round Trip Time (RTT)^([17](#Fn17)) is 50ms, then it will take
+    *at least* this amount of time for the query to be considered successful by the
+    database. Similarly, if you were to run operations with the highest possible consistency
+    (involving all replicas), then the failure of a single node may bring your entire
+    application down.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: NoSQL databases fairly often will provide you with ways to confine your queries
+    to a specific region to prevent costly network round trips from impacting your
+    latency. But again, it all boils down to you what your use case requires.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Geographic Distribution
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Does your business need to support a regional or global customer base in the
+    near-term future? Where are your users and your application located? The greater
+    the distance between your users, your application, and your database, the more
+    they’re going to face high latencies that stem from the physical time it takes
+    to move data across the network. Knowing this will influence where you locate
+    your database and how you design your topology—more on this in Chapters [6](541783_1_En_6_Chapter.xhtml)
+    and [8](541783_1_En_8_Chapter.xhtml).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The geographic distribution of your cluster might also be a requirement from
+    a disaster recovery perspective. In that sense, the cluster would typically serve
+    data primarily from a specific region, but failover to another in the event of
+    a disaster (such as a full region outage). These kinds of setups are costly, as
+    they will require doubling your infrastructure spend. However, depending on the
+    nature of your use case, sometimes it’s required.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some organizations that invest in a multi-region deployment for the primary
+    purpose of disaster recovery end up using them to host isolated use cases. As
+    explained in the “Competing Workloads” section of this chapter, companies often
+    prefer to physically isolate OLTP from OLAP workloads. Moving some isolated (less
+    critical) workloads to remote regions prevents these servers from being “idle”
+    most of the time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Regardless of the magnitude of compelling reasons that may drive you toward
+    a geographically dispersed deployment, here’s some important high-level advice
+    from a performance perspective (you’ll learn some more technical tips in Chapter
+    [8](541783_1_En_8_Chapter.xhtml)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Consider the increased load that your target region or regions will receive
+    in the event of a full region outage. For example, assume that you operate globally
+    across three regions, and all these three regions serve your end-users. Are the
+    two remaining regions able to sustain the load for a long period of time?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Recognize that simply having a geographically-dispersed database does *not*
+    fully cover you in a disaster recovery situation. You also need to have your application,
+    web servers, messaging queue systems, and so on, geographically replicated. If
+    the only thing that’s geo-replicated is your database, you won’t be in a great
+    position when your primary application goes down.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Consider the fact that geo-replicated databases typically require very good
+    network links. Especially when crossing large distances, the time to replicate
+    your data is crucial to minimize losses in the event of a disaster. If your workload
+    has a heavy write throughput, a slow network link may bottleneck the local region
+    nodes. This may cause a queue to build up and eventually throttle down your writes.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: High-Availability Expectations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Inevitably, s#*& happens. To prepare for the worst, start by understanding what
+    your use case and business can tolerate if a node goes down. Can you accept the
+    data loss that could occur if a node storing unreplicated data goes down? Do you
+    need to continue buzzing along without a noticeable performance impact even if
+    an entire datacenter or availability zone goes down? Or is it okay if things slow
+    down a bit from time to time? This will all impact how you architect your topology
+    and configure things like replication factor and consistency levels (you’ll learn
+    about this more in Chapter [8](541783_1_En_8_Chapter.xhtml)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: It’s important to note that replication and consistency both come at a cost
+    to performance. Get a good feel for your business’s risk tolerance and don’t opt
+    for more than your business really needs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When considering your cluster topology, remember that quite a lot is at risk
+    if you get it wrong (and you don’t want to be caught off-guard in the middle of
+    the night). For example, the failure of a single node in a three-node cluster
+    could make you momentarily lose 33 percent of your processing power. Quite often,
+    that’s a significant blow, with discernable business impact. Similarly, the loss
+    of a node in a six-node cluster would reduce the blast radius to only 16 percent.
+    But there’s always a tradeoff. A sprawling deployment spanning hundreds of nodes
+    is not ideal either. The more nodes you have, the more likely you are to experience
+    a node failure. Balance is key.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The specific database challenges you encounter, as well as your options for
+    addressing them, are highly dependent on your situation. For example, an AdTech
+    use case that demands single-digit millisecond P99 latencies for a large dataset
+    with small item sizes requires a different treatment than a fraud detection use
+    case that prioritizes the ingestion of massive amounts of data as rapidly as possible.
+    One of the primary factors influencing how these workloads are handled is how
+    your database is architected. That’s the focus for the next two chapters, which
+    dive into database internals.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[![Creative Commons](../css/cc-by.png)](https://creativecommons.org/licenses/by/4.0)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Open Access** This chapter is licensed under the terms of the Creative Commons
+    Attribution 4.0 International License ([http://​creativecommons.​org/​licenses/​by/​4.​0/​](http://creativecommons.org/licenses/by/4.0/)),
+    which permits use, sharing, adaptation, distribution and reproduction in any medium
+    or format, as long as you give appropriate credit to the original author(s) and
+    the source, provide a link to the Creative Commons license and indicate if changes
+    were made.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The images or other third party material in this chapter are included in the
+    chapter's Creative Commons license, unless indicated otherwise in a credit line
+    to the material. If material is not included in the chapter's Creative Commons
+    license and your intended use is not permitted by statutory regulation or exceeds
+    the permitted use, you will need to obtain permission directly from the copyright
+    holder.
+  prefs: []
+  type: TYPE_NORMAL

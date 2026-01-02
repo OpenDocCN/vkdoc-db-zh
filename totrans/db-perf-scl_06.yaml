@@ -1,0 +1,1071 @@
+- en: 7. Infrastructure and Deployment Models
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '[Core Hardware Considerations for Speed at Scale](#Sec1)[Recommendations for
+    Specific Hardware Components](#Sec5)[Considerations in the Cloud](#Sec16)[Fully
+    Managed Database-as-a-Service](#Sec17)[Serverless Deployment Models](#Sec18)[Containerization
+    and Kubernetes](#Sec19)[Summary](#Sec20)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: As noted in the previous chapter, many modern databases offer capabilities beyond
+    “just” storing and retrieving data. But all databases are ultimately built from
+    the ground up in order to serve I/O in the most efficient way possible. And it’s
+    crucial to remember this when selecting your infrastructure and deployment model
+    of choice.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In theory, a database’s purpose is fairly simple: You submit a request and
+    expect to receive a response. But as you have seen in the previous chapters, an
+    insane level of engineering effort is spent on continuously enhancing and speeding
+    up this process. Very likely, years and years were dedicated to optimizing algorithms
+    that may give you a processing boost of a few CPU cycles, or minimizing the amount
+    of memory fragmentation, or reducing the amount of storage I/O needed to look
+    up a specific set of data. All these advancements, eventually, converge to create
+    a database suitable for performance at scale.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Regardless of your database selection, you may eventually hit a wall that no
+    engineering effort can break through: the database’s physical hardware. It makes
+    very little sense to have a solution engineered for performance when the hardware
+    you throw at it may be suboptimal. Similarly, a less performant database will
+    likely be unable to make efficient use of an abundance of available physical resources.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This chapter looks at critical considerations and tradeoffs when selecting CPUs,
+    memory, storage, and networking for your distributed database infrastructure.
+    It describes how different resources cooperate and how to configure the database
+    to deliver the best performance. Special attention is drawn to storage I/O as
+    the most difficult component to deal with. There’s also a close look at optimal
+    cloud-based deployments suitable for highly-performant distributed databases (given
+    that these are the deployment preference of most businesses).
+  prefs: []
+  type: TYPE_NORMAL
+- en: While it is true that a Database-as-a-Service (DBaaS) deployment will shield
+    you from many infrastructure and hardware decisions through your selection process,
+    a fundamental understanding of the generic compute resources required by any database
+    is important for identifying potential bottlenecks that may limit performance.
+    After an introduction to the hardware that’s involved in every deployment model—whether
+    you think about it or not—the chapter shifts focus to different deployment options
+    and their impact on performance. It covers the special considerations associated
+    with cloud-hosted deployments, database-as-a-service, serverless, containerization,
+    and container orchestration technologies, such as Kubernetes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Core Hardware Considerations for Speed at Scale
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'When you are designing systems to handle large amounts of data and requests
+    at scale, the primary hardware considerations are:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Storage
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: CPU (cores)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Memory (RAM)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Network interfaces
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Each could be a potential bottleneck for internal database latency: The delay
+    from when a request is received by the database (or a node in the database) and
+    when the database provides a response.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Identifying the Source of Your Performance Bottlenecks
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Knowing your database’s write and read paths is helpful for identifying potential
+    performance bottlenecks and tracking down the culprit. It’s also key to understanding
+    what physical resources your use case may be mostly bound against.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, write-optimized databases carry this nomenclature because writes
+    primarily go to memory, rather than being immediately persisted into disk. However,
+    most modern databases need to employ some “crash-recovery” mechanism and avoid
+    data loss caused by unexpected service interruptions. As a result, even write-optimized
+    databases will also resort to disk access to quickly persist your data, just in
+    case. For example, writes to Cassandra clusters will be persisted to a “write
+    ahead log” disk structure called the “commit log” and a memory structure that’s
+    named a “memtable.” A write is considered successful only after both operations
+    succeed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: On the other side of the spectrum, the database’s read path will typically also
+    involve several physical components. Assuming that you’re not using an in-memory
+    database, then the read path will start by checking whether the data you are looking
+    for is present within the database cache. But if it’s not, the database needs
+    to look up and retrieve the data from disk, de-serialize it, and then answer with
+    the results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Network also plays a crucial role throughout the entire process. When you write,
+    data needs to be rapidly replicated to other replicas. When you read, the database
+    needs to select the correct replicas (shards) containing the data that the application
+    is after, thus potentially having to communicate with other nodes in the cluster.
+    Moreover, strong consistency use cases always require the response of a majority
+    of members for an operation to be successful—so delayed responses from a replica
+    can dramatically increase the tail latency of a request routed to it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Achieving Balance
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Balance is key to *any* distributed system, including and beyond databases.
+    It makes very little sense to try to achieve 1 million operations per second (OPS)
+    in a system that has the fastest network link available but relies on very few
+    CPUs. Similarly, it’s not very efficient to purchase the most expensive and performant
+    infrastructure for your solution if your use case requires only 10K OPS.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Additionally, it’s important to recognize that a cluster imbalance can easily
+    drag down performance across your entire distributed system. This happens because
+    a distributed system cannot be faster than your slowest component—a fact that
+    frequently surprises people.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s a real-life example. A customer reported elevated latencies affecting
+    their entire 18-node cluster. After collecting system information, we noticed
+    that the majority of their nodes were properly using locally-attached nonvolatile
+    memory express (NVMe) disks—except for one that had a software Redundant Array
+    of Independent Disks (RAID) with a mix of NVMes and network-attached disks. The
+    customer clarified that they were running out of storage space and decided to
+    attach another disk in order to relieve the problem. However, they weren’t aware
+    that this introduced a ticking time bomb into their entire cluster. Here’s a brief
+    explanation of what happened from a technical perspective:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: With a slow disk introduced in their RAID array, storage I/O operations in that
+    specific replica took longer to complete.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: As a result, the remaining replicas took additional time whenever sending or
+    waiting for a response that would require disk I/O.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: As more and more requests came in, all these delays eventually created a waiting
+    queue on the replicas.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: As the queue kept growing, this eventually affected the replicas’ performance,
+    which ended up affecting the entire cluster’s performance.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'From that point on, the entire cluster speed was impeded by the speed of its
+    slowest node: the one that had the slowest disk.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Setting Realistic Expectations
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Even the most powerful hardware cannot ensure impressive *end-to-end (or round-trip)*
+    latency—the entire cycle time from when a client sends a request to the server
+    until it obtains a response. The end-to-end latency could be undermined by factors
+    that might be outside of the database’s control. For example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multi-hop routing of packets from your client application to the database server,
+    adding hundreds of milliseconds in latency
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Client driver settings, connecting and sending requests to a remote datacenter
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Consistency levels that require both local and remote datacenter responses
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Poor network performance between clients and database servers
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Protocol overheads
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Client-side performance bottlenecks
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Recommendations for Specific Hardware Components
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'This section takes a deeper look at each of the primary hardware considerations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Storage
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: CPU (cores)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Memory (RAM)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Network interfaces
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Storage
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: One of the fastest ways to undermine all your other performance optimizations
+    is to send every read and write operation through an unsuitable disk. Although
+    recent technology advancements greatly improved the performance of storage devices,
+    disks are (by far) still the slowest component in a computer system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'From a performance standpoint, disk performance is typically measured in two
+    dimensions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The bandwidth available for sequential reads and writes
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The IOPS for random reads and writes
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Database engineers obsess over optimizing disk access patterns with respect
+    to those two dimensions. People who are selecting, managing, or using a database
+    should focus on two additional disk considerations: the storage technology and
+    the disk size.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Disk Types
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Locally-attached NVMe Solid State Drives (SSDs) are the standard when latency
+    is critical. Compared with other bus interfaces, NVMe SSDs connected to a Peripheral
+    Component Interconnect Express (PCIe) interface will generally deliver lower latencies
+    than the Serial AT Attachment (SATA) interface. If your workload isn’t super latency
+    sensitive, you could also consider using disks via the SATA interface. But, definitely
+    avoid using network-attached disks if you expect single-digit millisecond latencies.
+    Being network attached, these disks require an additional hop to reach a storage
+    server, and that ends up increasing latency for every database request.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If your focus is on throughput and latency really doesn’t matter for your use
+    case (e.g., for moving data into a data warehouse), you *might* be able to get
+    away with a persistent disk—but it’s not recommended. By persistent disks, we
+    mean durable network storage devices that your VMs can access like physical disks,
+    but are located independently from your VMs. We’re not going to pick on any specific
+    vendors, but a little research should reveal issues like subpar performance and
+    overall instability. If you’re forced to work with persistent disks, be prepared
+    to craft a creative solution.^([1](#Fn1))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Hard disk drives (HDDs) might fast become a bottleneck. Since SSDs are getting
+    progressively cheaper and cheaper, using HDDs is not recommended. Some workloads
+    may work with HDDs, especially if they play nice and minimize random seeks. An
+    example of an HDD-friendly workload is a write-mostly (98 percent writes) workload
+    with minimal random reads. If you decide to use HDDs, try to allocate a separate
+    disk for the commit log.
+  prefs: []
+  type: TYPE_NORMAL
+- en: ScyllaDB published benchmarking results of several different storage devices—
+    demonstrating how they perform under extreme load simulating typical database
+    access patterns.^([2](#Fn2)) For example, Figures [7-1](#Fig1) through [7-4](#Fig4)
+    visualize the different performance characteristics from two NVMes—a persistent
+    disk and an HDD.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../images/541783_1_En_7_Chapter/541783_1_En_7_Fig4_HTML.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Two graphs of p 50 and p 95 latency from 0 to 175 M B per second. The graphs
+    depict a decreasing trend. Two shaded strips are given to the right of the graphs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure 7-4
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bandwidth/latency graphs for a Toshiba DT01ACA200 hard disk drive^([4](#Fn4))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../images/541783_1_En_7_Chapter/541783_1_En_7_Fig3_HTML.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Two graphs of p 50 and p 95 latency from 0 to 600 M B per second. The graphs
+    depict a decreasing trend. Two shaded strips are given to the right of the graphs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure 7-3
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bandwidth/latency graphs for a Google Cloud n2-standard-8 instance type with
+    a 2TB SSD persistent disk^([3](#Fn3))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../images/541783_1_En_7_Chapter/541783_1_En_7_Fig2_HTML.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Two graphs of p 50 and p 95 latency from 0 to 1 G B per second. The graphs depict
+    a decreasing trend. Two shaded strips are given to the right of the graphs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure 7-2
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bandwidth/latency graphs for an AWS Im4gn.4xlarge instance type using AWS Nitro
+    SSDs
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../images/541783_1_En_7_Chapter/541783_1_En_7_Fig1_HTML.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Two graphs of p 50 and p 95 latency from 0 to 800 M B per second. The graphs
+    depict a decreasing trend. Two shaded strips are given to the right of the graphs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure 7-1
+  prefs: []
+  type: TYPE_NORMAL
+- en: NVMe bandwidth/latency graphs for an AWS i3.2xlarge instance type
+  prefs: []
+  type: TYPE_NORMAL
+- en: Disk Setup
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: We hear a lot of questions about RAID setups. Hardware RAIDs are commonly used
+    to avoid outages introduced by disk failures. As a result, the RAID-5 (distributed
+    parity) setup is often used.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'However, distributed databases typically have their own internal replication
+    mechanism to allow for business continuity and achieve high availability. Therefore,
+    RAID setups employing data mirroring or distributed parity have proven to be very
+    detrimental to disk I/O performance and, fairly often, are used redundantly. On
+    top of that, we have found that some hardware RAID vendors deliver poor performance
+    results depending on your database access mechanisms. One notable example: hardware
+    RAIDs that are unable to perform efficiently via asynchronous I/O or direct I/O
+    calls. If you believe your disk I/O is suboptimal, consider directly exposing
+    the disks from your hardware RAID to your operating system.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Conversely, RAID-0 (striping) setups often provide a boost in disk I/O performance
+    and allow the database to achieve higher IOPS and bandwidth than a single disk
+    can provide. The general recommendation for creating a RAID-0 setup is to use
+    all disks of the same type and capacity to avoid variable performance during your
+    daily workload. While it is true you would lose the entire RAID array in the event
+    of a disk failure, the replication performed by your distributed database should
+    be sufficient to ensure that your data remains available.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A couple of additional considerations related to disk setup:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Storage servers often serve several other users and workloads at the same
+    time.** Therefore, even though disks would be dedicated to the database, your
+    access performance can be undermined by factors like the level to which the storage
+    system is serving other users concurrently. Most of the time, the storage medium
+    provided to you will not be optimal for supporting a low-latency database workload.
+    This can often be mitigated by ensuring that the disks are allocated from a high-performing
+    disk pool.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**It’s important to expose your database infrastructure disks directly to the
+    operating system guest from your hypervisor.** We have seen many situations where
+    the I/O capacity of a database was greatly impacted when disks were virtualized.
+    To eliminate any possible bottlenecks in a low-latency environment, give your
+    database direct access to your disks so that they can perform I/O as they were
+    designed to.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Disk Size
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: When considering how much storage you need, be sure to account for your existing
+    data—replicated—plus your anticipated near-term data growth, and also leave sufficient
+    room for the overhead of internal operations (like compactions [for LSM-tree-based
+    databases], the commit log, backups, etc.).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As Chapter [8](541783_1_En_8_Chapter.xhtml) discusses, the most common topology
+    involves three replicas for each dataset. Assume you have 5TB of raw data and
+    use a replication factor of three:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5TB Data X 3 RF = 15TB
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'But 15TB is just a starting point since there are other sizing criteria:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: What is your dataset’s growth rate? (How much do you ingest per hour or day?)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Will you store everything forever, or will you have an eviction process (for
+    example, based on Time To Live [TTL])?
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Is your growth rate stable (a fixed rate of ingestion per week/day/hour) or
+    is it stochastic and bursty? The former would make it more predictable; the latter
+    may mean you have to give yourself more leeway to account for unpredictable but
+    probabilistic events.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You can model your data’s growth rate based on the number of users or endpoints
+    and how that number is expected to grow over time. Alternately, data models are
+    often enriched over time, resulting in more data per source. Or your sampling
+    rate may increase. For example, your system may begin ingesting data every five
+    seconds rather than every minute. All of these considerations impact your data
+    storage volume.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It’s strongly recommended that you select storage that’s suitable for where
+    you expect to end up after a certain time span. If you’re running your database
+    on a public cloud provider (self-managed or as a fully-managed Database-as-a-Service
+    [DBaaS]), you won’t need very much lead time to provision new hardware and expand
+    your cluster. However, for an on-premises hardware purchase, you may need to provision
+    based on your quarterly or annual budgeting process. You could also face delays
+    due to the supply chain disruptions that have become increasingly common.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Also, be sure to leave storage space for internal temporary operations such
+    as compaction, repairs, backups, and commit logs, as well as any other background
+    process that may temporarily introduce a space amplification. On the other hand,
+    if you’re using compression, be sure to factor in the amount of space that your
+    selected compression algorithm can save you.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, recognize that every database has an ideal memory-to-storage ratio—for
+    example, a certain amount of TB or GB per node that it can support with optimal
+    performance. If this isn’t readily apparent in your database’s documentation,
+    press your vendor for their recommendation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Raw Devices and Custom Drivers
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Some database vendors require direct access to storage devices—without needing
+    a filesystem to exist. Such direct access is often referred to as creating a “raw”
+    device, which refers to the fact that the operating system won’t know how to manage
+    it, and any I/O is handled directly by the database. Issuing I/O directly to the
+    underlying storage device may provide a performance boost to the database. However,
+    it is important to understand some of this approach’s drawbacks, which may not
+    be important for your specific deployment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Error prone**: Directly issuing I/O to a disk rather than through a filesystem
+    is error prone. While it will provide a performance gain, incorrect handling of
+    the underlying storage could result in data corruption, data loss, or unexpected
+    bugs.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '**Complex**: Raw devices are not as common as one might expect. In fact, very
+    few databases decided to implement that approach. It’s important to note that
+    since raw devices aren’t typically mounted as regular filesystems, their manageability
+    will be fully dependent on what your vendor provides.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '**Lock-in**: Once you are using a raw device, it’s extremely difficult to move
+    away from it. You can’t mount raw devices or query their storage consumption via
+    typical operating system mechanisms. All of your disks need to be arranged in
+    a certain way, and you can’t easily go back to a regular filesystem.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Maintaining Disk Performance Over Time
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Databases are very storage I/O intensive, so disks *will* wear out over time.
+    Most disk vendors provide estimates concerning the performance durability of their
+    products. Check on those and compare.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are multiple tools and programs that can help with SSD performance over
+    time. One example is the `fstrim` program, which is frequently run weekly to discard
+    unused filesystem blocks. `fstrim` is an operating system background process that
+    doesn’t require any database action and may improve I/O to a significant extent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tip
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you have to choose one place to invest—on CPU, storage, memory, or networking—we
+    recommend splurging on storage. Everything else has evolved faster and better
+    than storage. It still remains the slowest component in most systems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tiered Storage
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Many use cases have different latency requirements for different sets of data.
+    Similarly, industries may see exponential storage utilization growth over time.
+    It is not always desirable, or even possible, to get rid of old data (for example,
+    due to compliance regulations, third-party contracts, or simply because it still
+    carries relevance for the business).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Teams with storage-heavy use cases often seek ways to minimize the costs of
+    storage consumption: by reducing the replication factor of their dataset, using
+    less performant (although cheaper) storage disks, or by employing a manual data
+    rotation process from faster to slower disks.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tiered storage is a solution implemented by some databases in order to address
+    most of these concerns. It allows users to configure the database to use distinct
+    storage tiers, and to define which criteria the database should use to ensure
+    that the data is correctly replicated to its relevant tier. For example, MongoDB
+    allows you to determine how data is replicated to a specific storage tier by assigning
+    different tier tags to shards, allowing its balancer to migrate data between tiers
+    automatically. On top of that, Atlas Online Archive also allows the database to
+    offload historical datasets to cloud storage.
+  prefs: []
+  type: TYPE_NORMAL
+- en: CPUs (Cores)
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Next is the CPU. As of this writing, you are probably looking at modern servers
+    running some reasonably modern Intel, AMD, or ARM chips, which are commonly found
+    across most cloud providers and enterprise hardware vendors. Along with storage,
+    CPUs are another compute resource which—if not correctly sized—may introduce contention
+    to your workload and impact your latencies. Clusters handling hundreds of thousands
+    up to millions of operations per second tend to get very high CPU loads.
+  prefs: []
+  type: TYPE_NORMAL
+- en: More cores will generally mean better performance. This is important for achieving
+    optimal performance from databases that are architected to benefit from multithreading,
+    and it’s absolutely essential for databases that are architected with a shard-per-core
+    architecture—running a separate shard on each core in each server. In this case,
+    the more cores the CPU has, the more shards—and the better data distribution—the
+    database will have.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A combination of vendor recommendations and benchmarking (see Chapter [9](541783_1_En_9_Chapter.xhtml))
+    can help you determine how much throughput each multicore chip can support. A
+    general recommendation is to avoid running production systems close to the CPU
+    limits and find the sweet spot between supporting your expected performance and
+    leaving room for throughput growth. On top of that, when doing benchmarking, remember
+    to also factor in background database operations that might be detrimental to
+    your performance. For example, Cassandra and Cassandra-compatible databases often
+    need to run repair: a weekly process to ensure data consistency across the cluster.
+    This process requires a lot of coordination and communication across the entire
+    cluster. If your workload is not properly sized to accommodate background database
+    operations and other events (such as node failures), your latency may increase
+    to a level that surprises you.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When using virtual machines, containers, or the public cloud, remember that
+    each virtual CPU is mapped to a single logical core, or thread. In many cloud
+    deployments, nodes are provided on a vCPU basis. The vCPU is typically a single
+    hyperthread from a dual hyperthread x86 physical core for Intel/AMD variants,
+    or a single core for ARM chips.
+  prefs: []
+  type: TYPE_NORMAL
+- en: No matter what your deployment of choice involves, avoid overcommitting CPU
+    resources if performance is a priority. Doing so will prevent other guests from
+    stealing CPU time^([5](#Fn5)) from your database.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Memory (RAM)
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: If you’re working with an in-memory database, having enough memory to hold your
+    entire dataset is an absolute must. But every database uses in-memory caching
+    to some extent. For example, some databases require enough memory space for indexes
+    to avoid expensive round-trips to storage disks. Others leverage an internal data
+    cache to allow for lower latencies when retrieving recently used data, Cassandra
+    and Cassandra-like databases implement memtables, and some databases allow you
+    to control which tables are served entirely from memory. The more memory the database
+    has at its disposal, the better you can take advantage of those mechanisms. After
+    all, even the fastest NVMe can’t come close to the speed of RAM access.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In general, there is no blanket recommendation for “how much memory is enough”
+    for a database. Different vendors have different requirements and different use
+    cases also require different memory sizes. However, latency-sensitive use cases
+    typically require high memory footprints in order to achieve high cache hit rates
+    and serve low-latency read requests efficiently.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, a use case with a higher payload size requires a larger memory
+    footprint than one with a smaller payload size. Another interesting aspect to
+    consider is how frequently the use case in question reads data that may be present
+    in memory (hot data) as opposed to data that was never read (cold data). As mentioned
+    in Chapter [2](541783_1_En_2_Chapter.xhtml), the latter can easily undermine your
+    latencies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Without a sufficient disk-to-memory ratio, you will be hitting your storage
+    far more than you probably want if you intend to keep your latencies low. The
+    ideal ratio varies from database to database since every caching implementation
+    is different, so be sure to ask your vendor for their specific recommendations.
+    For example, ScyllaDB currently recommends that for every 1GB of memory allocated
+    to a node, you can store up to 100GB of data (so if you have 32GB of memory, you
+    can handle around 3TB). The higher your memory-to-storage ratio gets, the less
+    room you have for caching your total dataset. Every database has some sort of
+    hard physical limit. If you don’t have enough memory and you have to run a workload
+    on top of a very large dataset, it’s either going to be rather slow or increase
+    the risk of the database running out of memory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Another ratio to keep in mind: memory per CPU core. At ScyllaDB, we recommend
+    at least 8GB of memory per CPU core for production purposes (because, given our
+    shared-nothing architecture, every shard works independently and has its own allocated
+    memory for caching). 8GB per vCPU is the same ratio used by most cloud providers
+    for NoSQL or Big Data-oriented instance types. Again, the recommended ratio will
+    vary across vendors, depending on the database’s specific internal cache implementation
+    and other implementation details. For example, in Cassandra and Cassandra-like
+    databases, part of the memory will be allocated for some of its SSTable-components
+    in order to speed up disk lookups when reading cold data. Aerospike will typically
+    store all indexes in RAM. And MongoDB, on average, requires 1GB of RAM per 100K
+    assets.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Distributed databases are notoriously high memory consumers. Regardless of its
+    implementation, the database will always need to store some relevant parts of
+    your dataset in memory in order to avoid wasting time on disk I/O. Insufficient
+    memory can manifest itself as unpredictable, erratic database behavior—even crashes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Network
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Lastly, you have to ensure that network I/O does not become a bottleneck. Networking
+    is often an overlooked component. As with any distributed system, a database involves
+    a lot of traffic between all the cluster members to check for liveness, replicate
+    state and topology changes, and so on. As a result, network delays not only deteriorate
+    your application’s latency, but also prevent internode communication from functioning
+    effectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: At ScyllaDB, we recommend a minimum network bandwidth of 10Gbps because internal
+    database operations such as streaming, repairs, and gossip can become very network
+    intensive. On top of that, you also need to factor in the actual throughput required
+    for the use case in question; the number of operations per second will certainly
+    be the highest bandwidth consumer for your deployment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As with memory, the required network bandwidth will vary. Be sure to check your
+    vendor recommendations and consider the nature of your use case. A low throughput
+    workload will obviously consume less traffic than a higher throughput one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Tip: Use CPU pinning to mitigate the impact of hardware interrupts.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Hardware interrupts, which typically stem from (but are not limited to) high
+    network Internet traffic, force the OS kernel to stop everything and respond to
+    the hardware before returning to the job at hand. Too many interrupts (e.g., a
+    high softirq percent) will degrade database performance, as your CPUs may stall
+    during processing for serving network traffic. One way to resolve this is to use
+    CPU pinning. This tells the system that all network interrupts should be handled
+    by specific CPUs that are not being used by the database. With that setup, you
+    can blast the database with network traffic and be reasonably confident that you
+    won’t overwhelm it or stall the database processing during normal operations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For cloud deployments, most IaaS vendors provide a modern network infrastructure
+    with ample bandwidth between your database servers and between the database and
+    the application clients. Be sure to check on your client’s network bandwidth consumption
+    if you suspect network problems. A common mistake we see in deployments involves
+    application clients deployed with suboptimal network capacity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Also, be sure to place your application servers as close as possible to your
+    database. If you are deploying them in a single region, a shorter physical distance
+    between the servers will translate to better network performance (since it will
+    require fewer network hops for communication) and, as a result, lower latencies.
+    If you need to go multi-region and you require strong consistency or replication
+    across these regions, then you need to pay the latency penalty for traversing
+    regions—plus, you also have to pay, quite literally, with respect to cross-region
+    networking transfer fees. For multi-region deployments with cross-region replication,
+    a slow network link may create replication delays that cause the database to apply
+    backpressure on your writes until it manages to replicate the data piled up.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Considerations in the Cloud
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The “on-prem vs cloud” decision depends heavily on your organization’s security
+    and regulatory requirements as well as its business strategy—and is well beyond
+    the scope of this book. Instead of heading down that path, let’s focus on exploring
+    performance considerations that are unique to cloud deployments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Most cloud providers offer a wide range of instance types that you may choose
+    to host your workload. In our experience, most of the mistakes and performance
+    bottlenecks seen on distributed databases within cloud deployments are due to
+    an incorrect instance or storage type selection during the initial cluster setup.
+    A common misunderstanding (and concern) that many people have is the fact that
+    NVMe-based storage may be more expensive than network-attached storage. The misconception
+    likely stems from the assumption that since NVMes are faster, they would incur
+    elevated costs. However it turns out to be quite the opposite: Since NVMe disks
+    on cloud environments are tied to the lifecycle of an instance, they end up being
+    cheaper than network disks, which require holding up your dataset for a prolonged
+    period of time. We encourage you to compare the costs of NVMe backed-up storage
+    against network-attached disks on your cloud vendor of choice.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some cloud vendors have different instance types for different distributed database
+    workloads. For example, some workloads may benefit more from compute-heavy instance
+    types, with more compute power than storage capacity. Conversely, storage-dense
+    instance types typically feature a higher storage to memory ratio and are often
+    used by storage-heavy workloads.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To complicate things even more, some cloud providers may offer different CPU
+    generations for the same instance type. If one CPU generation is considerably
+    slower than other nodes, the wrong choice could introduce performance bottlenecks
+    into your cluster.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We have seen some (although rare) scenarios where a noisy neighbor dragged down
+    an entire node performance with no reasonable explanation. The lack of visibility
+    and control in cloud instances makes it harder to diagnose such situations. Often,
+    you need to reach out to your cloud vendor directly to resolve the situation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As you start configuring your instance, remember that a cloud environment isn’t
+    created exclusively for databases. You have access to a wide range of options,
+    but it can be confusing to determine where to start and which options to use.
+    In general, it’s best to check with your database vendor on which instance types
+    are recommended for deployment. Even better, go beyond that and compare the results
+    of their benchmarks against those same instance types running your workload.
+  prefs: []
+  type: TYPE_NORMAL
+- en: After you have decided on your instance types and deployment options, it’s time
+    to think about instance placement. Most clouds will charge you for both inter-region
+    traffic and inter-zone traffic, which may quite surprisingly increase the overall
+    networking costs. Some companies try to mitigate this cost by placing all instances
+    under a single availability zone (AZ), which also carries the risk of potentially
+    having to face a cluster-wide outage if/when that AZ goes down. Others opt to
+    ignore the cost aspect and deploy their replicas in different AZs to ensure data
+    is properly replicated to an isolated environment. Regardless of your instance’s
+    placement of choice, note that some database drivers allow clients in specific
+    AZs to route queries only against database replicas living in the same availability
+    zone in order to reduce costs. Similarly, you will also want to ensure that your
+    application clients are located under the same zones as your database to minimize
+    your networking costs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fully Managed Database-as-a-Service
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Does the database-as-a-service model help or hurt database performance? It
+    really depends on the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: How much attention your database requires to achieve and consistently meet your
+    performance expectations
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Your team’s experience working with the specific database you’re using
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Your team’s time and desire to tinker with that database
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The level of expertise—especially with respect to performance—that your DBaaS
+    provider dedicates to your account
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Managed DBaaS solutions can easily speed up your go-to-market and allow you
+    to focus on priorities beyond your database. Most database vendors now provide
+    some sort of managed solution. There are even independent companies in the business
+    of providing this kind of service for a variety of different distributed databases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We have seen many examples where a managed solution helped users succeed, as
+    well as numerous complaints over the fact that some managed solutions were rather
+    limited. It is not our intention to recommend nor criticize any specific service
+    provider in question. Here is some vendor-agnostic advice on things to consider
+    before selecting a managed solution:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Does the vendor satisfy your existing security requirements? Does it provide
+    enough evidence of security certifications issued by a known security company?
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: What are the options for observability and how do you export the data in question
+    to your monitoring platform of choice?
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: What kind of flexibility do you have with your deployment? What are the available
+    tunable options and the support for those within your managed solution?
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Does it allow you to peer traffic from your existing application network(s)
+    to your database in a private and secure way?
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: What are the available support options and SLAs?
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Which deployment options are available, what’s the flexibility among switching,
+    and what’s the cost comparison if you were to deploy and maintain it on your own?
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How easy is it for you to export your data if you need to move your deployment
+    to a different vendor in the future?
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: What, if any, migration options are available and what amount of effort do they
+    require?
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: These are just some of the many questions and concerns that we’ve frequently
+    heard teams asking (or wishing they asked before they got caught in an undesirable
+    option). Considering a third-party vendor to manage a relatively critical aspect
+    of your infrastructure is very often challenging. However, under the right circumstances
+    and vendor-user fit, it can be a great option for reducing your admin burden and
+    optimizing your performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Serverless Deployment Models
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '*Serverless* refers to database solutions that offer near-instant scaling up
+    or scaling down of database infrastructure—and charge you for the capacity and
+    storage that you actually consume.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A serverless model could theoretically yield a performance advantage. Before
+    serverless, many organizations faced a tradeoff:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: (Slightly or generously, depending on your risk tolerance) overestimate the
+    capacity they need to guarantee adequate performance.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Watch performance suffer if their overly-conservative capacity estimates proved
+    inadequate.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Serverless can help in a few different ways and situations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, with variable workloads. Since the database can rapidly scale up as your
+    workload increases, you can worry less about performance issues stemming from
+    inadequate capacity. If your traffic ebbs and flows across the day/week/month,
+    you can spend less during the light periods and dedicate those resources to supporting
+    the peak periods. And if your company suddenly experiences “catastrophic success,”
+    you don’t have to worry about the headaches associated with needing to suddenly
+    scale your infrastructure. If all goes well, the vendor will “automagically” ensure
+    that you’re covered, with acceptable performance. You won’t need to procure any
+    additional servers, or even contact your cloud provider.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Serverless is also a great option to consider if you’re working on a new project
+    and are not sure what capacity you need to meet performance expectations. It gives
+    you the freedom to start fast and scale (or shrink) depending on real-world usage.
+    Database sizing is one less thing to worry about. And you don’t need to predict
+    the future.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, serverless also makes it simpler to justify the spend internally. With
+    this model, you can assure your organization that you are never overprovisioned—at
+    least not for long. You’re paying for exactly the amount of performance that the
+    database vendor determines you need at all times.
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, a serverless deployment also carries the risk of cost overruns and
+    the uncertainty of unpredictable costs. For example, DynamoDB pricing may not
+    be very attractive for write-heavy workloads. Similarly, serverless database services
+    may charge an arm and a leg (or an eye and a knee) depending on the number of
+    operations per second you plan to sustain over an extended period of time. In
+    some cases, it could become a double-edged sword from a cost perspective if your
+    goal is to sustain a high-throughput performant system at large scale.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another aspect to consider when thinking about a serverless solution is whether
+    the solution in question is compatible with your existing infrastructure components.
+    For example, you’ll want to explore what amount of effort is required to connect
+    your message queueing or analytics tool with that specific serverless solution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Remember that the overall concept behind serverless is to abstract away the
+    underlying infrastructure in such a way that not all database-configurable options
+    are available to you. As a result, troubleshooting potential performance problems
+    is often more challenging since you might need to rely on your vendor’s input
+    and guidance to understand which actions to take. Being serverless also means
+    that you lack visibility into whether the infrastructure you consume is shared
+    with other tenants. Many distributed database vendors may also offer you different
+    pricing tiers for shared and dedicated environments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Containerization and Kubernetes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Containers and Kubernetes are now ubiquitous, even for stateful systems like
+    databases. Should you use them? Probably—unless you have a good reason not to.
+  prefs: []
+  type: TYPE_NORMAL
+- en: But be aware that there is a performance penalty for the operational convenience
+    of using containers. This is to be expected because of the extra layer of abstraction
+    (the container itself), relaxation of resource isolation, and increased context
+    switches. The good news is that it can certainly be overcome. In our testing using
+    ScyllaDB, we found it is possible to take what was originally a 69 percent reduction
+    in peak throughput down to a 3 percent performance penalty.^([6](#Fn6))
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here’s the TL;DR on that specific experiment:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Containerizing applications is not free. In particular, processes comprising
+    the containers have to be run in Linux cgroups and the container receives a virtualized
+    view of the network. Still, the biggest cost of running a close-to-hardware, thread-per-core
+    application like ScyllaDB inside a Docker container comes from the opportunity
+    cost of having to disable most of the performance optimizations that the database
+    employs in VM and bare-metal environments to enable it to run in potentially shared
+    and overcommitted platforms.*'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*The best results with Docker are obtained when resources are statically partitioned
+    and we can bring back bare-metal optimizations like CPU pinning and interrupt
+    isolation. There is only a 10 percent performance penalty in this case as compared
+    to the underlying platform—a penalty that is mostly attributed to the network
+    virtualization. Docker allows users to expose the host network directly for specialized
+    deployments. In cases in which this is possible, we saw that the performance difference
+    compared to the underlying platform falls down to 3 percent.*'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Of course, the potential penalty and strategies for mitigating will vary from
+    database to database. But the key takeaway is that there is likely a significant
+    performance penalty—so be sure to hunt it down and research how to mitigate it.
+    Some common mitigation strategies include:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Ensure that your containers have direct access to the database’s underlying
+    storage.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Expose the host OS network to the container in order to avoid the performance
+    penalty due to its network virtualization layer.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Allocate enough resources to the container in question, and ensure these are
+    not overcommitted with other containers or processes running within the underlying
+    host OS.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Kubernetes adds yet another virtualization layer—and thus opens the door to
+    yet another layer of performance issues, as well as different strategies for mitigating
+    them. First off, if you have the choice of multiple options for deploying and
+    managing database clusters on Kubernetes, test them out with an eye on performance.
+    Once you settle on the best fit for your needs, dive into the configuration options
+    that could impact performance. Here are some performance tips that cross databases:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Consider dedicating specific and independent Kubernetes nodes for your database
+    workloads and use affinities in order to configure their placement.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Enable `hostNetworking` and be sure to set up the required kernel parameters
+    as recommended by your vendor (for example, `fs.aio-max-nr` for increasing the
+    number of events available for asynchronous I/O processing in the Linux kernel).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ensure that your database pods have a Guaranteed QoS class^([7](#Fn7)) to avoid
+    other pods from potentially hurting your main workload.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Be sure to use an operator^([8](#Fn8)) in order to orchestrate and control the
+    lifecycle of your existing Kubernetes database cluster. For example, ScyllaDB
+    has its ScyllaDB Operator project.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'This chapter kicked off the final part of this book, focused on sharing recommendations
+    for getting better performance out of your database deployment. It looked at infrastructure
+    and deployment model considerations that are important to understand whether you’re
+    managing your own deployment or opting for a database-as-a-service (maybe serverless)
+    deployment model. The next chapter looks at performance considerations relevant
+    to the topology itself: replication, geographic distribution, scaling up and/or
+    out, and intermediaries like external caches, load balancers, and abstraction
+    layers.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[![Creative Commons](../css/cc-by.png)](https://creativecommons.org/licenses/by/4.0)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Open Access** This chapter is licensed under the terms of the Creative Commons
+    Attribution 4.0 International License ([http://​creativecommons.​org/​licenses/​by/​4.​0/​](http://creativecommons.org/licenses/by/4.0/)),
+    which permits use, sharing, adaptation, distribution and reproduction in any medium
+    or format, as long as you give appropriate credit to the original author(s) and
+    the source, provide a link to the Creative Commons license and indicate if changes
+    were made.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The images or other third party material in this chapter are included in the
+    chapter's Creative Commons license, unless indicated otherwise in a credit line
+    to the material. If material is not included in the chapter's Creative Commons
+    license and your intended use is not permitted by statutory regulation or exceeds
+    the permitted use, you will need to obtain permission directly from the copyright
+    holder.
+  prefs: []
+  type: TYPE_NORMAL

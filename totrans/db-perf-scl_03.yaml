@@ -1,0 +1,427 @@
+- en: '4. Database Internals: Algorithmic Optimizations'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '[Optimizing Collections](#Sec1)[To B- or Not to B-Tree](#Sec2)[Linear Search
+    on Steroids](#Sec3)[Scanning the Tree](#Sec4)[When the Tree Size Matters](#Sec5)[The
+    Secret Life of Separation Keys](#Sec6)[Summary](#Sec7)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the performance world, the hardware is always the unbreakable limiting factor—one
+    cannot squeeze more performing units from a system than the underlying chips may
+    provide. As opposed to that, the software part of the system is often considered
+    the most flexible thing in programming—in the sense that it can be changed at
+    any time given enough developers’ brains and hands (and investors’ cash).
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, that’s not always the case. Sometimes selecting an algorithm should
+    be done as early as the architecting stage in the most careful manner possible
+    because the chosen approach becomes so extremely fundamental that changing it
+    would effectively mean rewriting the whole engine from scratch or requiring users
+    to migrate exabytes of data from one instance to another.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This chapter shares one detailed example of algorithmic optimization—from the
+    perspective of the engineer who led this optimization. Specifically, this chapter
+    looks at how the B-trees family can be used to store data in cache implementations
+    and other accessory and in-memory structures. This look into a representative
+    engineering challenge should help you better understand what tradeoffs or optimizations
+    various databases might be making under the hood—ideally, so you can take better
+    advantage of its very deliberate design decisions.^([1](#Fn1))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: The goal of this chapter is *not* to convince database users that they need
+    a database with any particular algorithmic optimization—or to educate infrastructure
+    engineers on designing B-trees or the finer points of algorithmic optimization.
+    Rather, it’s to help anyone selecting or working with a database understand the
+    level of algorithmic optimization that might impact a database’s performance.
+    Hopefully, it piques your curiosity in learning more about the engineering behind
+    the database you’re using and/or alternative databases you’re considering.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Optimizing Collections
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Maintaining large sets of objects in memory deserves the same level of attention
+    as maintaining objects in external memory—say, spinning disks or network-attached
+    storages. For a task as simple as looking up an object by a plain key, the acceptable
+    solution is often a plain hash table (even with great attention to hash function
+    selection) or a binary balanced tree (usually the red-black one due to its implementation
+    simplicity). However, branchy trees like the B-trees family can significantly
+    boost performance. They also have a lot of non-obvious pitfalls.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To B- or Not to B-Tree
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: An important characteristic of a tree is *cardinality*. This is the maximum
+    number of child nodes that another node may have. In the corner case of cardinality
+    of two, the tree is called a *binary* tree. For other cases, there’s a wide class
+    of so-called B-trees. The common belief about binary vs B-trees is that the former
+    ones should be used when the data is stored in the RAM, while the latter trees
+    should live in the disk. The justification for this split is that RAM access speed
+    is much higher than disk. Also, disk I/O is performed in blocks, so it’s much
+    better and faster to fetch several “adjacent” keys in one request. RAM, unlike
+    disks, allows random access with almost any granularity, so it’s okay to have
+    a dispersed set of keys pointing to each other.
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, there are many reasons that B-trees are often a good choice for in-memory
+    collections. The first reason is cache *locality*. When searching for a key in
+    a binary tree, the algorithm would visit up to *logN* elements that are very likely
+    dispersed in memory. On a B-tree, this search will consist of two *phases*—an
+    intra-node search and descending the tree—executed one after another. And while
+    descending the tree doesn’t differ much from the binary tree in the aforementioned
+    sense, intra-node searching will access keys that are located next to each other,
+    thus making much better use of CPU caches. Figure [4-1](#Fig1) exemplifies the
+    process of walking down a binary tree. Compare it along with Figure [4-2](#Fig2),
+    which demonstrates a search in a B-tree set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../images/541783_1_En_4_Chapter/541783_1_En_4_Fig2_HTML.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: An illustration demonstrates the search in a B-tree set for M equals 6\. C P
+    U cores split the processing of each instruction into stages.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure 4-2
+  prefs: []
+  type: TYPE_NORMAL
+- en: Searching in a B-tree set
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../images/541783_1_En_4_Chapter/541783_1_En_4_Fig1_HTML.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: A block diagram, 1\. A block named 15, If less than 16, go to the right subtree,
+    else go to left subtree, block 10 divides into blocks 8 and 12, 2\. A block named
+    20, if more than 16, go to the left subtree, else go to right subtree, block 25
+    leads to block 30, 3\. The left subtree, Block 18 divides into 16 and 19.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure 4-1
+  prefs: []
+  type: TYPE_NORMAL
+- en: Searching in a binary tree root
+  prefs: []
+  type: TYPE_NORMAL
+- en: The second reason that B-trees are often a good choice for in-memory collections
+    also comes from the dispersed nature of binary trees and from how modern CPUs
+    are designed. It’s well known that when executing a stream of instructions, CPU
+    cores split the processing of each instruction into stages (loading instructions,
+    decoding them, preparing arguments, and doing the execution itself) and the stages
+    are run in parallel in a unit called a *conveyor*. When a conditional branching
+    instruction appears in this stream, the conveyor needs to guess which of two potential
+    branches it will have to execute next and start loading it into the conveyor pipeline.
+    If this guess fails, the conveyor is flushed and starts to work from scratch.
+    Such failures are called *branch mispredictions**.* They are harmful from a performance
+    point of view^([2](#Fn2)) and have direct implications on the binary search algorithm.
+    When searching for a key in such a tree, the algorithm jumps left and right depending
+    on the key comparison result without giving the CPU a chance to learn which direction
+    is “preferred.” In many cases, the CPU conveyer is flushed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The two-phased B-tree search can be made better with respect to branch predictions.
+    The trick is in making the intra-node search linear (i.e., walking the array of
+    keys forward key-by-key). In this case, there will be only a “should you move
+    forward” condition that’s much more predictable. There’s even a nice trick of
+    turning binary search into linear without sacrificing the number of comparisons,^([3](#Fn3))
+    but this approach is good for read-mostly collections because insertion into this
+    layout is tricky and has worse complexity than for sorted arrays. This approach
+    has proven itself in ScyllaDB’s implementation and is also widely used in the
+    Tarantool in-memory database.^([4](#Fn4))
+  prefs: []
+  type: TYPE_NORMAL
+- en: Linear Search on Steroids
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'That linear search can be improved a bit more. Let’s carefully count the number
+    of key comparisons that it may take to find a single key in a tree. For a binary
+    tree, it’s well known that it takes *log*[*2*]*N* comparisons (on average) where
+    *N* is the number of elements. We put the logarithm base here for a reason. Next,
+    consider a *k*-ary tree with *k* children per node. Does it take fewer comparisons?
+    (Spoiler: no). To find the element, you have to do the same search—get a node,
+    find in which branch it sits, then proceed to it. You have *log*[*k*]*N* levels
+    in the tree, so you have to do that many descending steps. However on each step,
+    you need to do the search within *k* elements, which is, again, *log*[*2*]*k*
+    if you’re doing a binary search. Multiplying both, you still need at least *log*[*2*]*N*
+    comparisons.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The way to reduce this number is to compare more than one key at a time when
+    doing intra-node searches. In case the keys are small enough, SIMD instructions
+    can compare up to 64 keys in one go. Although a SIMD compare instruction may be
+    slower than a classic cmp one and requires additional instructions to process
+    the comparison mask, linear SIMD-powered search wins on short enough arrays (and
+    B-tree nodes can be short enough). For example, Figure [4-3](#Fig3) shows the
+    times of looking up an integer in a sorted array using three techniques—linear
+    search, binary search, and SIMD-optimized linear search such as the x86 Advanced
+    Vector Extensions (AVX).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../images/541783_1_En_4_Chapter/541783_1_En_4_Fig3_HTML.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: A horizontal grouped bar chart that plots the time to find 4, 16 and 64 keys
+    for linear, binary and A V X. For 4 keys, that values are 9, 10.5, and 3, for
+    Linear, Binary and A V X, respectively. For 16 keys, that values are 5.5, 7, and
+    2.5, for Linear, Binary and A V X, respectively. For 64 keys, that values are
+    3.5, 3, and 2.5, for Linear, Binary and A V X, respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure 4-3
+  prefs: []
+  type: TYPE_NORMAL
+- en: The test used a large amount of randomly generated arrays of values dispersed
+    in memory to eliminate differences in cache usage and a large amount of random
+    search keys to blur branch predictions. These are the average times of finding
+    a key in an array normalized by the array length. Smaller results are faster (better)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Scanning the Tree
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: One interesting flavor of B-trees is called a B+-tree. In this tree, there are
+    two kinds of keys—*real* keys and *separation* keys. The real keys live on leaf
+    nodes (i.e., on those that don’t have children), while separation keys sit on
+    inner nodes and are used to select which branch to go next when descending the
+    tree. This difference has an obvious consequence that it takes more memory to
+    keep the same amount of keys in a B+-tree as compared to B-tree. But it’s not
+    only that.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A great implicit feature of a tree is the ability to iterate over elements in
+    a sorted manner (called a *scan*). To scan a classical B-tree, there are both
+    recursive and state-machine algorithms that process the keys in a very non-uniform
+    manner—the algorithm walks up-and-down the tree while it moves. Despite B-trees
+    being described as cache-friendly, scanning them requires visiting every single
+    node and inner nodes are visited in a cache unfriendly manner. Figure [4-4](#Fig4)
+    illustrates this phenomenon.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../images/541783_1_En_4_Chapter/541783_1_En_4_Fig4_HTML.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: A box with four divisions, with 11 in the first part, splits into two boxes,
+    each with four divisions. The first box has 3 and 8 in the first two parts. The
+    second box has 12, 13, 14 in the first three parts. The first box splits into
+    three boxes, each with four divisions, again. The first has 0, 1, 2, the second
+    has 4, 5, 6, 7, the third has 9, 10.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure 4-4
+  prefs: []
+  type: TYPE_NORMAL
+- en: Scanning a classical B-tree involves walking up and down the tree; every node
+    and inner node is visited
+  prefs: []
+  type: TYPE_NORMAL
+- en: As opposed to this, B+-trees’ scan only needs to loop through its leaf nodes,
+    which, with some additional effort, can be implemented as a linear scan over a
+    linked list of arrays, as demonstrated in Figure [4-5](#Fig5).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../images/541783_1_En_4_Chapter/541783_1_En_4_Fig5_HTML.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: A box with four divisions, with 7 in the first part, splits into two boxes,
+    each with four divisions. The first box has 4 in the first part. The second box
+    has 11 in the first part. The first box splits into two boxes, each with four
+    divisions, again, of which one has 0, 1, 2, 3, while the other has 4, 5, 6\. The
+    second box splits into two boxes, each with four divisions, again, of which one
+    has 7, 8, 9, 10 while the other has 11, 12, 13, 14.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure 4-5
+  prefs: []
+  type: TYPE_NORMAL
+- en: B+ tree scans only need to cover leaf nodes
+  prefs: []
+  type: TYPE_NORMAL
+- en: When the Tree Size Matters
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Talking about memory, B-trees don’t provide all these benefits for free (neither
+    do B+-trees). As the tree grows, so does the number of nodes in it and it’s useful
+    to consider the overhead needed to store a single key. For a binary tree, the
+    overhead is three pointers—to both left and right children as well as to the parent
+    node. For a B-tree, it will differ for inner and leaf nodes. For both types, the
+    overhead is one parent pointer and *k* pointers to keys, even if they are not
+    inserted in the tree. For inner nodes there will additionally be *k+1* pointers
+    to child nodes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The number of nodes in a B-tree is easy to estimate for a large number of keys.
+    As the number of nodes grows, the per-key overhead blurs as keys “share” parent
+    and children pointers. However, there’s a very interesting point at the beginning
+    of a tree’s growth. When the number of keys becomes *k+1* (i.e., the tree overgrows
+    its first leaf node), the number of nodes jumps three times because, in this case,
+    it’s needed to allocate one more leaf node and one inner node to link those two.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There is a good and pretty cheap optimization to mitigate this spike, called
+    “linear root.” The leaf root node grows on demand, doubling each step like a `std::vector`
+    in C++, and can overgrow the capacity of *k* up to some extent. Figure [4-6](#Fig6)
+    shows the per-key overhead for a 4-ary B-tree with 50 percent initial overgrowth.
+    Note the first split spike of a classical algorithm at five keys.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../images/541783_1_En_4_Chapter/541783_1_En_4_Fig6_HTML.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: A graph between Per key overhead and number of keys in tree, for Binary, B tree
+    and Linear root. The binary line is flat at y-axis value of 3\. The B-tree line
+    begins at (0, 5), drops to (4, 1.2), rises to (5, 4), and ends at (7, 2.8). The
+    linear root line begins at (0, 2), rises to (7, 2.8), then drops to (25, 1.4).
+    Values are estimated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure 4-6
+  prefs: []
+  type: TYPE_NORMAL
+- en: The per-key overhead for a 4-ary B-tree with 50 percent initial overgrowth
+  prefs: []
+  type: TYPE_NORMAL
+- en: When discussing how B-trees work with small amounts of keys, it’s worth mentioning
+    the corner case of one key. In ScyllaDB, a B-tree is used to store sorted rows
+    inside a block of rows called a partition. Since it’s possible to have a schema
+    where each partition always has a single row, this corner case is not that “corner”
+    for us. In the case of a binary tree, the single-element tree is equivalent to
+    having a direct pointer from the tree owner to this element (plus the cost of
+    two nil pointers to the left and right children). In case of a B-tree, the cost
+    of keeping the single key is always in having a root node that implies extra pointer
+    fetching to access this key. Even the linear root optimization is helpless here.
+    Fixing this corner case was possible by reusing the pointer to the root node to
+    point directly to the single key.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Secret Life of Separation Keys
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This section dives into technical details of B+-tree implementation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are two ways of managing separation keys in a B+-tree. The separation
+    key at any level must be less than or equal to *all* the keys from its right subtree
+    and greater than or equal to all the keys from its left subtree. Mind the “or”
+    condition—the exact value of the separation key *may* ***or*** *may not* coincide
+    with the value of some key from the respective branch (it’s clear that this *some*
+    will be the rightmost key on the left branch or leftmost on the right). Let’s
+    look at these two cases. If the tree balancing maintains the separation key to
+    be independent from other key values, then it’s the *light* mode; if it must coincide
+    with some of them, then it will be called the *strict* mode.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the light separation mode, the insertion and removal operations are a bit
+    faster because they don’t need to care about separation keys that much. It’s enough
+    if they separate branches, and that’s it. A somewhat worse consequence of the
+    light separation is that separation keys are separate values that may appear in
+    the tree by copying existing keys. If the key is simple, (e.g., an integer), this
+    will likely not cause any trouble. However, if keys are strings or, as in ScyllaDB’s
+    case, database partition or clustering keys, copying it might be both resource
+    consuming and out-of-memory risky.
+  prefs: []
+  type: TYPE_NORMAL
+- en: On the other hand, the strict separation mode makes it possible to avoid key
+    copying by implementing separation keys as references on real ones. This would
+    involve some complication of insertion and especially removal operations. In particular,
+    upon real key removal, it will be necessary to find and update the relevant separation
+    keys. Another difficulty to care about is that moving a real key value in memory,
+    if it’s needed (e.g., in ScyllaDB’s case keys are moved in memory as a part of
+    memory defragmentation hygiene), will also need to update the relevant reference
+    from separation keys. However, it’s possible to show that each real key will be
+    referenced by at most one separation key.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Speaking about memory consumption, although large B-trees were shown to consume
+    less memory per-key as they get filled, the real overhead would very likely be
+    larger, since the nodes of the tree will typically be underfilled because of the
+    way the balancing algorithm works. For example, Figures [4-7](#Fig7) and [4-8](#Fig8)
+    show how nodes look in a randomly filled 4-ary B-tree.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../images/541783_1_En_4_Chapter/541783_1_En_4_Fig8_HTML.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: A Pie chart of the distribution of number of keys in a node for leaf nodes,
+    in percentage. 1\. 2 keys, 34.3, 2\. 3 keys, 25.3, and 3\. 4 keys, 40.4.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure 4-8
+  prefs: []
+  type: TYPE_NORMAL
+- en: Distribution of number of keys in a node for inner nodes
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../images/541783_1_En_4_Chapter/541783_1_En_4_Fig7_HTML.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: A Pie chart of the distribution of number of keys in a node for leaf nodes,
+    in percentage. 1\. 2 keys, 18.4, 2\. 3 keys, 31.6, and 3\. 4 keys, 50.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure 4-7
+  prefs: []
+  type: TYPE_NORMAL
+- en: Distribution of number of keys in a node for leaf nodes
+  prefs: []
+  type: TYPE_NORMAL
+- en: It’s possible to define a compaction operation for a B-tree that will pick several
+    adjacent nodes and squash them together, but this operation has its limitations.
+    First, a certain amount of underoccupied nodes makes it possible to insert a new
+    element into a tree without the need to rebalance, thus saving CPU cycles. Second,
+    since each node cannot contain less than a half of its capacity, squashing two
+    adjacent nodes is impossible. Even if considering three adjacent nodes, then the
+    amount of really squashable nodes would be less than 5 percent of the leaves and
+    less than 1 percent of the inners.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: As extensive as these optimizations might seem, they are really just the tip
+    of the iceberg for this one particular example. Many finer points that matter
+    from an engineering perspective were skipped for brevity (for example, the subtle
+    difference in odd vs even number of keys on a node). For a database user, the
+    key takeaway here is that an excruciating level of design and experimentation
+    often goes into the software for determining how your database stores and retrieves
+    data. You certainly don’t need to be this familiar with every aspect of how your
+    database was engineered. But knowing what algorithmic optimizations your database
+    has focused on will help you understand why it performs in certain ways under
+    different contexts. And you might discover some impressively engineered capabilities
+    that could help you handle more user requests or shave a few precious milliseconds
+    off your P99 latencies. The next chapter takes you into the inner workings of
+    database drivers and shares tips for getting the most out of a driver, particularly
+    from a performance perspective.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[![Creative Commons](../css/cc-by.png)](https://creativecommons.org/licenses/by/4.0)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Open Access** This chapter is licensed under the terms of the Creative Commons
+    Attribution 4.0 International License ([http://​creativecommons.​org/​licenses/​by/​4.​0/​](http://creativecommons.org/licenses/by/4.0/)),
+    which permits use, sharing, adaptation, distribution and reproduction in any medium
+    or format, as long as you give appropriate credit to the original author(s) and
+    the source, provide a link to the Creative Commons license and indicate if changes
+    were made.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The images or other third party material in this chapter are included in the
+    chapter's Creative Commons license, unless indicated otherwise in a credit line
+    to the material. If material is not included in the chapter's Creative Commons
+    license and your intended use is not permitted by statutory regulation or exceeds
+    the permitted use, you will need to obtain permission directly from the copyright
+    holder.
+  prefs: []
+  type: TYPE_NORMAL
