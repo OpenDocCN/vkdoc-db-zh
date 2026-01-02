@@ -1,24 +1,32 @@
 - en: 6. Getting Data Closer
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 6. 将数据更靠近
 - en: '[Databases as Compute Engines](#Sec1)[Edge Computing](#Sec24)[Summary](#Sec31)'
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: '[数据库作为计算引擎](#Sec1)[边缘计算](#Sec24)[总结](#Sec31)'
 - en: Location, location, location. Sometimes it’s just as important to database performance
     as it is to real estate. Just as the location of a home influences how quickly
     it sells, the location of where data “lives” and is processed also matters for
     response times and latencies.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 位置，位置，位置。有时对数据库性能的重要性与对房地产一样重要。正如房屋的位置影响其销售速度一样，数据“居住”和被处理的位置对于响应时间和延迟也很重要。
 - en: Pushing more logic into the database can often reduce network latency (and costs,
     e.g., when your infrastructure provider charges for ingress/egress network traffic)
     while taking advantage of the database’s powerful compute capability. And redistributing
     database logic from fewer powerful datacenters to more minimalist ones that are
     closer to users is another move that can yield discernable performance gains under
     the right conditions.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 将更多逻辑推入数据库通常可以减少网络延迟（以及成本，例如，当你的基础设施提供商对入站/出站网络流量收费时），同时利用数据库强大的计算能力。将数据库逻辑从较少的强大数据中心重新分配到更简约且更靠近用户的数据中心，在适当条件下也是一种可以带来明显性能提升的措施。
 - en: This chapter explores the opportunities in both of these shifts. First, it looks
     at databases as compute engines with a focus on user-defined functions and user-defined
     aggregates. It then goes deeper into WebAssembly, which is now increasingly being
@@ -26,18 +34,24 @@
     Finally, the chapter ventures to the edge—exploring what you stand to gain by
     moving your database servers quite close to your users, as well as what potential
     pitfalls you need to negotiate in this scenario.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章探讨了这两个转变中的机会。首先，它将数据库视为计算引擎，重点关注用户定义的函数和用户定义的聚合。然后，它更深入地探讨了WebAssembly，它现在越来越多地被用于实现用户定义的函数和聚合（以及其他许多事物）。最后，章节探索了边缘——探讨将数据库服务器移至非常靠近用户可以获得的好处，以及在这种场景下需要克服的潜在陷阱。
 - en: Databases as Compute Engines
+  id: totrans-5
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 数据库作为计算引擎
 - en: Modern databases offer many more capabilities than just storing and retrieving
     data. Some of them are nothing short of operating systems, capable of streaming,
     modifying, encrypting, authorizing, authenticating, and virtually anything else
     with data they manage.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 现代数据库提供的功能远不止存储和检索数据。其中一些几乎等同于操作系统，能够进行流式传输、修改、加密、授权、认证以及处理它们所管理的数据的几乎所有其他操作。
 - en: 'Data locality is the holy grail of distributed systems. The less you need to
     move data around, the more time can be spent on performing meaningful operations
     on it—without excessive bandwidth costs. That’s why it makes sense to try to push
@@ -49,122 +63,163 @@
     Apache Spark, which is out of scope for this book), regular database engines almost
     always support some level of user-defined computations. These can be classified
     into two major sections: user-defined functions/procedures and user-defined aggregates.'
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 数据局部性是分布式系统中的圣杯。你越少需要移动数据，就有更多时间可以用来在数据上执行有意义的操作——而不需要过高的带宽成本。这就是为什么尝试将更多逻辑推入数据库本身，让它尽可能本地处理，然后将结果返回给用户或某些中间件进行进一步处理是有意义的。当你考虑到数据库节点通常运行在强大的硬件上，拥有大量的RAM和快速的I/O设备时，这一点就更加合理了。这通常意味着强大的CPU性能。除了专用的大数据处理框架（例如，Apache
+    Spark，本书范围之外）之外，常规数据库引擎几乎总是支持某种程度上的用户定义计算。这些可以归类为两大类：用户定义的函数/过程和用户定义的聚合。
 - en: Note that the definitions vary. Some database vendors use the general name “functions”
     to mean both aggregate and scalar functions. Others actually mean “scalar functions”
     when they reference “functions,” and use the name “aggregates” for “aggregate
     functions.” That’s the convention applied to this chapter.
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意，定义可能会有所不同。一些数据库供应商使用“函数”这个通用名称来同时指代聚合函数和标量函数。而另一些供应商在提到“函数”时实际上是指“标量函数”，并使用“聚合”这个名称来指代“聚合函数”。本章中应用的就是这种惯例。
 - en: User-Defined Functions and Procedures
+  id: totrans-9
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 用户定义的函数和过程
 - en: In contrast to native functions, often implemented in database engines (think
     `lowercase()`, `now()`, `concat()`, type casting, algebraic operations, and friends),
     user-defined functions are provided by the users of the database (e.g., the developers
     building applications). A “procedure” is substantially identical to a function
     in this context, except it does not return any result; instead, it has side effects.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 与本地函数相比，本地函数通常在数据库引擎中实现（例如`lowercase()`、`now()`、`concat()`、类型转换、代数运算等），由数据库的用户（例如，构建应用程序的开发者）提供。在这个上下文中，“过程”实质上与函数相同，只是它不返回任何结果；相反，它具有副作用。
 - en: 'The exact interface of allowing users to define their own functions or procedures
     varies wildly between database vendors. Still, several core strategies, listed
     here, are often implemented:'
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 允许用户定义自己的函数或过程的精确接口在数据库供应商之间差异很大。尽管如此，这里列出的几个核心策略通常都会实现：
 - en: A set of hardcoded native functions, not extensible, but at least composable.
     For example, casting a type to string, concatenating it with a predefined suffix,
     and then hashing it.
+  id: totrans-12
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 一组硬编码的本地函数，不可扩展，但至少是可组合的。例如，将类型转换为字符串，将其与预定义的后缀连接，然后进行哈希处理。
 - en: A custom scripting language, dedicated and vendor-locked to a specific database,
     allowing users to write and execute simple programs on the data.
+  id: totrans-13
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 一种定制的脚本语言，专门针对特定数据库，并允许用户在数据上编写和执行简单的程序。
 - en: 'Supporting a single general-purpose embeddable language of choice. For example,
     Lisp, Lua, ChaiScript, Squirrel, or WebAssembly might be used for this purpose.
     Note: You’ll explore WebAssembly in more depth a little later in this chapter.'
+  id: totrans-14
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 支持单一通用嵌入式语言。例如，Lisp、Lua、ChaiScript、Squirrel或WebAssembly可能用于此目的。注意：你将在本章稍后更深入地了解WebAssembly。
 - en: Supporting a variety of pluggable embeddable languages. A good example is Apache
     Cassandra and its support of Java (native language) and JavaScript^([1](#Fn1))
     as well as pluggable backend-loaded via .jar files.
+  id: totrans-15
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 支持多种可插拔的嵌入式语言。一个很好的例子是Apache Cassandra及其对Java（本地语言）和JavaScript的支持，以及通过.jar文件加载的可插拔后端。
 - en: The first on the list is the least flexible, offers the worst developer experience,
     and has the lowest security risk. The last has the most flexibility, offers the
     best developer experience, and also harbors the most potential for being a security
     risk worthy of its own CVE number.
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 列表中的第一个选项最不灵活，提供了最差的开发者体验，并且具有最低的安全风险。最后一个选项最灵活，提供了最佳的开发者体验，同时也潜藏着成为值得单独CVE编号的安全风险的最大可能性。
 - en: Scalar functions are usually invoked per each row, at least for row-oriented
     databases, which is usually the case for SQL. You might wonder if the computations
     can’t simply be performed by end users on their machines. That’s a valid point.
     The main advantage of that approach is fantastic scalability regardless of how
     many users perform data transformations (if they do it locally on their own machines,
     then the database cluster does not get overloaded).
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 标量函数通常按行调用，至少对于面向行的数据库来说是这样，这对于SQL通常是情况。你可能想知道计算是否不能简单地由最终用户在自己的机器上执行。这是一个有效的观点。这种方法的主要优势是无论有多少用户执行数据转换（如果他们在自己的机器上本地执行，那么数据库集群就不会过载），都具有出色的可扩展性。
 - en: 'There are several great reasons to push the computations closer to where the
     data is stored:'
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 有几个很好的理由将计算推近到数据存储的地方：
 - en: Databases have more context to efficiently cache the computed results. Imagine
     tens of thousands of users asking for the same function to be applied on a certain
     set of rows. That result can be computed just once and then distributed to all
     interested parties.
+  id: totrans-19
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 数据库有更多的上下文来有效地缓存计算结果。想象一下成千上万的用户请求在特定行集上应用相同的函数。这个结果只需计算一次，然后分发给所有感兴趣的各方。
 - en: If the computed results are considerably smaller than their input (think about
     returning just lengths of text values), it’s better to save bandwidth and send
     over only the final results.
+  id: totrans-20
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如果计算结果与其输入相比明显较小（例如，仅返回文本值的长度），则最好节省带宽，只发送最终结果。
 - en: Certain housekeeping operations (e.g., deleting data older than a week) can
     be efficiently performed locally, without fetching any information to the clients
     for validation.
+  id: totrans-21
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 某些维护操作（例如，删除一周以上的数据）可以有效地在本地执行，而无需将任何信息检索到客户端进行验证。
 - en: If the processing is done on database servers, the instruction cache residing
     on that database’s CPU chip is likely to be scorching hot with opcodes responsible
     for carrying out the computations for each row. And as a rule of thumb, hot cache
     translates to faster code execution and lower latency.
+  id: totrans-22
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如果处理是在数据库服务器上进行的，该数据库CPU芯片上驻留的指令缓存可能因为执行每行计算所需的操作码而非常热。一般来说，热缓存意味着代码执行更快，延迟更低。
 - en: Some computations are not trivially distributed to users. If they involve cryptographic
     private keys stored on the database servers, it might actually be impossible to
     run the code anywhere but on the server itself.
+  id: totrans-23
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 有些计算不能简单地分发给用户。如果它们涉及到存储在数据库服务器上的加密私钥，实际上可能在服务器本身之外的其他地方无法运行代码。
 - en: If the data on which computations are performed is sensitive (e.g., it falls
     under infamous, ever-changing European data protection laws such as GDPR), it
     might be illegal to send raw data to the users. In such cases, running an encryption
     function server-side can be a way for users to obtain obfuscated, legal data.
+  id: totrans-24
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如果执行计算的数据是敏感的（例如，它属于臭名昭著且不断变化的欧洲数据保护法规，如GDPR），将原始数据发送给用户可能是非法的。在这种情况下，在服务器端运行加密函数可以是用户获取混淆后合法数据的一种方式。
 - en: Determinism
+  id: totrans-25
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 确定性
 - en: In distributed environments, idempotence (discussed in Chapter [5](541783_1_En_5_Chapter.xhtml))
     is an important attribute that makes it possible to send requests in a speculative
     manner, potentially increasing performance. Thus, it is better to make sure that
     user-defined functions are deterministic. In other words, a user-defined function’s
     value should only depend on the value of its arguments, and not on the value of
     any external factors like time, date, pseudo-random seed, and so on.
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 在分布式环境中，幂等性（在第[5](541783_1_En_5_Chapter.xhtml)章中讨论）是一个重要的属性，它使得以推测方式发送请求成为可能，从而可能提高性能。因此，最好确保用户定义的函数是确定性的。换句话说，用户定义函数的值应仅取决于其参数的值，而不是任何外部因素（如时间、日期、伪随机种子等）的值。
 - en: A perfect example of a non-deterministic function is `now()`. Calling it twice
     might yield the same value if you’re fast enough, but it’s generally not guaranteed
     since its result is time-dependent. If possible, it’s a good idea to program the
@@ -173,12 +228,16 @@
     rather than using built-in time utilities. For pseudo-random sampling, the seed
     could also be passed as a parameter, as opposed to relying on sources of entropy
     provided by the user-defined function runtime.
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个非确定性函数的完美例子是`now()`。如果你足够快，调用它两次可能得到相同的结果，但通常不能保证，因为其结果是依赖于时间的。如果可能的话，以确定性方式编写用户定义的函数并将其标记为确定性是一个好主意。对于时间/日期，这可能涉及基于传递的时间戳计算结果，而不是使用内置的时间实用程序。对于伪随机抽样，种子也可以作为参数传递，而不是依赖于用户定义函数运行时提供的熵源。
 - en: Latency
+  id: totrans-28
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 延迟
 - en: Running user-provided code on your database clusters is potentially dangerous
     in aspects other than security. Most embedded languages are Turing-complete, and
     customarily allow the developers to use loops, recursion, and other similar techniques
@@ -187,8 +246,10 @@
     other tasks from used resources. And even if the user-defined function author
     did not have malicious intentions, some computations simply consume a lot of CPU
     time and memory.
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 在您的数据库集群上运行用户提供的代码在安全以外的方面也可能很危险。大多数嵌入式语言都是图灵完备的，通常允许开发者在其代码中使用循环、递归和其他类似技术。这是有风险的。一个未被发现的无限循环可能作为拒绝服务攻击，迫使数据库服务器无限期地处理一个函数，并阻止其他任务使用资源。即使用户定义函数的作者没有恶意意图，一些计算也可能消耗大量的CPU时间和内存。
 - en: In a way, a user-defined function should be thought of as a potential “noisy
     neighbor”^([2](#Fn2)) and its resources should be as limited as possible. For
     some use cases, a simple hard limit on memory and CPU time used is enough to ensure
@@ -196,20 +257,26 @@
     function. However, sometimes, a more specific solution is required—for example,
     splitting a user-function definition into smaller time bits, assigning priorities
     to user-defined functions, and so on.
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 从某种意义上说，用户定义函数应该被视为潜在的“嘈杂邻居”^([2](#Fn2))，其资源应该尽可能有限。对于某些用例，对内存和CPU时间使用的简单硬限制就足以确保其他数据库任务的性能不会因“嘈杂”的用户定义函数而受到影响。然而，有时需要更具体的解决方案——例如，将用户函数定义拆分为更小的时间块，为用户定义函数分配优先级，等等。
 - en: One interesting metering mechanism was applied by Wasmtime,^([3](#Fn3)) a WebAssembly
     runtime. Code running in a WebAssembly instance consumes *fuel,*^([4](#Fn4)) a
     synthetic unit used for tracking how fast an instance exhausts system resources.
     When an instance runs out of fuel, the runtime does one of the preconfigured actions—either
     “refills” and lets the code execution continue or decides that the task reached
     its quota and terminates it.
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: Wasmtime，^([3](#Fn3))一个WebAssembly运行时，应用了一个有趣的计量机制。在WebAssembly实例中运行的代码消耗*燃料*，^([4](#Fn4))这是一个用于跟踪实例耗尽系统资源速度的合成单位。当实例耗尽燃料时，运行时会执行预配置的操作之一——要么“补充燃料”并允许代码执行继续，要么决定任务达到了配额并终止它。
 - en: Just-in-Time Compilation (JIT)
+  id: totrans-32
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 即时编译（JIT）
 - en: Languages used for user-defined functions are often either interpreted (e.g.,
     Lua) or represented in bytecode that runs on a virtual machine (e.g., WebAssembly).
     Both of these approaches can benefit from just-in-time compilation. It’s a broad
@@ -218,8 +285,10 @@
     along the way. This may mean translating bytecode to machine code the program
     runs on (e.g., x86-64 instructions), or compiling the source code represented
     in an interpreted language to machine code.
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: 用于用户定义函数的语言通常是解释型（例如，Lua）或以字节码形式表示，这些字节码在虚拟机上运行（例如，WebAssembly）。这两种方法都可以从即时编译中受益。这是一个广泛的话题，但其本质是在运行时，用户定义函数的代码可以被编译为另一种更有效的表示形式，并在过程中进行优化。这可能意味着将字节码转换为程序运行的机器代码（例如，x86-64指令），或者将解释语言中表示的源代码编译成机器代码。
 - en: JIT is a very powerful tool, but it’s not a silver bullet—compilation and additional
     optimization can be an expensive process in terms of resources. A small user-defined
     function may take less than a millisecond to run, but recompiling it can cause
@@ -227,26 +296,36 @@
     the processing—resulting in high tail latency. It should therefore be a conscious
     decision to either enable just-in-time compilation for user-defined functions
     if the language allows it, or disable it altogether.
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: JIT是一个非常强大的工具，但不是万能的——编译和额外的优化在资源方面可能是一个昂贵的流程。一个小型的用户定义函数可能运行时间不到一毫秒，但重新编译它可能会导致CPU和内存使用量突然增加，以及处理延迟多毫秒——导致高尾部延迟。因此，如果语言允许，是否为用户定义函数启用即时编译，或者完全禁用它，应该是一个有意识的决定。
 - en: Examples
+  id: totrans-35
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 示例
 - en: Let’s take a look at a few examples of user-defined functions. The function
     serving as the example operates on floating point numbers; given two parameters,
     it returns the sum of them, inverted. Given 5 and 7, it should return 1/5+1/7,
     which is approximately 0.34285714285.
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们看看一些用户定义函数的例子。作为例子的函数操作浮点数；给定两个参数，它返回它们的和的倒数。给定5和7，它应该返回1/5+1/7，大约是0.34285714285。
 - en: 'Here’s how it could be defined in Apache Cassandra, which allows user-defined
     function definitions to be provided in Java, its native language, as well as in
     other languages:'
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 在Apache Cassandra中，可以这样定义它，它允许用户在Java（其本地语言）以及其他语言中提供用户定义函数的定义：
 - en: '[PRE0]'
+  id: totrans-38
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: 'Let’s take a closer look at the definition. The first line is straightforward:
     it includes the function’s name, parameters, and its types. It also specifies
     that if a function definition with that name already exists, it should be replaced.
@@ -255,23 +334,33 @@
     calling the function at all* or allow `null` and let the source code handle it
     explicitly (the syntax for that is `CALLED ON NULL INPUT`). This explicit declaration
     is required by Apache Cassandra.'
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们更仔细地看看定义。第一行很简单：它包括函数的名称、参数及其类型。它还指定，如果已经存在具有该名称的函数定义，则应替换它。接下来，它明确声明了如果任何参数为`null`（对于任何类型都是有效值）会发生什么。函数可以完全不调用函数就返回`null`，或者允许`null`并让源代码显式处理（该语法为`CALLED
+    ON NULL INPUT`）。这种显式声明是Apache Cassandra所要求的。
 - en: That declaration is then followed by the return type and chosen language—from
     which you can correctly deduce that multiple languages are supported. Then comes
     the function body. The only non-obvious decision made by the programmer was how
     to handle `0` as a parameter. Since the type system implemented in Apache Cassandra
     already handles NaN,^([5](#Fn5)) it’s a decent candidate (next to positive/negative
     infinity).
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 随后是返回类型和选择的语言——从这些可以正确推断出支持多种语言。然后是函数体。程序员做出的唯一非直观的决定是如何处理作为参数的`0`。由于Apache
+    Cassandra中实现的类型系统已经处理了NaN，^([5](#Fn5))，它是一个不错的候选者（与正/负无穷大并列）。
 - en: 'The newly created function can be easily tested by creating a table, filling
     it with a few values, and inspecting the result:'
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 新创建的函数可以通过创建一个表、用几个值填充它并检查结果来轻松测试：
 - en: '[PRE1]'
+  id: totrans-42
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: From the performance perspective, is offloading such a simple function to the
     database servers worth it? Not likely—the computations are fairly cheap, so users
     shouldn’t have an issue deriving these values themselves, immediately after receiving
@@ -280,80 +369,110 @@
     purposes. That runtime initialization takes time and other resources. Offloading
     such computations makes much more sense if the data is aggregated server-side,
     which is discussed in the next section (on user-defined aggregates).
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 从性能的角度来看，将这样一个简单的函数卸载到数据库服务器上值得吗？不太可能——计算成本相当低，因此用户在接收到数据后应该能够立即自己推导出这些值。另一方面，数据库服务器可能需要初始化用户定义函数的运行时，因为这些函数通常为了安全目的而被沙盒化。这个运行时初始化需要时间和其他资源。如果数据在服务器端聚合，那么卸载这样的计算就更有意义，这在下一节（关于用户定义的聚合）中讨论。
 - en: Best Practices
+  id: totrans-44
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 最佳实践
 - en: 'Before you learn about user-defined aggregates, which unleash the true potential
     of user-defined functions, it’s important to sum up a few best practices for setting
     up user-defined functions in your database management system:'
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 在学习用户定义的聚合函数之前，这些函数能够释放用户定义函数的真正潜力，总结一下在数据库管理系统中设置用户定义函数的一些最佳实践是很重要的：
 - en: Evaluate if you need user-defined functions at all—compare the latency (and
     general performance) of queries utilizing user-defined functions vs computing
     everything client-side (assuming that’s even possible).
+  id: totrans-46
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 评估你是否真的需要用户定义的函数——比较使用用户定义函数的查询的延迟（以及一般性能）与在客户端端计算所有内容（假设这是可能的）。
 - en: Test if offloading computations to the database servers scales. Look at metrics
     like CPU utilization to assess how well your database system can handle thousands
     of users requesting additional computations.
+  id: totrans-47
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 测试将计算卸载到数据库服务器是否可扩展。查看CPU利用率等指标，以评估你的数据库系统可以多好地处理数千名请求额外计算的用户。
 - en: Recognize that since user-defined functions are likely going to be executed
     on the “fast path,” they need to be optimized and benchmarked as well! Consider
     the performance best practices for the language you’re using for user-defined
     function implementation.
+  id: totrans-48
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 认识到用户定义的函数很可能会在“快速路径”上执行，因此它们也需要优化和基准测试！考虑你在用户定义函数实现中使用的语言的性能最佳实践。
 - en: Make sure to properly handle any errors or exceptional cases in your user-defined
     function to avoid disrupting the operation of the rest of the database system.
+  id: totrans-49
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 确保在用户定义的函数中妥善处理任何错误或异常情况，以避免干扰数据库系统的其他操作。
 - en: Consider using built-in functions whenever possible instead of creating a user-defined
     function. The built-in functions may be more optimized and efficient.
+  id: totrans-50
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 在可能的情况下，考虑使用内置函数而不是创建用户定义函数。内置函数可能更优化和高效。
 - en: Keep your user-defined functions simple and modular, breaking up complex tasks
     into smaller, more manageable functions that can be easily tested and reused.
+  id: totrans-51
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 保持你的用户定义函数简单且模块化，将复杂任务分解成更小、更易于管理的函数，这些函数可以轻松测试和重用。
 - en: Properly document your user-defined functions so that other users of the database
     system can understand how they work and how to use them correctly.
+  id: totrans-52
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 正确记录你的用户定义函数，以便其他数据库系统用户可以理解它们的工作原理以及如何正确使用它们。
 - en: User-Defined Aggregates
+  id: totrans-53
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 用户定义的聚合
 - en: The greatest potential for user-defined functions lies in them being building
     blocks for user-defined aggregates. Aggregate functions operate on multiple rows
     or columns, sometimes on entire tables or databases.
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 用户定义函数最大的潜力在于它们是用户定义聚合的构建块。聚合函数作用于多行或多列，有时作用于整个表或数据库。
 - en: 'Moving this kind of operation closer to where the data lies makes perfect sense.
     Imagine 1TB worth of database rows that need to be aggregated into a single value:
     the sum of their values. When a thousand users request all these rows in order
     to perform the aggregation client-side, the following happens:'
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 将此类操作移至数据所在位置附近是完全合理的。想象一下1TB的数据库行需要聚合成一个单一值：它们值的总和。当成千上万的用户请求所有这些行以在客户端执行聚合时，以下情况会发生：
 - en: A total of a petabyte of data is sent over the network to each user.
+  id: totrans-56
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 总共PB级的数据通过网络发送到每个用户。
 - en: Each user performs extensive computations, expensive in terms of RAM and CPU,
     that lead to exactly the same result as the other users.
+  id: totrans-57
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 每个用户都会执行大量的计算，从RAM和CPU的角度来看成本高昂，但得到的结果与其它用户完全相同。
 - en: If the aggregation is performed by the database servers, it not only avoids
     a petabyte of traffic; it also saves computing power for the users (which is a
     considerably greener solution). If the computation is properly cached, it only
@@ -362,12 +481,16 @@
     to the data. This is especially important for analytic workloads that tend to
     process large volumes of data in order to produce useful statistics and feedback—a
     process that is its own type of aggregation.
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果聚合操作由数据库服务器执行，它不仅避免了PB级的数据流量；同时也为用户节省了计算能力（这是一个相当环保的解决方案）。如果计算被适当地缓存，它只需要执行一次。这在性能方面是一个巨大的胜利，许多用例可以立即从将聚合计算推近数据处受益。这对于倾向于处理大量数据以生成有用统计和反馈的分析工作负载尤为重要——这个过程本身就是一种聚合。
 - en: Built-In Aggregates
+  id: totrans-59
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 内置聚合
 - en: 'Databases that allow creating user-defined aggregates usually also provide
     a few traditional built-in aggregation functions: the (in)famous `COUNT(*)`, but
     also `MAX`, `MIN`, `SUM`, `AVG`, and others. Such functions take into account
@@ -375,28 +498,39 @@
     value. Or, it could also be a set of values if the input is divided into smaller
     classes. One example of such an operation is SQL’s `GROUP BY` statement, which
     applies the aggregation to multiple disjoint groups of values.'
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 允许创建用户定义聚合的数据库通常也提供一些传统的内置聚合函数：著名的`COUNT(*)`，还有`MAX`、`MIN`、`SUM`、`AVG`等。这些函数考虑了多行或多值，并返回一个聚合结果。结果可能是一个单一值。或者，如果输入被分成更小的类别，它也可能是一组值。此类操作的一个例子是SQL的`GROUP
+    BY`语句，它将聚合应用于多个不相交的值组。
 - en: Built-in aggregates should be preferred over user-defined ones whenever possible—they
     are likely written in the language native to the database server, already optimized,
     and secure. Still, the set of predefined aggregate functions is often very basic
     and doesn’t allow users to perform the complex computations that make user-defined
     aggregates such a powerful tool.
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 在可能的情况下，应优先选择内置聚合而不是用户定义的聚合——它们很可能是用数据库服务器本机语言编写的，已经优化，并且安全。然而，预定义的聚合函数集通常非常基础，不允许用户执行那些使用户定义的聚合成为强大工具的复杂计算。
 - en: Components
+  id: totrans-62
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 组件
 - en: User-defined aggregates are customarily built on top of user-defined scalar
     functions. The details heavily depend on the database system, but the following
     components are definitely worth mentioning.
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 用户定义的聚合通常建立在用户定义的标量函数之上。具体细节很大程度上取决于数据库系统，但以下组件绝对值得提及。
 - en: Initial Value
+  id: totrans-64
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
+  zh: 初始值
 - en: 'An aggregation needs to start somewhere, and it’s up to the user to provide
     an initial value from which the final result will eventually be computed. In the
     case of the `COUNT` function, which returns the number of rows or values in a
@@ -404,24 +538,32 @@
     which computes the arithmetic mean from all column values, the initial state could
     consist of two variables: The total number of values, initialized to `0`, and
     the total sum of values, also initialized to `0`.'
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 聚合需要从一个地方开始，并且用户需要提供一个初始值，最终结果将从该值计算得出。对于返回表中行数或值的`COUNT`函数，初始值自然可以是`0`。对于计算所有列值的算术平均值的`AVG`，初始状态可以由两个变量组成：值的总数，初始化为`0`，以及值的总和，也初始化为`0`。
 - en: State Transition Function
+  id: totrans-66
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
+  zh: 状态转换函数
 - en: The core of each user-defined aggregate is its state transition function. This
     function is called for each new value that needs to be processed, and each time
     it is called, it returns the new state of the aggregation. Following the `COUNT`
     function example, its state transition function simply increments the number of
     rows by one. The state transition function of the `AVG` aggregate just adds the
     current value to the total sum and increments the total number of values by one.
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 每个用户定义的聚合的核心是其状态转换函数。这个函数会在需要处理的新值被调用时被调用，每次调用都会返回聚合的新状态。以`COUNT`函数为例，其状态转换函数只是简单地通过增加一行来增加行数。`AVG`聚合的状态转换函数只是将当前值加到总和上，并将值的总数增加一。
 - en: Final Function
+  id: totrans-68
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
+  zh: 最终函数
 - en: The final function is an optional feature for user-defined aggregates. Its sole
     purpose is to transform the final state of the aggregation to something else.
     For `COUNT`, no further transformations are required. The user is simply interested
@@ -431,26 +573,34 @@
     user. It transforms the final state—the total number of values and its total sum—and
     produces the arithmetic mean by simply dividing one by the other, handling the
     special case of avoiding dividing by zero.
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 最终函数是用户定义聚合的一个可选特性。它的唯一目的是将聚合的最终状态转换成其他形式。对于`COUNT`，不需要进一步的转换。用户只对聚合的最终状态（值的数量）感兴趣，所以最终函数不需要存在；可以假设它是一个恒等函数。然而，在`AVG`的情况下，最终函数是使结果对用户有用的关键。它通过简单地除以另一个值来转换最终状态——值的总数和总和——从而产生算术平均值，并处理避免除以零的特殊情况。
 - en: Reduce Function
+  id: totrans-70
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
+  zh: 聚合函数
 - en: The reduce function is an interesting optional addition to the user-defined
     aggregates world, especially for distributed databases. It can be thought of as
     another state transition function, but one that can combine two partial states
     into one.
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 聚合函数是用户定义聚合世界中的一个有趣的附加特性，尤其是在分布式数据库中。它可以被看作是另一个状态转换函数，但它是将两个部分状态合并为一个的函数。
 - en: With the help of a reduce function, computations of the user-defined aggregate
     can be distributed to multiple database nodes, in a map-reduce^([6](#Fn6)) fashion.
     This, in turn, can bring massive performance gains, because the computations suddenly
     become concurrent. Note that this optimization is not always possible—if the state
     transition function is not commutative, distributing the partial computations
     may yield an incorrect result.
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 在聚合函数的帮助下，用户定义聚合的计算可以分布到多个数据库节点上，以map-reduce^([6](#Fn6))的方式。这反过来又可以实现巨大的性能提升，因为计算突然变得并发。请注意，这种优化并不总是可能的——如果状态转换函数不是交换的，分布部分计算可能会导致错误的结果。
 - en: 'In order to better imagine what a reduce function can look like, let’s go back
     to the `AVG` example. A partial state for `AVG` can be represented as *(n, s)*,
     where *n* is the number of values, and *s* is the sum of them. Reducing two partial
@@ -458,100 +608,149 @@
     values: *(n*[*1*]*, s*[*1*]*) + (n*[*2*]*, s*[*2*]*) → (n*[*1*]*+ n*[*2*]*, s*[*1*]
     *+ s*[*2*]*)*. An optional reduce function can be defined (e.g., in ScyllaDB’s
     user-defined aggregate implementation^([7](#Fn7))).'
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了更好地想象一个聚合函数可能的样子，让我们回到`AVG`的例子。`AVG`的部分状态可以表示为*(n, s)*，其中*n*是值的数量，*s*是它们的总和。通过简单地将相应的值相加，可以将两个部分状态合并成一个新的有效状态：*(n*[*1*]*,
+    s*[*1*]*) + (n*[*2*]*, s*[*2*]*) → (n*[*1*]*+ n*[*2*]*, s*[*1*] *+ s*[*2*]*)*.
+    可以定义一个可选的聚合函数（例如，在ScyllaDB的用户定义聚合实现中^([7](#Fn7))）。
 - en: 'The user-defined aggregates support is not standardized among database vendors
     and each database has its own quirks and implementation details. For instance,
     in PostgreSQL, you can also implement a “moving” aggregate^([8](#Fn8)) by providing
     yet another set of functions and parameters: `msfunc`, `minvfunc`, `mstype`, and
     `minitcond`. Still, the general idea remains unchanged: Let the users push aggregation
     logic as close to the data as possible.'
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 用户定义的聚合支持在数据库供应商之间并不标准化，每个数据库都有自己的怪癖和实现细节。例如，在 PostgreSQL 中，你也可以通过提供另一组函数和参数（`msfunc`、`minvfunc`、`mstype`
+    和 `minitcond`）来实现一个“移动”聚合^([8](#Fn8))。尽管如此，基本思想保持不变：让用户尽可能地将聚合逻辑推近数据。
 - en: Examples
+  id: totrans-75
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 示例
 - en: Let’s create a custom integer arithmetic mean implementation in PostgreSQL.
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们在 PostgreSQL 中创建一个自定义的整数算术平均数实现。
 - en: That’s going to be done by providing a state transition function, called `sfunc`
     in PostgreSQL nomenclature, `finalfunc` for the final function, initial value
     (`initcond`), and the state type—`stype`. All of the functions will be implemented
     in SQL, PostgreSQL’s native query language.
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: 这将通过提供状态转换函数（在 PostgreSQL 术语中称为 `sfunc`）、最终函数（称为 `finalfunc`）、初始值（`initcond`）和状态类型（`stype`）来实现。所有函数都将使用
+    SQL，即 PostgreSQL 的原生查询语言来实现。
 - en: State Transition Function
+  id: totrans-78
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
+  zh: 状态转换函数
 - en: The state transition function, called `accumulate`, accepts a new integer value
     (the second parameter) and applies it to the existing state (the first parameter).
     As mentioned earlier in this chapter, a simple implementation keeps two variables
     in the state—the current sum of all values, and their count. Thus, transitioning
     to the next state simply means that the sum is incremented by the current value,
     and the total count is increased by one.
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: 状态转换函数，称为 `accumulate`，接受一个新的整数值（第二个参数）并将其应用于现有状态（第一个参数）。如本章前面所述，简单的实现将两个变量保留在状态中——所有值的当前总和和它们的计数。因此，过渡到下一个状态
+    simply means that the sum is incremented by the current value, and the total count
+    is increased by one.
 - en: '[PRE2]'
+  id: totrans-80
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: Final Function
+  id: totrans-81
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
+  zh: 最终函数
 - en: The final function divides the total sum of values by the total count of them,
     special-casing an average of `0` values, which should be just `0`. The final function
     returns a floating point number because that’s how the aggregate function is going
     to represent an arithmetic mean.
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: 最终函数将值的总和除以值的总数，对于`0`个值的平均值进行特殊处理，其结果应为`0`。最终函数返回一个浮点数，因为这是聚合函数表示算术平均数的方式。
 - en: '[PRE3]'
+  id: totrans-83
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: Aggregate Definition
+  id: totrans-84
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
+  zh: 聚合定义
 - en: 'With all the building blocks in place, the user-defined aggregate can now be
     declared:'
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: 在所有构建块就绪后，现在可以声明用户定义的聚合：
 - en: '[PRE4]'
+  id: totrans-86
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: In addition to declaring the state transition function and the final function,
     the state type is also declared to be an array of integers (which will always
     keep two values in the implementation), as well as the initial condition that
     sets both counters, the total sum and the total number of values, to `0`.
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: 除了声明状态转换函数和最终函数外，状态类型也被声明为整数数组（在实现中始终保留两个值），以及将两个计数器、总和和值的总数都设置为`0`的初始条件。
 - en: 'That’s it! Since the `AVG` aggregate for integers happens to be built-in, that
     gives you the perfect opportunity to validate if the implementation is correct:'
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 就这样！由于整数的 `AVG` 聚合是内置的，这为你提供了一个完美的机会来验证实现是否正确：
 - en: '[PRE5]'
+  id: totrans-89
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: Voilà. Remember that while creating an alternative implementation for `AVG`
     is a great academic example of user-defined aggregates, for production use it’s
     almost always better to stick to the built-in aggregates whenever they’re available.
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 哇！记住，虽然为 `AVG` 创建一个替代实现是用户定义聚合的一个很好的学术示例，但对于生产使用来说，只要内置聚合可用，几乎总是更好的选择。
 - en: Distributed User-Defined Aggregate
+  id: totrans-91
   prefs:
   - PREF_H5
   type: TYPE_NORMAL
+  zh: 分布式用户定义聚合
 - en: 'For completeness, let’s take a look at an almost identical implementation of
     a custom average function, but one accommodated to be distributed over multiple
     nodes. This time, ScyllaDB will be used as a reference, since its implementation
     of user-defined aggregates includes an extension for distributing the computations
     in a map-reduce manner. Here’s the complete source code:'
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了完整性，让我们看看一个几乎相同的自定义平均函数的实现，但这次是为了适应在多个节点上分布。这次我们将使用 ScyllaDB 作为参考，因为它的用户定义聚合实现包括一个用于以
+    map-reduce 方式分布计算的扩展。以下是完整的源代码：
 - en: '[PRE6]'
+  id: totrans-93
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: ScyllaDB’s native query language, CQL, is extremely similar to SQL, even in
     its acronym. It’s easy to see that most of the source code corresponds to the
     PostgreSQL implementation from the previous paragraph. ScyllaDB does not allow
@@ -559,181 +758,258 @@
     embeddable language, as well as WebAssembly. Since this book is expected to be
     read mostly by human beings (and occasionally ChatGPT once it achieves full consciousness),
     Lua was chosen for this example due to the fact it’s much more concise.
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: ScyllaDB 的原生查询语言 CQL 与 SQL 非常相似，甚至在缩写上也是如此。很容易看出，大部分源代码对应于上一段中提到的 PostgreSQL
+    实现。ScyllaDB 不允许在 CQL 中定义用户定义函数，但它支持 Lua，一种流行的轻量级嵌入式语言，以及 WebAssembly。由于本书预期主要供人类阅读（偶尔
+    ChatGPT 一旦实现完全意识，也会阅读），因此选择了 Lua 作为此示例，因为它更加简洁。
 - en: 'The most notable difference is the `reduce` function, declared in the aggregate
     under the `REDUCEFUNC` keyword. This function accepts two partial states and returns
     another (composed) state. What ScyllaDB servers can do if this function is present
     is the following:'
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: 最显著的区别是 `reduce` 函数，该函数在 `REDUCEFUNC` 关键字下声明。此函数接受两个部分状态并返回另一个（组合）状态。如果 ScyllaDB
+    服务器存在此函数，可以执行以下操作：
 - en: Divide the domain (e.g., all rows in the database) into multiple pieces and
     ask multiple servers to partially aggregate them, and then send back the result.
+  id: totrans-96
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将域（例如，数据库中的所有行）划分为多个部分，并让多个服务器部分聚合它们，然后将结果发送回来。
 - en: Apply the reduce function to combine partial results into the single final result.
+  id: totrans-97
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将 reduce 函数应用于将部分结果合并为单个最终结果。
 - en: Return the final result to the user.
+  id: totrans-98
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将最终结果返回给用户。
 - en: Thus, by providing the reduce function, the user also allows ScyllaDB to compute
     the aggregate concurrently on multiple machines. This can reduce the query execution
     time by orders of magnitude compared to a large query that only gets executed
     on a single server.
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，通过提供 reduce 函数，用户还允许 ScyllaDB 在多台机器上并发计算聚合。与仅在单个服务器上执行的大型查询相比，这可以大幅减少查询执行时间。
 - en: In this particular case, it might even be preferable to provide a user-defined
     alternative for a user-defined function in order to increase its concurrency—unless
     the built-in primitives also come with their reduce functions out of the box.
     That’s the case in ScyllaDB, but not necessarily in other databases that offer
     similar capabilities.
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个特定情况下，甚至可能更倾向于提供一个用户定义函数的用户定义替代方案，以提高其并发性——除非内置原语也附带现成的 reduce 函数。这是 ScyllaDB
+    的情况，但并不一定适用于提供类似功能的其他数据库。
 - en: Best Practices
+  id: totrans-101
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 最佳实践
 - en: If the computations can be efficiently represented with built-in aggregates,
     do so—or at least benchmark whether a custom implementation is any faster. User-defined
     aggregates are very expressive, but usually come with a cost of overhead compared
     to built-in implementations.
+  id: totrans-102
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 如果计算可以用内置聚合有效地表示，则这样做——或者至少基准测试自定义实现是否更快。用户定义的聚合非常灵活，但通常与内置实现相比，会带来额外的开销。
 - en: Research if user-defined aggregates can be customized in order to better fit
     specific use cases—for example, if the computations can be distributed to multiple
     database nodes, or if the database allows configuring its caches to store the
     intermediate results of user-defined aggregates somewhere.
+  id: totrans-103
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 研究是否可以自定义用户定义聚合以更好地适应特定用例——例如，如果计算可以分布到多个数据库节点，或者数据库允许配置其缓存以将用户定义聚合的中间结果存储在某个位置。
 - en: Always test the performance of your user-defined aggregates thoroughly before
     using them in production. This will help to ensure that they are efficient and
     can handle the workloads that you expect them to.
+  id: totrans-104
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 在生产中使用之前，始终彻底测试您用户定义聚合的性能。这将有助于确保它们效率高，并且可以处理您期望它们处理的负载。
 - en: Measure the cluster-wide effects of using user-defined aggregates in your workloads.
     Similar to full table scans, aggregates are a costly operation and it’s important
     to ensure that they respect the quality of service of other workloads, not overloading
     the database nodes beyond what’s acceptable in your system.
+  id: totrans-105
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 测量您的工作负载中使用用户定义聚合的集群级影响。类似于全表扫描，聚合是一个昂贵的操作，并且确保它们尊重其他工作负载的服务质量，不要超出您系统中可接受的范围，这一点很重要。
 - en: WebAssembly for User-Defined Functions
+  id: totrans-106
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: WebAssembly 用于用户定义函数
 - en: WebAssembly, also known as Wasm, is a binary format for representing executable
     code, designed to be easily embedded into other projects. It turns out that WebAssembly
     is also a perfect candidate for user-defined functions on the backend, thanks
     to its ease of integration, performance, and popularity.
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: WebAssembly，也称为 Wasm，是一种表示可执行代码的二进制格式，旨在易于嵌入到其他项目中。结果证明，WebAssembly 也是后端用户定义函数的完美候选者，这得益于其易于集成、性能和普及。
 - en: 'There are multiple great books and articles^([9](#Fn9)) on WebAssembly, and
     they all agree that first and foremost, it’s a misnomer—WebAssembly’s usefulness
     ranges way beyond web applications. It’s actually a solid general-purpose language
     that has already become the default choice for an embedded language around the
     world. It ticks all the boxes:'
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: 关于 WebAssembly 有许多优秀的书籍和文章^([9](#Fn9))，它们都一致认为，首先，这是一个误称——WebAssembly 的用途远远超出了网络应用。它实际上是一种坚实的通用语言，已经成为全球嵌入式语言的默认选择。它满足了所有条件：
 - en: ☒ It’s open-source, with a thriving community
+  id: totrans-109
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: ☒ 它是开源的，拥有一个充满活力的社区
 - en: ☒ It’s portable
+  id: totrans-110
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: ☒ 它是可移植的
 - en: ☒ It’s isolated by default, with everything running in a sandboxed environment
+  id: totrans-111
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: ☒ 默认情况下它是隔离的，所有内容都在沙盒环境中运行
 - en: ☒ It’s fast, comparable to native CPU code in terms of performance
+  id: totrans-112
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: ☒ 它速度快，在性能上与本地 CPU 代码相当
 - en: Runtime
+  id: totrans-113
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 运行时
 - en: 'WebAssembly is compiled to bytecode. This bytecode is designed to run on a
     virtual machine, which is usually part of a larger development environment called
     a runtime. There are multiple implementations of WebAssembly runtimes, most notably:'
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: WebAssembly 被编译成字节码。这种字节码旨在在虚拟机上运行，这通常是更大开发环境（称为运行时）的一部分。存在多个 WebAssembly 运行时的实现，最著名的是：
 - en: Wasmtime
+  id: totrans-115
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Wasmtime
 - en: '[`https://wasmtime.dev/`](https://wasmtime.dev/)'
+  id: totrans-116
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: '[`https://wasmtime.dev/`](https://wasmtime.dev/)'
 - en: A fast and secure runtime for WebAssembly, implemented in Rust, backed by the
     Bytecode Alliance^([10](#Fn10)) nonprofit organization.
+  id: totrans-117
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 一个快速且安全的 WebAssembly 运行时，用 Rust 实现，由 Bytecode Alliance^([10](#Fn10)) 非营利组织支持。
 - en: Wasmer.io
+  id: totrans-118
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Wasmer.io
 - en: '[`https://wasmer.io/`](https://wasmer.io/)'
+  id: totrans-119
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: '[`https://wasmer.io/`](https://wasmer.io/)'
 - en: Another open-source initiative implemented in Rust; maintainers of the WAPM^([11](#Fn11))
     project, which is a Wasm package manager.
+  id: totrans-120
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 另一个在 Rust 中实现的开源项目；WAPM^([11](#Fn11)) 项目的维护者，这是一个 Wasm 包管理器。
 - en: 'WasmEdge:'
+  id: totrans-121
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'WasmEdge:'
 - en: '[`https://wasmedge.org/`](https://wasmedge.org/)'
+  id: totrans-122
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: '[`https://wasmedge.org/`](https://wasmedge.org/)'
 - en: Runtime implemented in C++, general-purpose, but focused on edge computing.
+  id: totrans-123
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 使用 C++ 实现的运行时，通用但专注于边缘计算。
 - en: 'V8:'
+  id: totrans-124
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'V8:'
 - en: '[`https://v8.dev/`](https://v8.dev/)'
+  id: totrans-125
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: '[`https://v8.dev/`](https://v8.dev/)'
 - en: Google’s monolith JavaScript runtime; written in C++, comes with WebAssembly
     support as well.
+  id: totrans-126
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 谷歌的 JavaScript 单体运行时；用 C++ 编写，也支持 WebAssembly。
 - en: 'Also, since the WebAssembly specification is public, feel free to implement
     your own! Beware though: The standard is still in heavy development, changing
     rapidly every day.'
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，由于 WebAssembly 规范是公开的，您可以自由地实现自己的版本！但请注意：该标准仍在快速发展中，每天都在快速变化。
 - en: Back to Latency
+  id: totrans-128
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 回到延迟问题
 - en: Each runtime is free to define its own performance characteristics and guarantees.
     One interesting feature introduced in Wasmtime is the concept of *fuel*, already
     mentioned in the earlier discussion of user-defined functions. Combined with the
     fact that Wasmtime provides an optional asynchronous interface for running WebAssembly
     modules, it gives users an opportunity to fine-tune the runtime to their latency
     requirements.
+  id: totrans-129
   prefs: []
   type: TYPE_NORMAL
+  zh: 每个运行时都可以自由定义自己的性能特性和保证。Wasmtime 引入的一个有趣特性是 *燃料* 的概念，这在之前关于用户定义函数的讨论中已经提到。结合
+    Wasmtime 为运行 WebAssembly 模块提供可选的异步接口的事实，这使用户有机会根据他们的延迟需求微调运行时。
 - en: 'When Wasmtime starts executing a given WebAssembly function, this unit of execution
     is assigned a certain amount of fuel. Each execution step exhausts a small amount
     of fuel—at the time of writing this paragraph, it simply consumes one unit of
@@ -747,48 +1023,68 @@
     configuring fuel management the right way prevents function executions from taking
     over the CPU for too long. That helps maintain low, predictable latency in the
     whole system.'
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: 当Wasmtime开始执行一个给定的WebAssembly函数时，这个执行单元被分配了一定数量的燃料。每个执行步骤消耗一小部分燃料——在撰写本文时，它简单地消耗每个WebAssembly字节码指令的一个单位燃料，不包括一些流程控制指令，如分支。一旦执行单元耗尽燃料，它就会让出。之后，执行单元会采取预配置的操作之一：要么终止执行单元，要么为其油箱加油，并允许它返回到之前正在计算的任务。这种机制允许开发者控制单个函数执行可以消耗的总CPU时间，以及执行应该让出并交出CPU给其他任务的频率。因此，正确配置燃料管理可以防止函数执行长时间占用CPU。这有助于在整个系统中保持低且可预测的延迟。
 - en: Another interesting aspect of WebAssembly is its portability. The fact that
     the code can be distributed to multiple places and it’s guaranteed to run properly
     in multiple environments makes it a great candidate for moving not only data,
     but also computations, closer to the user.
+  id: totrans-131
   prefs: []
   type: TYPE_NORMAL
+  zh: WebAssembly的另一个有趣方面是其可移植性。代码可以分发到多个地方，并且保证在多个环境中正确运行，这使得它不仅适合移动数据，也适合移动计算，更靠近用户。
 - en: 'Pushing the database logic from enormous datacenters to smaller ones, located
     closer to end users, got its own buzzy name: edge computing.'
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: 将数据库逻辑从庞大的数据中心推向更小的数据中心，这些数据中心更靠近最终用户，得到了一个响亮的名字：边缘计算。
 - en: Edge Computing
+  id: totrans-133
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 边缘计算
 - en: 'Since the Internet of Things (IoT) became a thing, the term *edge computing*
     needs disambiguation. This paragraph is (unfortunately?) *not* about:'
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于物联网（IoT）成为现实，术语“边缘计算”需要明确区分。本段（不幸地？）**不是**关于：
 - en: Utilizing the combined computing power of smart fridges in your area
+  id: totrans-135
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 利用你所在地区的智能冰箱的联合计算能力
 - en: Creating a data mesh from your local network of Bluetooth light bulbs
+  id: totrans-136
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 从你的本地蓝牙灯泡网络创建一个数据网格
 - en: Integrating your smart watch into a Raft cluster in witness mode
+  id: totrans-137
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 将你的智能手表集成到见证模式的Raft集群中
 - en: The *edge* described in this paragraph is of a more boring kind. It still means
     performing computations on servers, but on ones closer to the user (e.g., located
     in a local Equinix datacenter in Warsaw, rather than Amazon’s `eu-central-1` in
     Frankfurt).
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 本段中描述的“边缘”是一种更无聊的类型。它仍然意味着在服务器上执行计算，但是在更靠近用户的地方（例如，位于华沙的本地Equinix数据中心，而不是法兰克福的Amazon的`eu-central-1`）。
 - en: Performance
+  id: totrans-139
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 性能
 - en: What does edge computing have to do with database performance? It brings the
     data closer to the user, and closer physical distance translates to lower latency.
     On the other hand, having your database cluster distributed to multiple locations
@@ -801,103 +1097,144 @@
     two—can cause delays that exceed the comfort zone of one second. Failure detection
     mechanisms are also affected since packet loss occurs much more often when the
     cluster spans multiple geographical locations.
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: 边缘计算与数据库性能有何关联？它将数据更靠近用户，而更近的物理距离意味着更低的延迟。另一方面，将数据库集群分布到多个位置也有其不利之处。在这些地区之间移动大量数据可能会很昂贵，因为云服务提供商往往对跨区域流量收费。如果数据库节点之间的延迟达到数百毫秒，这是北美和欧洲之间的客户级延迟（除非你能负担得起Hibernia
+    Express^([12](#Fn12)))，它们很容易失去同步。即使只有几次往返——仅分布式共识算法就需要至少两次——也可能导致超过一秒舒适区的延迟。由于集群跨越多个地理位置，数据包丢失发生的频率更高，因此故障检测机制也受到影响。
 - en: Database drivers for edge-friendly databases need to be aware of all these limitations
     mentioned. In particular, they need to be extra careful to pick the closest region
     whenever possible, minimizing the latency and the chance of failure.
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
+  zh: 需要为边缘友好型数据库的数据库驱动程序了解所有这些提到的限制。特别是，它们需要尽可能小心地选择最近的区域，以最小化延迟和失败的可能性。
 - en: Conflict-Free Replicated Data Types
+  id: totrans-142
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 无冲突复制数据类型
 - en: 'CRDT (conflict-free replicated data types) is an interesting way of dealing
     with inconsistencies. It’s a family of data structures designed to have the following
     characteristics:'
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: CRDT（无冲突复制数据类型）是一种处理不一致性的有趣方法。它是一组数据结构，旨在具有以下特性：
 - en: Users can update database replicas independently, without coordinating with
     other database servers.
+  id: totrans-144
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 用户可以独立更新数据库副本，无需与其他数据库服务器协调。
 - en: There exists an algorithm to automatically resolve conflicts that might occur
     when the same data is independently written to multiple replicas concurrently.
+  id: totrans-145
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 存在一个算法可以自动解决当相同数据同时独立写入多个副本时可能发生的冲突。
 - en: Replicas are allowed to be in different states, but they are guaranteed to eventually
     converge to a common state.
+  id: totrans-146
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 允许副本处于不同的状态，但它们最终将收敛到共同的状态。
 - en: The concept of CRDT gained traction along with edge computing because the two
     complement each other. The database is allowed to keep replicas in multiple places
     and allows them to act without central coordination—but at the same time, users
     can assume that *eventually* the database state is going to become consistent.
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
+  zh: 随着边缘计算的兴起，CRDT的概念也获得了关注，因为两者相辅相成。数据库被允许在多个地方保持副本，并允许它们在没有中央协调的情况下行动——但与此同时，用户可以假设数据库状态最终将变得一致。
 - en: A few interesting data structures that fit the definition of CRDT are discussed
     next.
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来将讨论一些符合CRDT定义的有趣数据结构。
 - en: G-Counter
+  id: totrans-149
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: G-计数器
 - en: Grow-only counter. Usually implemented as an array of counters, keeping a local
     counter value per each database node. Two array states from different nodes can
     be merged by taking the maximum of each respective field. The actual value of
     the G-Counter is simply a sum of all local counters.
+  id: totrans-150
   prefs: []
   type: TYPE_NORMAL
+  zh: 只增计数器。通常实现为一个计数器数组，为每个数据库节点保持一个局部计数器值。来自不同节点的两个数组状态可以通过取每个相应字段的最高值来合并。G-计数器的实际值只是所有局部计数器的总和。
 - en: PN-Counter
+  id: totrans-151
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: PN-计数器
 - en: Positive-Negative counter, brilliantly implemented by keeping two G-Counter
     instances—one for accumulating positive values, the other for negative ones. The
     final value is obtained by subtracting one from the other.
+  id: totrans-152
   prefs: []
   type: TYPE_NORMAL
+  zh: 正负计数器，通过保持两个G-计数器实例——一个用于累积正值，另一个用于累积负值——来巧妙地实现。最终值是通过从其中一个减去另一个得到的。
 - en: G-Set
+  id: totrans-153
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: G-集合
 - en: Grow-only set, that is, one that forbids the removal of elements. Converging
     two G-Sets is a simple set union since values are never removed from a G-Set.
     One flavor of G-Set is G-Map, where an entry, key, and value associated with the
     key cannot be removed once added.
+  id: totrans-154
   prefs: []
   type: TYPE_NORMAL
+  zh: 只增集合，即禁止删除元素的集合。合并两个G-集合是一个简单的集合联合，因为值永远不会从G-集合中删除。G-集合的一种变体是G-映射，其中与键关联的条目、键和值一旦添加就不能删除。
 - en: LWW-Set
+  id: totrans-155
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: LWW-集合
 - en: Last-write-wins set (and map, accordingly). This is a combination of two G-Sets,
     one gathering added elements and the other containing removed ones. Conflict resolution
     is based on a set union of the “added” G-Set, minus the union of the “removed”
     G-Set, but timestamps are also taken into account. A value exists if its timestamp
     in the “added” set is larger than its timestamp in the “removed” set, or if it’s
     not present in the “removed” set at all.
+  id: totrans-156
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后写入获胜集合（以及相应的映射）。这是两个G-集合的组合，一个收集添加的元素，另一个包含移除的元素。冲突解决基于“添加”G-集合的集合联合，减去“移除”G-集合的联合，但也会考虑时间戳。如果值在“添加”集合中的时间戳大于其在“移除”集合中的时间戳，或者它根本不在“移除”集合中，则该值存在。
 - en: The list is obviously not exhaustive, and countless other CRDTs exist. You’re
     hereby encouraged to do research on the topic if you found it interesting!
+  id: totrans-157
   prefs: []
   type: TYPE_NORMAL
+  zh: 显然，这个列表并不全面，还有无数其他CRDT存在。如果你对这个主题感兴趣，请鼓励你进行研究！
 - en: CRDTs are not just theoretical structures; they are very much used in practice.
     Variants of conflict-free replicated data types are common among databases that
     offer eventual consistency, like Apache Cassandra and ScyllaDB. Their writes have
     last-write-wins semantics for conflict resolution, and their implementation of
     counters is based on the idea of a PN-Counter.
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
+  zh: CRDTs不仅仅是理论结构；它们在实践中的应用非常广泛。在提供最终一致性（如Apache Cassandra和ScyllaDB）的数据库中，冲突自由复制的数据类型的变体很常见。它们的写入操作具有“最后写入者胜出”的语义用于冲突解决，它们的计数器实现基于PN-Counter的概念。
 - en: Summary
+  id: totrans-159
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 摘要
 - en: At this point, it should be clear that there are a number of ways to improve
     performance by using a database a bit unconventionally, as well as understanding
     (and tapping) specialized capabilities built into the database and its drivers.
@@ -905,24 +1242,34 @@
     ensuring that your database is performing at its best. The next chapter begins
     this discussion by focusing on infrastructure options (CPUs, memory, storage,
     and networking) and deployment models.
+  id: totrans-160
   prefs: []
   type: TYPE_NORMAL
+  zh: 到目前为止，应该很清楚，通过稍微不常规地使用数据库以及理解（并利用）数据库及其驱动程序中内置的专用功能，有几种方法可以提高性能。让我们转换一下思路，看看我们推荐的确保数据库性能最佳的前“应该做”和“不应该做”事项。下一章将重点讨论基础设施选项（CPU、内存、存储和网络）和部署模型，以此开始这一讨论。
 - en: '[![Creative Commons](../css/cc-by.png)](https://creativecommons.org/licenses/by/4.0)'
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
+  zh: '[![Creative Commons](../css/cc-by.png)](https://creativecommons.org/licenses/by/4.0)'
 - en: '**Open Access** This chapter is licensed under the terms of the Creative Commons
     Attribution 4.0 International License ([http://​creativecommons.​org/​licenses/​by/​4.​0/​](http://creativecommons.org/licenses/by/4.0/)),
     which permits use, sharing, adaptation, distribution and reproduction in any medium
     or format, as long as you give appropriate credit to the original author(s) and
     the source, provide a link to the Creative Commons license and indicate if changes
     were made.'
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
+  zh: '**开放获取** 本章节根据Creative Commons Attribution 4.0 International License（[http://creativecommons.org/licenses/by/4.0/](http://creativecommons.org/licenses/by/4.0/)）的条款进行许可，允许在任何媒介或格式中使用、分享、改编、分发和复制，只要您适当引用原始作者和来源，提供Creative
+    Commons许可的链接，并指明是否进行了修改。'
 - en: The images or other third party material in this chapter are included in the
     chapter's Creative Commons license, unless indicated otherwise in a credit line
     to the material. If material is not included in the chapter's Creative Commons
     license and your intended use is not permitted by statutory regulation or exceeds
     the permitted use, you will need to obtain permission directly from the copyright
     holder.
+  id: totrans-163
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章节中的图像或其他第三方材料包含在本章节的Creative Commons许可中，除非在材料引用行中另有说明。如果材料未包含在本章节的Creative
+    Commons许可中，且您的使用意图不受法定法规允许或超出允许的使用范围，您需要直接从版权持有人处获得许可。

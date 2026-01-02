@@ -1,78 +1,106 @@
 - en: 8. Topology Considerations
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 8. 拓扑考虑
 - en: '[Replication Strategy](#Sec1)[Scaling Up vs Scaling Out](#Sec5)[Workload Isolation](#Sec6)[Abstraction
     Layers](#Sec8)[Load Balancing](#Sec9)[External Caches](#Sec10)[Summary](#Sec18)'
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: '[复制策略](#Sec1)[向上扩展与向外扩展](#Sec5)[工作负载隔离](#Sec6)[抽象层](#Sec8)[负载均衡](#Sec9)[外部缓存](#Sec10)[总结](#Sec18)'
 - en: As mentioned in Chapter [5](541783_1_En_5_Chapter.xhtml), database servers are
     often combined into intricate topologies where certain nodes are grouped in a
     single geographical location; others are used only as a fast cache layer, and
     yet others store seldom-accessed cold data in a cheap place, for emergency purposes
     only. That chapter covered how drivers work to understand and interact with that
     topology to exchange information more efficiently.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 如第[5](541783_1_En_5_Chapter.xhtml)章所述，数据库服务器通常被组合成复杂的拓扑结构，其中某些节点被分组在单个地理位置；其他节点仅用作快速缓存层，而其他节点则将很少访问的冷数据存储在便宜的地方，仅用于应急目的。该章节介绍了驱动程序如何工作以理解和交互该拓扑，从而更有效地交换信息。
 - en: This chapter focuses on the topology in and of itself. How is data replicated
     across geographies and datacenters? What are the risks and alternatives to taking
     the common NoSQL practice of scaling out to the extreme? And what about intermediaries
     to your database servers—for example, external caches, load balancers, and abstraction
     layers? Performance implications of all this and more are all covered here.^([1](#Fn1))
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章重点在于拓扑本身。数据是如何跨地理和数据中心复制的？采用常见的NoSQL扩展到极限的实践的风险和替代方案是什么？以及数据库服务器的中介——例如，外部缓存、负载均衡器和抽象层？所有这些以及更多内容的影响都在这里涵盖。^([1](#Fn1))
 - en: Replication Strategy
+  id: totrans-4
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 复制策略
 - en: First, let’s look at *replication*, which is how your data will be spread to
     other replicas across your cluster.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，让我们看看*复制*，这是你的数据如何在集群中的其他副本之间分布的方式。
 - en: Note
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: If you want a quick introduction to the concept of replication, see Appendix
     A.
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你想快速了解复制的概念，请参阅附录A。
 - en: Having more replicas will slow your writes (since every write must be duplicated
     to replicas), but it could accelerate your reads (since more replicas will be
     available for serving the same dataset). It will also allow you to maintain operations
     and avoid data loss in the event of node failures. Additionally, replicating data
     to get closer to your application and closer to your users will reduce latency,
     especially if your application has a highly geographically-distributed user base.
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 有更多的副本将减慢你的写入速度（因为每次写入都必须复制到副本），但它可以加速你的读取（因为更多的副本将可用于服务相同的数据集）。它还将允许你在节点故障的情况下维护操作并避免数据丢失。此外，将数据复制到更接近你的应用程序和用户的位置将减少延迟，特别是如果你的应用程序有一个高度地理分布的用户基础。
 - en: A replication factor (RF) of 1 means there is only one copy of a row in a cluster,
     and there is no way to recover the data if the node is compromised or goes down
     (other than restoring from a backup). An RF of 2 means that there are two copies
     of a row in a cluster. An RF of at least three is used in most systems. This allows
     you to write and read with strong consistency, as a quorum of replicas will be
     achieved, even if one node is down.
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 复制因子（RF）为1表示集群中只有一行的一个副本，如果节点被破坏或关闭（除了从备份中恢复之外），则无法恢复数据。复制因子为2表示集群中有一行的两个副本。大多数系统中使用的复制因子至少为3。这允许你以强一致性写入和读取，因为即使有一个节点关闭，也会达到副本的法定人数。
 - en: Many databases also let you fine-tune replication settings at the regional level.
     For example, you could have three replicas in a heavily used region, but only
     two in a less popular region.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 许多数据库还允许你在区域级别微调复制设置。例如，你可以在使用率高的区域中有三个副本，但在不太受欢迎的区域中只有两个。
 - en: Note that replicating data across multiple regions (as Bigtable recommends as
     a safeguard against both availability zone failure and regional failure) can be
     expensive. Before you set this up, understand the cost of replicating data between
     regions.
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意，跨多个区域复制数据（如Bigtable建议的，作为防止可用区故障和区域故障的安全措施）可能很昂贵。在设置此之前，了解跨区域复制数据的成本。
 - en: If you’re working with DynamoDB, you create tables (not clusters), and AWS manages
     the replication for you as soon as you set a table to be Global. One notable drawback
     of DynamoDB global tables is that transactions are not supported across regions,
     which may be a limiting factor for some use cases.
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你正在使用DynamoDB，你将创建表（而不是集群），一旦将表设置为全局，AWS就会为你管理复制。DynamoDB全局表的一个显著缺点是，事务不支持跨区域，这可能会成为某些用例的限制因素。
 - en: Rack Configuration
+  id: totrans-13
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 机架配置
 - en: If all your nodes are in the same datacenter, how do you configure their placement?
     The rule of thumb here is to have as many racks as you have replicas. For example,
     if you have a replication factor of three, run it in three racks. That way, even
@@ -83,17 +111,23 @@
     replicas distributed across two racks, then losing a rack may potentially affect
     two out of the three natural endpoints for part of your data. That’s a showstopper
     if your use case requires strongly consistent reads/writes.
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您的所有节点都在同一个数据中心，您如何配置它们的放置？这里的经验法则是拥有尽可能多的机架，您就有尽可能多的副本。例如，如果您有3个副本的复制因子，就在3个机架上运行。这样，即使整个机架都出现故障，您仍然可以继续满足对大多数副本的读取和写入请求。由于您失去了大约33%的基础设施（考虑到总的区域/机架故障），性能可能会略有下降，但总体上您仍然可以正常运行。相反，如果您有三个副本分布在两个机架上，那么失去一个机架可能会影响您数据的一部分的三个自然端点中的两个。如果您的用例需要强一致性读取/写入，这将是一个致命的问题。
 - en: Multi-Region or Global Replication
+  id: totrans-15
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 多区域或全局复制
 - en: By placing your database servers close to your users, you lower the network
     latency. You can also improve availability and insulate your business from regional
     outages.
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过将您的数据库服务器放置在您的用户附近，您可以降低网络延迟。您还可以提高可用性，并使您的业务免受区域故障的影响。
 - en: If you do have multiple datacenters, ensure that—unless otherwise required by
     the business—reads and writes use a consistency level that is confined to replicas
     within a specific datacenter. This approach avoids introducing a latency hit by
@@ -102,8 +136,10 @@
     client knows what datacenter is considered its local one; it should prioritize
     that local one for connections and requests, although it may also have a fallback
     strategy just in case that datacenter goes down.
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你确实有多个数据中心，确保除非业务另有要求，否则读取和写入使用仅限于特定数据中心副本的一致性级别。这种方法通过指示数据库仅选择本地副本（在同一区域内）来实现所需的一致性级别，从而避免了引入延迟。同时，确保每个应用程序客户端都知道其本地数据中心是什么；它应该优先考虑该本地数据中心进行连接和请求，尽管它也可能有一个回退策略以防该数据中心出现故障。
 - en: Note that application clients may or may not be aware of the multi-datacenter
     deployment, and it is up to the application developer to decide on the awareness
     to fallback across regions. Although different settings and load balancing profiles
@@ -111,12 +147,16 @@
     to failover to a different region in the event of a local failure may often break
     application semantics. As a result, its reaction upon a failure must be handled
     directly by the application developer.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意，应用程序客户端可能知道也可能不知道多数据中心部署，是否决定在区域间回退由应用程序开发者决定。尽管通过各种数据库驱动程序存在不同的设置和负载均衡配置文件，但在本地故障发生时，应用程序回退到不同区域的一般概念可能会经常破坏应用程序语义。因此，对故障的反应必须由应用程序开发者直接处理。
 - en: Multi-Availability Zones vs. Multi-Region
+  id: totrans-19
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 多可用区与多区域
 - en: To mitigate a possible server or rack failure, cloud vendors offer (and recommend)
     a multi-zone deployment. Think about it as if you have a datacenter at your fingertips
     where you can deploy each server instance in its own rack, using its own power,
@@ -124,21 +164,28 @@
     for any single system or zonal failure, since each rack is self-contained. The
     availability zones are still located in the same region. However, a specific zone
     failure won’t affect another zone’s deployed instances.
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了减轻服务器或机架故障的可能影响，云服务提供商提供（并推荐）多区域部署。把它想象成您手边有一个数据中心，您可以在自己的机架上部署每个服务器实例，使用自己的电源、机架顶部交换机和冷却系统。这种部署对于任何单一系统或区域故障都是坚不可摧的，因为每个机架都是自包含的。可用区仍然位于同一区域内。然而，特定区域的故障不会影响另一个区域中部署的实例。
 - en: For example, on Google Compute Engine, the `us-east1-b`, `us-east1-c`, and `us-east1-d`
     availability zones are located in the `us-east1` region (Moncks Corner, South
     Carolina, USA). But each availability zone is self-contained. Network latency
     between AZs in the same region is negligible for the purpose of this discussion.
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，在谷歌计算引擎上，`us-east1-b`、`us-east1-c` 和 `us-east1-d` 可用区域位于 `us-east1` 区域（美国南卡罗来纳州蒙克斯角）。但每个可用区域都是独立的。在同一区域内，AZ
+    之间的网络延迟对于本次讨论的目的可以忽略不计。
 - en: 'In short, both multi-zone and multi-region deployments help with business continuity
     and disaster recovery respectively, but multi-region has the additional benefit
     of minimizing local application latencies in those local regions. It might come
     at a cost though: cross-region data replication costs need to be considered for
     multi-regional topologies.'
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 简而言之，多区域和多区域部署分别有助于业务连续性和灾难恢复，但多区域部署还有额外的优势，即最小化本地区域的应用延迟。但这可能需要付出代价：对于多区域拓扑结构，需要考虑跨区域数据复制的成本。
 - en: 'Note that multi-zonal deployments will similarly charge you for inter-zone
     replication. Although it is perfectly possible to have a single zone deployment
     for your database, it is often not a recommended approach because it will effectively
@@ -146,25 +193,33 @@
     here is quite simple: Do you want to reduce costs as much as possible and risk
     potential unavailability, or do you want to guarantee high availability in a single
     region at the expense of network replication costs?'
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意，多区域部署也会对跨区域复制收费。尽管对于数据库来说，完全有可能有单区域部署，但这通常不是一个推荐的方法，因为它实际上会将您的基础设施暴露为单一故障点。这里的抉择相当简单：您是想尽可能降低成本并承担潜在的不可用风险，还是想以网络复制成本为代价，在单个区域内保证高可用性？
 - en: Scaling Up vs Scaling Out
+  id: totrans-24
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 扩展向上与扩展向外
 - en: Is it better to have a larger number of smaller (read, “less powerful”) nodes
     or a smaller number of larger nodes? We recommend aiming for the most powerful
     nodes and smallest clusters that meet your high availability and resiliency goals—but
     only if your database can truly take advantage of the power added by the larger
     nodes.
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 是拥有更多数量的小型（即“不太强大”）节点更好，还是拥有较少数量的大型节点更好？我们建议目标是尽可能强大的节点和最小的集群，以满足您的高可用性和弹性目标——但前提是您的数据库确实能够充分利用大型节点增加的功率。
 - en: Let’s unravel that a bit. For over a decade, NoSQL’s promise has been enabling
     massive horizontal scalability with relatively inexpensive commodity hardware.
     This has allowed organizations to deploy architectures that would have been prohibitively
     expensive and impossible to scale using traditional relational database systems.
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们稍微分析一下。十多年来，NoSQL 的承诺一直是利用相对低成本的通用硬件实现大规模横向扩展。这使组织能够部署原本成本过高且无法使用传统关系型数据库系统进行扩展的架构。
 - en: Over that same decade, “commodity hardware” has also undergone a transformation.
     But not all databases take advantage of modern computing resources. Many aren’t
     architected to take advantage of the resources offered by large nodes, such as
@@ -173,13 +228,18 @@
     constrained by heap size. Multi-threaded code, with its locking and context-switches
     overhead and lack of attention for Non-Uniform Memory Architecture (NUMA), imposes
     a significant performance penalty against modern hardware architectures.
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 在那十年间，“通用硬件”也经历了转型。但并非所有数据库都能充分利用现代计算资源。许多数据库没有设计成利用大型节点提供的资源，例如额外的 CPU、内存和固态硬盘（SSD），也不能在磁盘上有效地存储大量数据。像
+    Java 这样的托管运行时，其堆大小受到进一步限制。多线程代码，由于其锁定和上下文切换的开销以及对非均匀内存架构（NUMA）的忽视，对现代硬件架构造成了显著的性能损失。
 - en: If your database is in this group, you might find that scaling up quickly brings
     you to a point of diminishing returns. But even then, it’s best to max out your
     vertical scaling potential before you shift to horizontal scaling.
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您的数据库属于这一组，您可能会发现快速扩展会很快让您达到收益递减的点。但即便如此，在转向横向扩展之前，最好先充分利用您的垂直扩展潜力。
 - en: A focus on horizontal scaling results in system sprawl, which equates to operational
     overhead, with a far larger footprint to keep managed and secure. Server sprawl
     also introduces more network overhead to distributed systems due to the constant
@@ -189,11 +249,16 @@
     For example, Cassandra Production Guidelines^([2](#Fn2)) do not recommend clusters
     larger than 50 nodes using the default number of 16 vNodes per instance because
     it may result in decreased availability.
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 专注于水平扩展会导致系统蔓延，这等同于运营开销，需要更大的足迹来管理和保护。服务器蔓延还会因为集群中每个节点不断进行的复制和健康检查而给分布式系统引入更多的网络开销。尽管大多数供应商声称扩展将带来线性性能，但有些人更为保守，声称它将带来“接近线性性能”。例如，Cassandra
+    生产指南^([2](#Fn2)) 不建议使用默认的每个实例16个vNode的数量来构建超过50个节点的集群，因为这可能会导致可用性降低。
 - en: Moreover, there are quite a few advantages to using large, powerful nodes.
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，使用大型、强大的节点有很多优势。
 - en: '**Less noisy neighbors**: On cloud platforms, multi-tenancy is the norm. A
     cloud platform is, by definition, based on shared network bandwidth, I/O, memory,
     storage, and so on. As a result, a deployment of many small nodes is susceptible
@@ -202,33 +267,41 @@
     nodes increase in size, fewer and fewer resources are shared among tenants. In
     fact, beyond a certain size, your applications are likely to be the only tenant
     on the physical machines on which your system is deployed.'
+  id: totrans-31
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**更少的嘈杂邻居**：在云平台上，多租户是常态。云平台按定义是基于共享的网络带宽、I/O、内存、存储等。因此，许多小型节点的部署容易受到“嘈杂邻居”效应的影响。这种效应发生在某个应用程序或虚拟机消耗了比其应得份额更多的可用资源时。随着节点尺寸的增加，租户之间共享的资源越来越少。事实上，超过一定尺寸后，你的应用程序可能成为你系统部署的物理机器上的唯一租户。'
 - en: '**Fewer failures**: Since large and small nodes fail at roughly the same rate,
     large nodes deliver a higher mean time between failures (MTBF) than small nodes.
     Failures in the data layer require operator intervention, and restoring a large
     node requires the same amount of human effort as a small one. In a cluster of
     a thousand nodes, you’ll likely see failures every day—and this magnifies administrative
     costs.'
+  id: totrans-32
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**更少的故障**：由于大型和小型节点故障率大致相同，大型节点比小型节点提供更高的平均故障间隔时间（MTBF）。数据层的故障需要操作员干预，恢复大型节点所需的人力与小型节点相同。在一个拥有千个节点的集群中，你可能会每天看到故障——这放大了管理成本。'
 - en: '**Datacenter density**: Many organizations with on-premises datacenters are
     seeking to increase density by consolidating servers into fewer, larger boxes
     with more computing resources per server. Small clusters of large nodes help this
     process by efficiently consuming denser resources, in turn decreasing energy and
     operating costs.'
+  id: totrans-33
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**数据中心密度**：许多拥有本地数据中心的企业正在寻求通过将服务器整合到更少、更大、每台服务器拥有更多计算资源的箱子中来提高密度。小型大型节点的集群通过有效地消耗更密集的资源来帮助这一过程，从而降低能源和运营成本。'
 - en: '**Operational simplicity**: Big clusters of small instances demand more attention,
     and generate more alerts, than small clusters of large instances. All of those
     small nodes multiply the effort of real-time monitoring and periodic maintenance,
     such as rolling upgrades.'
+  id: totrans-34
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**操作简单性**：大型小型实例的集群需要更多的关注，并产生更多的警报，而小型大型实例的集群则不然。所有这些小型节点都会增加实时监控和定期维护（如滚动升级）的工作量。'
 - en: Some architects are concerned that putting more data on fewer nodes increases
     the risks associated with outages and data loss. You can think of this as the
     “big basket” problem. It may seem intuitive that storing all of your data on a
@@ -239,12 +312,16 @@
     capabilities that reduce the time required to add and replace nodes and internal
     load balancing mechanisms to minimize the throughput or latency impact across
     database restarts.^([3](#Fn3))
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: 一些架构师担心将更多数据放在更少的节点上会增加故障和数据丢失的风险。你可以将其视为“大篮子”问题。似乎直观地认为将所有数据存储在几个大型节点上会使它们更容易出现故障，就像把所有的鸡蛋放在一个篮子里一样。但这并不一定成立。现代数据库使用多种技术来确保可用性，同时加速从故障中恢复，使大型节点既更安全也更经济。例如，考虑那些减少添加和替换节点所需时间的功能以及内部负载均衡机制，以最小化数据库重启期间的吞吐量或延迟影响.^([3](#Fn3))
 - en: Workload Isolation
+  id: totrans-36
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 工作负载隔离
 - en: Many teams find themselves in a position where they need to run multiple different
     workloads against the database. It is often compelling to aggregate different
     workloads under a single cluster, especially when they need to work on the exact
@@ -253,14 +330,18 @@
     latency-critical workloads. Failure to do so may introduce hard-to-diagnose performance
     situations, where one misbehaving workload ends up dragging down the entire cluster’s
     performance.
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 许多团队发现自己需要针对数据库运行多个不同的工作负载。将不同的工作负载聚合在单个集群下进行操作往往很有吸引力，尤其是当它们需要处理完全相同的数据集时。在单个集群下保持多个工作负载在一起也可以降低成本。但是，在实现具有延迟关键性的工作负载时，避免资源争用至关重要。未能做到这一点可能会导致难以诊断的性能问题，其中一个表现不佳的工作负载最终会拖垮整个集群的性能。
 - en: 'There are many ways to accomplish workload isolation to minimize the resource
     contention that could occur when running multiple workloads on a single cluster.
     Here are a few that work well. Keep in mind that the best approach depends on
     your existing database’s available options, as well as your use case’s requirements:'
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 实现工作负载隔离以最小化在单个集群上运行多个工作负载时可能发生的资源争用有许多方法。以下是一些效果良好的方法。请记住，最佳方法取决于你现有数据库的可选方案以及你的用例需求：
 - en: '**Physical isolation**: This setup is often used to entirely isolate one workload
     from another. It involves essentially extending your deployment to an additional
     region (which may be physically the same as your existing one, but logically different
@@ -269,9 +350,11 @@
     such a way that a performance bottleneck in one workload won’t degrade or bottleneck
     the other. Note that a downside of this solution is that your infrastructure costs
     double.'
+  id: totrans-39
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**物理隔离**：这种设置通常用于完全隔离一个工作负载与另一个工作负载。这本质上是在你的部署中扩展到另一个区域（这可能在物理上与你的现有区域相同，但在数据库方面在逻辑上是不同的）。因此，工作负载被分割以将数据复制到另一个位置，但查询仅在该特定位置执行——这样，一个工作负载的性能瓶颈不会降低或阻塞另一个工作负载。请注意，这种解决方案的缺点是您的基础设施成本加倍。'
 - en: '**Logical isolation**: Some databases or deployment options allow you to logically
     isolate workloads without needing to increase your infrastructure resources. For
     example, ScyllaDB has a workload prioritization feature where you can assign different
@@ -279,180 +362,254 @@
     you want it to prioritize in the event of system contention. If your database
     does not offer such a feature, you may still be able to run two or more workloads
     in parallel, but watch out for potential contentions in your database.'
+  id: totrans-40
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**逻辑隔离**：一些数据库或部署选项允许你在不增加基础设施资源的情况下逻辑上隔离工作负载。例如，ScyllaDB有一个工作负载优先级功能，你可以为特定的工作负载分配不同的权重，以帮助数据库理解在系统争用的情况下它应该优先处理哪个工作负载。如果你的数据库没有提供此类功能，你可能仍然能够在并行运行两个或更多工作负载，但要注意数据库中可能出现的潜在争用。'
 - en: '**Scheduled isolation**: Many times, you might need to simply run batched scheduled
     jobs at specified intervals in order to support other business-related activities,
     such as extracting analytics reports. In those cases, consider running the workload
     in question at low-peak periods (if any exist), and experiment with different
     concurrency settings in order to avoid impairing the latency of the primary workload
     that’s running alongside it.'
+  id: totrans-41
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**计划隔离**：很多时候，您可能只需要简单地以指定的时间间隔运行批量计划作业，以支持其他与业务相关的活动，例如提取分析报告。在这种情况下，考虑在低峰时段（如果有的话）运行相关的工作负载，并尝试不同的并发设置，以避免影响与其一起运行的主要工作负载的延迟。'
 - en: More on Workload Prioritization for Logical Isolation
+  id: totrans-42
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 更多关于逻辑隔离的工作负载优先级
 - en: ScyllaDB users sometimes use workload prioritization to balance OLAP and OLTP
     workloads. The goal is to ensure that each defined task has a fair share of system
     resources so that no single job monopolizes system resources, starving other jobs
     of their needed minimums to continue operations.
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: ScyllaDB用户有时会使用工作负载优先级来平衡OLAP和OLTP工作负载。目标是确保每个定义的任务都能公平地获得系统资源，以便没有单个工作负载垄断系统资源，剥夺其他工作负载所需的最低资源以继续运行。
 - en: In Figure [8-1](#Fig1), note that the latency for both workloads nearly converges.
     OLTP processing began at or below 2ms P99 latency up until the OLAP job began
     at 12:15\. When the OLAP workload kicked in, OLTP P99 latencies shot up to 8ms,
     then further degraded, plateauing around 11–12ms until the OLAP job terminated
     after 12:26.
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 在图[8-1](#Fig1)中，请注意，两种工作负载的延迟几乎趋于收敛。OLTP处理开始于或低于2毫秒的P99延迟，直到OLAP工作在12:15开始。当OLAP工作负载启动时，OLTP的P99延迟飙升至8毫秒，然后进一步下降，在12-12毫秒之间达到平稳，直到12:26后OLAP工作负载终止。
 - en: '![](../images/541783_1_En_8_Chapter/541783_1_En_8_Fig1_HTML.jpg)'
+  id: totrans-45
   prefs: []
   type: TYPE_IMG
+  zh: '![图片](../images/541783_1_En_8_Chapter/541783_1_En_8_Fig1_HTML.jpg)'
 - en: A graph titled, Cassandra, Stress Latency 99%, in which the latency for both
     workloads nearly converges. O L T P processing began at or below 2 milliseconds
     P 99 latency up until the O L A P job began at 12 15\. When the O L A P workload
     kicked in, O L T P P 99 latencies shot up to 8 milliseconds, then further degraded,
     plateauing around 11 to 12 milliseconds until the O L A P job terminated after
     12 26.
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个标题为“Cassandra，压力延迟99%”的图表，其中两个工作负载的延迟几乎趋于收敛。OLTP处理开始于或低于2毫秒的P99延迟，直到OLAP工作在12:15开始。当OLAP工作负载启动时，OLTP的P99延迟飙升至8毫秒，然后进一步下降，在11到12毫秒之间达到平稳，直到12:26后OLAP工作负载终止。
 - en: Figure 8-1
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 图8-1
 - en: Latency between OLTP and OLAP workloads on the same cluster before enabling
     workload prioritization
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 在启用工作负载优先级之前，同一集群中OLTP和OLAP工作负载之间的延迟
 - en: These latencies are approximately six times greater than when OLTP ran by itself.
     (OLAP latencies hover between 12–14ms, but, again, OLAP is not latency-sensitive).
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些延迟大约是OLTP单独运行时的六倍。（OLAP延迟在12-14毫秒之间徘徊，但再次强调，OLAP对延迟不敏感）。
 - en: Figure [8-2](#Fig2) shows that the throughput on OLTP sinks from around 60,000
     OPS to half that—30,000 OPS. You can see the reason why. OLAP, being throughput
     hungry, is maintaining roughly 260,000 OPS.
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 图[8-2](#Fig2)显示，OLTP的吞吐量从大约60,000 OPS下降到一半——30,000 OPS。您可以看到原因。OLAP对吞吐量有很高的需求，维持大约260,000
+    OPS。
 - en: '![](../images/541783_1_En_8_Chapter/541783_1_En_8_Fig2_HTML.jpg)'
+  id: totrans-51
   prefs: []
   type: TYPE_IMG
+  zh: '![图片](../images/541783_1_En_8_Chapter/541783_1_En_8_Fig2_HTML.jpg)'
 - en: A graph titled, Cassandra, Stress latency 99%, illustrates that the throughput
     on O L T P sinks from around 60,000 O P S to half that 30,000 O P S.
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个标题为“Cassandra，压力延迟99%”的图表，说明OLTP的吞吐量从大约60,000 OPS下降到一半——30,000 OPS。
 - en: Figure 8-2
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: 图8-2
 - en: Comparative throughput results for OLTP and OLAP on the same cluster without
     workload prioritization enabled
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 在未启用工作负载优先级的情况下，同一集群中OLTP和OLAP的吞吐量比较结果
 - en: Ultimately, OLTP suffers with respect to both latency and throughput, and users
     experience slower response times. In many real-world conditions, such OLTP responses
     would violate a customer’s SLA.
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 最终，OLTP在延迟和吞吐量方面都受到影响，用户会体验到更慢的响应时间。在许多实际情况下，此类OLTP响应可能会违反客户的SLA。
 - en: Figure [8-3](#Fig3) shows the latencies after workload prioritization is enabled.
     You can see that the OLTP workload similarly starts out at sub-millisecond to
     2ms P99 latencies. Once an OLAP workload is added, OLTP processing performance
     degrades, but with P99 latencies hovering between 4–7ms (about half of the 11–12ms
     P99 latencies when workload prioritization was *not* enabled).
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 图[8-3](#Fig3)显示了启用工作负载优先级后的延迟。您可以看到，OLTP工作负载同样从亚毫秒到2毫秒的P99延迟开始。一旦添加了OLAP工作负载，OLTP处理性能下降，但P99延迟在4-7毫秒之间徘徊（大约是未启用工作负载优先级时的11-12毫秒P99延迟的一半）。
 - en: '![](../images/541783_1_En_8_Chapter/541783_1_En_8_Fig3_HTML.jpg)'
+  id: totrans-57
   prefs: []
   type: TYPE_IMG
+  zh: '![](../images/541783_1_En_8_Chapter/541783_1_En_8_Fig3_HTML.jpg)'
 - en: A graph titled, O P S S, illustrates that the latencies after workload prioritization
     is enabled. The O L T P workload starts out at sub-millisecond to 2 milliseconds
     m s P 99 latencies. When O L A P workload is added, O L T P processing performance
     degrades, but with P 99 latencies hovering between 4 and 7 milliseconds.
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个名为“OPSS”的图表说明了启用工作负载优先级后的延迟。OLTP工作负载最初从亚毫秒到2毫秒的P99延迟开始。当添加OLAP工作负载时，OLTP处理性能下降，但P99延迟徘徊在4到7毫秒之间。
 - en: Figure 8-3
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 图8-3
 - en: OLTP and OLAP latencies with workload prioritization enabled
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 启用工作负载优先级后的OLTP和OLAP延迟
 - en: It is important to note that once system contention kicks in, the OLTP latencies
     are still somewhat impacted—just not to the same extent they were prior to workload
     prioritization. If your real-time workload requires ultra-constant single-digit
     millisecond or lower P99 latencies, then we strongly recommend that you avoid
     introducing *any* form of contention.
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 重要的是要注意，一旦系统竞争开始，OLTP延迟仍然会受到一定的影响——只是没有在启用工作负载优先级之前那么严重。如果你的实时工作负载需要超常稳定的个位数毫秒或更低的P99延迟，那么我们强烈建议你避免引入任何形式的竞争。
 - en: The OLAP workload, not being as latency-sensitive, has P99 latencies that hover
     between 25–65ms. These are much higher latencies than before—the tradeoff for
     keeping the OLTP latencies lower.
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: OLAP工作负载，由于不是那么对延迟敏感，其P99延迟在25-65毫秒之间波动。这些延迟比之前要高得多——这是为了保持OLTP延迟较低所付出的代价。
 - en: Throughput wise, Figure [8-4](#Fig4) shows that the OLTP traffic is a smooth
     60,000 OPS until the OLAP load is also enabled.
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 在吞吐量方面，图[8-4](#Fig4)显示，在启用OLAP负载之前，OLTP流量是平稳的60,000 OPS。
 - en: '![](../images/541783_1_En_8_Chapter/541783_1_En_8_Fig4_HTML.jpg)'
+  id: totrans-64
   prefs: []
   type: TYPE_IMG
+  zh: '![](../images/541783_1_En_8_Chapter/541783_1_En_8_Fig4_HTML.jpg)'
 - en: A graph titled, Cassandra, Stress Latency 99%, in which the O L T P traffic
     is a smooth 60,000 O P S until the O L A P load is also enabled.
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个名为“Cassandra，压力延迟99%”的图表，其中OLTP流量是平稳的60,000 OPS，直到OLAP负载也被启用。
 - en: Figure 8-4
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 图8-4
 - en: OLTP and OLAP load throughput with workload prioritization enabled
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 启用工作负载优先级后的OLTP和OLAP负载吞吐量
 - en: It does dip in performance at that point, but only slightly, hovering between
     54,000 to 58,000 OPS. That is only a 3–10 percent drop in throughput. The OLAP
     workload, for its part, hovers between 215,000–250,000 OPS. That is a drop of
     4–18 percent, which means an OLAP workload would take longer to complete. Both
     workloads suffer degradation, as would be expected for an overloaded cluster,
     but neither to a crippling degree.
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 在那个点上，性能确实有所下降，但只是略微，徘徊在54,000到58,000 OPS之间。这仅仅是吞吐量下降了3-10%。对于OLAP工作负载来说，它徘徊在215,000-250,000
+    OPS之间。这意味着下降了4-18%，这意味着OLAP工作负载将需要更长的时间来完成。两个工作负载都受到了影响，正如预期的那样，在过载的集群中，但都没有达到致命的程度。
 - en: Abstraction Layers
+  id: totrans-69
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 抽象层
 - en: It’s becoming fairly common for teams to write an abstraction layer on top of
     their databases. Instead of calling the database’s APIs directly, the applications
     connect to this database-agnostic abstraction layer, which then manages the logistics
     of connecting to the database.
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: 在数据库之上编写抽象层已成为团队中相当普遍的做法。应用程序不是直接调用数据库的API，而是连接到这个数据库无关的抽象层，然后由它管理连接到数据库的物流。
 - en: 'There are usually a few main motives behind this move:'
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 通常，这种做法背后有几个主要动机：
 - en: '**Portability**: If the team wants to move to another database, they won’t
     need to modify their applications and queries. However, the team responsible for
     the abstraction layer will need to modify that code, which could turn out to be
     more complicated.'
+  id: totrans-72
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**可移植性**：如果团队想要迁移到另一个数据库，他们不需要修改他们的应用程序和查询。然而，负责抽象层的团队将需要修改该代码，这可能会变得更为复杂。'
 - en: '**Developer simplicity**: Developers don’t need to worry about the inner details
     of working with any particular database. This can make it easier for people to
     move around from team to team.'
+  id: totrans-73
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**开发者简单性**：开发者不需要担心与任何特定数据库合作的内部细节。这可以使人们更容易地在团队之间移动。'
 - en: '**Scalability**: An abstraction layer can be easier to containerize. If the
     API gets overloaded, it’s usually easier to scale out more containers in Kubernetes
     than to spin off more containers of the database itself.'
+  id: totrans-74
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**可扩展性**：抽象层可以更容易地进行容器化。如果API过载，通常比启动更多数据库容器的容器更容易在Kubernetes中扩展更多容器。'
 - en: '**Customer-facing APIs**: Exposing the database directly to end-users is typically
     not a good idea. As a result, many companies expose common endpoints, which are
     eventually translated into actual database queries. As a result, the abstraction
     layer can shed requests, limit concurrency across tenants, and perform auditability
     and accountability over its calls.'
+  id: totrans-75
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**面向客户的 API**：直接将数据库暴露给最终用户通常不是一个好主意。因此，许多公司公开了常见的端点，这些端点最终被转换为实际的数据库查询。因此，抽象层可以减少请求，限制租户之间的并发性，并对其调用进行可审计性和问责。'
 - en: But, there’s definitely a potential for a performance penalty that is highly
     dependent on how efficiently the layer was implemented. An abstraction layer that
     was fastidiously implemented by a team of masterful Rust engineers is likely to
@@ -462,8 +619,12 @@
     via both benchmarking and ongoing monitoring. Remember that every application
     <> database communication is going to use this layer, so a small inefficiency
     can quickly snowball into a significant performance problem.
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 但是，确实存在性能惩罚的潜在风险，这高度依赖于该层实现的有效性。由一群技艺高超的 Rust 工程师精心实现的抽象层可能比拼凑而成的 Java 或 Python
+    抽象层具有更微不足道的影响。如果您决定走这条路，请确保该层是在考虑性能的情况下开发的，并且您通过基准测试和持续监控仔细测量其影响。请记住，每个应用程序 <>
+    数据库通信都将使用这个层，所以一点不效率可能会迅速演变成一个重大的性能问题。
 - en: For example, we once saw a customer report an elevated latency situation coming
     from their Golang abstraction layer. Once we realized that the latency on the
     database side was within bounds for its use case, the investigation shifted from
@@ -472,8 +633,10 @@
     process, dragging down the client-side performance significantly. The problem
     was resolved after scaling out the number of clients and by ensuring that they
     had enough compute resources to properly function.
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，我们曾经看到一位客户报告了来自他们的 Golang 抽象层的延迟增加情况。一旦我们意识到数据库端的延迟在其用例中是合理的，调查就从数据库转向了网络和客户端。简而言之，应用程序延迟峰值被确定为在垃圾回收过程中受到严重影响，显著拖累了客户端性能。问题在扩展客户端数量并确保他们有足够的计算资源以正确运行后得到解决。
 - en: 'And another example: When working with a customer through a PostgreSQL to NoSQL
     migration, we realized that their clients were fairly often opening too many concurrent
     connections against the database. Although having a high number of sockets opened
@@ -484,12 +647,16 @@
     they submitted against the cluster. After correcting the malfunctioning code,
     the overall application throughput was significantly increased because the abstraction
     layer was then using active sockets opened when it routed requests.^([4](#Fn4))'
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一个例子：当通过 PostgreSQL 到 NoSQL 迁移与客户合作时，我们意识到他们的客户端经常会对数据库打开过多的并发连接。尽管在高数量的套接字打开通常是分布式系统的好主意，但极端高数量的套接字很容易压倒客户端（需要跟踪所有打开的套接字）以及数据库。在我们向客户报告我们的发现后，他们发现他们为提交给集群的每个请求都打开了一个新的数据库会话。在纠正了故障代码后，整体应用程序吞吐量显著提高，因为抽象层当时正在使用路由请求时打开的活动套接字.^([4](#Fn4))
 - en: Load Balancing
+  id: totrans-79
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 负载均衡
 - en: Should you put a dedicated load balancer in front of your database? In most
     cases, no. Databases typically have their own way to balance traffic across the
     cluster, so layering a load balancer on top of that won’t help—and it could actually
@@ -498,8 +665,10 @@
     single point of failure that reduces your database resilience. As a result, you
     overcomplicate your overall infrastructure topology because you now need to worry
     about load balancing high availability.
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: 你应该在数据库前放置一个专用的负载均衡器吗？在大多数情况下，不需要。数据库通常有自己的方式在集群之间平衡流量，因此在上面添加负载均衡器不会有所帮助——实际上可能会造成伤害。考虑1)负载均衡器在不成为瓶颈之前可以服务多少请求，以及2)其均衡策略。此外，认识到它引入了一个单点故障，这会降低你的数据库容错能力。因此，你使整体基础设施拓扑结构过于复杂，因为你现在需要担心负载均衡的高可用性。
 - en: Of course, there are always exceptions. For example, say you were previously
     using a database API that’s unaware of the layout of the cluster and its individual
     nodes (e.g., DynamoDB, where a client is configured with a single “endpoint address”
@@ -512,8 +681,11 @@
     necessary. However, this single node will be more loaded than the other nodes
     because it will be the only node actively serving requests. This node will also
     become a single point of failure from your application’s perspective.
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: 当然，总有例外。例如，假设你之前使用的是一个不了解集群布局及其各个节点的数据库API（例如，DynamoDB，其中客户端配置了一个单一的“端点地址”，所有请求都发送到它）。现在你转向使用分布式无领导数据库，如ScyllaDB，其中客户端是节点感知的，甚至是令牌感知的（了解拓扑中每个节点的自然端点令牌范围）。如果你只是将应用程序配置为使用单个ScyllaDB节点的IP地址作为其唯一的DynamoDB
+    API端点地址，应用程序将正常工作。毕竟，任何节点都可以通过将请求转发到其他节点来响应任何请求。然而，这个节点将比其他节点更繁忙，因为它将是唯一一个积极服务请求的节点。从应用程序的角度来看，这个节点也将成为单点故障。
 - en: 'In this special edge case, load balanc*ing* is critical—but load balanc*ers*
     are not. Server-side load balancing is fairly complex from an admin perspective.
     More importantly with respect to performance, server-side solutions add latency.
@@ -521,44 +693,58 @@
     request—increasing not just the cost of each request, but also its latency. We
     recommend client-side load balancing: Modifying the application to send requests
     to the available nodes versus a single one.'
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个特殊的边缘情况下，负载均衡*非常重要*——但是负载均衡器*本身并不重要*。从管理员的角度来看，服务器端负载均衡相当复杂。更重要的是，从性能的角度来看，服务器端解决方案会增加延迟。涉及TCP或HTTP负载均衡器的解决方案需要为每个请求增加一个跳转——这不仅增加了每个请求的成本，也增加了其延迟。我们建议使用客户端负载均衡：修改应用程序以将请求发送到可用的节点，而不是单个节点。
 - en: The key takeaway here is that load balancing generally isn’t needed—and when
     it is, server-side load balancers yield a pretty severe performance penalty. If
     it’s absolutely necessary, client-side load balancing is likely a better option.^([5](#Fn5))
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里的重要启示是，负载均衡通常不是必需的——当它是必需的时候，服务器端负载均衡器会带来相当严重的性能惩罚。如果绝对必要，客户端负载均衡可能是更好的选择.^([5](#Fn5))
 - en: External Caches
+  id: totrans-84
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 外部缓存
 - en: 'Teams often consider external caches when the existing database cluster cannot
     meet the required SLA. This is a clear performance-oriented decision. Putting
     an external cache in front of the database is commonly used to compensate for
     subpar latency stemming from the various factors discussed throughout this book:
     inefficient database internals, driver usage, infrastructure choices, traffic
     spikes, and so on.'
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: 当现有的数据库集群无法满足所需的SLA时，团队通常会考虑外部缓存。这是一个明确以性能为导向的决定。在数据库前放置外部缓存通常用于补偿本书中讨论的各种因素导致的低延迟：不高效的数据库内部结构、驱动程序使用、基础设施选择、流量峰值等。
 - en: Caching may seem like a fast and easy solution because the deployment can be
     implemented without tremendous hassle and without incurring the significant cost
     of database scaling, database schema redesign, or even a deeper technology transformation.
     However, external caches are not as simple as they are often made out to be. In
     fact, they can be one of the more problematic components of a distributed application
     architecture.
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: 缓存可能看起来是一个快速且简单的解决方案，因为部署可以实施而无需巨大的麻烦，并且不会产生数据库扩展、数据库模式重设计或甚至更深入的技术转型的重大成本。然而，外部缓存并不像它们通常被描述的那样简单。实际上，它们可能是分布式应用程序架构中更具问题的组件之一。
 - en: In some cases, it’s a necessary evil—particularly if you have an ultra-latency-sensitive
     use case such as real-time ad bidding or streaming media, and you’ve tried all
     the other means of reducing latency. But in many cases, the performance boost
     isn’t worth it. The following sections outline some key risks and you can decide
     what makes sense for your use case and SLAs.
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: 在某些情况下，这是一种必要的恶行——尤其是如果你有一个超延迟敏感的使用案例，如实时广告竞价或流媒体，并且你已经尝试了所有其他减少延迟的方法。但在许多情况下，性能提升并不值得。以下部分概述了一些关键风险，你可以决定哪些适合你的使用案例和SLA。
 - en: An External Cache Adds Latency
+  id: totrans-88
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 外部缓存增加了延迟
 - en: A separate cache means another hop on the way. When a cache surrounds the database,
     the first access occurs at the cache layer. If the data isn’t in the cache, then
     the request is sent to the database. The result is additional latency to an already
@@ -566,12 +752,16 @@
     cache, the additional latency doesn’t come into play. However, there is usually
     more than a single workload/pattern that hits the database and some of it will
     carry the extra hop cost.
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个单独的缓存意味着在路径上又多了一个跳转。当一个缓存围绕数据库时，第一次访问发生在缓存层。如果数据不在缓存中，则请求被发送到数据库。结果是向已经缓慢的无缓存数据路径增加了额外的延迟。有人可能会说，当整个数据集适合缓存时，额外的延迟不会发挥作用。然而，通常有多个工作负载/模式会击中数据库，其中一些会承担额外的跳转成本。
 - en: An External Cache Is an Additional Cost
+  id: totrans-90
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 外部缓存是额外的成本
 - en: Caching means expensive DRAM, which translates to a higher cost per gigabyte
     than SSDs. Even when RAM can store frequently accessed objects, it is best to
     use the existing database RAM, and even increase it for internal caching rather
@@ -579,17 +769,23 @@
     a cache to be the same size as the entire persistent dataset may be prohibitively
     expensive. In other cases, the working set size can be too big, often reaching
     petabytes, making an SSD-friendly implementation the preferred, and cheaper, option.
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: 缓存意味着昂贵的DRAM，这导致每千兆字节的成本比SSD高。即使RAM可以存储频繁访问的对象，最好还是使用现有的数据库RAM，甚至增加它以用于内部缓存，而不是在以RAM为中心的实例上提供完全独立的基础设施。将缓存配置为与整个持久数据集大小相同可能过于昂贵。在其他情况下，工作集大小可能太大，通常达到PB级别，这使得SSD友好的实现成为首选且更经济的选项。
 - en: External Caching Decreases Availability
+  id: totrans-92
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 外部缓存降低了可用性
 - en: No cache’s high availability solution can match that of the database itself.
     Modern distributed databases have multiple replicas; they also are topology-aware
     and speed-aware and can sustain multiple failures without data loss.
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: 没有缓存的高可用性解决方案可以与数据库本身相匹配。现代分布式数据库有多个副本；它们也具有拓扑感知和速度感知，可以在不丢失数据的情况下承受多次故障。
 - en: 'For example, a common replication pattern is three local replicas, which generally
     allows for reads to be balanced across such replicas in order to efficiently use
     your database’s internal caching mechanism. Consider a nine-node cluster with
@@ -601,8 +797,10 @@
     be impeded for a while since the database won’t have that data in its internal
     cache (more on this in the section entitled “External Caching Ruins the Database
     Caching” later in this chapter).'
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，一个常见的复制模式是三个本地副本，这通常允许在这样一些副本之间平衡读取，以有效地使用数据库的内部缓存机制。考虑一个具有三个复制因子的九节点集群：本质上每个节点将持有你总数据集大小的约33%。随着请求在不同副本之间平衡，这为你提供了更多的空间来缓存数据，这可能会（潜在地）完全消除对外部缓存的需求。相反，如果外部缓存恰好在冷请求激增之前使条目无效，由于数据库在其内部缓存中没有这些数据，可用性可能会暂时受阻（关于这一点，请参阅本章后面的“外部缓存破坏数据库缓存”部分）。
 - en: 'Caches often lack high-availability properties and can easily fail or invalidate
     records depending on their heuristics. Partial failures, which are more common,
     are even worse in terms of consistency. When the cache inevitably fails, the database
@@ -611,12 +809,16 @@
     coordinate handling such failure with the persistent database it is in front of.
     The bottom line: Rely on the database, rather than making your latency SLAs dependent
     on a cache.'
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: 缓存通常缺乏高可用性特性，并且容易根据其启发式算法失败或使记录无效。更常见的部分失败在一致性方面更糟糕。当缓存不可避免地失败时，数据库将受到未缓解的查询洪流的影响，很可能会破坏你的服务级别协议（SLAs）。此外，即使缓存本身具有一些高可用性功能，它也无法与其前面的持久数据库协调处理此类故障。总之：依赖数据库，而不是让你的延迟SLAs依赖于缓存。
 - en: 'Application Complexity: Your Application Needs to Handle More Cases'
+  id: totrans-96
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 应用复杂性：你的应用需要处理更多情况
 - en: Application and operational complexity are problems for external caches. Once
     you have an external cache, you need to keep the cache up-to-date with the client
     and the database. For instance, if your database runs repairs, the cache needs
@@ -625,12 +827,16 @@
     retry and timeout policies need to match the properties of the cache but also
     need to function when the cache is done. Usually, such scenarios are hard to test
     and implement.
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: 应用和操作复杂性是外部缓存的问题。一旦你有了外部缓存，你需要保持缓存与客户端和数据库同步。例如，如果你的数据库运行修复，缓存需要同步或使无效。然而，使缓存无效可能会引入一个需要等待它最终变暖的长时间段。你的客户端重试和超时策略需要匹配缓存的特征，但还需要在缓存完成后发挥作用。通常，这样的场景很难测试和实施。
 - en: External Caching Ruins the Database Caching
+  id: totrans-98
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 外部缓存破坏数据库缓存
 - en: Modern databases have embedded caches and complex policies to manage them. When
     you place a cache in front of the database, most read requests will reach only
     the external cache and the database won’t keep these objects in its memory. As
@@ -638,33 +844,45 @@
     reach the database, its cache will be cold and the responses will come primarily
     from the disk. As a result, the round-trip from the cache to the database and
     then back to the application is likely to incur additional latency.
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: 现代数据库已经嵌入缓存和复杂的策略来管理它们。当你将缓存放置在数据库前面时，大多数读取请求只会到达外部缓存，数据库不会将这些对象保留在其内存中。因此，数据库缓存变得无效。当请求最终到达数据库时，其缓存将是冷的，响应将主要来自磁盘。因此，从缓存到数据库再到应用的往返可能会产生额外的延迟。
 - en: External Caching Might Increase Security Risks
+  id: totrans-100
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 外部缓存可能增加安全风险
 - en: An external cache adds a whole new attack surface to your infrastructure. Encryption,
     isolation, and access control on data placed in the cache are likely to be different
     from the ones at the database layer itself.
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: 外部缓存增加了你的基础设施的全新攻击面。放置在缓存中的数据的加密、隔离和访问控制可能与数据库层的不同。
 - en: External Caching Ignores the Database Knowledge and Database Resources
+  id: totrans-102
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 外部缓存忽略了数据库知识和数据库资源
 - en: Databases are quite complex and built for specialized I/O workloads on the system.
     Many of the queries access the same data, and some amount of the working set size
     can be cached in memory in order to save disk accesses. A good database should
     have sophisticated logic to decide which objects, indexes, and accesses it should
     cache.
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 数据库相当复杂，是为系统上的专用I/O工作负载构建的。许多查询访问相同的数据，并且工作集大小的一部分可以缓存在内存中，以节省磁盘访问。一个好的数据库应该有复杂的逻辑来决定应该缓存哪些对象、索引和访问。
 - en: The database also should have various eviction policies (such as the least recently
     used [LRU] policy as a straightforward example) that determine when new data should
     replace existing (older) cached objects.
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 数据库还应具有各种驱逐策略（例如，最简单的是最不经常使用[LRU]策略）来决定何时用新数据替换现有的（较旧的）缓存对象。
 - en: 'Another example is scan-resistant caching. When scanning a large dataset, say
     a large range or a full-table scan, a lot of objects are read from the disk. The
     database can realize this is a scan (not a regular query) and choose to leave
@@ -675,88 +893,128 @@
     do anything to make sure that lookups to recently written data are performant.
     Therefore, if, for some reason, your database doesn’t respond fast enough, it
     means that:'
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一个例子是扫描抵抗缓存。当扫描大量数据集时，比如一个大的范围或全表扫描，会从磁盘读取很多对象。数据库可以识别出这是一个扫描操作（而不是常规查询）并选择将这些对象留在其内部缓存之外。然而，外部缓存会像对待任何其他结果集一样处理结果，并尝试缓存这些结果。数据库会根据接收到的请求速率自动同步缓存内容与磁盘，因此用户和开发者无需做任何事情来确保对最近写入数据的查找操作性能良好。因此，如果由于某种原因，你的数据库响应不够快，这意味着：
 - en: The cache is misconfigured
+  id: totrans-106
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 缓存配置错误
 - en: It doesn’t have enough RAM for caching
+  id: totrans-107
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 它没有足够的RAM用于缓存
 - en: The working set size and request pattern don’t fit the cache
+  id: totrans-108
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 工作集大小和请求模式不适合缓存
 - en: The database cache implementation is poor
+  id: totrans-109
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 数据库缓存实现不佳
 - en: Summary
+  id: totrans-110
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 摘要
 - en: 'This chapter shared strong opinions on how to navigate topology decisions.
     For example, we recommended:'
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章分享了关于如何导航拓扑决策的强烈观点。例如，我们建议：
 - en: Using an RF of at least 3 (with geographical fine-tuning if available)
+  id: totrans-112
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用至少3的RF（如果有地理微调的话）
 - en: Having as many racks as replicas
+  id: totrans-113
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 拥有尽可能多的机架作为副本
 - en: Isolating reads and writes within a specific datacenter
+  id: totrans-114
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在特定数据中心内隔离读写操作
 - en: Ensuring each client knows and prioritizes the local datacenter
+  id: totrans-115
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 确保每个客户端都知道并优先考虑本地数据中心
 - en: Considering the (cross-region replication) costs of multi-region deployments
     as well as their benefits
+  id: totrans-116
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 考虑多区域部署的（跨区域复制）成本以及其好处
 - en: Scaling up as much as possible before scaling out
+  id: totrans-117
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在扩展之前尽可能进行向上扩展
 - en: Considering a few different options to minimize the resource contention that
     could occur when running multiple workloads on a single cluster
+  id: totrans-118
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 考虑在单个集群上运行多个工作负载时可能发生的资源争用，并选择几种不同的选项来最小化它
 - en: Carefully considering the caveats associated with external caches, load balancers,
     and abstraction layers
+  id: totrans-119
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 仔细考虑与外部缓存、负载均衡器和抽象层相关的注意事项
 - en: 'The next chapter looks at best practices for testing your topology: Benchmarking
     it to see what it’s capable of and how it compares to alternative configurations
     and solutions.'
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: 下一章将探讨测试你的拓扑结构的最佳实践：基准测试以查看其能力以及与替代配置和解决方案的比较。
 - en: '[![Creative Commons](../css/cc-by.png)](https://creativecommons.org/licenses/by/4.0)'
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: '[![Creative Commons](../css/cc-by.png)](https://creativecommons.org/licenses/by/4.0)'
 - en: '**Open Access** This chapter is licensed under the terms of the Creative Commons
     Attribution 4.0 International License ([http://​creativecommons.​org/​licenses/​by/​4.​0/​](http://creativecommons.org/licenses/by/4.0/)),
     which permits use, sharing, adaptation, distribution and reproduction in any medium
     or format, as long as you give appropriate credit to the original author(s) and
     the source, provide a link to the Creative Commons license and indicate if changes
     were made.'
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: '**开放获取** 本章节根据Creative Commons Attribution 4.0国际许可协议（[http://creativecommons.org/licenses/by/4.0/](http://creativecommons.org/licenses/by/4.0/)）授权，允许在任何媒介或格式中使用、分享、改编、分发和复制，只要您适当引用原始作者和来源，提供Creative
+    Commons许可的链接，并指出是否进行了修改。'
 - en: The images or other third party material in this chapter are included in the
     chapter's Creative Commons license, unless indicated otherwise in a credit line
     to the material. If material is not included in the chapter's Creative Commons
     license and your intended use is not permitted by statutory regulation or exceeds
     the permitted use, you will need to obtain permission directly from the copyright
     holder.
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章中包含的图片或其他第三方材料均包含在章节的Creative Commons许可证中，除非在材料引用行中另有说明。如果材料未包含在章节的Creative
+    Commons许可证中，且您的使用意图不受法定法规允许或超出允许的使用范围，您将需要直接从版权持有人处获得许可。

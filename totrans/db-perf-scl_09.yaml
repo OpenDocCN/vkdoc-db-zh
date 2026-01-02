@@ -1,20 +1,26 @@
 - en: 10. Monitoring
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 10. 监控
 - en: '[Taking a Proactive Approach](#Sec1)[Tracking Core Database KPIs](#Sec2)[Creating
     Effective Custom Alerts](#Sec8)[Walking Through Sample Scenarios](#Sec9)[Monitoring
     Options](#Sec12)[Summary](#Sec17)'
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: '[采取主动方法](#Sec1)[跟踪核心数据库KPI](#Sec2)[创建有效的自定义警报](#Sec8)[通过示例场景进行操作](#Sec9)[监控选项](#Sec12)[总结](#Sec17)'
 - en: Databases require ongoing care and attention, especially when performance is
     a priority and the data being stored is growing rapidly and/or changing frequently.
     Adverse events that could place the business at risk—for example, node failures
     or a misbehaving client—will inevitably occur. Given the complexity of both databases
     and data-intensive applications, it’s not a matter of *if* some combination of
     factors ends up degrading performance, but *when*.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 数据库需要持续的关注和照顾，尤其是在性能是重点，存储的数据正在快速增长或频繁变化时。可能对业务构成风险的不利事件——例如，节点故障或客户端行为异常——不可避免地会发生。鉴于数据库和数据密集型应用程序的复杂性，问题不在于“是否”某些因素组合会导致性能下降，而在于“何时”。
 - en: Enter observability and monitoring. A proactive approach is the key to understanding
     and optimizing your baseline performance, catching emerging issues before your
     end-users feel the pain, and reacting fast when they do. This chapter helps you
@@ -22,24 +28,32 @@
     use cases—offers tips for exploring issues as they emerge, and details how you
     might proceed when your key performance indicators (KPIs) are trending in the
     wrong direction.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 进入可观察性和监控。主动方法是理解和优化你的基本性能、在最终用户感到痛苦之前捕捉到新兴问题以及在他们感到痛苦时快速反应的关键。本章帮助你确定在哪里集中监控努力——提供不同用例的示例——提供在问题出现时探索问题的技巧，并详细说明当你的关键性能指标（KPI）趋势走向错误方向时，你可能如何进行操作。
 - en: Taking a Proactive Approach
+  id: totrans-4
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 采取主动方法
 - en: Monitoring often doesn’t become a priority until something goes wrong. Users
     start complaining about slowness, the system runs out of space, or your application
     simply stops responding.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 监控通常只有在出现问题后才会成为优先事项。用户开始抱怨速度慢，系统空间不足，或者你的应用程序简单地停止响应。
 - en: At that point, monitoring is a vital tool for digging into the problem, understanding
     the root cause, and hopefully verifying that your mitigation attempts were successful.
     Having insightful monitoring and knowing what to look for is invaluable at this
     point. But what’s even more helpful is the knowledge gained by monitoring performance
     over time, even when everything was humming along nicely.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 在那个阶段，监控是深入挖掘问题、理解根本原因以及希望验证你的缓解尝试是否成功的关键工具。在这个时候，有洞察力的监控和知道该寻找什么是非常宝贵的。但更有帮助的是，通过长时间监控性能所获得的知识，即使一切都在顺利运行时也是如此。
 - en: If you have a good grasp of how your database generally behaves when it works
     well, it’s much easier to spot the problem when it’s unhealthy. For example, if
     you see a spike in request concurrency but you know that your system always properly
@@ -47,8 +61,10 @@
     operations that may be slowing down your database. Or, maybe your application
     got scaled out to handle more traffic, therefore breaking your previous client-side
     assumptions.
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你很好地掌握了数据库在正常运行时的一般行为，那么在它不健康时更容易发现问题。例如，如果你看到请求并发性激增，但你又知道你的系统始终正确地应用了并发限制器，那么你可能将调查重点放在可能减慢数据库的背景操作上。或者，也许你的应用程序已经扩展以处理更多流量，因此打破了之前的客户端假设。
 - en: Monitoring trends over time can also help you predict and plan for peaks. For
     instance, assume you’re a streaming media company. If you know that last year’s
     version of a big sporting event drew over 25M active users when you had 250M subscribers,
@@ -57,15 +73,19 @@
     It’s a similar case for retail, fraud detection, or any other industry that experiences
     “Black Friday” surges. One of the best ways to prepare for the next peak is to
     understand what happened during the previous one.
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 随时间监控趋势还可以帮助你预测和规划高峰。例如，假设你是一家流媒体公司。如果你知道去年一个大型体育赛事的版本吸引了2500万活跃用户，而你当时有2.5亿订阅者，你可以使用这些数据来做出一些预测，关于今年你可能需要多少流量来支持——现在你有近两倍的订阅者。对于零售、欺诈检测或任何经历“黑色星期五”激增的行业来说，情况类似。为下一次高峰做准备的最佳方法之一是了解上一次高峰期间发生了什么。
 - en: Making monitoring a regular routine rather than an emergency response can also
     help you spot potential issues as they emerge—and avoid them causing a crisis.
     For example, one of the most common database mistakes is failing to carefully
     watch disk utilization. By the time you realize that the system is running out
     of storage space, it might be too late to respond.
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 将监控变成一项常规工作，而不是紧急响应，也可以帮助你及时发现潜在问题，并避免它们引发危机。例如，最常见的数据库错误之一就是未能仔细监控磁盘利用率。等你意识到系统即将耗尽存储空间时，可能已经太晚做出反应了。
 - en: As a nice side effect, monitoring can also provide a window into how your data
     and application usage are evolving. For example, if you note a steady increase
     in data volume and/or IOPs, you might consider benchmarking your database against
@@ -73,15 +93,21 @@
     maybe you need to think about your options for increasing capacity. Additionally,
     assessing what’s required to achieve the expected latencies at the likely new
     scale also helps you predict and plan for the associated cost increase.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 作为一种美好的副作用，监控还可以提供一个窗口，让你了解你的数据和应用程序使用是如何演变的。例如，如果你注意到数据量或IOPs的稳步增加，你可能会考虑将你的数据库与下一年内可行的标准进行基准测试。也许你已经在那个规模上做好了准备，或者你可能需要考虑增加容量的选择。此外，评估在可能的新规模上实现预期延迟所需的内容，也有助于你预测和计划相关的成本增加。
 - en: 'Note: Do You Need to Monitor a DBaaS?'
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 备注：你需要监控DBaaS吗？
 - en: You selected a DBaaS because you didn’t want to worry about your database, right?
     So does that mean you don’t have to worry about monitoring? Yes … and no.
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 你选择数据库即服务（DBaaS）是因为你不想担心你的数据库，对吧？那么这意味着你不必担心监控吗？是的……也不完全是。
 - en: 'You *should* rest assured that your vendor of choice is carefully watching
     over your instance with a great deal of automation as well as expertise. If you’re
     not confident that this is the case, you might want to consider rethinking your
@@ -89,31 +115,43 @@
     close eye on database performance. To earn and retain your trust, your DBaaS vendor
     should offer full transparency into what they’re monitoring. At a minimum, you
     should understand:'
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 你应该放心，你选择的供应商正在仔细监控你的实例，既有大量的自动化，也有专业知识。如果你不确信这是事实，你可能需要考虑重新考虑你的DBaaS供应商。但即使你确实有信心，仍然建议你密切关注数据库性能。为了赢得并保持你的信任，你的DBaaS供应商应该提供对其监控内容的完全透明度。至少，你应该了解：
 - en: Which KPIs are correlated to your team’s greatest performance concerns
+  id: totrans-14
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 哪些KPIs与你团队最大的性能担忧相关
 - en: What triggers them to review KPIs, take action internally, and notify you of
     an issue
+  id: totrans-15
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 什么触发了他们审查关键绩效指标（KPIs），内部采取行动，并通知你问题
 - en: What level of effort they make in order to guarantee these KPIs
+  id: totrans-16
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 他们为了确保这些KPIs所付出的努力水平
 - en: It’s probably overkill to keep a DBaaS monitoring dashboard open on one of your
     monitors 24/7\. But at least know enough for a basic level of confidence that
     your database—and your DBaaS vendor—are both doing their job.
+  id: totrans-17
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 持续24/7在你的显示器上保持一个DBaaS监控仪表板可能有些过度。但至少你应该了解足够的信息，以保持基本水平的信心，即你的数据库和你的DBaaS供应商都在履行他们的职责。
 - en: Tracking Core Database KPIs
+  id: totrans-18
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 跟踪核心数据库KPIs
 - en: Less is more when you’re tracking database KPIs. We recommend zeroing in on
     a small set of KPIs in each area (cluster, infrastructure, application) that really
     matter to your business. Then, showcase those core KPIs prominently in a dashboard
@@ -121,174 +159,234 @@
     response. Be brutally honest here. It’s much better to have one custom alert you’ll
     really act on than 30 you’ll ignore. If you won’t address it immediately, it’s
     “noise” that will desensitize the team to even the most critical issues.
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 当你跟踪数据库KPIs时，少即是多。我们建议在每个领域（集群、基础设施、应用程序）中集中关注一小部分真正对你的业务有意义的KPIs。然后，在仪表板上突出显示这些核心KPIs，并设置当它们达到你认为需要立即响应的水平时触发的警报。在这里要非常诚实。有一个你真的会采取行动的定制警报，比30个你将忽略的警报要好得多。如果你不会立即处理它，它就是“噪音”，会使团队对甚至是最关键的问题变得麻木。
 - en: What about all other KPIs? They’ll be key when it’s time to a) optimize your
     baseline performance, b) see what’s needed to maintain that performance at a greater
     scale, or c) diagnose an emerging performance issue.
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 那么，其他所有KPIs呢？当需要以下操作时，它们将变得至关重要：a) 优化你的基准性能，b) 看看需要什么来在更大规模上维持这种性能，或c) 诊断一个新兴的性能问题。
 - en: Rather than try to cover every KPI for every popular high-performance database,
     let’s take a critical look at what we’ve found are the most common and critical
     ones for meeting throughput and latency expectations.
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 而不是试图涵盖每个流行高性能数据库的每个关键绩效指标（KPI），让我们仔细看看我们认为对于满足吞吐量和延迟期望最常见和最关键的指标。
 - en: Database Cluster KPIs
+  id: totrans-22
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 数据库集群KPI
 - en: These are metrics that provide insight into a database cluster’s health. This
     bucket might cover things like I/O queues, task groups, internal errors, reads/writes,
     timeouts and errors, replicas, cache, and change data capture.
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些是提供关于数据库集群健康状况洞察的指标。这个类别可能包括I/O队列、任务组、内部错误、读写、超时和错误、副本、缓存以及变更数据捕获。
 - en: 'The ultimate goal of monitoring a cluster is to ensure a steady state “healthy
     system.” Before looking at specific KPIs, consider what an ideal cluster state
     looks like for your database. For example, with a wide column database like ScyllaDB
     or Cassandra, your target might be:'
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 监控集群的最终目标是确保系统处于稳定状态“健康状态”。在查看具体的KPI之前，考虑一下对于您的数据库来说理想的集群状态是什么样的。例如，对于像ScyllaDB或Cassandra这样的宽列数据库，您的目标可能是：
 - en: All nodes are up and running
+  id: totrans-25
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 所有节点都正常运行
 - en: There are no alerts indicating that a KPI you care about has exceeded the acceptable
     threshold
+  id: totrans-26
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 没有警报表明您关心的KPI已超过可接受的阈值
 - en: Clients are driving traffic to all nodes and shards in a balanced manner
+  id: totrans-27
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 客户端以平衡的方式驱动所有节点和分片的流量
 - en: Connections are balanced (your driver might balance them automatically)
+  id: totrans-28
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 连接平衡（您的驱动程序可能自动平衡它们）
 - en: The amount of traffic to the various shards is roughly the same
+  id: totrans-29
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 各个分片访问量大致相同
 - en: The queries are spread out across the shards
+  id: totrans-30
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 查询在各个分片之间分散
 - en: Requests for a partition/row are balanced (e.g., you don’t have a “hot partition”
     with 50 percent of read requests going to a single partition)
+  id: totrans-31
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 对分区/行的请求数平衡（例如，您没有“热点分区”，其中50%的读取请求都发送到单个分区）
 - en: Partitions are balanced (e.g., you don’t have an average partition size of .5
     MB and a few partitions that are 10GB)
+  id: totrans-32
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 分区平衡（例如，您没有平均分区大小为0.5 MB，而只有几个分区大小为10GB）
 - en: The cache hit rate (rows read from the cache) follows a specific distribution
     pattern
+  id: totrans-33
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 缓存命中率（从缓存中读取的行）遵循特定的分布模式
 - en: Disk utilization has enough room to accommodate growth and other background
     operations, such as compactions
+  id: totrans-34
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 磁盘利用率有足够的空间来容纳增长和其他后台操作，例如压缩
 - en: 'Here are some specific KPIs to look into regarding your cluster health:'
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里有一些关于集群健康的具体KPI需要关注：
 - en: '**Node availability**: Indicates if a node is online and responding through
     liveness checks. This can be used to assess whether the node is available on the
     network and to the rest of the cluster. If the cluster has one or more nodes that
     are unavailable, this means that the cluster has fewer resources to process its
     workload, which could result in increased latencies. Note that just because a
     node is available does not necessarily mean it is healthy.'
+  id: totrans-36
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**节点可用性**：指示节点是否在线并通过存活检查进行响应。这可以用来评估节点是否在网络和集群的其他部分可用。如果集群有一个或多个不可用的节点，这意味着集群处理其工作负载的资源更少，这可能导致延迟增加。请注意，仅仅因为节点可用并不意味着它一定健康。'
 - en: '**Average read/write latencies**: Tells you the average latencies per operation
     type. This is a good way of knowing how your cluster delivers part of the requests,
     but there is more than meets the eye when you inspect it closely (for example,
     P99 latencies).'
+  id: totrans-37
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**平均读写延迟**：告诉你每种操作类型的平均延迟。这是了解集群如何处理部分请求的好方法，但当你仔细检查时，你会发现更多（例如，P99延迟）。'
 - en: '**P99 read/write latencies**: Provides insight into the latency of the 99th
     percentile of requests in your cluster. Most performance-sensitive use cases aim
     at keeping P99 latencies (and sometimes P999 latencies) within acceptable ranges
     for the business case.'
+  id: totrans-38
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**P99读写延迟**：提供了关于集群中99百分位请求延迟的洞察。大多数对性能敏感的使用案例都旨在将P99延迟（有时还包括P999延迟）保持在业务案例可接受的范围内。'
 - en: '**Requests per second**: Specifies how many operations per second your database
     is processing. This KPI, along with latency, is crucial to assess how the cluster
     processes the intended workloads. A sudden drop in throughput might indicate a
     network failure, misbehaving clients, or simply when a given high throughput workload
     processing finished.'
+  id: totrans-39
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**每秒请求数**：指定数据库每秒处理多少操作。这个KPI，连同延迟，对于评估集群如何处理预期的工作负载至关重要。吞吐量的突然下降可能表明网络故障、行为异常的客户，或者简单地当某个高吞吐量工作负载处理完成时。'
 - en: '**Timeouts**: Reveals if any timeouts have recently occurred on the cluster.
     A timeout is not a bad sign per se. But the team might want to consider how to
     tackle them from the application side and how to stop timeouts from becoming common
     on a busy system. A cluster’s timeout rates will usually spike when it is malfunctioning.'
+  id: totrans-40
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**超时**: 显示集群中是否最近发生了任何超时。超时本身并不是一个坏信号。但团队可能需要考虑如何从应用层面处理超时，以及如何防止超时在繁忙的系统上变得普遍。集群的超时率通常会在出现故障时急剧上升。'
 - en: '**Caching**: This can vary from how much data your cache contains to how much
     data is being read from the cache (as opposed to the disk). The latter measurement
     will help you assess how the database is using its caching system and if any tuning
     is required for it. It could also explain some latency spikes, which would be
     correlated to reads primarily hitting the disk.'
+  id: totrans-41
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**缓存**: 这可能包括你的缓存包含多少数据，以及从缓存中读取了多少数据（与磁盘相比）。后者将帮助你评估数据库如何使用其缓存系统，以及是否需要对其进行调整。它也可能解释一些延迟峰值，这些峰值将与主要读取磁盘的读取相关。'
 - en: '**Connections**: It is crucial to understand how your database is being accessed
     over the network. Knowing how many connections are currently active on the database
     can help you gauge application connectivity issues and understand if connections
     are balanced throughout the cluster (to catch whether a node is malfunctioning
     or overloaded).'
+  id: totrans-42
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**连接**: 理解你的数据库通过网络如何被访问至关重要。了解当前数据库上有多少活动连接可以帮助你评估应用程序的连接问题，并了解连接是否在整个集群中平衡（以捕捉节点是否出现故障或过载）。'
 - en: '**Garbage Collector (GC)** **pauses**: If you’re using a database that requires
     GC pauses to purge unused memory objects, pay close attention to how GC pauses
     may be affecting your latencies and throughput. In general, a GC pause is a small
     fraction of time when a database is unavailable to process its work. That means
     that long GC pauses may be wasting resources and hurting your workload.'
+  id: totrans-43
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**垃圾回收器 (GC) 停顿**: 如果你使用的是需要GC停顿来清除未使用内存对象的数据库，请密切关注GC停顿可能对你延迟和吞吐量的影响。一般来说，GC停顿是数据库不可用处理其工作的一小段时间。这意味着长时间的GC停顿可能会浪费资源并损害你的工作负载。'
 - en: What to Look for at Different Levels (Datacenter, Node, CPU/Shard)
+  id: totrans-44
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 在不同级别（数据中心、节点、CPU/Shard）需要关注的内容
 - en: Monitoring solutions will typically provide different views of your distributed
     topology. For example, a global view of your P99 latencies within a multi-regional
     active-active deployment will quickly help you identify whether your entire infrastructure
     is stable and operational. However, when things go wrong, you may need a different
     level of granularity in order to identify the culprit.
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 监控解决方案通常会提供你分布式拓扑的不同视图。例如，在多区域主动-主动部署中，全局查看你的P99延迟将迅速帮助你确定整个基础设施是否稳定且运行正常。然而，当事情出错时，你可能需要不同级别的粒度来识别罪魁祸首。
 - en: The higher the level of detail you choose, the more data points and information
     you will have. However, it is not always a good idea to navigate through your
     monitoring solution with a high level of detail until you identify possible suspects.
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: 你选择的细节级别越高，你将拥有的数据点和信息就越多。然而，在你确定可能的嫌疑人之前，用高细节级别在监控解决方案中导航并不总是好主意。
 - en: When investigating an unknown problem, we recommend that you initiate your research
     with the datacenter-level view if you have a multi-regional topology. This allows
     you to isolate whether a problem is specifically confined to a single region or
     whether the problem in question affects all regions.
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 在调查未知问题时，如果你有一个多区域拓扑结构，我们建议你从数据中心级别的视图开始你的研究。这允许你确定问题是否仅限于单个区域，或者所讨论的问题是否影响所有区域。
 - en: Once you have isolated the impacted location, the next step is to look into
     the data points on a per-node level. This will reveal whether any specific replica
     may be misbehaving, receiving more requests, experiencing an imbalance, or suffering
     from higher latencies than the others.
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 一旦你确定了受影响的位置，下一步就是查看每个节点的数据点。这将揭示是否有任何特定的副本可能表现不佳，接收更多请求，经历不平衡，或者比其他副本有更高的延迟。
 - en: 'For most databases, a per-node view is the lowest possible level. However,
     databases with a shard-per-core architecture offer an additional granularity:
     the CPU level. Switching your observability to the CPU level makes sense once
@@ -296,42 +394,56 @@
     it will simply show you too many data points that might look unintelligible at
     first glance. However, when used properly, a per-CPU level view can greatly empower
     your observability and troubleshooting skills.'
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于大多数数据库来说，按节点视图是可能的最底层。然而，具有每核心一个分片架构的数据库提供了一种额外的粒度：CPU级别。一旦你确定了性能问题的主要嫌疑人，将你的可观察性切换到CPU级别是有意义的。否则，它只会显示太多可能一开始看起来难以理解的数据点。然而，当正确使用时，按CPU级别的视图可以极大地增强你的可观察性和故障排除技能。
 - en: Three Industry-Specific Examples
+  id: totrans-50
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 三个行业特定示例
 - en: 'Here are a few examples of how cluster monitoring approaches vary across industries
     and use cases:'
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 下面是一些关于集群监控方法如何在不同行业和用例中变化的例子：
 - en: '**AdTech**: AdTech is one of the most recognizable use cases that relies heavily
     on sub-millisecond latencies. For example, in real-time bidding, a single millisecond
     spike might be all it takes to miss a targeted ad opportunity. As a result, these
     use cases often monitor P99, P999, and even P9999 latencies and set up very aggressive
     custom alerting thresholds so that spikes can be identified and addressed immediately.'
+  id: totrans-52
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**AdTech**：AdTech是依赖亚毫秒级延迟的最可识别的使用案例之一。例如，在实时竞价中，仅仅一个毫秒的峰值就可能导致错过一个定向广告机会。因此，这些用例通常会监控P99、P999甚至P9999延迟，并设置非常激进的定制警报阈值，以便可以立即识别和解决峰值。'
 - en: '**Streaming media**: Streaming media use cases typically serve several distinct
     media types across several tenants, often through different regions. At a region,
     data balancing is critical since a single bottlenecked shard can introduce a widespread
     impact.'
+  id: totrans-53
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**流媒体**：流媒体用例通常在多个租户中提供几种不同的媒体类型，通常通过不同的地区。在地区层面，数据平衡是至关重要的，因为单个瓶颈化的分片可能会产生广泛的影响。'
 - en: '**Blockchain**: Blockchain solutions are typically required to store, compute,
     and analyze large amounts of data. As the blockchain in question grows, tracking
     the history of transactions at fast speeds may become very challenging. This specific
     use case focuses on two main drivers: storage growth and disk I/O performance.'
+  id: totrans-54
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**区块链**：区块链解决方案通常需要存储、计算和分析大量数据。随着所讨论的区块链的增长，以快速速度跟踪交易历史可能会变得非常具有挑战性。这个特定的用例专注于两个主要驱动因素：存储增长和磁盘I/O性能。'
 - en: Application KPIs
+  id: totrans-55
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 应用程序KPI
 - en: Your distributed database is the single most important stateful component in
     your infrastructure. It is therefore no surprise that many database vendors invest
     a lot of time and effort into improving and bundling observability capabilities
@@ -340,12 +452,16 @@
     if not observed properly, may cause important business impacts. Application KPIs
     are the key to exposing things like query issues, poor data models, and unexpected
     driver behavior.
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 你的分布式数据库是你基础设施中最重要的有状态组件。因此，许多数据库供应商在他们的产品中投入了大量时间和精力来改进和捆绑可观察性功能，这并不奇怪。然而，仅监控数据库本身只能做到这么多。总会有一个应用程序（或整个基础设施）在它后面，如果不进行适当的观察，可能会造成重要的业务影响。应用程序KPI是揭示查询问题、糟糕的数据模型和意外的驱动程序行为等问题的关键。
 - en: 'Here are some important KPIs to look into regarding your application (client
     side):'
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 在你的应用程序（客户端）方面，以下是一些重要的关键绩效指标（KPI）需要关注：
 - en: '**Latency**: High P99 latency on your client side does not necessarily mean
     that there’s a problem with your database latency. Client-side latencies will
     typically be slightly higher than your database latencies due to the natural network
@@ -353,9 +469,11 @@
     this metric alone does not help you identify the actual culprit. Look at whether
     your application is behaving erratically or whether it is simply bottlenecked
     (in which case, you can scale it out as necessary).'
+  id: totrans-58
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**延迟**：客户端的P99高延迟并不一定意味着你的数据库延迟有问题。由于与数据库通信时涉及到的自然网络往返延迟，客户端延迟通常会略高于数据库延迟。然而，这个指标本身并不能帮助你确定真正的罪魁祸首。看看你的应用程序是否行为异常，或者它是否只是瓶颈（在这种情况下，你可以根据需要扩展它）。'
 - en: '**CPU consumption**: High CPU consumption could stem from several causes. Maybe
     your client is simply overwhelmed, unable to keep up with the pace of incoming
     requests. Maybe your request balancing is not appropriate. Maybe a “noisy neighbor”
@@ -365,9 +483,13 @@
     tools, such as perf.^([1](#Fn1)) Otherwise, simply scaling out your application
     deployments or moving the application to another host might be enough to resolve
     the problem.'
+  id: totrans-59
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**CPU 消耗**：高 CPU 消耗可能由几个原因引起。可能是您的客户端简单地超负荷，无法跟上传入请求的步伐。可能是您的请求平衡不适当。可能是“嘈杂的邻居”正在窃取您的
+    CPU 容量，等等。一般来说，如果您怀疑高 CPU 消耗的根本原因在于代码中的效率低下，您可以在代码上收集 tracepoints 或使用高级热图分析工具，例如
+    perf.^([1](#Fn1))。否则，简单地扩展您的应用程序部署或将应用程序迁移到其他主机可能就足够解决问题了。'
 - en: '**Network IRQs**: Applications that need to achieve a high throughput with
     low latencies can be rather network intensive. As a result, a high network IRQ
     consumption may prevent your application from fully maximizing the intended rate
@@ -376,9 +498,12 @@
     in most Linux platforms. Another mechanism employed to stop IRQs from undermining
     your performance involves CPU-pinning or simply scaling out your application to
     run on different host machines.'
+  id: totrans-60
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**网络中断请求**：需要以低延迟实现高吞吐量的应用程序可能相当依赖网络。因此，高网络中断请求消耗可能会阻止您的应用程序完全最大化您最初预期的请求速率。使用低级
+    CPU 可观察性工具检查您的软中断消耗，例如大多数 Linux 平台上的 `top` 和 `htop` 命令。另一种防止中断损害性能的机制涉及 CPU 锁定或简单地扩展您的应用程序以在不同的主机机器上运行。'
 - en: '**Readiness/liveness**: Any application is prone to bugs and infrastructure
     failures. Readiness and liveness probes will help you identify when a specific
     set of your distributed application may start to misbehave and—in many situations—will
@@ -389,9 +514,13 @@
     to readiness or liveness problems may indicate problematic logic, a memory leak,
     or other issues. Check your application or Kubernetes logs for more details on
     the actual cause of such events.'
+  id: totrans-61
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**就绪/活跃状态**：任何应用程序都容易受到错误和基础设施故障的影响。就绪和活跃状态检查可以帮助您确定特定的一组分布式应用程序何时可能开始出现异常行为，并在许多情况下会自动重新部署或重启有故障的客户端。就绪和活跃状态检查是
+    Kubernetes 无状态应用程序的标准做法。每当您的应用程序 Pod 开始出现异常行为时，您的 Kubernetes 控制器通常会采取行动将其移回健康状态。由于就绪或活跃问题而频繁重启的应用程序可能表明存在有问题的逻辑、内存泄漏或其他问题。检查您的应用程序或
+    Kubernetes 日志以获取有关此类事件实际原因的更多详细信息。'
 - en: '**GC pauses**: Many applications are developed in programming languages that
     experience garbage collection pauses while freeing up memory. Depending on its
     aggressiveness, it can cause CPU spikes (preventing your application from keeping
@@ -399,41 +528,53 @@
     a problematic memory management algorithm, or an inefficiency with your garbage
     collector overall. Consider spreading out your application to run with more independent
     clients and see if that improves the situation.'
+  id: totrans-62
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**GC 停顿**：许多应用程序在释放内存时都会经历垃圾回收暂停。根据其激进程度，它可能会导致 CPU 峰值（阻止您的应用程序跟上其输入速率）或引入严重的延迟峰值。这表明可能存在有问题的内存管理算法，或者您的垃圾回收器整体效率低下。考虑将您的应用程序分散到运行更多独立客户端，看看是否可以改善情况。'
 - en: Infrastructure/Hardware KPIs
+  id: totrans-63
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 基础设施/硬件关键绩效指标
 - en: Keeping an eye on the database and application sounds reasonable, but what about
     the underlying hardware and infrastructure? Keeping it all healthy and humming
     is the top priority of infrastructure teams. After all, what good does tuning
     and monitoring a database do if the server that powers it goes offline due to
     a weeks-long malfunction that went unnoticed?
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 关注数据库和应用程序似乎是合理的，但底层硬件和基础设施呢？保持它们所有内容健康运行是基础设施团队的首要任务。毕竟，如果服务器因数周未被发现的功能故障而离线，那么调整和监控数据库又能起到什么作用呢？
 - en: 'Here are the top infrastructure/hardware KPIs that are relevant from a database
     perspective:'
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里是从数据库角度相关的最重要的基础设施/硬件KPI：
 - en: '**Disk space utilization**: A database, being a stateful application, certainly
     has disk space utilization as a top priority KPI. It’s extremely dangerous to
     have disks reaching full capacity because the database has no option other than
     to shed requests. A database might even shut itself down to avoid unintentional
     data loss. Keeping disk utilization well under control is crucial to a healthy,
     performant database.'
+  id: totrans-66
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**磁盘空间利用率**：作为一个有状态的应用程序，数据库当然将磁盘空间利用率作为一个最重要的KPI。当磁盘达到满容量时非常危险，因为数据库除了放弃请求别无选择。数据库甚至可能自行关闭以避免意外数据丢失。保持磁盘利用率在良好控制之下对于健康、高效的数据库至关重要。'
 - en: '**Disk bandwidth utilization**: Apart from the disk space utilization, monitor
     how disks are being actively used and performing. In a world of multi-gigabyte
     RAM, disk bandwidth cannot fall behind; otherwise, you might risk increased latencies
     or even a complete failure due to disks being unable to attend to requests within
     acceptable timeframes.'
+  id: totrans-67
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**磁盘带宽利用率**：除了磁盘空间利用率之外，还要监控磁盘的活跃使用情况和性能。在一个拥有多吉字节RAM的世界里，磁盘带宽不能落后；否则，你可能会面临增加的延迟，甚至由于磁盘无法在可接受的时间内处理请求而导致完全失败。'
 - en: '**CPU utilization**: This is the one and only metric that counts…or is it?
     CPU utilization can be looked at from different perspectives. On the one hand,
     the OS might say that a CPU is 100 percent busy and therefore it has certainly
@@ -443,36 +584,46 @@
     internal processes such as compactions and repairs. In such a system, it is actually
     expected to see CPU utilization at 100 percent most of the time—and it does not
     mean that the system has reached its limits!'
+  id: totrans-68
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**CPU利用率**：这是唯一一个重要的指标……或者不是吗？CPU利用率可以从不同的角度来考虑。一方面，操作系统可能会说CPU已经100%忙碌，因此它肯定已经达到了极限，不可能再接受更多的工作。对吗？不对！一个忙碌的CPU并不总是意味着系统已经达到了极限。例如，ScyllaDB这样的数据库有内部机制来优先处理用户工作负载，而不是后台内部进程，如压缩和修复。在这样的系统中，实际上大多数时候都期望看到CPU利用率达到100%，但这并不意味着系统已经达到了极限！'
 - en: '**Memory utilization**: No one wants to see a database swapping to disk since
     it can become very detrimental to performance. Heavy memory pressure can trigger
     your database to crash (or get its process killed) if the underlying operating
     system runs out of memory. In general, database nodes should be the only memory-hungry
     resource running on a given server and the system must be configured to avoid
     swapping unless strictly necessary.'
+  id: totrans-69
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**内存利用率**：没有人愿意看到数据库交换到磁盘，因为这可能会对性能造成极大的损害。严重的内存压力可能会在底层操作系统内存不足时触发数据库崩溃（或其进程被杀死）。一般来说，数据库节点应该是服务器上唯一的内存密集型资源，并且系统必须配置为避免交换，除非绝对必要。'
 - en: '**Network availability**: A distributed database heavily relies on networking
     in order to communicate with other nodes to replicate your data, liveness information,
     and—at the same time—serve your application queries. Network failures may introduce
     a split-brain situation, or make node(s) completely inaccessible momentarily,
     whereas hitting network bandwidth limits may result in additional latency to your
     workloads.'
+  id: totrans-70
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**网络可用性**：分布式数据库严重依赖于网络来与其他节点通信，以复制数据、存活信息，同时处理应用程序查询。网络故障可能会引起脑裂情况，或者暂时使节点完全不可访问，而达到网络带宽限制可能会导致工作负载的额外延迟。'
 - en: Creating Effective Custom Alerts
+  id: totrans-71
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 创建有效的自定义警报
 - en: Most tools you use to monitor databases provide built-in alerting systems with
     predefined rules that should meet most users’ needs. But what if you’d sleep better
     with more specialized monitoring rules and alerts in place?
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 大多数用于监控数据库的工具都提供了内置的警报系统，带有预定义的规则，这些规则应该能满足大多数用户的需求。但如果你有更多专门的监控规则和警报，你会睡得更好吗？
 - en: First, start by understanding what you want to monitor, then see how that can
     be achieved using existing metrics (or a combination of them). After selecting
     the metric(s) that will drive the custom alert, think about the frequency of checks
@@ -481,45 +632,65 @@
     should trigger warnings, and five minutes indicates something is definitely wrong.
     Set your monitoring system accordingly and bind the appropriate alerting channels
     for each type of alert.
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，了解你想要监控的内容，然后看看如何使用现有指标（或它们的组合）来实现。在选择了将驱动自定义警报的指标（或指标组合）之后，考虑检查频率并设置可能值的阈值。例如，你可能认为工作负载超过其预期峰值一分钟是可以接受的，三分钟应该触发警告，五分钟则表明肯定有问题。相应地设置你的监控系统，并为每种类型的警报绑定适当的警报渠道。
 - en: Also, make good use of alerting channels! Be sure to tag and appropriately direct
     each level of alert to its own set of target channels. You don’t want the alerting
     system automation to silently drop a message on a random Slack channel in the
     middle of the night if the production system is down.
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，也要充分利用警报渠道！确保为每个警报级别标记并适当地将其引导到自己的目标渠道。你不想在生产系统出现故障时，警报系统自动化在半夜默默地在一个随机的Slack频道上发送消息。
 - en: Walking Through Sample Scenarios
+  id: totrans-75
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 演示示例场景
 - en: To help you see how these principles translate into practice, here are two sample
     scenarios.
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了帮助你了解这些原则如何转化为实践，这里有两个示例场景。
 - en: One Replica Is Lagging in Acknowledging Requests
+  id: totrans-77
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 一个副本在确认请求时落后
 - en: Assume that you’re looking at the dashboard in Figure [10-1](#Fig1) and notice
     that one replica is taking much longer than all the others to acknowledge requests.
     Since the application’s incoming request rate is constant (you’re not throttling
     requests), the other replicas will also start suffering after some time.
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: 假设你正在查看图[10-1](#Fig1)中的仪表板，并注意到有一个副本在确认请求方面比其他所有副本都要慢得多。由于应用程序的传入请求率是恒定的（你没有限制请求），其他副本在一段时间后也会开始受到影响。
 - en: '![](../images/541783_1_En_10_Chapter/541783_1_En_10_Fig1_HTML.jpg)'
+  id: totrans-79
   prefs: []
   type: TYPE_IMG
+  zh: '![图片](../images/541783_1_En_10_Chapter/541783_1_En_10_Fig1_HTML.jpg)'
 - en: A graph of writes per second versus instance. The writes per second range between
     14 an d 23.
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: 每秒写入次数与实例的关系图。每秒的写入次数在14到23之间。
 - en: Figure 10-1
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: 图10-1
 - en: One replica taking much longer than all the others to acknowledge requests
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个副本在确认请求时比其他所有副本都要慢得多
 - en: 'To see what’s going on here, let’s look at the foreground and background write
     queues. But first: what’s a foreground and background queue? Foreground queues
     are requests that the application directed to the specified node, but were not
@@ -530,154 +701,230 @@
     they can be considered done. Delays replicating data across nodes are typically
     the reason for high background queues. High foreground and background queues both
     correlate with high latencies.'
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
+  zh: 要了解这里发生了什么，让我们看看前台和后台写入队列。但首先：什么是前台和后台队列？前台队列是应用程序指向指定节点的请求，但尚未向客户端确认。也就是说，请求已被接收，但由于数据库目前正在忙于服务其他请求，它们正在等待处理。后台队列是已经向应用程序确认，但在被视为完成之前仍需要在数据库中做额外工作的应用程序请求。跨节点复制数据延迟通常是后台队列高的原因。高前台和后台队列都与高延迟相关。
 - en: So what’s the true problem here? Figure [10-2](#Fig2) indicates that the application
     is overloading the system. It’s sending more requests than the database can handle.
     And since the running time of a single task in a distributed system is governed
     by the slowest node, the entire system will throttle down to the speed of that
     slow node.
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: 那么，这里真正的問題是什么？图[10-2](#Fig2)表明应用程序正在过载系统。它发送的请求数量超过了数据库的处理能力。由于分布式系统中单个任务的运行时间由最慢的节点控制，整个系统将降低到那个慢速节点的速度。
 - en: '![](../images/541783_1_En_10_Chapter/541783_1_En_10_Fig2_HTML.jpg)'
+  id: totrans-85
   prefs: []
   type: TYPE_IMG
+  zh: '![图片](../images/541783_1_En_10_Chapter/541783_1_En_10_Fig2_HTML.jpg)'
 - en: 'A line graph of foreground writes per instance from 0 to 200 versus time from
     18 : 30 hours to 19 : 55 hours. Most of the lines are below 40 writes per instance.'
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: 从18:30到19:55小时，每个实例的前台写入从0到200与时间的关系的折线图。大多数线条的每实例写入次数都低于40。
 - en: Figure 10-2
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: 图10-2
 - en: Foreground writes per shard
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 每个分片的前台写入
 - en: Figure [10-3](#Fig3) shows that the background queues in other nodes start climbing
     right after one node gets overwhelmed with requests it can’t handle. This makes
     sense, because the busy node is clearly taking longer to acknowledge requests
     sent to it.
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: 图[10-3](#Fig3)显示，当某个节点因无法处理请求而超负荷时，其他节点的后台队列开始上升。这是有道理的，因为繁忙的节点显然在确认发送给它的请求时花费了更长的时间。
 - en: '![](../images/541783_1_En_10_Chapter/541783_1_En_10_Fig3_HTML.jpg)'
+  id: totrans-90
   prefs: []
   type: TYPE_IMG
+  zh: '![图](../images/541783_1_En_10_Chapter/541783_1_En_10_Fig3_HTML.jpg)'
 - en: 'A line graph of background writes per instance from 0 to 17.5 versus time from
     18 : 30 hours to 19 : 55 hours. Most of the lines are below 15 writes per instance.'
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: 每个实例的后台写入的折线图，从0到17.5，与从18:30小时到19:55小时的时间对比。大多数线条的实例写入量都低于15。
 - en: Figure 10-3
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 图10-3
 - en: Background writes per shard
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: 每个分片的后台写入
 - en: There are a couple of options for resolving this. First, consider modifying
     the application to throttle requests. If you can’t do that, then scale out the
     cluster to give it more capacity.
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: 有几种方法可以解决这个问题。首先，考虑修改应用程序以限制请求。如果你做不到这一点，那么扩展集群以提供更多容量。
 - en: Disappointing P99 Read Latencies
+  id: totrans-95
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 令人失望的P99读取延迟
 - en: Assume that you’re looking at the dashboard shown in Figure [10-4](#Fig4) and
     notice that the read latencies seem disappointing. The P99 read latency is 40ms
     most of the time, with a spike above 100ms under some circumstances. What’s going
     on here?
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: 假设你正在查看图[10-4](#Fig4)所示的仪表板，并注意到读取延迟似乎令人失望。P99读取延迟大部分时间在40毫秒，在某些情况下会超过100毫秒。这里发生了什么？
 - en: '![](../images/541783_1_En_10_Chapter/541783_1_En_10_Fig4_HTML.jpg)'
+  id: totrans-97
   prefs: []
   type: TYPE_IMG
+  zh: '![图](../images/541783_1_En_10_Chapter/541783_1_En_10_Fig4_HTML.jpg)'
 - en: 'A line graph of read latency by instance from 0 to 120 milliseconds versus
     time from 20 : 05 hours to 21 : 05 hours. The highest latency is 112 at around
     20 : 48 hours.'
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: 从0到120毫秒的实例读取延迟的折线图，与从20:05小时到21:05小时的时间对比。最高的延迟发生在大约20:48小时，为112毫秒。
 - en: Figure 10-4
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: 图10-4
 - en: Disappointing P99 read latencies
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: 令人失望的P99读取延迟
 - en: To analyze this, let’s look at the internal cache metrics. The Reads with Misses
     graph in Figure [10-5](#Fig5) shows that the reads aren’t hitting the cache—they’re
     all going to disk instead. Fetching information from the disk is an order of magnitude
     slower than doing so from memory. At this point, you know something weird is going
     on.
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了分析这个问题，让我们来看看内部缓存指标。图[10-5](#Fig5)中的“读取缺失”图显示，读取操作没有命中缓存——它们都直接访问了磁盘。从磁盘获取信息比从内存中获取慢一个数量级。这时，你知道有些奇怪的事情发生了。
 - en: '![](../images/541783_1_En_10_Chapter/541783_1_En_10_Fig5_HTML.jpg)'
+  id: totrans-102
   prefs: []
   type: TYPE_IMG
+  zh: '![图](../images/541783_1_En_10_Chapter/541783_1_En_10_Fig5_HTML.jpg)'
 - en: 'A line graph of reads with misses from 0 to 70 versus time from 20 : 05 hours
     to 21 : 05 hours. It starts from 0 then rises to around 65, becomes almost flat
     till 21 : 05 hours and then drops to 0.'
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 从0到70的读取缺失的折线图，与从20:05小时到21:05小时的时间对比。它从0开始，然后上升到大约65，直到21:05小时几乎保持平坦，然后下降到0。
 - en: Figure 10-5
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 图10-5
 - en: Database reads with cache misses; reads are going to disk instead of cache
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
+  zh: 数据库读取与缓存缺失；读取操作直接访问磁盘而不是缓存
 - en: Similarly, Figure [10-6](#Fig6) shows the cache hits. You can see that almost
     no requests are being served by the cache. This is a likely indication that the
     workload in question heavily relies on reading cold (uncached) data.
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 类似地，图[10-6](#Fig6)显示了缓存命中。你可以看到几乎没有请求是由缓存服务的。这很可能是所讨论的工作负载严重依赖于读取冷数据（未缓存的）的迹象。
 - en: '![](../images/541783_1_En_10_Chapter/541783_1_En_10_Fig6_HTML.jpg)'
+  id: totrans-107
   prefs: []
   type: TYPE_IMG
+  zh: '![图](../images/541783_1_En_10_Chapter/541783_1_En_10_Fig6_HTML.jpg)'
 - en: 'A line graph of reads with no misses from 0 to 500 versus time from 20 : 05
     hours to 21 : 05 hours. It starts from around 10 then rises sharply to around
     500, and then drops sharply to around 10.'
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: 从0到500的读取无缺失的折线图，与从20:05小时到21:05小时的时间对比。它从大约10开始，然后急剧上升到大约500，然后急剧下降到大约10。
 - en: Figure 10-6
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 图10-6
 - en: Database reads with cache hits
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: 数据库读取与缓存命中
 - en: To investigate further, look at the Active SSTable Reads graph in Figure [10-7](#Fig7).
     Here, you can see that the amount of active read requests going to the disk is
     quite high.
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了进一步调查，查看图[10-7](#Fig7)中的“活跃SSTable读取”图。在这里，你可以看到大量活跃的读取请求正在发送到磁盘。
 - en: '![](../images/541783_1_En_10_Chapter/541783_1_En_10_Fig7_HTML.jpg)'
+  id: totrans-112
   prefs: []
   type: TYPE_IMG
+  zh: '![图](../images/541783_1_En_10_Chapter/541783_1_En_10_Fig7_HTML.jpg)'
 - en: 'A line graph of active S S table reads from 0 to 200 versus time from 20 :
     05 hours to 21 : 05 hours. Most of the reads are between 30 and 150.'
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: 从0到200的活跃SS表读取的折线图，与从20:05小时到21:05小时的时间对比。大多数读取操作都在30到150之间。
 - en: Figure 10-7
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 图10-7
 - en: Active SSTable Reads graph showing that the amount of active read requests going
     to the disk is quite high
+  id: totrans-115
   prefs: []
   type: TYPE_NORMAL
+  zh: Active SSTable Reads 图显示，发送到磁盘的活跃读取请求数量相当高
 - en: On the Queued Reads graph in Figure [10-8](#Fig8), you can see there’s a bit
     of queuing. This queuing means that the underlying storage system can’t keep up
     with the request rate. Requests need to wait longer before being served—and latency
     increases.
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: 在图 [10-8](#Fig8) 的排队读取图中，您可以看到有一些排队现象。这种排队意味着底层存储系统无法跟上请求速率。请求需要等待更长的时间才能被服务——延迟增加。
 - en: '![](../images/541783_1_En_10_Chapter/541783_1_En_10_Fig8_HTML.jpg)'
+  id: totrans-117
   prefs: []
   type: TYPE_IMG
+  zh: '![图片](../images/541783_1_En_10_Chapter/541783_1_En_10_Fig8_HTML.jpg)'
 - en: 'A line graph of queued reads from 0 to 3.5 versus time from 20 : 05 hours to
     21 : 05 hours. Most of the reads are between 0 and 1.'
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: 从 0 到 3.5 的排队读取折线图与从 20:05 小时到 21:05 小时的时间的关系图。大多数读取都在 0 到 1 之间。
 - en: Figure 10-8
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 10-8
 - en: Queued Reads graph demonstrates that several requests are getting queued
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: 排队读取图显示，有几个请求正在排队
 - en: How do you resolve this? Review your queries and access patterns to use the
     cache more efficiently. This is where query analysis is helpful. For example,
     with CQL, you could look at the distribution of inserts, reads, deletes, and updates,
@@ -685,42 +932,62 @@
     reading. If available, also check whether your queries are following the relevant
     best practices (for CQL, this could be using prepared statements, token-aware
     queries, paged queries, and so on).
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: 您如何解决这个问题？回顾您的查询和访问模式，以更有效地使用缓存。这正是查询分析有帮助的地方。例如，使用 CQL，您可以查看插入、读取、删除和更新的分布，每个节点或分片上的连接数，以及您目前正在读取的行数。如果可用，还可以检查您的查询是否遵循相关的最佳实践（对于
+    CQL，这可能包括使用预编译语句、令牌感知查询、分页查询等）。
 - en: Also, watch out for queries that require nodes across datacenters to participate
     before requests are considered successful. Cross-datacenter traffic is usually
     more expensive in terms of latencies and actual cost. Figure [10-9](#Fig9) shows
     an example of how to identify queries traversing to remote regions.
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，请注意需要跨数据中心节点参与才能被视为成功的查询。跨数据中心流量通常在延迟和实际成本方面更为昂贵。图 [10-9](#Fig9) 展示了如何识别穿越到远程区域的查询的示例。
 - en: '![](../images/541783_1_En_10_Chapter/541783_1_En_10_Fig9_HTML.jpg)'
+  id: totrans-123
   prefs: []
   type: TYPE_IMG
+  zh: '![图片](../images/541783_1_En_10_Chapter/541783_1_En_10_Fig9_HTML.jpg)'
 - en: 'A graph of cross data center queries per second versus time from 20 : 05 hours
     to 21 : 05 hours. The cross data line starts from 0, rises sharply to around 32,
     becomes stable till 21 : 00 hours and then drops sharply to 0.'
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: 从 20:05 小时到 21:05 小时的每秒跨数据中心查询数与时间的关系图。跨数据线从 0 开始，急剧上升到约 32，直到 21:00 小时稳定，然后急剧下降到
+    0。
 - en: Figure 10-9
+  id: totrans-125
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 10-9
 - en: Tracking cross-datacenter traffic, which is usually more expensive in terms
     of latencies and cost
+  id: totrans-126
   prefs: []
   type: TYPE_NORMAL
+  zh: 跟踪跨数据中心流量，这通常在延迟和成本方面更为昂贵
 - en: Monitoring Options
+  id: totrans-127
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 监控选项
 - en: Once you have a good grasp of what you’re looking for, how do you find it? There
     are a number of tools and technologies available; here’s a quick rundown of the
     pros and cons of common options.
+  id: totrans-128
   prefs: []
   type: TYPE_NORMAL
+  zh: 一旦您对您要寻找的内容有了很好的了解，您如何找到它？有许多工具和技术可用；以下是常见选项的优缺点快速概述。
 - en: The Database Vendor’s Monitoring Stack
+  id: totrans-129
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 数据库供应商的监控堆栈
 - en: Under most circumstances, your database’s bundled monitoring solution should
     be sufficient for gaining insight into how the database is performing. It is typically
     the recommended solution for a number of reasons. Since it was engineered by your
@@ -729,29 +996,39 @@
     to diagnose on your own, the vendor is likely to request visibility through their
     provided solution. For that reason, we recommend that you always deploy your vendor’s
     monitoring stack—even if you plan to use another solution you prefer.
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: 在大多数情况下，您的数据库捆绑的监控解决方案应该足以让您深入了解数据库的性能表现。它通常是推荐的解决方案，原因有很多。由于它是您的供应商设计的，它可能包含您最关心的许多细节。此外，如果您遇到无法自行诊断的性能问题，供应商很可能会要求通过他们提供的解决方案来获取可见性。因此，我们建议您始终部署供应商的监控堆栈——即使您计划使用您更喜欢的其他解决方案。
 - en: Build Your Own Dashboards and Alerting (Grafana, Grafana Loki)
+  id: totrans-131
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 构建您自己的仪表板和警报（Grafana，Grafana Loki）
 - en: What if the vendor-provided monitoring stack doesn’t allow you customization
     options and the ability to create additional monitors that could yield additional
     insight into your use case, application, or database? In this case, it’s great
     to have the flexibility of going open-source to build your own monitoring stack
     by stitching together every monitor and chart that you need.
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果供应商提供的监控堆栈不允许你进行定制选项和创建额外的监控器，这些监控器可以为你提供关于你的用例、应用程序或数据库的额外洞察，那会怎么样？在这种情况下，拥有灵活性去开源构建自己的监控堆栈是非常好的，你可以通过拼接你需要的所有监控器和图表来实现这一点。
 - en: Just keep in mind that a vendor’s monitoring system is usually tuned to provide
     valuable metrics that are commonly used during troubleshooting. It’s still important
     to keep that foundation operational alongside the additional monitoring options
     you and your team decide to use.
+  id: totrans-133
   prefs: []
   type: TYPE_NORMAL
+  zh: 只需记住，供应商的监控系统通常是调整好的，以提供在故障排除期间常用的重要指标。仍然重要的是，在您和您的团队决定使用的附加监控选项的同时，保持这个基础运行。
 - en: Third-Party Database Monitoring Tools
+  id: totrans-134
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 第三方数据库监控工具
 - en: Some teams might already be using a database monitoring tool that’s built and
     maintained by someone other than their database vendor. If it’s a tool you’re
     already familiar with, you get the benefit of working with a familiar solution
@@ -761,27 +1038,35 @@
     a third-party monitoring tool can be the lack of vendor support and the risk of
     your dashboards becoming obsolete whenever your vendor implements a new metric
     or changes the meaning of a metric.
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
+  zh: 有些团队可能已经在使用由其数据库供应商以外的人构建和维护的数据库监控工具。如果你已经熟悉这个工具，你可以从与一个熟悉且可能已经集成到现有监控框架的解决方案中获益。然而，你可能需要手动构建和跟踪你想要的全部相关仪表板，这可能会很繁琐且耗时。实施第三方监控工具的其他潜在缺点可能包括缺乏供应商支持和你的仪表板在供应商实施新的指标或更改指标含义时变得过时。
 - en: Full Stack Application Performance Monitoring (APM) Tool
+  id: totrans-136
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 全栈应用性能监控（APM）工具
 - en: A full-stack APM system collects remote metrics and aggregates them in a central
     solution that provides insight across different types of services and products.
     An organization might use an APM tool for a global view of all assets, services,
     and nodes across a portfolio. It is the preferred way for larger companies to
     manage infrastructure, and it certainly has its benefits. It’s usually serverless
     and only a client is required to push information to the centralized service.
+  id: totrans-137
   prefs: []
   type: TYPE_NORMAL
+  zh: 全栈APM系统收集远程指标，并在一个中央解决方案中聚合它们，为不同类型的服务和产品提供洞察。一个组织可能使用APM工具来获得整个投资组合中所有资产、服务和节点的全局视图。这是大型公司管理基础设施的首选方式，并且确实有其好处。它通常是无服务器的，只需要一个客户端来将信息推送到集中式服务。
 - en: However, a centralized solution requires a subscription and constant internet
     access. You might also be charged per device and have less flexibility on how
     to customize metrics collection, create panels and alerts, and so on. APM platforms
     usually offer a wide range of plugins that can be tailor-made to monitor products.
     But not all of them are created the same, so your mileage may vary.
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，集中式解决方案需要订阅和持续的互联网访问。你也可能按设备收费，并且在如何定制指标收集、创建面板和警报等方面可能灵活性较低。APM平台通常提供广泛的插件，可以定制以监控产品。但并非所有插件都是相同的，所以你的使用效果可能会有所不同。
 - en: Teams often ask if their favorite observability solution can impact their performance.
     Yes, it can. We have learned from experience that some observability or monitoring
     solutions, especially those that require an agent to be installed on top of your
@@ -790,12 +1075,16 @@
     outage. Whenever installing third-party solutions that could directly interact
     with your database process, ensure that you first consult with your vendor about
     its compatibility and support.
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
+  zh: 团队经常询问他们的首选可观察性解决方案是否会影响性能。是的，它可以。我们从经验中了解到，一些可观察性或监控解决方案，尤其是那些需要在你的数据库节点上安装代理的解决方案，可能会引入性能问题。在一个极端例子中，我们看到了一个代理完全挂起了数据库进程，导致真正的业务中断。无论何时安装可能直接与你的数据库进程交互的第三方解决方案，确保你首先与你的供应商咨询其兼容性和支持。
 - en: Summary
+  id: totrans-140
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 摘要
 - en: This chapter began by recommending that you make monitoring a regular habit
     so that you’re well-prepared to spot emerging issues and effectively diagnose
     the problem when something goes wrong. It outlined a number of KPIs that have
@@ -806,24 +1095,34 @@
     and shared our take on the pros and cons of different monitoring platform options.
     The next (and final) chapter looks at the performance impacts of common admin
     operations and offers some tips on how you might mitigate them.
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章节首先建议您将监控变成一种常规习惯，以便在出现问题时能够及时发现问题并有效诊断。它概述了一系列经过验证的有助于跟踪业务关键企业部署的KPI。对于每个KPI，它解释了应该关注什么，并提供了当趋势表明存在问题时的应对建议。章节还提供了一些创建自定义警报的高级指南。最后，我们探讨了两个示例监控场景，并分享了我们对不同监控平台选项优缺点的看法。下一章（也是最后一章）将探讨常见管理操作的性能影响，并提供了一些关于如何减轻这些影响的建议。
 - en: '[![Creative Commons](../css/cc-by.png)](https://creativecommons.org/licenses/by/4.0)'
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
+  zh: '[![Creative Commons](../css/cc-by.png)](https://creativecommons.org/licenses/by/4.0)'
 - en: '**Open Access** This chapter is licensed under the terms of the Creative Commons
     Attribution 4.0 International License ([http://​creativecommons.​org/​licenses/​by/​4.​0/​](http://creativecommons.org/licenses/by/4.0/)),
     which permits use, sharing, adaptation, distribution and reproduction in any medium
     or format, as long as you give appropriate credit to the original author(s) and
     the source, provide a link to the Creative Commons license and indicate if changes
     were made.'
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: '**开放获取** 本章节根据Creative Commons Attribution 4.0 International License（[http://creativecommons.org/licenses/by/4.0/](http://creativecommons.org/licenses/by/4.0/)）的条款进行许可，允许在任何媒介或格式中使用、分享、改编、分发和复制，只要您适当引用原始作者和来源，提供Creative
+    Commons许可的链接，并指出是否进行了修改。'
 - en: The images or other third party material in this chapter are included in the
     chapter's Creative Commons license, unless indicated otherwise in a credit line
     to the material. If material is not included in the chapter's Creative Commons
     license and your intended use is not permitted by statutory regulation or exceeds
     the permitted use, you will need to obtain permission directly from the copyright
     holder.
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章节中的图像或其他第三方材料包含在本章节的Creative Commons许可中，除非在材料引用行中另有说明。如果材料未包含在本章节的Creative
+    Commons许可中，且您的使用未得到法定规定的许可或超出了许可的使用范围，您将需要直接从版权持有人处获得许可。

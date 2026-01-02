@@ -1,11 +1,15 @@
 - en: '1. A Taste of What You’re Up Against: Two Tales'
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 1. 你将面对的挑战：两个故事
 - en: '[Joan Dives Into Drivers and Debugging](#Sec1)[Patrick’s Unlucky Green Fedoras](#Sec5)[The
     Spike Strikes Again](#Sec11)[Backup Strikes Back](#Sec13)[Summary](#Sec15)'
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: '[琼深入探索驱动程序和调试](#Sec1)[帕特里克不幸的绿色礼帽](#Sec5)[尖峰再次出击](#Sec11)[备份反击](#Sec13)[总结](#Sec15)'
 - en: What’s more fun than wrestling with database performance? Well, a lot. But that
     doesn’t mean you can’t have a little fun here. To give you an idea of the complexities
     you’ll likely face if you’re serious about optimizing database performance, this
@@ -13,12 +17,16 @@
     are expanded on throughout the book. But this is the one and only time you’ll
     hear of poor Joan and Patrick. Let their struggles bring you some valuable lessons,
     solace in your own performance predicaments… and maybe a few chuckles as well.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 与数据库性能搏斗有什么比这更有趣的吗？好吧，很多。但这并不意味着你不能在这里找点乐子。为了给你一个概念，如果你认真对待优化数据库性能，你可能会遇到什么样的复杂性，本章将介绍两个相当虚构的故事。这里涉及的技术主题将在整本书中进一步展开。但这是你唯一一次会听到关于可怜的琼和帕特里克的故事。让他们之间的斗争给你带来一些宝贵的教训，在你自己的性能困境中找到安慰……也许还能让你笑一笑。
 - en: Joan Dives Into Drivers and Debugging
+  id: totrans-3
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 琼深入探索驱动程序和调试
 - en: Lured in by impressive buzzwords like “hybrid cloud,” “serverless,” and “edge
     first,” Joan readily joined a new company and started catching up with their technology
     stack. Her first project recently started a transition from their in-house implementation
@@ -26,49 +34,65 @@
     of customers, to one of the industry-standard database management solutions. Their
     new pick was a new distributed database, which, as opposed to NoSQL, strives to
     keep the original ACID^([1](#Fn1)) guarantees known in the SQL world.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 被诸如“混合云”、“无服务器”、“边缘优先”等令人印象深刻的术语所吸引，琼毫不犹豫地加入了一家新公司，并开始追赶他们的技术堆栈。她的第一个项目最近开始从他们内部实现的数据库系统过渡，该系统最终没有随着客户数量的增加而以相同的速度扩展，转而采用行业标准的数据库管理系统。他们的新选择是一个新的分布式数据库，与NoSQL不同，它努力保持SQL世界中众所周知的原始ACID^([1](#Fn1))保证。
 - en: Due to a few new data protection acts that tend to appear annually nowadays,
     the company’s board decided that they were going to maintain their own datacenter,
     instead of using one of the popular cloud vendors for storing sensitive information.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于近年来每年都会出现一些新的数据保护法案，公司的董事会决定他们将维护自己的数据中心，而不是使用流行的云服务提供商来存储敏感信息。
 - en: 'On a very high level, the company’s main product consisted of only two layers:'
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 在非常高的层面上，公司的主要产品只由两层组成：
 - en: The *frontend*, the entry point for users, which actually runs in their own
     browsers and communicates with the rest of the system to exchange and persist
     information.
+  id: totrans-7
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: “前端”，用户的入口点，实际上在他们的浏览器中运行，并与整个系统通信以交换和持久化信息。
 - en: The everything-else, customarily known as the *backend*, but actually includes
     load balancers, authentication, authorization, multiple cache layers, databases,
     backups, and so on.
+  id: totrans-8
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 通常所说的“其他一切”，习惯上称为“后端”，但实际上包括负载均衡器、身份验证、授权、多个缓存层、数据库、备份等等。
 - en: Joan’s first task was to implement a very simple service for gathering and summing
     up various statistics from the database and integrate that service with the whole
     ecosystem, so that it fetched data from the database in real-time and allowed
     the DevOps teams to inspect the statistics live.
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 琼的第一项任务是实施一个非常简单的服务，用于从数据库中收集和汇总各种统计数据，并将该服务与整个生态系统集成，以便实时从数据库中获取数据，并允许DevOps团队实时检查统计数据。
 - en: To impress the management and reassure them that hiring Joan was their absolutely
     best decision this quarter, Joan decided to deliver a proof-of-concept implementation
     on her first day! The company’s unspoken policy was to write software in Rust,
     so she grabbed the first driver for their database from a brief `crates.io` search
     and sat down to her self-organized hackathon.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了给管理层留下深刻印象，并让他们确信雇佣琼是他们这个季度做出的最佳决定，琼决定在她的第一天就交付一个概念验证实现！公司的潜规则是使用Rust编写软件，所以她从`crates.io`的简短搜索中找到了他们数据库的第一个驱动程序，然后坐下来参加她自组织的黑客马拉松。
 - en: The day went by really smoothly, with Rust’s ergonomic-focused ecosystem providing
     a superior developer experience. But then Joan ran her first smoke tests on a
     real system. Disbelief turned to disappointment and helplessness when she realized
     that every third request (on average) ended up in an error, even though the whole
     database cluster reported to be in a healthy, operable state. That meant a debugging
     session was in order!
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 那天过得非常顺利，Rust的以人体工程学为重点的生态系统提供了一个优越的开发者体验。但随后琼安在真实系统上进行了第一次烟雾测试。当她意识到平均每三个请求（平均）都导致错误时，尽管整个数据库集群报告显示处于健康、可操作的状态，她感到难以置信，失望和无助。这意味着需要进行调试会话！
 - en: Unfortunately, the driver Joan hastily picked for the foundation of her work,
     even though open-source on its own, was just a thin wrapper over precompiled,
     legacy C code, with no source to be found. Fueled by a strong desire to solve
@@ -78,72 +102,98 @@
     used by the company, keys are hashed to later route requests to appropriate nodes.
     If a hash value is computed incorrectly, a request may be forwarded to the wrong
     node, which can refuse it and return an error instead.
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 不幸的是，琼安匆忙选择的作为她工作基础的驱动程序，尽管本身是开源的，但只是对预编译的、遗留的C代码的一个薄薄包装，找不到任何源代码。在强烈的解决谜团欲望和一股健康的愤怒驱使下，琼安花了几小时用Wireshark检查网络通信^([2](#Fn2))，并做出了一个有根据的猜测，即错误一定在哈希密钥实现中^([3](#Fn3))。在公司使用的数据库中，键被哈希处理以稍后路由请求到适当的节点。如果计算出的哈希值不正确，请求可能会被转发到错误的节点，该节点可能会拒绝请求并返回错误。
 - en: Unable to verify the claim due to the missing source code, Joan decided on a
     simpler path—ditching the originally chosen driver and reimplementing the solution
     on one of the officially supported, open-source drivers backed by the database
     vendor, with a solid user base and regularly updated release schedule.
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于缺少源代码，无法验证这一说法，琼安决定选择一条更简单的路径——放弃最初选择的驱动程序，并在数据库供应商支持的官方支持的、开源的驱动程序上重新实现解决方案，该驱动程序拥有坚实的用户基础和定期更新的发布计划。
 - en: Joan’s Diary of Lessons Learned, Part I
+  id: totrans-14
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 琼安的教训日记，第一部分
 - en: 'The initial lessons include:'
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 初始的教训包括：
 - en: Choose a driver carefully. It’s at the core of your code’s performance, robustness,
     and reliability.
+  id: totrans-16
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 请仔细选择驱动程序。它是你代码性能、健壮性和可靠性的核心。
 - en: 'Drivers have bugs too, and it’s impossible to avoid them. Still, there are
     good practices to follow:'
+  id: totrans-17
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 驱动程序也有错误，而且无法避免。尽管如此，还有一些良好的实践可以遵循：
 - en: Unless there’s a good reason, choose the officially supported driver (if it
     exists).
+  id: totrans-18
   prefs:
   - PREF_IND
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 除非有充分的理由，否则请选择官方支持的驱动程序（如果存在）。
 - en: Open-source drivers have advantages. They’re not only verified by the community,
     but they also allow deep inspection of the code, and even modifying the driver
     code to get even more insights for debugging.
+  id: totrans-19
   prefs:
   - PREF_IND
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 开源驱动程序有优势。它们不仅经过社区的验证，还允许深入检查代码，甚至可以修改驱动程序代码以获得更多调试见解。
 - en: It’s better to rely on drivers with a well-established release schedule since
     they are more likely to receive bug fixes (including for security vulnerabilities)
     in a reasonable period of time.
+  id: totrans-20
   prefs:
   - PREF_IND
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 最好依赖于有良好发布计划的驱动程序，因为它们更有可能在合理的时间内收到错误修复（包括安全漏洞的修复）。
 - en: Wireshark is a great open-source tool for interpreting network packets; give
     it a try if you want to peek under the hood of your program.
+  id: totrans-21
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: Wireshark是一个用于解释网络数据包的出色开源工具；如果你想查看程序底层的运行情况，不妨试一试。
 - en: The introductory task was eventually completed successfully, which made Joan
     ready to receive her first real assignment.
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 导入任务最终成功完成，这使得琼安准备好接受她的第一个真正的工作任务。
 - en: The Tuning
+  id: totrans-23
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 调优
 - en: 'Armed with the experience gained working on the introductory task, Joan started
     planning how to approach her new assignment: a misbehaving app. One of the applications
     notoriously caused stability issues for the whole system, disrupting other workloads
     each time it experienced any problems. The rogue app was already based on an officially
     supported driver, so Joan could cross that one off the list of potential root
     causes.'
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 借助于在导入任务中获得的经验，琼安开始规划如何处理她的新任务：一个行为异常的应用程序。其中一个应用程序臭名昭著，每次遇到任何问题时都会导致整个系统出现稳定性问题，干扰其他工作负载。这个恶意应用程序已经基于官方支持的驱动程序，所以琼安可以将它从潜在的根本原因列表中划掉。
 - en: This particular service was responsible for injecting data backed up from the
     legacy system into the new database. Because the company was not in a great hurry,
     the application was written with low concurrency in mind to have low priority
@@ -152,32 +202,42 @@
     to perform a denial-of-service attack on its own database, flooding it with requests
     until the backend got overloaded enough to cause issues for other parts of the
     ecosystem.
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个特定的服务负责将来自旧系统的数据备份注入到新数据库中。因为公司并不急于求成，所以应用程序是以低并发性编写的，以保持低优先级，不会干扰用户的工作负载。不幸的是，每隔几天就会触发异常。这个通常平静的应用程序似乎在试图对其自己的数据库进行拒绝服务攻击，用请求将其淹没，直到后端负载过重，导致生态系统的其他部分出现问题。
 - en: As Joan watched metrics presented in a Grafana dashboard, clearly suggesting
     that the rate of requests generated by this application started spiking around
     the time of the anomaly, she wondered how on Earth this workload could behave
     like that. It was, after all, explicitly implemented to send new requests only
     when fewer than 100 of them were currently in progress.
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 当琼查看Grafana仪表板上的指标时，这些指标清楚地表明，这个应用程序生成的请求数量在异常发生时开始激增，她想知道这个工作负载怎么会表现得如此。毕竟，它明确地实现为只有当当前进行中的请求少于100个时才发送新的请求。
 - en: Since collaboration was heavily advertised as one of the company’s “spirit and
     cultural foundations” during the onboarding sessions with an onsite coach, she
     decided it was best to discuss the matter with her colleague, Tony.
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于在入职过程中，现场教练大力宣传协作是公司“精神和文化基础”之一，她决定最好和她的同事托尼讨论这个问题。
 - en: '“Look, Tony, I can’t wrap my head around this,” she explained. “This service
     doesn’t send any new requests when 100 of them are already in flight. And look
     right here in the logs: 100 requests in-progress, one returned a timeout error,
     and…,” she then stopped, startled at her own epiphany.'
+  id: totrans-28
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: “听着，托尼，我实在搞不懂这个，”她解释道。“当有100个请求已经在进行中时，这个服务不会发送任何新的请求。而且看这里在日志中：100个请求正在进行，一个返回了超时错误，然后……”，她突然停了下来，对自己的顿悟感到惊讶。
 - en: “Alright, thanks Tony, you’re a dear—best rubber duck^([4](#Fn4)) ever!,” she
     concluded and returned to fixing the code.
+  id: totrans-29
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: “好吧，谢谢托尼，你真是个好人——最好的橡皮鸭^([4](#Fn4))！”她总结道，然后又回到修复代码的工作中。
 - en: 'The observation that led to discovering the root cause was rather simple: The
     request didn’t actually *return* a timeout error because the database server never
     sent such a response. The request was simply qualified as timed out by the driver,
@@ -185,40 +245,52 @@
     for a particular request does not mean that the database is done processing it!
     It’s entirely possible that the request was instead just stalled, taking longer
     than expected, and the driver gave up waiting for its response.'
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 导致发现根本原因的观察相当简单：请求实际上并没有*返回*超时错误，因为数据库服务器从未发送过这样的响应。请求只是被驱动程序判定为超时，并被丢弃。但仅仅因为驱动程序不再等待特定请求的响应并不意味着数据库已经完成了对该请求的处理！完全有可能请求只是暂时停滞，耗时超过了预期，而驱动程序放弃了等待其响应。
 - en: With that knowledge, it’s easy to imagine that once 100 requests time out on
     the client side, the app might erroneously think that they are not in progress
     anymore, and happily submit 100 more requests to the database, increasing the
     total number of in-flight requests (i.e., concurrency) to 200\. Rinse, repeat,
     and you can achieve extreme levels of concurrency on your database cluster—even
     though the application was supposed to keep it limited to a small number!
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 有了这个知识，很容易想象一旦客户端有100个请求超时，应用程序可能会错误地认为它们已经不再进行中，然后高兴地向数据库提交100个更多请求，将正在进行的请求总数（即并发量）增加到200。重复这个过程，你可以在数据库集群上实现极端的并发水平——尽管应用程序本应该将其限制在一个小数目！
 - en: Joan’s Diary of Lessons Learned, Part II
+  id: totrans-32
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 琼的教训日记，第二部分
 - en: 'The lessons continue:'
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: 教训还在继续：
 - en: 'Client-side timeouts are convenient for programmers, but they can interact
     badly with server-side timeouts. Rule of thumb: Make the client-side timeouts
     around twice as long as server-side ones, unless you have an extremely good reason
     to do otherwise. Some drivers may be capable of issuing a warning if they detect
     that the client-side timeout is smaller than the server-side one, or even amend
     the server-side timeout to match, but in general it’s best to double-check.'
+  id: totrans-34
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 客户端超时对于程序员来说很方便，但它们可能会与服务器端超时产生不良交互。经验法则：将客户端超时设置为服务器端超时的两倍左右，除非你有非常充分的理由去做其他事情。一些驱动程序可能在检测到客户端超时小于服务器端超时的情况下发出警告，甚至可以修改服务器端超时以匹配，但通常最好还是进行双重检查。
 - en: Tasks with seemingly fixed concurrency can actually cause spikes under certain
     unexpected conditions. Inspecting logs and dashboards is helpful in investigating
     such cases, so make sure that observability tools are available, both in the database
     cluster and for all client applications. Bonus points for distributed tracing,
     like OpenTelemetry^([5](#Fn5)) integration.
+  id: totrans-35
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 看起来具有固定并发的任务实际上可能在某些意外条件下导致峰值。检查日志和仪表板有助于调查此类情况，因此请确保可观察性工具在数据库集群和所有客户端应用程序中都可用。对于分布式跟踪，如OpenTelemetry^([5](#Fn5))集成，加分。
 - en: With the client-side timeouts properly amended, the application choked much
     less frequently and to a smaller extent, but it still wasn’t a perfect citizen
     in the distributed system. It occasionally picked a victim database node and kept
@@ -230,8 +302,10 @@
     had to give up on a fair portion of them. A long study of the driver’s documentation,
     which was fortunately available in mdBook^([6](#Fn6)) format and kept reasonably
     up-to-date, helped Joan alleviate those pains too.
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 在正确调整客户端超时后，应用程序的阻塞频率大大降低，程度也较小，但它仍然不是分布式系统中的完美公民。它偶尔会选择一个受害者数据库节点，并不断用过多的请求打扰它，而忽略了其他七个节点负载明显较低，也能帮助处理工作负载的事实。在其他时候，其并发性报告显示比配置预期高200%。每当这两个异常在时间上汇聚时，这个可怜的节点就无法处理它所受到的所有请求，并且不得不放弃其中相当一部分。对驱动程序文档的长期研究，幸运的是，该文档以mdBook^([6](#Fn6))格式提供，并保持相对最新，帮助琼安缓解了这些痛苦。
 - en: The first issue was simply a misconfiguration of the non-default load balancing
     policy, which tried too hard to pick “the least loaded” database node out of all
     the available ones, based on heuristics and statistics occasionally updated by
@@ -242,8 +316,10 @@
     server was not actually busy at all. Joan decided that this setup was a premature
     optimization that turned out to be a footgun, so she just restored the original
     default policy, which worked as expected.
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 第一个问题仅仅是非默认负载均衡策略的配置错误，该策略试图非常努力地从所有可用的数据库节点中挑选出“负载最轻”的节点，基于数据库偶尔更新的启发式和统计数据。不幸的是，这个策略也是“尽力而为”，依赖于从数据库到达的统计数据始终是合法的。但一个压力很大的数据库节点可能会变得如此超载，以至于它无法及时发送更新的统计数据！这导致驱动程序错误地认为这个特定的服务器实际上并不忙。琼安决定这个设置是一个过早的优化，结果证明是一个陷阱，所以她只是恢复了原始的默认策略，它按预期工作。
 - en: 'The second issue (temporary doubling of the concurrency) was caused by another
     misconfiguration: an overeager speculative retry policy. After waiting for a preconfigured
     period of time without getting an acknowledgement from the database, drivers would
@@ -254,27 +330,38 @@
     only when it’s very likely that the original one failed. Otherwise, as in Joan’s
     case, the speculative retry may act too soon, doubling the number of requests
     sent (and thus also doubling concurrency) without improving the success rate.'
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 第二个问题（并发性的临时加倍）是由另一个配置错误引起的：一个过于急切的猜测重试策略。在等待预配置的时间段内没有从数据库获得确认后，驱动程序会猜测性地重新发送请求以最大化其成功的可能性。这种机制对于提高请求的成功率非常有用。然而，如果原始请求也成功了，这意味着猜测性的请求是徒劳的。为了平衡利弊，猜测重试应该配置为仅在原始请求很可能失败时才重新发送请求。否则，就像琼的情况一样，猜测重试可能会过早地发生，将发送的请求数量加倍（从而也将并发性加倍），但并不会提高成功率。
 - en: Whew, nothing gives a simultaneous endorphin rush and dopamine hit like a quality
     debugging session that ends in an astounding success (except writing a cheesy
     story in a deeply technical book, naturally). Great job, Joan!
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 呼，没有什么能像一次成功的调试会那样同时带来内啡肽和多巴胺的激增（当然，除了在技术书籍中写一个陈词滥调的故事）。干得好，琼！
 - en: The end.
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 结束。
 - en: Patrick’s Unlucky Green Fedoras
+  id: totrans-41
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 帕特里克不幸的绿色礼帽
 - en: After losing his job at a FAANG MAANG (MANGA?) company, Patrick decided to strike
     off on his own and founded a niche online store dedicated to trading his absolute
     favorite among headwear, green fedoras. Noticing that a certain NoSQL database
     was recently trending on the front page of *Hacker News*, Patrick picked it for
     his backend stack.
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 在一家 FAANG MAANG（MANGA？）公司失去工作后，帕特里克决定独立创业，成立了一家专门交易他最爱的帽子——绿色礼帽的在线商店。注意到某个 NoSQL
+    数据库最近在 *Hacker News* 的首页上很受欢迎，帕特里克选择了它作为后端技术栈。
 - en: After some experimentation with the offering’s free tier, Patrick decided to
     sign a one-year contract with a major cloud provider to get a significant discount
     on its NoSQL database-as-a-service offering. With provisioned throughput capable
@@ -283,119 +370,160 @@
     fewer than ten customers visited the site daily. At the same time, the shiny new
     database cluster kept running, fueled by a steady influx of money from his credit
     card and waiting for its potential to be harnessed.
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 在尝试了提供免费层的一些实验后，帕特里克决定与一家主要云服务提供商签订为期一年的合同，以获得其 NoSQL 数据库即服务提供的显著折扣。具有每秒可服务高达
+    1,000 名客户的配置吞吐量，技术栈已准备就绪，商店向客户打开了虚拟大门。让帕特里克失望的是，每天只有不到十个客户访问网站。与此同时，那个闪亮的新数据库集群一直在运行，由他信用卡上的稳定资金流入提供动力，等待其潜力得到利用。
 - en: Patrick’s Diary of Lessons Learned, Part I
+  id: totrans-44
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 帕特里克学习心得日记，第一部分
 - en: 'The lessons started right away:'
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 课程立即开始了：
 - en: 'Although some databases advertise themselves as universal, most of them perform
     best for certain kinds of workloads. The analysis before selecting a database
     for your own needs must include estimating the characteristics of your own workload:'
+  id: totrans-46
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 虽然一些数据库宣称自己是通用的，但大多数数据库在处理某些类型的工作负载时表现最佳。在选择数据库以满足您自己的需求之前，分析必须包括估计您自己工作负载的特征：
 - en: Is it likely to be a predictable, steady flow of requests (e.g., updates being
     fetched from other systems periodically)?
+  id: totrans-47
   prefs:
   - PREF_IND
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 是否可能是一个可预测的、稳定的请求流（例如，定期从其他系统获取更新）？
 - en: Is the variance high and hard to predict, with the system being idle for potentially
     long periods of time, with occasional bumps of activity?
+  id: totrans-48
   prefs:
   - PREF_IND
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 变差大且难以预测吗？系统可能会在可能很长的一段时间内空闲，偶尔会有活动高峰？
 - en: Database-as-a-service offerings often let you pick between provisioned throughput
     and on-demand purchasing. Although the former is more cost-efficient, it incurs
     a certain cost regardless of how busy the database actually is. The latter costs
     more per request, but you only pay for what you use.
+  id: totrans-49
   prefs:
   - PREF_IND
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 数据库即服务（Database-as-a-service）提供通常允许你在配置吞吐量和按需购买之间进行选择。虽然前者更经济，但无论数据库实际上有多忙，都会产生一定的成本。后者每请求的成本更高，但你只需为使用的部分付费。
 - en: Give yourself time to evaluate your choice and avoid committing to long-term
     contracts (even if lured by a discount) before you see that the setup works for
     you in a sustainable way.
+  id: totrans-50
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 在看到设置对你来说是可持续的之前，给自己一些时间来评估你的选择，并避免承诺长期合同（即使被折扣所吸引）。
 - en: The First Spike
+  id: totrans-51
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 第一次峰值
 - en: March 17th seemed like an extremely lucky day. Patrick was pleased to notice
     lots of new orders starting from the early morning. But as the number of active
     customers skyrocketed around noon, Patrick’s mood started to deteriorate. This
     was strictly correlated with the rate of calls he received from angry customers
     reporting their inability to proceed with their orders.
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: 3月17日似乎是一个非常幸运的日子。帕特里克很高兴地注意到从清晨开始就有很多新订单。但随着中午活跃客户数量的激增，帕特里克的心情开始恶化。这与他收到的愤怒客户的电话数量密切相关，这些客户报告说他们无法继续他们的订单。
 - en: After a short brainstorming session with himself and a web search engine, Patrick
     realized, to his dismay, that he lacked any observability tools on his precious
     (and quite expensive) database cluster. Shortly after frantically setting up Grafana
     and browsing the metrics, Patrick saw that although the number of incoming requests
     kept growing, their success rate was capped at a certain level, way below today’s
     expected traffic.
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: 在与自己和网络搜索引擎进行短暂的头脑风暴后，帕特里克沮丧地意识到，他在宝贵的（而且相当昂贵）数据库集群上缺乏任何可观察性工具。在疯狂地设置Grafana并浏览指标后不久，帕特里克看到，尽管入站请求的数量一直在增长，但它们的成功率被限制在某个水平，远低于今天的预期流量。
 - en: “Provisioned throughput strikes again,” Patrick groaned to himself, while scrolling
     through thousands of “throughput exceeded” error messages that started appearing
     around 11am.
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: “容量超限又发生了，”帕特里克一边浏览着从上午11点左右开始出现的成千上万条“容量超限”错误信息，一边自言自语。
 - en: Patrick’s Diary of Lessons Learned, Part II
+  id: totrans-55
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 帕特里克的学习心得日记，第二部分
 - en: 'This is what Patrick learned:'
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 这就是帕特里克学到的东西：
 - en: If your workload is susceptible to spikes, be prepared for it and try to architect
     your cluster to be able to survive a temporarily elevated load. Database-as-a-service
     solutions tend to allow configuring the provisioned throughput in a dynamic way,
     which means that the threshold of accepted requests can occasionally be raised
     temporarily to a previously configured level. Or, respectively, they allow it
     to be temporarily decreased to make the solution slightly more cost-efficient.
+  id: totrans-57
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 如果你的工作负载容易受到峰值的影响，要做好准备，并尝试设计你的集群以能够承受暂时增加的负载。数据库即服务解决方案通常允许以动态方式配置预留吞吐量，这意味着偶尔可以将接受请求的阈值临时提高到之前配置的水平。或者，相应地，它们允许将其临时降低，以使解决方案略微更具成本效益。
 - en: '*Always* expect spikes. Even if your workload is absolutely steady, a temporary
     hardware failure or a surprise DDoS attack can cause a sharp increase in incoming
     requests.'
+  id: totrans-58
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '*始终*预期峰值。即使你的工作负载绝对稳定，暂时的硬件故障或意外的DDoS攻击也可能导致入站请求的急剧增加。'
 - en: Observability is key in distributed systems. It allows the developers to retrospectively
     investigate a failure. It also provides real-time alerts when a likely failure
     scenario is detected, allowing people to react quickly and either prevent a larger
     failure from happening, or at least minimize the negative impact on the cluster.
+  id: totrans-59
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 可观察性是分布式系统中的关键。它允许开发者回顾性地调查故障。当检测到可能发生的故障场景时，它还提供实时警报，使人们能够迅速反应，要么防止更大故障的发生，至少也能最小化对集群的负面影响。
 - en: The First Loss
+  id: totrans-60
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 第一次损失
 - en: Patrick didn’t even manage to recover from the trauma of losing most of his
     potential income on the only day throughout the year during which green fedoras
     experienced any kind of demand, when the letter came. It included an angry rant
     from a would-be customer, who successfully proceeded with his order and paid for
     it (with a receipt from the payment processing operator as proof), but is now
     unable to either see any details of his order—and he’s still waiting for the delivery!
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 当信件到来时，帕特里克甚至没有从失去一年中唯一一天（绿色礼帽有任何需求的那一天）大部分潜在收入的创伤中恢复过来。信中包含了一位潜在客户的愤怒抱怨，这位客户成功完成了他的订单并支付了费用（支付处理操作员的收据作为证据），但现在他无法看到订单的任何细节——他还在等待发货！
 - en: Without further ado, Patrick browsed the database. To his astonishment, he didn’t
     find any trace of the order either. For completeness, Patrick also put his wishful
     thinking into practice by browsing the backup snapshot directory. It remained
     empty, as one of Patrick’s initial executive decisions was to save time and money
     by not scheduling any periodic backup procedures.
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 不再拖延，帕特里克浏览了数据库。令他惊讶的是，他也没有找到任何订单的痕迹。为了完整性，帕特里克还通过浏览备份快照目录将他的愿望付诸实践。目录仍然是空的，因为帕特里克最初的一个行政决定是节省时间和金钱，不安排任何定期备份程序。
 - en: How did data loss happen to him, of all people? After studying the consistency
     model of his database of choice, Patrick realized that there’s consensus to make
     between consistency guarantees, performance, and availability. By configuring
@@ -405,44 +533,60 @@
     days ago, but ultimately customer data landed on a single server without any replicas
     distributed in the system. Once this server failed—which happens to hardware surprisingly
     often, especially at large scale—the data was gone.
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 数据丢失怎么会发生在他身上呢？在研究了所选数据库的一致性模型后，帕特里克意识到，在一致性保证、性能和可用性之间需要达成共识。通过配置查询，可以要求以降低吞吐量为代价的线性化（^([7](#Fn7)）），或者相应地减少一致性保证并提高性能。几天前，对于帕特里克来说，更高的吞吐量能力是显而易见的，但最终客户数据却落在了没有在系统中分布任何副本的单个服务器上。一旦这个服务器失败——这在硬件上意外地经常发生，尤其是在大规模上——数据就消失了。
 - en: Patrick’s Diary of Lessons Learned, Part III
+  id: totrans-64
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 帕特里克的学习心得日记，第三部分
 - en: 'Further lessons include:'
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 其他教训包括：
 - en: Backups are vital in a distributed environment, and there’s no such thing as
     setting backup routines “too soon.” Systems fail, and backups are there to restore
     as much of the important data as possible.
+  id: totrans-66
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 在分布式环境中，备份至关重要，而且设置备份流程“过早”的情况是不存在的。系统会失败，而备份就是为了尽可能恢复重要数据而存在的。
 - en: Every database system has a certain consistency model, and it’s crucial to take
     that into account when designing your project. There might be compromises to make.
     In some use cases (think financial systems), consistency is the key. In other
     ones, eventual consistency is acceptable, as long as it keeps the system highly
     available and responsive.
+  id: totrans-67
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 每个数据库系统都有一定的共识模型，在设计项目时必须考虑这一点。可能需要做出一些妥协。在某些用例（比如金融系统）中，一致性是关键。在其他情况下，最终一致性是可以接受的，只要它能保持系统的高度可用性和响应性。
 - en: The Spike Strikes Again
+  id: totrans-68
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 意外再次发生
 - en: Months went by and Patrick’s sleeping schedule was even beginning to show signs
     of stabilization. With regular backups, a redesigned consistency model, and a
     reminder set in his calendar for March 16th to scale up the cluster to manage
     elevated traffic, he felt moderately safe.
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 几个月过去了，帕特里克甚至开始显示出睡眠时间表稳定化的迹象。有了定期的备份、重新设计的共识模型，以及他在日历上为3月16日设定的提醒，以扩大集群以管理增加的流量，他感到相对安全。
 - en: If only he knew that a ten-second video of a cat dressed as a leprechaun had
     just gone viral in Malaysia… which, taking time zone into account, happened around
     2am Patrick’s time, ruining the aforementioned sleep stabilization efforts.
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果他知道一只装扮成小矮人的猫的视频在马来西亚刚刚走红……考虑到时区，这发生在帕特里克时间凌晨2点左右，破坏了上述睡眠稳定化努力。
 - en: On the one hand, the observability suite did its job and set off a warning early,
     allowing for a rapid response. On the other hand, even though Patrick reacted
     on time, databases are seldom able to scale instantaneously, and his system of
@@ -452,18 +596,25 @@
     a real-life instantiation of Little’s Law, which he vaguely remembered from his
     days at the university. With a beautifully concise formula, L = λW, the law can
     be simplified to the fact that concurrency equals throughput times latency.
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 一方面，可观察性套件完成了它的任务，并在早期发出了警告，允许快速响应。另一方面，尽管帕特里克及时做出了反应，但数据库很少能够瞬间扩展，而他选择的系统也不例外。并发峰值非常高且集中，因为成千上万的马来西亚青少年为了追求不断变化的互联网趋势而大量购买绿色帽子。帕特里克能够观察到Little定律的真实实例，这是他从大学时代模糊记得的。用简洁的公式L
+    = λW，该定律可以简化为并发等于吞吐量乘以延迟的事实。
 - en: Tip
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 小贴士
 - en: For those having trouble with remembering the formula, think units. Concurrency
     is just a number, latency can be measured in seconds, while throughput is usually
     expressed in 1/s. Then, it stands to reason that in order for units to match,
     concurrency should be obtained by multiplying latency (seconds) by throughput
     (1/s). You’re welcome!
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于那些记不住公式的人来说，想想单位。并发只是一个数字，延迟可以用秒来衡量，而吞吐量通常用1/s来表示。那么，为了使单位匹配，并发应该通过将延迟（秒）乘以吞吐量（1/s）来获得。不客气！
 - en: Throughput depends on the hardware and naturally has its limits (e.g., you can’t
     expect a NVMe drive purchased in 2023 to serve the data for you in terabytes per
     second, although we are crossing our fingers for this assumption to be invalidated
@@ -475,15 +626,21 @@
     the system is broken beyond repair. It’s easy to find online articles quoting
     that “Amazon found that 100ms of latency costs them 1 percent in sales”; although
     it sounds overly simplified, it is also true enough.
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 吞吐量取决于硬件，自然有其限制（例如，你不能期望2023年购买的NVMe驱动器以每秒数太字节的速度为你提供数据，尽管我们正在期待这个假设在不久的将来被证伪！一旦达到限制，你可以在公式中将它视为常数。那么很明显，随着并发的增加，延迟也会增加。对于最终用户——在这个场景中的马来西亚青少年——这意味着延迟最终会超过平均人类感知的几秒钟的魔法屏障。一旦发生这种情况，用户就会过于沮丧，并完全放弃尝试，认为系统已经损坏到无法修复。很容易在网上找到引用“亚马逊发现100毫秒的延迟会让他们损失1%的销售额”的文章；虽然这听起来过于简化，但它也是足够真实的。
 - en: Patrick’s Diary of Lessons Learned, Part IV
+  id: totrans-75
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 帕特里克的经验教训日记，第四部分
 - en: 'The lessons continue…:'
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 经验教训仍在继续…：
 - en: Unexpected spikes are inevitable, and scaling out the cluster might not be swift
     enough to mitigate the negative effects of excessive concurrency. Expecting the
     database to handle it properly is not without merit, but not every database is
@@ -492,24 +649,32 @@
     (which is a very good idea for multiple reasons) but instead is accessed through
     a set of microservices under your control, make sure that the microservices are
     also aware of the concurrency limits and adhere to them.
+  id: totrans-77
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 不预期的峰值是不可避免的，扩大集群可能不足以迅速缓解过多并发带来的负面影响。期望数据库能够妥善处理这一点并非毫无道理，但并非每个数据库都有这样的能力。如果可能的话，尽早限制你系统中的并发性。例如，如果数据库从未直接被客户接触（这从多个角度来看都是一个非常好的主意），而是通过你控制的微服务集进行访问，确保这些微服务也了解并发限制并遵守它们。
 - en: Keep in mind that Little’s Law exists—it’s fundamental knowledge for anyone
     interested in distributed systems. Quoting it often also makes you appear exceptionally
     smart among peers.
+  id: totrans-78
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 请记住，Little定律存在——这是任何对分布式系统感兴趣的人的基本知识。经常引用它也会让你在同行中显得特别聪明。
 - en: Backup Strikes Back
+  id: totrans-79
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 备份反击
 - en: After redesigning his project yet again to take expected and unexpected concurrency
     fluctuations into account, Patrick happily waited for his fedora business to finally
     become ramen profitable.
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: 在再次重新设计他的项目以考虑预期的和意外的并发波动后，帕特里克愉快地等待他的费多拉生意最终成为拉面盈利。
 - en: Unfortunately, the next March 17th didn’t go as smoothly as expected either.
     Patrick spent most of the day enjoying steady Grafana dashboards, which kept assuring
     him that the traffic was under control and capable of handling the load of customers,
@@ -518,26 +683,36 @@
     given the observed concurrency. While looking for the possible source of this
     anomaly, Patrick noticed, to his horror, that the scheduled backup procedure coincided
     with the annual peak load…
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: 不幸的是，下一个3月17日也没有像预期的那样顺利。帕特里克大部分时间都在享受稳定的Grafana仪表板，这些仪表板不断向他保证流量在控制之下，能够处理客户的负载，并有健康的安全边际。但随后仪表板停止了，友好地提醒说磁盘被严重过度使用。鉴于观察到的并发情况，这似乎完全不合时宜。在寻找这种异常的可能来源时，帕特里克惊讶地发现，定期的备份程序与年度峰值负载时间巧合…
 - en: Patrick’s Diary of Lessons Learned, Part V
+  id: totrans-82
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 帕特里克的经验教训日记，第五部分
 - en: 'Concluding thoughts:'
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
+  zh: 总结思考：
 - en: Database systems are hardly ever idle, even without incoming user requests.
     Maintenance operations often happen and you must take them into consideration
     because they’re an internal source of concurrency and resource consumption.
+  id: totrans-84
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 数据库系统几乎从不空闲，即使没有用户请求。维护操作经常发生，你必须考虑它们，因为它们是内部并发和资源消耗的来源。
 - en: Whenever possible, schedule maintenance options for times with expected low
     pressure on the system.
+  id: totrans-85
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 在可能的情况下，为系统预期低压力时段安排维护选项。
 - en: If your database management system supports any kind of quality of service configuration,
     it’s a good idea to investigate such capabilities. For instance, it might be possible
     to set a strong priority for user requests over regular maintenance operations,
@@ -546,38 +721,53 @@
     that use a variant of LSM trees for underlying storage need to perform quite a
     bit of *compactions* (a kind of maintenance operation on data) in order to keep
     the read/write performance predictable and steady.
+  id: totrans-86
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 如果你的数据库管理系统支持任何类型的服务质量配置，调查这些功能是个好主意。例如，可能可以设置用户请求比常规维护操作更高的优先级，尤其是在高峰时段。相应地，用户活动低峰期可以用来加速后台活动。在数据库领域，使用LSM树变体作为底层存储的系统需要执行相当多的*压缩*（一种数据维护操作），以保持读写性能的可预测性和稳定性。
 - en: The end.
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: 结束。
 - en: Summary
+  id: totrans-88
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 摘要
 - en: Meeting database performance expectations can sometimes seem like a never-ending
     pain. As soon as you diagnose and address one problem, another is likely lurking
     right behind it. The next chapter helps you anticipate the challenges and opportunities
     you are most likely to face given your technical requirements and business expectations.
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: 满足数据库性能预期有时可能像一场永无止境的痛苦。一旦你诊断并解决了一个问题，另一个问题很可能会紧随其后。下一章将帮助你预测你可能会面临的技术要求和业务预期带来的挑战和机遇。
 - en: '[![Creative Commons](../css/cc-by.png)](https://creativecommons.org/licenses/by/4.0)'
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: '[![Creative Commons](../css/cc-by.png)](https://creativecommons.org/licenses/by/4.0)'
 - en: '**Open Access** This chapter is licensed under the terms of the Creative Commons
     Attribution 4.0 International License ([http://​creativecommons.​org/​licenses/​by/​4.​0/​](http://creativecommons.org/licenses/by/4.0/)),
     which permits use, sharing, adaptation, distribution and reproduction in any medium
     or format, as long as you give appropriate credit to the original author(s) and
     the source, provide a link to the Creative Commons license and indicate if changes
     were made.'
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: '**开放获取**本章根据Creative Commons Attribution 4.0国际许可协议（[http://creativecommons.org/licenses/by/4.0/](http://creativecommons.org/licenses/by/4.0/)）许可，允许在任何媒介或格式中使用、分享、改编、分发和复制，只要您适当引用原始作者和来源，提供Creative
+    Commons许可链接，并指出是否进行了更改。'
 - en: The images or other third party material in this chapter are included in the
     chapter's Creative Commons license, unless indicated otherwise in a credit line
     to the material. If material is not included in the chapter's Creative Commons
     license and your intended use is not permitted by statutory regulation or exceeds
     the permitted use, you will need to obtain permission directly from the copyright
     holder.
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章中的图像或其他第三方材料包含在本章的Creative Commons许可中，除非在材料信用行中另有说明。如果材料不包含在本章的Creative Commons许可中，且你的预期使用未获得法定监管许可或超出许可使用范围，你需要直接从版权所有者处获得许可。

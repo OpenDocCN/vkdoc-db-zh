@@ -1,26 +1,34 @@
 - en: '4. Database Internals: Algorithmic Optimizations'
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 4. 数据库内部：算法优化
 - en: '[Optimizing Collections](#Sec1)[To B- or Not to B-Tree](#Sec2)[Linear Search
     on Steroids](#Sec3)[Scanning the Tree](#Sec4)[When the Tree Size Matters](#Sec5)[The
     Secret Life of Separation Keys](#Sec6)[Summary](#Sec7)'
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: '[优化集合](#Sec1)[是使用B树还是不使用B树](#Sec2)[线性搜索的强化](#Sec3)[扫描树](#Sec4)[当树的大小很重要时](#Sec5)[分离键的神秘生活](#Sec6)[总结](#Sec7)'
 - en: In the performance world, the hardware is always the unbreakable limiting factor—one
     cannot squeeze more performing units from a system than the underlying chips may
     provide. As opposed to that, the software part of the system is often considered
     the most flexible thing in programming—in the sense that it can be changed at
     any time given enough developers’ brains and hands (and investors’ cash).
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 在性能领域，硬件始终是不可逾越的限制因素——从系统中无法挤压出比底层芯片提供的更多性能单元。相比之下，系统的软件部分通常被认为是编程中最灵活的东西——从意义上说，只要开发者有足够的头脑和双手（以及投资者的资金），它可以在任何时候进行更改。
 - en: However, that’s not always the case. Sometimes selecting an algorithm should
     be done as early as the architecting stage in the most careful manner possible
     because the chosen approach becomes so extremely fundamental that changing it
     would effectively mean rewriting the whole engine from scratch or requiring users
     to migrate exabytes of data from one instance to another.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，情况并不总是如此。有时，选择算法应该在架构阶段就尽可能谨慎地进行，因为选择的方法变得极其基本，改变它实际上意味着从头开始重写整个引擎，或者要求用户从一个实例迁移到另一个实例的数以亿计的数据。
 - en: This chapter shares one detailed example of algorithmic optimization—from the
     perspective of the engineer who led this optimization. Specifically, this chapter
     looks at how the B-trees family can be used to store data in cache implementations
@@ -28,11 +36,15 @@
     engineering challenge should help you better understand what tradeoffs or optimizations
     various databases might be making under the hood—ideally, so you can take better
     advantage of its very deliberate design decisions.^([1](#Fn1))
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章分享了一个算法优化的详细示例——从领导这次优化的工程师的角度来看。具体来说，本章探讨了B树家族如何用于在缓存实现和其他辅助内存结构中存储数据。对这一代表性工程挑战的探讨应该有助于你更好地理解各种数据库在底层可能做出的权衡或优化——理想情况下，这样你可以更好地利用其非常谨慎的设计决策。[^([1](#Fn1))]
 - en: Note
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意
 - en: The goal of this chapter is *not* to convince database users that they need
     a database with any particular algorithmic optimization—or to educate infrastructure
     engineers on designing B-trees or the finer points of algorithmic optimization.
@@ -40,12 +52,16 @@
     level of algorithmic optimization that might impact a database’s performance.
     Hopefully, it piques your curiosity in learning more about the engineering behind
     the database you’re using and/or alternative databases you’re considering.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章的目标**不是**说服数据库用户他们需要一个具有特定算法优化功能的数据库——也不是为了教育基础设施工程师如何设计B树或算法优化的细节。相反，它是为了帮助任何选择或使用数据库的人了解可能影响数据库性能的算法优化水平。希望这能激发你对了解你所使用的数据库及其/或你正在考虑的替代数据库背后的工程学的兴趣。
 - en: Optimizing Collections
+  id: totrans-7
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 优化集合
 - en: Maintaining large sets of objects in memory deserves the same level of attention
     as maintaining objects in external memory—say, spinning disks or network-attached
     storages. For a task as simple as looking up an object by a plain key, the acceptable
@@ -53,12 +69,16 @@
     selection) or a binary balanced tree (usually the red-black one due to its implementation
     simplicity). However, branchy trees like the B-trees family can significantly
     boost performance. They also have a lot of non-obvious pitfalls.
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 在内存中维护大量对象需要与在外部内存（例如，旋转磁盘或网络附加存储）中维护对象相同级别的关注。对于像通过普通键查找对象这样简单的任务，通常的解决方案是一个普通的哈希表（即使对哈希函数的选择非常注意）或二叉平衡树（通常是因为其实施简单，通常是红黑树）。然而，像B树家族这样的分支树可以显著提高性能。它们也有许多不明显的问题。
 - en: To B- or Not to B-Tree
+  id: totrans-9
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 是使用B树还是不使用B树
 - en: An important characteristic of a tree is *cardinality*. This is the maximum
     number of child nodes that another node may have. In the corner case of cardinality
     of two, the tree is called a *binary* tree. For other cases, there’s a wide class
@@ -69,8 +89,10 @@
     better and faster to fetch several “adjacent” keys in one request. RAM, unlike
     disks, allows random access with almost any granularity, so it’s okay to have
     a dispersed set of keys pointing to each other.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 树的一个重要特征是**基数**。这是另一个节点可能拥有的最大子节点数。在基数为二的情况下，该树被称为**二叉**树。对于其他情况，存在一大类所谓的B树。关于二叉树与B树之间的普遍看法是，当数据存储在RAM中时，应使用前者，而后者应存在于磁盘上。这种划分的理由是RAM的访问速度远高于磁盘。此外，磁盘I/O以块为单位执行，因此在一次请求中获取几个“相邻”的键要更好、更快。与磁盘不同，RAM允许几乎任何粒度的随机访问，因此可以有一个分散的键集，它们相互指向。
 - en: However, there are many reasons that B-trees are often a good choice for in-memory
     collections. The first reason is cache *locality*. When searching for a key in
     a binary tree, the algorithm would visit up to *logN* elements that are very likely
@@ -81,36 +103,55 @@
     thus making much better use of CPU caches. Figure [4-1](#Fig1) exemplifies the
     process of walking down a binary tree. Compare it along with Figure [4-2](#Fig2),
     which demonstrates a search in a B-tree set.
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，有许多原因使得B树经常是内存集合的一个好选择。第一个原因是缓存**局部性**。在二叉树中搜索一个键时，算法会访问多达**logN**个元素，这些元素很可能分散在内存中。在B树中，这种搜索将包括两个**阶段**——节点内搜索和树下降——依次执行。虽然树下降在上述意义上与二叉树没有太大区别，但节点内搜索将访问相邻的键，从而更好地利用CPU缓存。图[4-1](#Fig1)展示了沿着二叉树行走的过程。将其与图[4-2](#Fig2)进行比较，后者展示了B树集合中的搜索过程。
 - en: '![](../images/541783_1_En_4_Chapter/541783_1_En_4_Fig2_HTML.jpg)'
+  id: totrans-12
   prefs: []
   type: TYPE_IMG
+  zh: '![B树集合搜索](../images/541783_1_En_4_Chapter/541783_1_En_4_Fig2_HTML.jpg)'
 - en: An illustration demonstrates the search in a B-tree set for M equals 6\. C P
     U cores split the processing of each instruction into stages.
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个插图展示了M等于6时在B树集合中的搜索过程。CPU核心将每个指令的处理分成几个阶段。
 - en: Figure 4-2
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 图4-2
 - en: Searching in a B-tree set
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 在B树集合中搜索
 - en: '![](../images/541783_1_En_4_Chapter/541783_1_En_4_Fig1_HTML.jpg)'
+  id: totrans-16
   prefs: []
   type: TYPE_IMG
+  zh: '![二叉树搜索](../images/541783_1_En_4_Chapter/541783_1_En_4_Fig1_HTML.jpg)'
 - en: A block diagram, 1\. A block named 15, If less than 16, go to the right subtree,
     else go to left subtree, block 10 divides into blocks 8 and 12, 2\. A block named
     20, if more than 16, go to the left subtree, else go to right subtree, block 25
     leads to block 30, 3\. The left subtree, Block 18 divides into 16 and 19.
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个框图，1. 一个名为15的块，如果小于16，则转到右子树，否则转到左子树，块10分为8和12，2. 一个名为20的块，如果大于16，则转到左子树，否则转到右子树，块25指向块30，3.
+    左子树，块18分为16和19。
 - en: Figure 4-1
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 图4-1
 - en: Searching in a binary tree root
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 在二叉树根中搜索
 - en: The second reason that B-trees are often a good choice for in-memory collections
     also comes from the dispersed nature of binary trees and from how modern CPUs
     are designed. It’s well known that when executing a stream of instructions, CPU
@@ -125,8 +166,10 @@
     When searching for a key in such a tree, the algorithm jumps left and right depending
     on the key comparison result without giving the CPU a chance to learn which direction
     is “preferred.” In many cases, the CPU conveyer is flushed.
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: B树经常是内存集合的良好选择，第二个原因也来自于二叉树的分散性质以及现代CPU的设计。众所周知，当执行指令流时，CPU核心将每个指令的处理分为阶段（加载指令、解码它们、准备参数和执行本身）并在一个称为*传送带*的单元中并行运行这些阶段。当条件分支指令出现在这个流中时，传送带需要猜测它将执行哪个潜在的分支，并将其加载到传送带管道中。如果这个猜测失败，传送带将被清空并从头开始工作。这种失败称为*分支预测错误*。从性能角度来看，这些错误是有害的^([2](#Fn2))，并且对二分搜索算法有直接影响。在搜索树中的键时，算法根据键比较结果左右跳跃，而没有给CPU一个学习哪个方向是“首选”的机会。在许多情况下，CPU传送带会被清空。
 - en: The two-phased B-tree search can be made better with respect to branch predictions.
     The trick is in making the intra-node search linear (i.e., walking the array of
     keys forward key-by-key). In this case, there will be only a “should you move
@@ -136,12 +179,17 @@
     layout is tricky and has worse complexity than for sorted arrays. This approach
     has proven itself in ScyllaDB’s implementation and is also widely used in the
     Tarantool in-memory database.^([4](#Fn4))
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 关于分支预测，两阶段B树搜索可以做得更好。技巧在于使节点内搜索线性（即逐个键向前遍历键数组）。在这种情况下，将只有一个“是否前进”的条件，这个条件更加可预测。甚至有一个将二分搜索转换为线性搜索而不牺牲比较次数的巧妙技巧，^([3](#Fn3))
+    但这种方法适用于读操作为主的集合，因为在此布局中插入复杂且比排序数组更复杂。这种方法在ScyllaDB的实现中得到了证明，并且在Tarantool内存数据库中也得到了广泛应用.^([4](#Fn4))
 - en: Linear Search on Steroids
+  id: totrans-22
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 精炼的线性搜索
 - en: 'That linear search can be improved a bit more. Let’s carefully count the number
     of key comparisons that it may take to find a single key in a tree. For a binary
     tree, it’s well known that it takes *log*[*2*]*N* comparisons (on average) where
@@ -153,8 +201,13 @@
     you need to do the search within *k* elements, which is, again, *log*[*2*]*k*
     if you’re doing a binary search. Multiplying both, you still need at least *log*[*2*]*N*
     comparisons.'
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 线性搜索还可以进一步改进。让我们仔细计算在树中找到单个键可能需要的关键比较次数。对于二叉树，众所周知，它需要 *log*[*2*]*N* 次比较（平均而言），其中
+    *N* 是元素的数量。我们在这里放置对数底是为了一个原因。接下来，考虑一个具有每个节点 *k* 个子节点的 *k* 叉树。它需要更少的比较次数吗？（剧透：不是）。为了找到元素，你必须进行相同的搜索——获取一个节点，找到它所在的分支，然后继续搜索。你在树中有
+    *log*[*k*]*N* 个层级，所以你必须进行这么多下降步骤。然而，在每一步中，你都需要在 *k* 个元素中进行搜索，如果你进行二分搜索，这又是 *log*[*2*]*k*。将两者相乘，你仍然至少需要
+    *log*[*2*]*N* 次比较。
 - en: The way to reduce this number is to compare more than one key at a time when
     doing intra-node searches. In case the keys are small enough, SIMD instructions
     can compare up to 64 keys in one go. Although a SIMD compare instruction may be
@@ -164,31 +217,43 @@
     times of looking up an integer in a sorted array using three techniques—linear
     search, binary search, and SIMD-optimized linear search such as the x86 Advanced
     Vector Extensions (AVX).
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 减少这种数量的方法是，在进行节点内搜索时同时比较多个键。如果键足够小，SIMD指令可以一次比较多达64个键。尽管SIMD比较指令可能比经典的cmp指令慢，并且需要额外的指令来处理比较掩码，但线性SIMD加速的搜索在足够短的数组（以及B树节点足够短）上仍然占优势。例如，图[4-3](#Fig3)展示了使用三种技术——线性搜索、二分搜索和SIMD优化的线性搜索（如x86高级向量扩展AVX）在有序数组中查找整数的耗时。
 - en: '![](../images/541783_1_En_4_Chapter/541783_1_En_4_Fig3_HTML.jpg)'
+  id: totrans-25
   prefs: []
   type: TYPE_IMG
+  zh: '![图片](../images/541783_1_En_4_Chapter/541783_1_En_4_Fig3_HTML.jpg)'
 - en: A horizontal grouped bar chart that plots the time to find 4, 16 and 64 keys
     for linear, binary and A V X. For 4 keys, that values are 9, 10.5, and 3, for
     Linear, Binary and A V X, respectively. For 16 keys, that values are 5.5, 7, and
     2.5, for Linear, Binary and A V X, respectively. For 64 keys, that values are
     3.5, 3, and 2.5, for Linear, Binary and A V X, respectively.
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个水平分组条形图，显示了线性、二进制和AVX查找4、16和64个键的时间。对于4个键，这些值分别是9、10.5和3，分别对应线性、二进制和AVX。对于16个键，这些值分别是5.5、7和2.5，分别对应线性、二进制和AVX。对于64个键，这些值分别是3.5、3和2.5，分别对应线性、二进制和AVX。
 - en: Figure 4-3
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 图4-3
 - en: The test used a large amount of randomly generated arrays of values dispersed
     in memory to eliminate differences in cache usage and a large amount of random
     search keys to blur branch predictions. These are the average times of finding
     a key in an array normalized by the array length. Smaller results are faster (better)
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 该测试使用了大量随机生成的、散布在内存中的值数组，以消除缓存使用差异，以及大量随机搜索键以模糊分支预测。这些是按数组长度归一化的找到数组中键的平均时间。较小的结果表示更快（更好）
 - en: Scanning the Tree
+  id: totrans-29
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 扫描树
 - en: One interesting flavor of B-trees is called a B+-tree. In this tree, there are
     two kinds of keys—*real* keys and *separation* keys. The real keys live on leaf
     nodes (i.e., on those that don’t have children), while separation keys sit on
@@ -196,8 +261,10 @@
     tree. This difference has an obvious consequence that it takes more memory to
     keep the same amount of keys in a B+-tree as compared to B-tree. But it’s not
     only that.
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 一种有趣的B树变种称为B+-树。在这棵树中，有两种类型的键——*真实*键和*分隔*键。真实键位于叶节点上（即没有子节点的那些），而分隔键位于内部节点上，用于在下降树时选择下一个要访问的分支。这种差异的明显后果是，与B树相比，在B+-树中保持相同数量的键需要更多的内存。但这不仅仅是这样。
 - en: A great implicit feature of a tree is the ability to iterate over elements in
     a sorted manner (called a *scan*). To scan a classical B-tree, there are both
     recursive and state-machine algorithms that process the keys in a very non-uniform
@@ -205,51 +272,75 @@
     being described as cache-friendly, scanning them requires visiting every single
     node and inner nodes are visited in a cache unfriendly manner. Figure [4-4](#Fig4)
     illustrates this phenomenon.
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 树的一个很好的隐含特性是能够以排序方式遍历元素（称为扫描）。要扫描经典B树，存在递归和状态机算法，它们以非常非均匀的方式处理键——算法在移动时上下移动树。尽管B树被描述为缓存友好的，但扫描它们需要访问每个节点，内部节点以缓存不友好的方式被访问。图[4-4](#Fig4)说明了这一现象。
 - en: '![](../images/541783_1_En_4_Chapter/541783_1_En_4_Fig4_HTML.jpg)'
+  id: totrans-32
   prefs: []
   type: TYPE_IMG
+  zh: '![图片](../images/541783_1_En_4_Chapter/541783_1_En_4_Fig4_HTML.jpg)'
 - en: A box with four divisions, with 11 in the first part, splits into two boxes,
     each with four divisions. The first box has 3 and 8 in the first two parts. The
     second box has 12, 13, 14 in the first three parts. The first box splits into
     three boxes, each with four divisions, again. The first has 0, 1, 2, the second
     has 4, 5, 6, 7, the third has 9, 10.
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个有四个分割的盒子，第一个部分有11，分成两个盒子，每个盒子有四个分割。第一个盒子在前两个部分中有3和8。第二个盒子在前三个部分中有12、13和14。第一个盒子再次分成三个盒子，每个盒子有四个分割。第一个盒子有0、1、2，第二个盒子有4、5、6、7，第三个盒子有9、10。
 - en: Figure 4-4
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: 图4-4
 - en: Scanning a classical B-tree involves walking up and down the tree; every node
     and inner node is visited
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: 扫描经典B树涉及在树中上下移动；每个节点和内部节点都会被访问
 - en: As opposed to this, B+-trees’ scan only needs to loop through its leaf nodes,
     which, with some additional effort, can be implemented as a linear scan over a
     linked list of arrays, as demonstrated in Figure [4-5](#Fig5).
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 与此相反，B+树扫描只需遍历其叶节点，通过一些额外的工作，可以将其实现为对数组链表的线性扫描，如图[4-5](#Fig5)所示。
 - en: '![](../images/541783_1_En_4_Chapter/541783_1_En_4_Fig5_HTML.jpg)'
+  id: totrans-37
   prefs: []
   type: TYPE_IMG
+  zh: '![图](../images/541783_1_En_4_Chapter/541783_1_En_4_Fig5_HTML.jpg)'
 - en: A box with four divisions, with 7 in the first part, splits into two boxes,
     each with four divisions. The first box has 4 in the first part. The second box
     has 11 in the first part. The first box splits into two boxes, each with four
     divisions, again, of which one has 0, 1, 2, 3, while the other has 4, 5, 6\. The
     second box splits into two boxes, each with four divisions, again, of which one
     has 7, 8, 9, 10 while the other has 11, 12, 13, 14.
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个有四个分割的盒子，第一个部分有7个，分割成两个盒子，每个盒子有四个分割。第一个盒子在第一个部分有4个。第二个盒子在第一个部分有11个。第一个盒子再次分割成两个盒子，每个盒子有四个分割，其中一个有0,
+    1, 2, 3，而另一个有4, 5, 6。第二个盒子再次分割成两个盒子，每个盒子有四个分割，其中一个有7, 8, 9, 10，而另一个有11, 12, 13,
+    14。
 - en: Figure 4-5
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 图4-5
 - en: B+ tree scans only need to cover leaf nodes
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: B+树扫描只需覆盖叶节点
 - en: When the Tree Size Matters
+  id: totrans-41
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 当树的大小很重要时
 - en: Talking about memory, B-trees don’t provide all these benefits for free (neither
     do B+-trees). As the tree grows, so does the number of nodes in it and it’s useful
     to consider the overhead needed to store a single key. For a binary tree, the
@@ -258,39 +349,54 @@
     overhead is one parent pointer and *k* pointers to keys, even if they are not
     inserted in the tree. For inner nodes there will additionally be *k+1* pointers
     to child nodes.
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 谈到内存，B树（以及B+树）并不免费提供所有这些好处。随着树的成长，其中的节点数量也在增加，考虑存储单个键所需的额外开销是有用的。对于二叉树，额外开销是三个指针——指向左右子节点以及父节点。对于B树，内节点和叶节点的开销会有所不同。对于这两种类型，额外开销是一个父指针和*k*个指向键的指针，即使它们尚未插入到树中。对于内节点，还会有*k+1*个指向子节点的指针。
 - en: The number of nodes in a B-tree is easy to estimate for a large number of keys.
     As the number of nodes grows, the per-key overhead blurs as keys “share” parent
     and children pointers. However, there’s a very interesting point at the beginning
     of a tree’s growth. When the number of keys becomes *k+1* (i.e., the tree overgrows
     its first leaf node), the number of nodes jumps three times because, in this case,
     it’s needed to allocate one more leaf node and one inner node to link those two.
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于大量键，B树中的节点数量很容易估算。随着节点数量的增加，每键开销会随着键“共享”父亲和子指针而变得模糊。然而，在树的成长初期有一个非常有趣的观点。当键的数量变为*k+1*（即树超过了其第一个叶节点）时，节点数量会翻三倍，因为在这种情况下，需要分配一个额外的叶节点和一个内节点来连接这两个节点。
 - en: There is a good and pretty cheap optimization to mitigate this spike, called
     “linear root.” The leaf root node grows on demand, doubling each step like a `std::vector`
     in C++, and can overgrow the capacity of *k* up to some extent. Figure [4-6](#Fig6)
     shows the per-key overhead for a 4-ary B-tree with 50 percent initial overgrowth.
     Note the first split spike of a classical algorithm at five keys.
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 有一种很好的且相对便宜的优化方法可以缓解这种峰值，称为“线性根”。叶根节点按需增长，每一步翻倍，就像C++中的`std::vector`一样，并且可以在一定程度上超过*k*的容量。图[4-6](#Fig6)显示了具有50%初始过度增长的4叉B树的每键开销。注意在五个键处的经典算法的第一个分裂峰值。
 - en: '![](../images/541783_1_En_4_Chapter/541783_1_En_4_Fig6_HTML.jpg)'
+  id: totrans-45
   prefs: []
   type: TYPE_IMG
+  zh: '![图](../images/541783_1_En_4_Chapter/541783_1_En_4_Fig6_HTML.jpg)'
 - en: A graph between Per key overhead and number of keys in tree, for Binary, B tree
     and Linear root. The binary line is flat at y-axis value of 3\. The B-tree line
     begins at (0, 5), drops to (4, 1.2), rises to (5, 4), and ends at (7, 2.8). The
     linear root line begins at (0, 2), rises to (7, 2.8), then drops to (25, 1.4).
     Values are estimated.
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个关于每键开销和树中键的数量之间的图表，对于二叉树、B树和线性根。二叉树的线条在y轴值为3处平坦。B树的线条从(0, 5)开始，下降到(4, 1.2)，上升到(5,
+    4)，然后结束于(7, 2.8)。线性根线条从(0, 2)开始，上升到(7, 2.8)，然后下降到(25, 1.4)。数值为估算值。
 - en: Figure 4-6
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 图4-6
 - en: The per-key overhead for a 4-ary B-tree with 50 percent initial overgrowth
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 具有50%初始过度增长的4叉B树的每键开销
 - en: When discussing how B-trees work with small amounts of keys, it’s worth mentioning
     the corner case of one key. In ScyllaDB, a B-tree is used to store sorted rows
     inside a block of rows called a partition. Since it’s possible to have a schema
@@ -302,15 +408,21 @@
     fetching to access this key. Even the linear root optimization is helpless here.
     Fixing this corner case was possible by reusing the pointer to the root node to
     point directly to the single key.
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 当讨论B树如何处理少量键时，值得提及一个键的边缘情况。在ScyllaDB中，B树用于存储称为分区的一组排序行。由于可能存在每个分区始终只有一个行的模式，因此对我们来说，这个边缘情况并不是那么“边缘”。在二叉树的情况下，单元素树相当于从树所有者直接指向该元素（加上两个指向左右子节点的nil指针的成本）。在B树的情况下，保持单个键的成本始终在于有一个根节点，这需要额外的指针获取来访问此键。即使是线性的根优化在这里也无能为力。通过重用指向根节点的指针直接指向单个键，可以解决这个问题。
 - en: The Secret Life of Separation Keys
+  id: totrans-50
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 分离键的神秘生活
 - en: This section dives into technical details of B+-tree implementation.
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 本节深入探讨了B+-树实现的细节。
 - en: There are two ways of managing separation keys in a B+-tree. The separation
     key at any level must be less than or equal to *all* the keys from its right subtree
     and greater than or equal to all the keys from its left subtree. Mind the “or”
@@ -320,8 +432,10 @@
     look at these two cases. If the tree balancing maintains the separation key to
     be independent from other key values, then it’s the *light* mode; if it must coincide
     with some of them, then it will be called the *strict* mode.
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: 在B+-树中管理分离键有两种方式。任何级别的分离键必须小于或等于其右子树中的所有键，并且大于或等于其左子树中的所有键。注意“或”条件——分离键的确切值**可能**与相应分支中某些键的值**相同**，也可能**不同**（显然，这个“某些”将是左分支的最右键或右分支的最左键）。让我们看看这两种情况。如果树平衡保持分离键独立于其他键值，那么它就是**轻量**模式；如果它必须与其中的一些键值相匹配，那么它将被称为**严格**模式。
 - en: In the light separation mode, the insertion and removal operations are a bit
     faster because they don’t need to care about separation keys that much. It’s enough
     if they separate branches, and that’s it. A somewhat worse consequence of the
@@ -330,8 +444,10 @@
     will likely not cause any trouble. However, if keys are strings or, as in ScyllaDB’s
     case, database partition or clustering keys, copying it might be both resource
     consuming and out-of-memory risky.
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: 在轻量分离模式下，插入和删除操作要快一些，因为它们不必太在意分离键。只要它们分开分支就足够了。轻量分离的一个不太好的后果是，分离键是可能通过复制现有键出现在树中的独立值。如果键很简单（例如，一个整数），这可能不会引起任何麻烦。然而，如果键是字符串，或者在ScyllaDB的情况下是数据库分区或聚类键，复制它可能会既消耗资源，又存在内存不足的风险。
 - en: On the other hand, the strict separation mode makes it possible to avoid key
     copying by implementing separation keys as references on real ones. This would
     involve some complication of insertion and especially removal operations. In particular,
@@ -341,41 +457,61 @@
     memory defragmentation hygiene), will also need to update the relevant reference
     from separation keys. However, it’s possible to show that each real key will be
     referenced by at most one separation key.
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一方面，严格分离模式使得通过将分离键实现为对真实键的引用来避免键复制成为可能。这将涉及插入和特别是删除操作的一些复杂性。特别是，在真实键删除时，将需要找到并更新相关的分离键。另一个需要注意的困难是，如果需要（例如，在ScyllaDB的情况下，键作为内存碎片整理卫生的一部分在内存中移动），移动真实键值也将需要更新分离键中的相关引用。然而，可以证明每个真实键最多被一个分离键引用。
 - en: Speaking about memory consumption, although large B-trees were shown to consume
     less memory per-key as they get filled, the real overhead would very likely be
     larger, since the nodes of the tree will typically be underfilled because of the
     way the balancing algorithm works. For example, Figures [4-7](#Fig7) and [4-8](#Fig8)
     show how nodes look in a randomly filled 4-ary B-tree.
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 谈及内存消耗，虽然大B树在填满时每键的内存消耗较少，但实际开销可能会非常大，因为树的节点通常由于平衡算法的工作方式而通常未完全填满。例如，图[4-7](#Fig7)和[4-8](#Fig8)展示了随机填充的4叉B树中节点的样子。
 - en: '![](../images/541783_1_En_4_Chapter/541783_1_En_4_Fig8_HTML.jpg)'
+  id: totrans-56
   prefs: []
   type: TYPE_IMG
+  zh: '![图4-8](../images/541783_1_En_4_Chapter/541783_1_En_4_Fig8_HTML.jpg)'
 - en: A Pie chart of the distribution of number of keys in a node for leaf nodes,
     in percentage. 1\. 2 keys, 34.3, 2\. 3 keys, 25.3, and 3\. 4 keys, 40.4.
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 节点内键的数量分布饼图，按百分比。1. 2键，34.3%，2. 3键，25.3%，3. 4键，40.4%。
 - en: Figure 4-8
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: 图4-8
 - en: Distribution of number of keys in a node for inner nodes
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 节点内键的数量分布
 - en: '![](../images/541783_1_En_4_Chapter/541783_1_En_4_Fig7_HTML.jpg)'
+  id: totrans-60
   prefs: []
   type: TYPE_IMG
+  zh: '![图4-7](../images/541783_1_En_4_Chapter/541783_1_En_4_Fig7_HTML.jpg)'
 - en: A Pie chart of the distribution of number of keys in a node for leaf nodes,
     in percentage. 1\. 2 keys, 18.4, 2\. 3 keys, 31.6, and 3\. 4 keys, 50.
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 节点内键的数量分布饼图，按百分比。1. 2键，18.4%，2. 3键，31.6%，3. 4键，50%。
 - en: Figure 4-7
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 图4-7
 - en: Distribution of number of keys in a node for leaf nodes
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 节点内键的数量分布
 - en: It’s possible to define a compaction operation for a B-tree that will pick several
     adjacent nodes and squash them together, but this operation has its limitations.
     First, a certain amount of underoccupied nodes makes it possible to insert a new
@@ -384,12 +520,16 @@
     adjacent nodes is impossible. Even if considering three adjacent nodes, then the
     amount of really squashable nodes would be less than 5 percent of the leaves and
     less than 1 percent of the inners.
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于B树，可以定义一个压缩操作，该操作会选择几个相邻的节点并将它们压缩在一起，但这种操作有其局限性。首先，一定数量的未充分利用的节点使得在不需要重新平衡的情况下将新元素插入到树中成为可能，从而节省CPU周期。其次，由于每个节点不能包含少于其容量的一半，因此压缩两个相邻节点是不可能的。即使考虑三个相邻节点，真正可压缩的节点数量也会少于5%的叶子节点和少于1%的内节点。
 - en: Summary
+  id: totrans-65
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 摘要
 - en: As extensive as these optimizations might seem, they are really just the tip
     of the iceberg for this one particular example. Many finer points that matter
     from an engineering perspective were skipped for brevity (for example, the subtle
@@ -404,24 +544,34 @@
     off your P99 latencies. The next chapter takes you into the inner workings of
     database drivers and shares tips for getting the most out of a driver, particularly
     from a performance perspective.
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 尽管这些优化看起来很多，但它们实际上只是冰山一角。从工程角度来看，许多重要的细微差别被省略了（例如，节点上奇数与偶数键的微妙差异）。对于数据库用户来说，这里的关键收获是，为了确定数据库如何存储和检索数据，软件中往往需要进行痛苦程度的设计和实验。你当然不需要熟悉数据库工程的每一个方面。但了解你的数据库所关注的算法优化将帮助你理解为什么它在不同的环境下以某种方式表现。你可能会发现一些令人印象深刻的工程能力，这可以帮助你处理更多的用户请求或从P99延迟中节省几毫秒。下一章将带你深入了解数据库驱动程序的内部工作原理，并分享如何最大限度地利用驱动程序的技巧，特别是从性能的角度来看。
 - en: '[![Creative Commons](../css/cc-by.png)](https://creativecommons.org/licenses/by/4.0)'
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: '![Creative Commons](../css/cc-by.png)[(https://creativecommons.org/licenses/by/4.0)]'
 - en: '**Open Access** This chapter is licensed under the terms of the Creative Commons
     Attribution 4.0 International License ([http://​creativecommons.​org/​licenses/​by/​4.​0/​](http://creativecommons.org/licenses/by/4.0/)),
     which permits use, sharing, adaptation, distribution and reproduction in any medium
     or format, as long as you give appropriate credit to the original author(s) and
     the source, provide a link to the Creative Commons license and indicate if changes
     were made.'
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: '**开放获取** 本章节根据Creative Commons Attribution 4.0国际许可协议（[http://creativecommons.org/licenses/by/4.0/](http://creativecommons.org/licenses/by/4.0/)）许可，允许在任何媒介或格式中使用、分享、改编、分发和复制，只要您适当引用原始作者和来源，提供Creative
+    Commons许可的链接，并指出是否进行了修改。'
 - en: The images or other third party material in this chapter are included in the
     chapter's Creative Commons license, unless indicated otherwise in a credit line
     to the material. If material is not included in the chapter's Creative Commons
     license and your intended use is not permitted by statutory regulation or exceeds
     the permitted use, you will need to obtain permission directly from the copyright
     holder.
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章中包含的图像或其他第三方材料均包含在章节的Creative Commons许可协议中，除非在材料信用行中另有说明。如果材料未包含在章节的Creative
+    Commons许可协议中，且您的使用意图不受法定法规允许或超出允许的使用范围，您将需要直接从版权持有人处获得许可。

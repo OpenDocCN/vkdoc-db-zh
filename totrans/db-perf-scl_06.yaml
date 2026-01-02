@@ -1,20 +1,26 @@
 - en: 7. Infrastructure and Deployment Models
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 7. 基础设施和部署模型
 - en: '[Core Hardware Considerations for Speed at Scale](#Sec1)[Recommendations for
     Specific Hardware Components](#Sec5)[Considerations in the Cloud](#Sec16)[Fully
     Managed Database-as-a-Service](#Sec17)[Serverless Deployment Models](#Sec18)[Containerization
     and Kubernetes](#Sec19)[Summary](#Sec20)'
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: '[核心硬件考量，以实现大规模速度](#Sec1)[特定硬件组件的建议](#Sec5)[云中的考量](#Sec16)[完全托管数据库即服务](#Sec17)[无服务器部署模型](#Sec18)[容器化和Kubernetes](#Sec19)[总结](#Sec20)'
 - en: As noted in the previous chapter, many modern databases offer capabilities beyond
     “just” storing and retrieving data. But all databases are ultimately built from
     the ground up in order to serve I/O in the most efficient way possible. And it’s
     crucial to remember this when selecting your infrastructure and deployment model
     of choice.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 如前一章所述，许多现代数据库提供了超越“仅仅”存储和检索数据的特性。但所有数据库都是从头开始构建，以尽可能高效地服务I/O。在选择您的基础设施和首选部署模型时，这一点至关重要要记住。
 - en: 'In theory, a database’s purpose is fairly simple: You submit a request and
     expect to receive a response. But as you have seen in the previous chapters, an
     insane level of engineering effort is spent on continuously enhancing and speeding
@@ -23,15 +29,19 @@
     of memory fragmentation, or reducing the amount of storage I/O needed to look
     up a specific set of data. All these advancements, eventually, converge to create
     a database suitable for performance at scale.'
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 从理论上讲，数据库的目的相当简单：您提交一个请求，并期望得到响应。但正如您在前几章所看到的，大量的工程努力被投入到不断改进和加速这一过程中。很可能，多年的时间都致力于优化算法，可能只为您带来几个CPU周期的处理提升，或者最小化内存碎片化，或者减少查找特定数据集所需的存储I/O量。所有这些进步最终都汇聚在一起，创建了一个适合大规模性能的数据库。
 - en: 'Regardless of your database selection, you may eventually hit a wall that no
     engineering effort can break through: the database’s physical hardware. It makes
     very little sense to have a solution engineered for performance when the hardware
     you throw at it may be suboptimal. Similarly, a less performant database will
     likely be unable to make efficient use of an abundance of available physical resources.'
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 无论您选择哪种数据库，您最终可能会遇到一个工程努力无法突破的障碍：数据库的物理硬件。当您投入的硬件可能不是最优时，为性能而设计的解决方案几乎没有意义。同样，性能较差的数据库可能无法有效地利用大量可用的物理资源。
 - en: This chapter looks at critical considerations and tradeoffs when selecting CPUs,
     memory, storage, and networking for your distributed database infrastructure.
     It describes how different resources cooperate and how to configure the database
@@ -39,8 +49,10 @@
     the most difficult component to deal with. There’s also a close look at optimal
     cloud-based deployments suitable for highly-performant distributed databases (given
     that these are the deployment preference of most businesses).
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章探讨了在选择CPU、内存、存储和网络时，为您的分布式数据库基础设施所必须考虑的关键因素和权衡。它描述了不同资源是如何协作的，以及如何配置数据库以提供最佳性能。特别关注存储I/O，因为这是最难处理的部分。同时，也详细研究了适合高性能分布式数据库的基于云的最佳部署方案（鉴于这些是大多数企业的部署首选）。
 - en: While it is true that a Database-as-a-Service (DBaaS) deployment will shield
     you from many infrastructure and hardware decisions through your selection process,
     a fundamental understanding of the generic compute resources required by any database
@@ -50,46 +62,66 @@
     and their impact on performance. It covers the special considerations associated
     with cloud-hosted deployments, database-as-a-service, serverless, containerization,
     and container orchestration technologies, such as Kubernetes.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 虽然确实，数据库即服务（DBaaS）的部署将通过您的选择过程让您免于许多基础设施和硬件决策，但了解任何数据库所需的通用计算资源的基本理解对于识别可能限制性能的潜在瓶颈至关重要。在介绍涉及每个部署模型的硬件之后——无论您是否考虑过——本章将重点转向不同的部署选项及其对性能的影响。它涵盖了与云托管部署、数据库即服务、无服务器、容器化和容器编排技术（如Kubernetes）相关的特殊考量。
 - en: Core Hardware Considerations for Speed at Scale
+  id: totrans-7
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 核心硬件考量，以实现大规模速度
 - en: 'When you are designing systems to handle large amounts of data and requests
     at scale, the primary hardware considerations are:'
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 当你设计系统以处理大量数据和请求时，主要的硬件考虑因素包括：
 - en: Storage
+  id: totrans-9
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 存储
 - en: CPU (cores)
+  id: totrans-10
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: CPU（核心）
 - en: Memory (RAM)
+  id: totrans-11
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 内存（RAM）
 - en: Network interfaces
+  id: totrans-12
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 网络接口
 - en: 'Each could be a potential bottleneck for internal database latency: The delay
     from when a request is received by the database (or a node in the database) and
     when the database provides a response.'
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 每个都可能是内部数据库延迟的潜在瓶颈：从请求被数据库（或数据库中的节点）接收，到数据库提供响应之间的延迟。
 - en: Identifying the Source of Your Performance Bottlenecks
+  id: totrans-14
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 识别性能瓶颈的来源
 - en: Knowing your database’s write and read paths is helpful for identifying potential
     performance bottlenecks and tracking down the culprit. It’s also key to understanding
     what physical resources your use case may be mostly bound against.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 了解你的数据库的读写路径有助于识别潜在的性能瓶颈并追踪到罪魁祸首。这也有助于理解你的用例可能主要受哪些物理资源的限制。
 - en: For example, write-optimized databases carry this nomenclature because writes
     primarily go to memory, rather than being immediately persisted into disk. However,
     most modern databases need to employ some “crash-recovery” mechanism and avoid
@@ -99,16 +131,20 @@
     ahead log” disk structure called the “commit log” and a memory structure that’s
     named a “memtable.” A write is considered successful only after both operations
     succeed.
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，写入优化的数据库使用这种命名法，因为写入主要进入内存，而不是立即持久化到磁盘。然而，大多数现代数据库需要采用一些“崩溃恢复”机制，以避免意外服务中断导致的数据丢失。因此，即使是写入优化的数据库也会求助于磁盘访问，以便快速持久化你的数据，以防万一。例如，Cassandra集群的写入将被持久化到一个名为“提交日志”的“预写日志”磁盘结构和一个名为“memtable”的内存结构。只有当这两个操作都成功后，写入才被认为是成功的。
 - en: On the other side of the spectrum, the database’s read path will typically also
     involve several physical components. Assuming that you’re not using an in-memory
     database, then the read path will start by checking whether the data you are looking
     for is present within the database cache. But if it’s not, the database needs
     to look up and retrieve the data from disk, de-serialize it, and then answer with
     the results.
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 在光谱的另一端，数据库的读取路径通常也会涉及几个物理组件。假设你没有使用内存数据库，那么读取路径将首先检查你正在寻找的数据是否存在于数据库缓存中。但如果不在，数据库需要从磁盘查找和检索数据，反序列化它，然后回答结果。
 - en: Network also plays a crucial role throughout the entire process. When you write,
     data needs to be rapidly replicated to other replicas. When you read, the database
     needs to select the correct replicas (shards) containing the data that the application
@@ -116,25 +152,34 @@
     Moreover, strong consistency use cases always require the response of a majority
     of members for an operation to be successful—so delayed responses from a replica
     can dramatically increase the tail latency of a request routed to it.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 网络在整个过程中也扮演着至关重要的角色。当你写入时，数据需要迅速复制到其他副本。当你读取时，数据库需要选择包含应用程序所需数据的正确副本（分片），因此可能需要与集群中的其他节点通信。此外，强一致性用例始终要求大多数成员对操作的成功响应——因此副本的延迟响应可以显著增加路由到该副本的请求的尾部延迟。
 - en: Achieving Balance
+  id: totrans-19
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 实现平衡
 - en: Balance is key to *any* distributed system, including and beyond databases.
     It makes very little sense to try to achieve 1 million operations per second (OPS)
     in a system that has the fastest network link available but relies on very few
     CPUs. Similarly, it’s not very efficient to purchase the most expensive and performant
     infrastructure for your solution if your use case requires only 10K OPS.
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 平衡是任何分布式系统，包括数据库在内的关键。在一个拥有最快网络链路但只依赖很少CPU的系统里尝试实现每秒一百万次操作（OPS）几乎毫无意义。同样，如果你的用例只需要10K
+    OPS，购买最昂贵和性能最好的基础设施也并不高效。
 - en: Additionally, it’s important to recognize that a cluster imbalance can easily
     drag down performance across your entire distributed system. This happens because
     a distributed system cannot be faster than your slowest component—a fact that
     frequently surprises people.
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，重要的是要认识到集群不平衡很容易拖垮整个分布式系统的性能。这是因为分布式系统不能比最慢的组件更快——这是一个经常让人感到惊讶的事实。
 - en: 'Here’s a real-life example. A customer reported elevated latencies affecting
     their entire 18-node cluster. After collecting system information, we noticed
     that the majority of their nodes were properly using locally-attached nonvolatile
@@ -144,123 +189,177 @@
     attach another disk in order to relieve the problem. However, they weren’t aware
     that this introduced a ticking time bomb into their entire cluster. Here’s a brief
     explanation of what happened from a technical perspective:'
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里有一个现实生活中的例子。一位客户报告了整个18节点集群的延迟升高。在收集系统信息后，我们注意到他们的大多数节点都正确地使用了本地连接的非易失性内存表达（NVMe）磁盘——除了一个使用了软件冗余独立磁盘阵列（RAID）的节点，该RAID包含NVMes和网络连接的磁盘混合。客户澄清说，他们快用完存储空间，并决定连接另一个磁盘以解决问题。然而，他们没有意识到这为他们的整个集群引入了一个定时炸弹。以下是从技术角度简要解释发生了什么：
 - en: With a slow disk introduced in their RAID array, storage I/O operations in that
     specific replica took longer to complete.
+  id: totrans-23
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 在RAID阵列中引入了慢速磁盘后，该特定副本的存储I/O操作完成时间更长。
 - en: As a result, the remaining replicas took additional time whenever sending or
     waiting for a response that would require disk I/O.
+  id: totrans-24
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 因此，在发送或等待需要磁盘I/O响应时，剩余副本需要额外的时间。
 - en: As more and more requests came in, all these delays eventually created a waiting
     queue on the replicas.
+  id: totrans-25
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 随着请求越来越多，所有这些延迟最终在副本上创建了一个等待队列。
 - en: As the queue kept growing, this eventually affected the replicas’ performance,
     which ended up affecting the entire cluster’s performance.
+  id: totrans-26
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 随着队列的不断增长，这最终影响了副本的性能，最终影响了整个集群的性能。
 - en: 'From that point on, the entire cluster speed was impeded by the speed of its
     slowest node: the one that had the slowest disk.'
+  id: totrans-27
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 从那时起，整个集群的速度受到了其最慢节点速度的阻碍：那个拥有最慢磁盘的节点。
 - en: Setting Realistic Expectations
+  id: totrans-28
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 设置合理的期望
 - en: 'Even the most powerful hardware cannot ensure impressive *end-to-end (or round-trip)*
     latency—the entire cycle time from when a client sends a request to the server
     until it obtains a response. The end-to-end latency could be undermined by factors
     that might be outside of the database’s control. For example:'
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 即使是最强大的硬件也无法保证令人印象深刻的**端到端（或往返**）延迟——从客户端向服务器发送请求到获得响应的整个周期时间。端到端延迟可能会受到数据库无法控制的因素的影响。例如：
 - en: Multi-hop routing of packets from your client application to the database server,
     adding hundreds of milliseconds in latency
+  id: totrans-30
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 从客户端应用程序到数据库服务器的多跳路由数据包，增加了数百毫秒的延迟
 - en: Client driver settings, connecting and sending requests to a remote datacenter
+  id: totrans-31
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 客户端驱动程序设置，连接并向远程数据中心发送请求
 - en: Consistency levels that require both local and remote datacenter responses
+  id: totrans-32
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 需要本地和远程数据中心响应的一致性级别
 - en: Poor network performance between clients and database servers
+  id: totrans-33
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 客户端和数据库服务器之间较差的网络性能
 - en: Protocol overheads
+  id: totrans-34
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 协议开销
 - en: Client-side performance bottlenecks
+  id: totrans-35
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 客户端性能瓶颈
 - en: Recommendations for Specific Hardware Components
+  id: totrans-36
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 对特定硬件组件的建议
 - en: 'This section takes a deeper look at each of the primary hardware considerations:'
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 本节将更深入地探讨每个主要硬件考虑因素：
 - en: Storage
+  id: totrans-38
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 存储
 - en: CPU (cores)
+  id: totrans-39
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: CPU（核心）
 - en: Memory (RAM)
+  id: totrans-40
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 内存（RAM）
 - en: Network interfaces
+  id: totrans-41
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 网络接口
 - en: Storage
+  id: totrans-42
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 存储
 - en: One of the fastest ways to undermine all your other performance optimizations
     is to send every read and write operation through an unsuitable disk. Although
     recent technology advancements greatly improved the performance of storage devices,
     disks are (by far) still the slowest component in a computer system.
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 毁灭所有其他性能优化的最快方法之一是将每个读写操作都通过一个不合适的磁盘。尽管最近的技术进步大大提高了存储设备的表现，但磁盘（远远）仍然是计算机系统中最慢的组件。
 - en: 'From a performance standpoint, disk performance is typically measured in two
     dimensions:'
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 从性能角度来看，磁盘性能通常在两个维度上进行衡量：
 - en: The bandwidth available for sequential reads and writes
+  id: totrans-45
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 顺序读写的可用带宽
 - en: The IOPS for random reads and writes
+  id: totrans-46
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 随机读写的IOPS
 - en: 'Database engineers obsess over optimizing disk access patterns with respect
     to those two dimensions. People who are selecting, managing, or using a database
     should focus on two additional disk considerations: the storage technology and
     the disk size.'
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 数据库工程师痴迷于优化磁盘访问模式，以这两个维度为依据。选择、管理或使用数据库的人应关注两个额外的磁盘考虑因素：存储技术和磁盘大小。
 - en: Disk Types
+  id: totrans-48
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 磁盘类型
 - en: Locally-attached NVMe Solid State Drives (SSDs) are the standard when latency
     is critical. Compared with other bus interfaces, NVMe SSDs connected to a Peripheral
     Component Interconnect Express (PCIe) interface will generally deliver lower latencies
@@ -269,8 +368,11 @@
     avoid using network-attached disks if you expect single-digit millisecond latencies.
     Being network attached, these disks require an additional hop to reach a storage
     server, and that ends up increasing latency for every database request.
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 当延迟至关重要时，本地连接的 NVMe 固态硬盘（SSD）是标准配置。与其他总线接口相比，连接到外围组件互连扩展（PCIe）接口的 NVMe SSD 通常会比串行
+    AT 连接（SATA）接口提供更低的延迟。如果你的工作负载对延迟不是特别敏感，你也可以考虑通过 SATA 接口使用磁盘。但是，如果你期望达到毫秒级的低延迟，则绝对避免使用网络连接的磁盘。由于这些磁盘是网络连接的，它们需要额外的跳转才能到达存储服务器，这最终会增加每个数据库请求的延迟。
 - en: If your focus is on throughput and latency really doesn’t matter for your use
     case (e.g., for moving data into a data warehouse), you *might* be able to get
     away with a persistent disk—but it’s not recommended. By persistent disks, we
@@ -279,86 +381,130 @@
     vendors, but a little research should reveal issues like subpar performance and
     overall instability. If you’re forced to work with persistent disks, be prepared
     to craft a creative solution.^([1](#Fn1))
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你的重点是吞吐量，而延迟对你使用的场景（例如，将数据移动到数据仓库）并不重要，你*可能*能够使用持久磁盘，但这并不推荐。我们所说的持久磁盘是指你的虚拟机可以像物理磁盘一样访问的耐用网络存储设备，但它们位于你的虚拟机之外。我们不会针对任何特定的供应商进行批评，但一点研究应该会揭示出性能不佳和整体不稳定等问题。如果你被迫使用持久磁盘，请准备好制定一个创造性的解决方案.^([1](#Fn1))
 - en: Hard disk drives (HDDs) might fast become a bottleneck. Since SSDs are getting
     progressively cheaper and cheaper, using HDDs is not recommended. Some workloads
     may work with HDDs, especially if they play nice and minimize random seeks. An
     example of an HDD-friendly workload is a write-mostly (98 percent writes) workload
     with minimal random reads. If you decide to use HDDs, try to allocate a separate
     disk for the commit log.
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 硬盘驱动器（HDD）可能会很快成为瓶颈。由于 SSD 的价格越来越便宜，使用 HDD 并不推荐。某些工作负载可能适合使用 HDD，特别是如果它们表现良好并最小化随机查找。一个适合
+    HDD 的工作负载示例是写入为主（98% 写入）且随机读取最少的工作负载。如果你决定使用 HDD，尽量为提交日志分配一个单独的磁盘。
 - en: ScyllaDB published benchmarking results of several different storage devices—
     demonstrating how they perform under extreme load simulating typical database
     access patterns.^([2](#Fn2)) For example, Figures [7-1](#Fig1) through [7-4](#Fig4)
     visualize the different performance characteristics from two NVMes—a persistent
     disk and an HDD.
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: ScyllaDB 发布了几个不同存储设备的基准测试结果——展示了它们在模拟典型数据库访问模式下的极端负载下的性能表现.^([2](#Fn2)) 例如，图
+    [7-1](#Fig1) 至 [7-4](#Fig4) 展示了两种 NVMes（持久磁盘和 HDD）的不同性能特征。
 - en: '![](../images/541783_1_En_7_Chapter/541783_1_En_7_Fig4_HTML.png)'
+  id: totrans-53
   prefs: []
   type: TYPE_IMG
+  zh: '![](../images/541783_1_En_7_Chapter/541783_1_En_7_Fig4_HTML.png)'
 - en: Two graphs of p 50 and p 95 latency from 0 to 175 M B per second. The graphs
     depict a decreasing trend. Two shaded strips are given to the right of the graphs.
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 从 0 到 175 MB/秒的 p 50 和 p 95 延迟的两种图表。图表显示了一个下降趋势。图表右侧给出了两个阴影条带。
 - en: Figure 7-4
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 7-4
 - en: Bandwidth/latency graphs for a Toshiba DT01ACA200 hard disk drive^([4](#Fn4))
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 东芝 DT01ACA200 硬盘驱动器的带宽/延迟图表^([4](#Fn4))
 - en: '![](../images/541783_1_En_7_Chapter/541783_1_En_7_Fig3_HTML.jpg)'
+  id: totrans-57
   prefs: []
   type: TYPE_IMG
+  zh: '![](../images/541783_1_En_7_Chapter/541783_1_En_7_Fig3_HTML.jpg)'
 - en: Two graphs of p 50 and p 95 latency from 0 to 600 M B per second. The graphs
     depict a decreasing trend. Two shaded strips are given to the right of the graphs.
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: 从 0 到 600 MB/秒的 p 50 和 p 95 延迟的两种图表。图表显示了一个下降趋势。图表右侧给出了两个阴影条带。
 - en: Figure 7-3
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 7-3
 - en: Bandwidth/latency graphs for a Google Cloud n2-standard-8 instance type with
     a 2TB SSD persistent disk^([3](#Fn3))
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: Google Cloud n2-standard-8 实例类型配备 2TB SSD 持久磁盘的带宽/延迟图表^([3](#Fn3))
 - en: '![](../images/541783_1_En_7_Chapter/541783_1_En_7_Fig2_HTML.png)'
+  id: totrans-61
   prefs: []
   type: TYPE_IMG
+  zh: '![](../images/541783_1_En_7_Chapter/541783_1_En_7_Fig2_HTML.png)'
 - en: Two graphs of p 50 and p 95 latency from 0 to 1 G B per second. The graphs depict
     a decreasing trend. Two shaded strips are given to the right of the graphs.
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 从 0 到 1 GB/秒的 p 50 和 p 95 延迟的两种图表。图表显示了一个下降趋势。图表右侧给出了两个阴影条带。
 - en: Figure 7-2
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 7-2
 - en: Bandwidth/latency graphs for an AWS Im4gn.4xlarge instance type using AWS Nitro
     SSDs
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用AWS Nitro SSDs的AWS Im4gn.4xlarge实例类型的带宽/延迟图表
 - en: '![](../images/541783_1_En_7_Chapter/541783_1_En_7_Fig1_HTML.png)'
+  id: totrans-65
   prefs: []
   type: TYPE_IMG
+  zh: '![](../images/541783_1_En_7_Chapter/541783_1_En_7_Fig1_HTML.png)'
 - en: Two graphs of p 50 and p 95 latency from 0 to 800 M B per second. The graphs
     depict a decreasing trend. Two shaded strips are given to the right of the graphs.
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 两个从0到800 MB每秒的p 50和p 95延迟的图表。图表显示了一个下降趋势。图表右侧给出了两个阴影条带。
 - en: Figure 7-1
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 图7-1
 - en: NVMe bandwidth/latency graphs for an AWS i3.2xlarge instance type
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用AWS i3.2xlarge实例类型的NVMe带宽/延迟图表
 - en: Disk Setup
+  id: totrans-69
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 磁盘配置
 - en: We hear a lot of questions about RAID setups. Hardware RAIDs are commonly used
     to avoid outages introduced by disk failures. As a result, the RAID-5 (distributed
     parity) setup is often used.
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们听到了很多关于RAID配置的问题。硬件RAID通常用于避免由磁盘故障引入的中断。因此，RAID-5（分布式校验和）配置经常被使用。
 - en: 'However, distributed databases typically have their own internal replication
     mechanism to allow for business continuity and achieve high availability. Therefore,
     RAID setups employing data mirroring or distributed parity have proven to be very
@@ -368,8 +514,10 @@
     RAIDs that are unable to perform efficiently via asynchronous I/O or direct I/O
     calls. If you believe your disk I/O is suboptimal, consider directly exposing
     the disks from your hardware RAID to your operating system.'
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，分布式数据库通常具有自己的内部复制机制，以允许业务连续性和实现高可用性。因此，采用数据镜像或分布式校验和的RAID配置已被证明对磁盘I/O性能非常有害，并且相当频繁地被冗余使用。除此之外，我们发现一些硬件RAID供应商提供的性能结果取决于您的数据库访问机制。一个值得注意的例子：无法通过异步I/O或直接I/O调用有效执行的硬件RAID。如果您认为您的磁盘I/O性能不佳，请考虑直接将您的硬件RAID中的磁盘暴露给操作系统。
 - en: Conversely, RAID-0 (striping) setups often provide a boost in disk I/O performance
     and allow the database to achieve higher IOPS and bandwidth than a single disk
     can provide. The general recommendation for creating a RAID-0 setup is to use
@@ -377,11 +525,15 @@
     daily workload. While it is true you would lose the entire RAID array in the event
     of a disk failure, the replication performed by your distributed database should
     be sufficient to ensure that your data remains available.
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 相反，RAID-0（条带化）配置通常可以提高磁盘I/O性能，并允许数据库实现比单个磁盘更高的IOPS和带宽。创建RAID-0配置的一般建议是使用相同类型和容量的所有磁盘，以避免在日常工作负载期间出现性能变化。虽然确实，在磁盘故障的情况下，您会丢失整个RAID阵列，但您的分布式数据库执行的复制应该足以确保您的数据保持可用。
 - en: 'A couple of additional considerations related to disk setup:'
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: 与磁盘配置相关的几个额外考虑因素：
 - en: '**Storage servers often serve several other users and workloads at the same
     time.** Therefore, even though disks would be dedicated to the database, your
     access performance can be undermined by factors like the level to which the storage
@@ -389,64 +541,86 @@
     provided to you will not be optimal for supporting a low-latency database workload.
     This can often be mitigated by ensuring that the disks are allocated from a high-performing
     disk pool.'
+  id: totrans-74
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**存储服务器通常同时为多个其他用户和工作负载提供服务。** 因此，即使磁盘是专门为数据库分配的，但您的访问性能可能会受到诸如存储系统同时为其他用户服务的程度等因素的影响。大多数情况下，提供给您的存储介质可能不适合支持低延迟数据库工作负载。这通常可以通过确保从高性能磁盘池中分配磁盘来缓解。'
 - en: '**It’s important to expose your database infrastructure disks directly to the
     operating system guest from your hypervisor.** We have seen many situations where
     the I/O capacity of a database was greatly impacted when disks were virtualized.
     To eliminate any possible bottlenecks in a low-latency environment, give your
     database direct access to your disks so that they can perform I/O as they were
     designed to.'
+  id: totrans-75
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**将您的数据库基础设施磁盘直接从您的虚拟机管理程序暴露给操作系统是非常重要的。** 我们已经看到许多情况，其中数据库的I/O容量在磁盘虚拟化时受到了严重影响。为了消除低延迟环境中可能存在的任何瓶颈，请确保您的数据库直接访问您的磁盘，以便它们可以按照设计的方式执行I/O。'
 - en: Disk Size
+  id: totrans-76
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 磁盘大小
 - en: When considering how much storage you need, be sure to account for your existing
     data—replicated—plus your anticipated near-term data growth, and also leave sufficient
     room for the overhead of internal operations (like compactions [for LSM-tree-based
     databases], the commit log, backups, etc.).
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: 当考虑你需要多少存储时，务必考虑你现有的数据——复制后的数据——以及你预期的近期数据增长，还要为内部操作（如LSM-tree数据库的压缩、提交日志、备份等）的冗余留出足够的空间。
 - en: 'As Chapter [8](541783_1_En_8_Chapter.xhtml) discusses, the most common topology
     involves three replicas for each dataset. Assume you have 5TB of raw data and
     use a replication factor of three:'
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: 如第[8](541783_1_En_8_Chapter.xhtml)章所述，最常见的拓扑结构是每个数据集有三个副本。假设你有5TB的原始数据，并使用三个副本的复制因子：
 - en: 5TB Data X 3 RF = 15TB
+  id: totrans-79
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 5TB 数据 X 3 RF = 15TB
 - en: 'But 15TB is just a starting point since there are other sizing criteria:'
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: 但15TB只是一个起点，因为还有其他尺寸标准：
 - en: What is your dataset’s growth rate? (How much do you ingest per hour or day?)
+  id: totrans-81
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 你的数据集的增长率是多少？（每小时或每天摄取多少？）
 - en: Will you store everything forever, or will you have an eviction process (for
     example, based on Time To Live [TTL])?
+  id: totrans-82
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 你会永远存储所有数据吗，还是会有一个驱逐过程（例如，基于生存时间[TTL]）？
 - en: Is your growth rate stable (a fixed rate of ingestion per week/day/hour) or
     is it stochastic and bursty? The former would make it more predictable; the latter
     may mean you have to give yourself more leeway to account for unpredictable but
     probabilistic events.
+  id: totrans-83
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 你的增长速度是稳定的（每周/天/每小时固定的摄取速率）还是随机的和突发的？前者会使它更具可预测性；后者可能意味着你必须给自己更多的灵活性来应对不可预测但概率性的事件。
 - en: You can model your data’s growth rate based on the number of users or endpoints
     and how that number is expected to grow over time. Alternately, data models are
     often enriched over time, resulting in more data per source. Or your sampling
     rate may increase. For example, your system may begin ingesting data every five
     seconds rather than every minute. All of these considerations impact your data
     storage volume.
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可以根据用户数量或端点数量以及该数量随时间预期的增长来模拟你数据增长的速度。或者，数据模型通常会随着时间的推移而丰富，导致每个源的数据量增加。或者，你的采样率可能会增加。例如，你的系统可能开始每五秒而不是每分钟摄取数据。所有这些考虑都会影响你的数据存储量。
 - en: It’s strongly recommended that you select storage that’s suitable for where
     you expect to end up after a certain time span. If you’re running your database
     on a public cloud provider (self-managed or as a fully-managed Database-as-a-Service
@@ -454,25 +628,33 @@
     your cluster. However, for an on-premises hardware purchase, you may need to provision
     based on your quarterly or annual budgeting process. You could also face delays
     due to the supply chain disruptions that have become increasingly common.
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: 强烈建议你选择适合你在一定时间跨度后预期到达位置的存储。如果你在公共云提供商（自托管或作为完全托管的数据库即服务[DBaaS]）上运行数据库，你不需要太多的提前时间来配置新硬件和扩展你的集群。然而，对于本地硬件购买，你可能需要根据你的季度或年度预算流程进行配置。你也可能面临由于供应链中断而导致的延迟，这种中断变得越来越常见。
 - en: Also, be sure to leave storage space for internal temporary operations such
     as compaction, repairs, backups, and commit logs, as well as any other background
     process that may temporarily introduce a space amplification. On the other hand,
     if you’re using compression, be sure to factor in the amount of space that your
     selected compression algorithm can save you.
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，务必为内部临时操作留出存储空间，例如压缩、修复、备份和提交日志，以及任何可能暂时引入空间膨胀的其他后台进程。另一方面，如果你使用压缩，务必考虑所选压缩算法可以为你节省的空间量。
 - en: Finally, recognize that every database has an ideal memory-to-storage ratio—for
     example, a certain amount of TB or GB per node that it can support with optimal
     performance. If this isn’t readily apparent in your database’s documentation,
     press your vendor for their recommendation.
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，认识到每个数据库都有一个理想的内存与存储比率——例如，每个节点可以支持一定量的TB或GB，以实现最佳性能。如果这在你的数据库文档中不明显，请向你的供应商索取他们的建议。
 - en: Raw Devices and Custom Drivers
+  id: totrans-88
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 原始设备和自定义驱动程序
 - en: Some database vendors require direct access to storage devices—without needing
     a filesystem to exist. Such direct access is often referred to as creating a “raw”
     device, which refers to the fact that the operating system won’t know how to manage
@@ -480,69 +662,93 @@
     underlying storage device may provide a performance boost to the database. However,
     it is important to understand some of this approach’s drawbacks, which may not
     be important for your specific deployment.
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: 一些数据库供应商需要直接访问存储设备——无需存在文件系统。这种直接访问通常被称为创建“原始”设备，这指的是操作系统不知道如何管理它，任何I/O都由数据库直接处理。直接向底层存储设备发出I/O可能会为数据库提供性能提升。然而，了解这种方法的缺点很重要，这些缺点可能对您的特定部署并不重要。
 - en: '**Error prone**: Directly issuing I/O to a disk rather than through a filesystem
     is error prone. While it will provide a performance gain, incorrect handling of
     the underlying storage could result in data corruption, data loss, or unexpected
     bugs.'
+  id: totrans-90
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**易出错**：直接向磁盘发出I/O而不是通过文件系统是易出错的。虽然这会提供性能提升，但不当处理底层存储可能导致数据损坏、数据丢失或意外的错误。'
 - en: '**Complex**: Raw devices are not as common as one might expect. In fact, very
     few databases decided to implement that approach. It’s important to note that
     since raw devices aren’t typically mounted as regular filesystems, their manageability
     will be fully dependent on what your vendor provides.'
+  id: totrans-91
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**复杂**：原始设备不像人们预期的那样常见。实际上，很少有数据库决定实施这种方法。重要的是要注意，由于原始设备通常不会作为常规文件系统挂载，其可管理性将完全取决于您的供应商提供的内容。'
 - en: '**Lock-in**: Once you are using a raw device, it’s extremely difficult to move
     away from it. You can’t mount raw devices or query their storage consumption via
     typical operating system mechanisms. All of your disks need to be arranged in
     a certain way, and you can’t easily go back to a regular filesystem.'
+  id: totrans-92
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**锁定**：一旦您开始使用原始设备，就非常难以摆脱它。您无法通过典型的操作系统机制挂载原始设备或查询其存储消耗。所有磁盘都需要以某种方式排列，而且您无法轻易回到常规文件系统。'
 - en: Maintaining Disk Performance Over Time
+  id: totrans-93
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 维护磁盘性能随时间的变化
 - en: Databases are very storage I/O intensive, so disks *will* wear out over time.
     Most disk vendors provide estimates concerning the performance durability of their
     products. Check on those and compare.
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: 数据库非常依赖存储I/O，因此磁盘*会*随着时间的推移而磨损。大多数磁盘供应商都会提供关于其产品性能耐久性的估计。请检查这些信息并进行比较。
 - en: There are multiple tools and programs that can help with SSD performance over
     time. One example is the `fstrim` program, which is frequently run weekly to discard
     unused filesystem blocks. `fstrim` is an operating system background process that
     doesn’t require any database action and may improve I/O to a significant extent.
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: 有多种工具和程序可以帮助随着时间的推移提高SSD性能。一个例子是`fstrim`程序，它通常每周运行一次以丢弃未使用的文件系统块。`fstrim`是一个操作系统后台进程，不需要任何数据库操作，并且可能显著提高I/O。
 - en: Tip
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: 小贴士
 - en: If you have to choose one place to invest—on CPU, storage, memory, or networking—we
     recommend splurging on storage. Everything else has evolved faster and better
     than storage. It still remains the slowest component in most systems.
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您必须选择一个地方进行投资——CPU、存储、内存或网络——我们建议在存储上大举投资。其他所有方面都比存储发展得更快、更好。它仍然是大多数系统中最慢的组件。
 - en: Tiered Storage
+  id: totrans-98
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 分层存储
 - en: Many use cases have different latency requirements for different sets of data.
     Similarly, industries may see exponential storage utilization growth over time.
     It is not always desirable, or even possible, to get rid of old data (for example,
     due to compliance regulations, third-party contracts, or simply because it still
     carries relevance for the business).
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: 许多用例对不同的数据集有不同的延迟要求。同样，行业可能会随着时间的推移看到指数级的存储利用率增长。并非总是希望，甚至可能不可能，去除旧数据（例如，由于合规性规定、第三方合同，或者仅仅因为它仍然对业务具有相关性）。
 - en: 'Teams with storage-heavy use cases often seek ways to minimize the costs of
     storage consumption: by reducing the replication factor of their dataset, using
     less performant (although cheaper) storage disks, or by employing a manual data
     rotation process from faster to slower disks.'
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于存储密集型用例的团队，通常会寻求降低存储消耗成本的方法：通过减少数据集的复制因子、使用性能较低（尽管更便宜）的存储磁盘，或者通过从较快的磁盘到较慢的磁盘的手动数据轮换过程。
 - en: Tiered storage is a solution implemented by some databases in order to address
     most of these concerns. It allows users to configure the database to use distinct
     storage tiers, and to define which criteria the database should use to ensure
@@ -551,28 +757,36 @@
     different tier tags to shards, allowing its balancer to migrate data between tiers
     automatically. On top of that, Atlas Online Archive also allows the database to
     offload historical datasets to cloud storage.
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: 分层存储是一些数据库为解决这些问题而实施的解决方案。它允许用户配置数据库以使用不同的存储层，并定义数据库应使用哪些标准来确保数据正确复制到相关层。例如，MongoDB允许您通过为分片分配不同的层标签来确定数据如何复制到特定的存储层，允许其平衡器自动在层之间迁移数据。此外，Atlas在线归档还允许数据库将历史数据集卸载到云存储。
 - en: CPUs (Cores)
+  id: totrans-102
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: CPU（核心）
 - en: Next is the CPU. As of this writing, you are probably looking at modern servers
     running some reasonably modern Intel, AMD, or ARM chips, which are commonly found
     across most cloud providers and enterprise hardware vendors. Along with storage,
     CPUs are another compute resource which—if not correctly sized—may introduce contention
     to your workload and impact your latencies. Clusters handling hundreds of thousands
     up to millions of operations per second tend to get very high CPU loads.
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来是CPU。截至本文撰写时，您可能正在查看运行一些合理现代的Intel、AMD或ARM芯片的现代服务器，这些芯片在大多数云提供商和企业硬件供应商中都很常见。与存储一样，CPU是另一种计算资源，如果配置不当，可能会对工作负载引入竞争，并影响延迟。每秒处理数十万到数百万操作的集群往往会有很高的CPU负载。
 - en: More cores will generally mean better performance. This is important for achieving
     optimal performance from databases that are architected to benefit from multithreading,
     and it’s absolutely essential for databases that are architected with a shard-per-core
     architecture—running a separate shard on each core in each server. In this case,
     the more cores the CPU has, the more shards—and the better data distribution—the
     database will have.
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 更多的核心通常意味着更好的性能。这对于从多线程架构中受益的数据库实现最佳性能非常重要，对于采用每个核心一个分片架构的数据库来说，这一点至关重要——在每个服务器上每个核心运行一个单独的分片。在这种情况下，CPU的核心越多，分片就越多——数据分布就越好，数据库将具有更好的性能。
 - en: 'A combination of vendor recommendations and benchmarking (see Chapter [9](541783_1_En_9_Chapter.xhtml))
     can help you determine how much throughput each multicore chip can support. A
     general recommendation is to avoid running production systems close to the CPU
@@ -585,24 +799,32 @@
     cluster. If your workload is not properly sized to accommodate background database
     operations and other events (such as node failures), your latency may increase
     to a level that surprises you.'
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
+  zh: 结合供应商推荐和基准测试（见第[9章](541783_1_En_9_Chapter.xhtml)）可以帮助您确定每个多核芯片可以支持多少吞吐量。一般建议是避免在生产系统中运行接近CPU极限的系统，并找到在支持预期性能和留出吞吐量增长空间之间的最佳平衡点。此外，在进行基准测试时，请记住也要考虑可能对性能产生不利影响的背景数据库操作。例如，Cassandra及其兼容数据库通常需要运行修复：一个每周进行的流程，以确保集群中数据的一致性。这个过程需要在整个集群中进行大量的协调和通信。如果您的负载没有适当调整以适应背景数据库操作和其他事件（如节点故障），您的延迟可能会增加到让您惊讶的程度。
 - en: When using virtual machines, containers, or the public cloud, remember that
     each virtual CPU is mapped to a single logical core, or thread. In many cloud
     deployments, nodes are provided on a vCPU basis. The vCPU is typically a single
     hyperthread from a dual hyperthread x86 physical core for Intel/AMD variants,
     or a single core for ARM chips.
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 当使用虚拟机、容器或公共云时，请记住，每个虚拟CPU都映射到一个单个逻辑核心或线程。在许多云部署中，节点是按vCPU提供的。对于Intel/AMD变体，vCPU通常是来自双超线程x86物理核心的单个超线程，对于ARM芯片，通常是单个核心。
 - en: No matter what your deployment of choice involves, avoid overcommitting CPU
     resources if performance is a priority. Doing so will prevent other guests from
     stealing CPU time^([5](#Fn5)) from your database.
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: 无论你选择的部署方式如何，如果性能是首要考虑，请避免过度承诺CPU资源。这样做将防止其他虚拟机从你的数据库中窃取CPU时间^([5](#Fn5))。
 - en: Memory (RAM)
+  id: totrans-108
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 内存（RAM）
 - en: If you’re working with an in-memory database, having enough memory to hold your
     entire dataset is an absolute must. But every database uses in-memory caching
     to some extent. For example, some databases require enough memory space for indexes
@@ -612,23 +834,29 @@
     to control which tables are served entirely from memory. The more memory the database
     has at its disposal, the better you can take advantage of those mechanisms. After
     all, even the fastest NVMe can’t come close to the speed of RAM access.
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你正在使用内存数据库，有足够的内存来存储你的整个数据集是绝对必要的。但每个数据库都在某种程度上使用内存缓存。例如，一些数据库需要足够的内存空间来存储索引，以避免昂贵的往返存储磁盘。其他数据库利用内部数据缓存，以便在检索最近使用的数据时降低延迟，Cassandra和类似Cassandra的数据库实现内存表，一些数据库允许你控制哪些表完全从内存中提供服务。数据库可用的内存越多，你就能更好地利用这些机制。毕竟，即使是最快的NVMe也无法接近RAM访问的速度。
 - en: In general, there is no blanket recommendation for “how much memory is enough”
     for a database. Different vendors have different requirements and different use
     cases also require different memory sizes. However, latency-sensitive use cases
     typically require high memory footprints in order to achieve high cache hit rates
     and serve low-latency read requests efficiently.
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: 通常，没有针对数据库“多少内存足够”的普遍建议。不同的供应商有不同的要求，不同的用例也需要不同的内存大小。然而，对延迟敏感的用例通常需要较大的内存占用，以便实现高缓存命中率并有效地处理低延迟的读取请求。
 - en: For example, a use case with a higher payload size requires a larger memory
     footprint than one with a smaller payload size. Another interesting aspect to
     consider is how frequently the use case in question reads data that may be present
     in memory (hot data) as opposed to data that was never read (cold data). As mentioned
     in Chapter [2](541783_1_En_2_Chapter.xhtml), the latter can easily undermine your
     latencies.
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，具有更高有效载荷大小的用例需要比具有较小有效载荷大小的用例更大的内存占用。另一个值得考虑的有趣方面是，针对特定用例，读取可能存在于内存中的数据（热数据）的频率与从未读取过的数据（冷数据）的频率相比。如第[2](541783_1_En_2_Chapter.xhtml)章所述，后者可能会轻易地削弱你的延迟。
 - en: Without a sufficient disk-to-memory ratio, you will be hitting your storage
     far more than you probably want if you intend to keep your latencies low. The
     ideal ratio varies from database to database since every caching implementation
@@ -640,8 +868,10 @@
     hard physical limit. If you don’t have enough memory and you have to run a workload
     on top of a very large dataset, it’s either going to be rather slow or increase
     the risk of the database running out of memory.
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你想保持低延迟，没有足够的磁盘到内存比率，你将比预期更频繁地访问你的存储。理想的比例因数据库而异，因为每个缓存实现都是不同的，所以务必向供应商咨询他们的具体建议。例如，ScyllaDB目前建议，对于每个分配给节点的1GB内存，你可以存储高达100GB的数据（因此如果你有32GB的内存，你可以处理大约3TB）。你的内存到存储比率越高，你用于缓存整个数据集的空间就越少。每个数据库都有某种硬性物理限制。如果你没有足够的内存，并且必须在非常大的数据集上运行工作负载，那么它要么会相当慢，要么会增加数据库耗尽内存的风险。
 - en: 'Another ratio to keep in mind: memory per CPU core. At ScyllaDB, we recommend
     at least 8GB of memory per CPU core for production purposes (because, given our
     shared-nothing architecture, every shard works independently and has its own allocated
@@ -653,41 +883,55 @@
     in order to speed up disk lookups when reading cold data. Aerospike will typically
     store all indexes in RAM. And MongoDB, on average, requires 1GB of RAM per 100K
     assets.'
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一个需要记住的比率：每CPU核心的内存。在ScyllaDB，我们建议每CPU核心至少8GB的内存用于生产目的（因为，鉴于我们的无共享架构，每个分片都是独立工作的，并且为其缓存分配了内存）。每vCPU的8GB内存是大多数云提供商用于NoSQL或大数据实例类型的相同比率。再次强调，推荐的比率会因供应商而异，具体取决于数据库特定的内部缓存实现和其他实现细节。例如，在Cassandra和类似Cassandra的数据库中，部分内存将分配给其某些SSTable组件，以便在读取冷数据时加快磁盘查找速度。Aerospike通常将所有索引存储在RAM中。而MongoDB平均每100K资产需要1GB的RAM。
 - en: Distributed databases are notoriously high memory consumers. Regardless of its
     implementation, the database will always need to store some relevant parts of
     your dataset in memory in order to avoid wasting time on disk I/O. Insufficient
     memory can manifest itself as unpredictable, erratic database behavior—even crashes.
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 分布式数据库通常消耗很高的内存。无论其实现方式如何，数据库都需要在内存中存储数据集的相关部分，以避免在磁盘I/O上浪费时间。内存不足可能会表现为不可预测、不稳定的数据库行为——甚至崩溃。
 - en: Network
+  id: totrans-115
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 网络
 - en: Lastly, you have to ensure that network I/O does not become a bottleneck. Networking
     is often an overlooked component. As with any distributed system, a database involves
     a lot of traffic between all the cluster members to check for liveness, replicate
     state and topology changes, and so on. As a result, network delays not only deteriorate
     your application’s latency, but also prevent internode communication from functioning
     effectively.
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，您必须确保网络I/O不会成为瓶颈。网络往往是被忽视的组件。与任何分布式系统一样，数据库涉及集群成员之间的大量流量，以检查活动状态、复制状态和拓扑更改等。因此，网络延迟不仅会降低您的应用程序的延迟，还会阻止节点间通信有效进行。
 - en: At ScyllaDB, we recommend a minimum network bandwidth of 10Gbps because internal
     database operations such as streaming, repairs, and gossip can become very network
     intensive. On top of that, you also need to factor in the actual throughput required
     for the use case in question; the number of operations per second will certainly
     be the highest bandwidth consumer for your deployment.
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: 在ScyllaDB，我们建议最低网络带宽为10Gbps，因为内部数据库操作，如流式传输、修复和八卦，可能会变得非常依赖网络。除此之外，您还需要考虑实际用例所需的吞吐量；每秒的操作数将是您部署中带宽消耗最高的因素。
 - en: As with memory, the required network bandwidth will vary. Be sure to check your
     vendor recommendations and consider the nature of your use case. A low throughput
     workload will obviously consume less traffic than a higher throughput one.
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: 与内存一样，所需的网络带宽也会有所不同。请务必检查供应商的建议，并考虑您用例的性质。低吞吐量工作负载显然比高吞吐量工作负载消耗的流量要少。
 - en: 'Tip: Use CPU pinning to mitigate the impact of hardware interrupts.'
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: 小贴士：使用CPU固定来减轻硬件中断的影响。
 - en: Hardware interrupts, which typically stem from (but are not limited to) high
     network Internet traffic, force the OS kernel to stop everything and respond to
     the hardware before returning to the job at hand. Too many interrupts (e.g., a
@@ -697,15 +941,19 @@
     by specific CPUs that are not being used by the database. With that setup, you
     can blast the database with network traffic and be reasonably confident that you
     won’t overwhelm it or stall the database processing during normal operations.
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: 硬件中断通常源于（但不限于）高网络互联网流量，迫使操作系统内核停止一切操作，并在返回手头工作之前先响应硬件。中断过多（例如，高软中断百分比）会降低数据库性能，因为你的CPU在处理网络流量服务时可能会停滞。解决这一问题的方法之一是使用CPU固定。这告诉系统，所有网络中断都应该由数据库未使用的特定CPU来处理。有了这样的设置，你可以在网络流量中猛烈打击数据库，并且可以合理地确信在正常操作中不会使其过载或使数据库处理停滞。
 - en: For cloud deployments, most IaaS vendors provide a modern network infrastructure
     with ample bandwidth between your database servers and between the database and
     the application clients. Be sure to check on your client’s network bandwidth consumption
     if you suspect network problems. A common mistake we see in deployments involves
     application clients deployed with suboptimal network capacity.
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于云部署，大多数IaaS供应商提供现代网络基础设施，在数据库服务器之间以及数据库和应用程序客户端之间提供充足的带宽。如果你怀疑存在网络问题，请务必检查客户的网络带宽消耗。我们在部署中常见的一个错误是，应用程序客户端部署了次优的网络容量。
 - en: Also, be sure to place your application servers as close as possible to your
     database. If you are deploying them in a single region, a shorter physical distance
     between the servers will translate to better network performance (since it will
@@ -716,18 +964,24 @@
     networking transfer fees. For multi-region deployments with cross-region replication,
     a slow network link may create replication delays that cause the database to apply
     backpressure on your writes until it manages to replicate the data piled up.
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，务必将你的应用程序服务器放置在尽可能靠近数据库的位置。如果你在一个区域内部署它们，服务器之间的较短物理距离将转化为更好的网络性能（因为它将需要更少的网络跳数进行通信），从而降低延迟。如果你需要跨区域部署并且需要在这些区域之间实现强一致性或复制，那么你需要为穿越区域支付延迟惩罚——此外，你还要实际支付跨区域网络传输费用。对于具有跨区域复制的多区域部署，慢速网络链路可能会造成复制延迟，导致数据库在成功复制堆积的数据之前对你的写入操作施加回压。
 - en: Considerations in the Cloud
+  id: totrans-123
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 云部署的考虑因素
 - en: The “on-prem vs cloud” decision depends heavily on your organization’s security
     and regulatory requirements as well as its business strategy—and is well beyond
     the scope of this book. Instead of heading down that path, let’s focus on exploring
     performance considerations that are unique to cloud deployments.
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: “本地部署与云部署”的决定在很大程度上取决于你组织的安全和监管要求以及其商业策略——这远远超出了本书的范围。我们不再深入那个方向，而是专注于探索云部署特有的性能考虑因素。
 - en: 'Most cloud providers offer a wide range of instance types that you may choose
     to host your workload. In our experience, most of the mistakes and performance
     bottlenecks seen on distributed databases within cloud deployments are due to
@@ -740,35 +994,45 @@
     cheaper than network disks, which require holding up your dataset for a prolonged
     period of time. We encourage you to compare the costs of NVMe backed-up storage
     against network-attached disks on your cloud vendor of choice.'
+  id: totrans-125
   prefs: []
   type: TYPE_NORMAL
+  zh: 大多数云服务提供商提供了一系列的实例类型，您可以选择用于托管您的负载。根据我们的经验，在云部署中的分布式数据库中看到的许多错误和性能瓶颈是由于在初始集群设置期间选择了错误的实例或存储类型。许多人普遍存在的一个误解（以及担忧）是，基于NVMe的存储可能比网络附加存储更昂贵。这种误解可能源于以下假设：由于NVMes速度更快，它们会带来更高的成本。然而，实际情况恰恰相反：由于云环境中的NVMe磁盘与实例的生命周期相关联，它们最终比需要长时间保留数据集的网络磁盘更便宜。我们鼓励您比较您选择的云服务提供商提供的NVMe备份存储与网络附加磁盘的成本。
 - en: Some cloud vendors have different instance types for different distributed database
     workloads. For example, some workloads may benefit more from compute-heavy instance
     types, with more compute power than storage capacity. Conversely, storage-dense
     instance types typically feature a higher storage to memory ratio and are often
     used by storage-heavy workloads.
+  id: totrans-126
   prefs: []
   type: TYPE_NORMAL
+  zh: 一些云服务提供商为不同的分布式数据库工作负载提供不同的实例类型。例如，某些工作负载可能从计算密集型实例类型中受益更多，具有比存储容量更多的计算能力。相反，存储密集型实例类型通常具有更高的存储与内存比率，并且通常用于存储密集型工作负载。
 - en: To complicate things even more, some cloud providers may offer different CPU
     generations for the same instance type. If one CPU generation is considerably
     slower than other nodes, the wrong choice could introduce performance bottlenecks
     into your cluster.
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: 更糟糕的是，一些云服务提供商可能为同一实例类型提供不同的CPU代系。如果一个CPU代系比其他节点慢得多，错误的选择可能会将性能瓶颈引入您的集群。
 - en: We have seen some (although rare) scenarios where a noisy neighbor dragged down
     an entire node performance with no reasonable explanation. The lack of visibility
     and control in cloud instances makes it harder to diagnose such situations. Often,
     you need to reach out to your cloud vendor directly to resolve the situation.
+  id: totrans-128
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们看到一些（尽管很少见）场景，其中噪声邻居在没有合理解释的情况下拖累了整个节点的性能。在云实例中缺乏可见性和控制使得诊断此类情况更加困难。通常，您需要直接联系您的云服务提供商以解决这种情况。
 - en: As you start configuring your instance, remember that a cloud environment isn’t
     created exclusively for databases. You have access to a wide range of options,
     but it can be confusing to determine where to start and which options to use.
     In general, it’s best to check with your database vendor on which instance types
     are recommended for deployment. Even better, go beyond that and compare the results
     of their benchmarks against those same instance types running your workload.
+  id: totrans-129
   prefs: []
   type: TYPE_NORMAL
+  zh: 当您开始配置实例时，请记住，云环境并非仅用于数据库。您有权访问广泛的选择，但确定从哪里开始以及使用哪些选项可能会令人困惑。一般来说，最好咨询您的数据库供应商，了解哪些实例类型适合部署。更好的是，超越这一点，比较他们基准测试的结果与运行您工作负载的相同实例类型的结果。
 - en: After you have decided on your instance types and deployment options, it’s time
     to think about instance placement. Most clouds will charge you for both inter-region
     traffic and inter-zone traffic, which may quite surprisingly increase the overall
@@ -782,120 +1046,168 @@
     zone in order to reduce costs. Similarly, you will also want to ensure that your
     application clients are located under the same zones as your database to minimize
     your networking costs.
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: 在您确定了实例类型和部署选项之后，是时候考虑实例放置了。大多数云服务都会对跨区域流量和跨区域流量收费，这可能会出人意料地增加整体网络成本。一些公司试图通过将所有实例放置在单个可用区（AZ）下以减轻这种成本，这也带来了如果该AZ出现故障时可能需要面对集群级中断的风险。其他人则选择忽略成本因素，并将副本部署在不同的AZ中，以确保数据被正确地复制到隔离环境中。无论您选择的实例放置方式如何，请注意，一些数据库驱动程序允许特定AZ中的客户端仅针对同一可用区内的数据库副本进行查询路由，以降低成本。同样，您还希望确保您的应用程序客户端位于与数据库相同的区域，以最大限度地降低您的网络成本。
 - en: Fully Managed Database-as-a-Service
+  id: totrans-131
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 完全托管数据库即服务
 - en: 'Does the database-as-a-service model help or hurt database performance? It
     really depends on the following:'
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: 数据库即服务（DBaaS）模型是否有助于提升还是损害数据库性能？这实际上取决于以下因素：
 - en: How much attention your database requires to achieve and consistently meet your
     performance expectations
+  id: totrans-133
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 您的数据库需要多少关注才能实现并持续满足您的性能预期
 - en: Your team’s experience working with the specific database you’re using
+  id: totrans-134
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 您的团队使用特定数据库的经验
 - en: Your team’s time and desire to tinker with that database
+  id: totrans-135
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 您的团队对数据库进行修改的时间和愿望
 - en: The level of expertise—especially with respect to performance—that your DBaaS
     provider dedicates to your account
+  id: totrans-136
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 您的DBaaS提供商为您的账户投入的专业水平——特别是与性能相关的水平
 - en: Managed DBaaS solutions can easily speed up your go-to-market and allow you
     to focus on priorities beyond your database. Most database vendors now provide
     some sort of managed solution. There are even independent companies in the business
     of providing this kind of service for a variety of different distributed databases.
+  id: totrans-137
   prefs: []
   type: TYPE_NORMAL
+  zh: 管理数据库即服务（DBaaS）解决方案可以轻松加快您的上市速度，并让您能够专注于数据库以外的优先事项。现在，大多数数据库供应商都提供某种形式的托管解决方案。甚至还有一些独立公司专门提供各种不同分布式数据库的此类服务。
 - en: 'We have seen many examples where a managed solution helped users succeed, as
     well as numerous complaints over the fact that some managed solutions were rather
     limited. It is not our intention to recommend nor criticize any specific service
     provider in question. Here is some vendor-agnostic advice on things to consider
     before selecting a managed solution:'
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们已经看到许多例子，其中托管解决方案帮助用户取得成功，以及许多关于一些托管解决方案相当有限的投诉。我们无意推荐或批评任何特定的服务提供商。以下是一些在选择托管解决方案之前需要考虑的、与供应商无关的建议：
 - en: Does the vendor satisfy your existing security requirements? Does it provide
     enough evidence of security certifications issued by a known security company?
+  id: totrans-139
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 供应商是否满足您现有的安全要求？它是否提供了由知名安全公司颁发的足够的安全认证证据？
 - en: What are the options for observability and how do you export the data in question
     to your monitoring platform of choice?
+  id: totrans-140
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 可观察性的选项有哪些？您如何将相关数据导出到您选择的监控平台？
 - en: What kind of flexibility do you have with your deployment? What are the available
     tunable options and the support for those within your managed solution?
+  id: totrans-141
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 您在部署方面有多大的灵活性？可用的可调选项有哪些？在您的托管解决方案中，对这些选项的支持如何？
 - en: Does it allow you to peer traffic from your existing application network(s)
     to your database in a private and secure way?
+  id: totrans-142
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 它是否允许您以私密和安全的方式将现有应用程序网络（s）中的流量与数据库进行对等？
 - en: What are the available support options and SLAs?
+  id: totrans-143
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 可用的支持选项和SLA是什么？
 - en: Which deployment options are available, what’s the flexibility among switching,
     and what’s the cost comparison if you were to deploy and maintain it on your own?
+  id: totrans-144
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 可用的部署选项有哪些，切换之间的灵活性如何，如果您自行部署和维护，成本比较如何？
 - en: How easy is it for you to export your data if you need to move your deployment
     to a different vendor in the future?
+  id: totrans-145
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如果你需要将部署迁移到不同的供应商，你如何轻松地导出你的数据？
 - en: What, if any, migration options are available and what amount of effort do they
     require?
+  id: totrans-146
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 有哪些迁移选项可用，它们需要多少工作量？
 - en: These are just some of the many questions and concerns that we’ve frequently
     heard teams asking (or wishing they asked before they got caught in an undesirable
     option). Considering a third-party vendor to manage a relatively critical aspect
     of your infrastructure is very often challenging. However, under the right circumstances
     and vendor-user fit, it can be a great option for reducing your admin burden and
     optimizing your performance.
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些只是我们经常听到团队询问（或希望在他们陷入不理想的选择之前询问）的许多问题和担忧之一。考虑第三方供应商来管理你基础设施的相对关键部分是非常具有挑战性的。然而，在适当的条件下和供应商与用户的匹配下，这可以是一个减少你的管理负担和优化你性能的绝佳选择。
 - en: Serverless Deployment Models
+  id: totrans-148
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 无服务器部署模型
 - en: '*Serverless* refers to database solutions that offer near-instant scaling up
     or scaling down of database infrastructure—and charge you for the capacity and
     storage that you actually consume.'
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
+  zh: '*无服务器*指的是提供几乎即时扩展或缩减数据库基础设施的数据库解决方案——并按你实际消耗的容量和存储收费。'
 - en: 'A serverless model could theoretically yield a performance advantage. Before
     serverless, many organizations faced a tradeoff:'
+  id: totrans-150
   prefs: []
   type: TYPE_NORMAL
+  zh: 理论上，无服务器模型可能带来性能优势。在无服务器之前，许多组织面临一个权衡：
 - en: (Slightly or generously, depending on your risk tolerance) overestimate the
     capacity they need to guarantee adequate performance.
+  id: totrans-151
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: （根据你的风险承受能力，稍微或慷慨地）高估他们需要保证充足性能的容量。
 - en: Watch performance suffer if their overly-conservative capacity estimates proved
     inadequate.
+  id: totrans-152
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如果他们过于保守的容量估计证明不足，观察性能受到影响。
 - en: Serverless can help in a few different ways and situations.
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
+  zh: 无服务器可以在多种不同的情况下提供帮助。
 - en: First, with variable workloads. Since the database can rapidly scale up as your
     workload increases, you can worry less about performance issues stemming from
     inadequate capacity. If your traffic ebbs and flows across the day/week/month,
@@ -905,21 +1217,27 @@
     scale your infrastructure. If all goes well, the vendor will “automagically” ensure
     that you’re covered, with acceptable performance. You won’t need to procure any
     additional servers, or even contact your cloud provider.
+  id: totrans-154
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，随着可变的工作负载。由于数据库可以随着工作负载的增加而快速扩展，你可以减少因容量不足而导致的性能问题的担忧。如果你的流量在一天/一周/一个月中波动，你可以在淡季少花钱，并将这些资源用于支持高峰期。如果你的公司突然遭遇“灾难性的成功”，你不必担心与突然需要扩展基础设施相关的头痛问题。如果一切顺利，供应商将“自动”确保你得到保障，并且性能可接受。你不需要采购任何额外的服务器，甚至不需要联系你的云服务提供商。
 - en: Serverless is also a great option to consider if you’re working on a new project
     and are not sure what capacity you need to meet performance expectations. It gives
     you the freedom to start fast and scale (or shrink) depending on real-world usage.
     Database sizing is one less thing to worry about. And you don’t need to predict
     the future.
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你正在从事一个新项目，并且不确定需要多少容量来满足性能预期，无服务器也是一个值得考虑的选项。它让你能够快速启动并根据实际使用情况进行扩展（或缩减）。数据库大小不再是你需要担心的事情。而且你不需要预测未来。
 - en: Finally, serverless also makes it simpler to justify the spend internally. With
     this model, you can assure your organization that you are never overprovisioned—at
     least not for long. You’re paying for exactly the amount of performance that the
     database vendor determines you need at all times.
+  id: totrans-156
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，无服务器还使得在内部证明支出更加简单。在这个模型下，你可以向你的组织保证你永远不会过度配置——至少不会长时间过度配置。你支付的是数据库供应商确定你需要的所有时刻的性能费用。
 - en: However, a serverless deployment also carries the risk of cost overruns and
     the uncertainty of unpredictable costs. For example, DynamoDB pricing may not
     be very attractive for write-heavy workloads. Similarly, serverless database services
@@ -927,14 +1245,18 @@
     operations per second you plan to sustain over an extended period of time. In
     some cases, it could become a double-edged sword from a cost perspective if your
     goal is to sustain a high-throughput performant system at large scale.
+  id: totrans-157
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，无服务器部署也伴随着成本超支和不可预测成本的不确定性风险。例如，DynamoDB的价格可能对写密集型工作负载来说并不吸引人。同样，无服务器数据库服务可能会根据您计划在较长时间内每秒持续进行的操作数量收取高昂的费用。在某些情况下，如果您的目标是实现大规模的高吞吐量高性能系统，从成本角度来看，它可能成为一把双刃剑。
 - en: Another aspect to consider when thinking about a serverless solution is whether
     the solution in question is compatible with your existing infrastructure components.
     For example, you’ll want to explore what amount of effort is required to connect
     your message queueing or analytics tool with that specific serverless solution.
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
+  zh: 在考虑无服务器解决方案时，另一个需要考虑的方面是所讨论的解决方案是否与您现有的基础设施组件兼容。例如，您可能需要探索将您的消息队列或分析工具与特定的无服务器解决方案连接所需的努力程度。
 - en: Remember that the overall concept behind serverless is to abstract away the
     underlying infrastructure in such a way that not all database-configurable options
     are available to you. As a result, troubleshooting potential performance problems
@@ -943,27 +1265,37 @@
     that you lack visibility into whether the infrastructure you consume is shared
     with other tenants. Many distributed database vendors may also offer you different
     pricing tiers for shared and dedicated environments.
+  id: totrans-159
   prefs: []
   type: TYPE_NORMAL
+  zh: 记住，无服务器背后的整体概念是抽象出底层基础设施，这样您就不一定能够访问所有数据库可配置的选项。因此，解决潜在的性能问题通常更具挑战性，因为您可能需要依赖供应商的输入和指导来了解应采取哪些行动。无服务器还意味着您无法了解您所消耗的基础设施是否与其他租户共享。许多分布式数据库供应商也可能为共享和专用环境提供不同的定价层。
 - en: Containerization and Kubernetes
+  id: totrans-160
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 容器化和Kubernetes
 - en: Containers and Kubernetes are now ubiquitous, even for stateful systems like
     databases. Should you use them? Probably—unless you have a good reason not to.
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
+  zh: 容器和Kubernetes现在无处不在，甚至对于像数据库这样的有状态系统也是如此。您应该使用它们吗？可能吧——除非您有充分的理由不使用。
 - en: But be aware that there is a performance penalty for the operational convenience
     of using containers. This is to be expected because of the extra layer of abstraction
     (the container itself), relaxation of resource isolation, and increased context
     switches. The good news is that it can certainly be overcome. In our testing using
     ScyllaDB, we found it is possible to take what was originally a 69 percent reduction
     in peak throughput down to a 3 percent performance penalty.^([6](#Fn6))
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
+  zh: 但请注意，使用容器的操作便利性会带来性能上的惩罚。这是可以预料的，因为额外的抽象层（容器本身）、资源隔离的放宽和上下文切换的增加。好消息是，这肯定是可以克服的。在我们的ScyllaDB测试中，我们发现可以将原本的峰值吞吐量降低69%的情况降低到3%的性能惩罚。[6](#Fn6)
 - en: 'Here’s the TL;DR on that specific experiment:'
+  id: totrans-163
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里是关于那个特定实验的TL;DR：
 - en: '*Containerizing applications is not free. In particular, processes comprising
     the containers have to be run in Linux cgroups and the container receives a virtualized
     view of the network. Still, the biggest cost of running a close-to-hardware, thread-per-core
@@ -971,9 +1303,11 @@
     cost of having to disable most of the performance optimizations that the database
     employs in VM and bare-metal environments to enable it to run in potentially shared
     and overcommitted platforms.*'
+  id: totrans-164
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*容器化应用程序并非免费。特别是，组成容器的进程必须在Linux cgroups中运行，并且容器接收一个网络虚拟化视图。然而，在Docker容器内运行接近硬件、核心级别的线程应用，如ScyllaDB的最大成本来自于必须禁用数据库在虚拟机和裸机环境中使用的多数性能优化，以使其能够在可能共享和过度承诺的平台中运行的机会成本。*'
 - en: '*The best results with Docker are obtained when resources are statically partitioned
     and we can bring back bare-metal optimizations like CPU pinning and interrupt
     isolation. There is only a 10 percent performance penalty in this case as compared
@@ -981,65 +1315,87 @@
     virtualization. Docker allows users to expose the host network directly for specialized
     deployments. In cases in which this is possible, we saw that the performance difference
     compared to the underlying platform falls down to 3 percent.*'
+  id: totrans-165
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*使用Docker时，当资源静态分区并且我们可以恢复裸金属优化（如CPU固定和中断隔离）时，可以获得最佳结果。在这种情况下，与底层平台相比，性能惩罚仅为10%，这主要归因于网络虚拟化。Docker允许用户直接暴露主机网络进行专用部署。在这种情况下，与底层平台相比，性能差异降至3%。*'
 - en: 'Of course, the potential penalty and strategies for mitigating will vary from
     database to database. But the key takeaway is that there is likely a significant
     performance penalty—so be sure to hunt it down and research how to mitigate it.
     Some common mitigation strategies include:'
+  id: totrans-166
   prefs: []
   type: TYPE_NORMAL
+  zh: 当然，潜在的惩罚和缓解策略会因数据库而异。但关键点是可能存在显著的性能惩罚——所以一定要找到它并研究如何缓解。一些常见的缓解策略包括：
 - en: Ensure that your containers have direct access to the database’s underlying
     storage.
+  id: totrans-167
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 确保你的容器可以直接访问数据库的底层存储。
 - en: Expose the host OS network to the container in order to avoid the performance
     penalty due to its network virtualization layer.
+  id: totrans-168
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 将主机OS网络暴露给容器，以避免由于网络虚拟化层而导致的性能惩罚。
 - en: Allocate enough resources to the container in question, and ensure these are
     not overcommitted with other containers or processes running within the underlying
     host OS.
+  id: totrans-169
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 为相关的容器分配足够的资源，并确保这些资源不会被底层主机OS中的其他容器或进程过度占用。
 - en: 'Kubernetes adds yet another virtualization layer—and thus opens the door to
     yet another layer of performance issues, as well as different strategies for mitigating
     them. First off, if you have the choice of multiple options for deploying and
     managing database clusters on Kubernetes, test them out with an eye on performance.
     Once you settle on the best fit for your needs, dive into the configuration options
     that could impact performance. Here are some performance tips that cross databases:'
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
+  zh: Kubernetes又增加了一层虚拟化层——因此打开了另一个性能问题层的大门，以及缓解这些问题的不同策略。首先，如果你有多个选项来在Kubernetes上部署和管理数据库集群，请从性能的角度测试它们。一旦确定了最适合你需求的方案，就深入研究可能影响性能的配置选项。以下是一些跨数据库的性能提示：
 - en: Consider dedicating specific and independent Kubernetes nodes for your database
     workloads and use affinities in order to configure their placement.
+  id: totrans-171
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 考虑为你的数据库工作负载分配特定的独立Kubernetes节点，并使用亲和性来配置它们的放置。
 - en: Enable `hostNetworking` and be sure to set up the required kernel parameters
     as recommended by your vendor (for example, `fs.aio-max-nr` for increasing the
     number of events available for asynchronous I/O processing in the Linux kernel).
+  id: totrans-172
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 启用`hostNetworking`，并确保按照供应商的建议设置所需的内核参数（例如，`fs.aio-max-nr`用于在Linux内核中增加异步I/O处理可用事件的数目）。
 - en: Ensure that your database pods have a Guaranteed QoS class^([7](#Fn7)) to avoid
     other pods from potentially hurting your main workload.
+  id: totrans-173
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 确保你的数据库Pod具有保证QoS类^([7](#Fn7))，以避免其他Pod可能对你的主要工作负载造成伤害。
 - en: Be sure to use an operator^([8](#Fn8)) in order to orchestrate and control the
     lifecycle of your existing Kubernetes database cluster. For example, ScyllaDB
     has its ScyllaDB Operator project.
+  id: totrans-174
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 一定要使用操作符^([8](#Fn8))来编排和控制现有Kubernetes数据库集群的生命周期。例如，ScyllaDB有它的ScyllaDB Operator项目。
 - en: Summary
+  id: totrans-175
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 摘要
 - en: 'This chapter kicked off the final part of this book, focused on sharing recommendations
     for getting better performance out of your database deployment. It looked at infrastructure
     and deployment model considerations that are important to understand whether you’re
@@ -1048,24 +1404,34 @@
     to the topology itself: replication, geographic distribution, scaling up and/or
     out, and intermediaries like external caches, load balancers, and abstraction
     layers.'
+  id: totrans-176
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章节开启了本书的最后一部分，专注于分享提高数据库部署性能的建议。它探讨了在您管理自己的部署或选择数据库即服务（可能为无服务器）部署模型时，重要的基础设施和部署模型考虑因素。下一章节将探讨与拓扑本身相关的性能考虑因素：复制、地理分布、扩展和/或缩减，以及外部缓存、负载均衡器和抽象层等中介。
 - en: '[![Creative Commons](../css/cc-by.png)](https://creativecommons.org/licenses/by/4.0)'
+  id: totrans-177
   prefs: []
   type: TYPE_NORMAL
+  zh: '[![Creative Commons](../css/cc-by.png)](https://creativecommons.org/licenses/by/4.0)'
 - en: '**Open Access** This chapter is licensed under the terms of the Creative Commons
     Attribution 4.0 International License ([http://​creativecommons.​org/​licenses/​by/​4.​0/​](http://creativecommons.org/licenses/by/4.0/)),
     which permits use, sharing, adaptation, distribution and reproduction in any medium
     or format, as long as you give appropriate credit to the original author(s) and
     the source, provide a link to the Creative Commons license and indicate if changes
     were made.'
+  id: totrans-178
   prefs: []
   type: TYPE_NORMAL
+  zh: '**开放获取** 本章节根据Creative Commons署名4.0国际许可协议（[http://creativecommons.org/licenses/by/4.0/](http://creativecommons.org/licenses/by/4.0/)）授权，允许在任何媒介或格式下使用、分享、改编、分发和复制，只要您适当引用原始作者和来源，提供Creative
+    Commons许可链接，并指明是否进行了修改。'
 - en: The images or other third party material in this chapter are included in the
     chapter's Creative Commons license, unless indicated otherwise in a credit line
     to the material. If material is not included in the chapter's Creative Commons
     license and your intended use is not permitted by statutory regulation or exceeds
     the permitted use, you will need to obtain permission directly from the copyright
     holder.
+  id: totrans-179
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章中的图像或其他第三方材料包含在本章节的Creative Commons许可协议中，除非在材料引用行中另有说明。如果材料未包含在本章节的Creative
+    Commons许可协议中，且您的使用意图不受法定法规允许或超出允许的使用范围，您需要直接从版权持有人处获得许可。
