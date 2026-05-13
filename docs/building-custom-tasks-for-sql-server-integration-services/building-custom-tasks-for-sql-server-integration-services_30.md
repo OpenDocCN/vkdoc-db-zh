@@ -1,0 +1,275 @@
+# 项目技术文档索引
+
+## A
+
+### 索引
+### ADONet 连接
+### TypeConverter 类文档
+### getADONetConnections 可重写方法
+### SettingsView.cs 文件源代码
+### SourceConnection 属性
+### StringConverter 类
+### 测试项目
+### TypeConverter 方法
+### 程序集项目引用
+### 文件系统文件夹创建管理器窗口
+### 解决方案资源管理器虚拟文件夹
+### Visual Studio 管理员配置和命名项目
+### ExecuteCatalogPackageTask
+### 本地存储库项目类型引用
+### 启动屏幕显示用户账户控制
+### Azure Data Factory (ADF) 作者和监视器概述页面配置部署
+### ExecuteCatalogPackageTaskInstall.log 文件
+### Git 配置选项卡
+### 安装文件夹
+### 集成运行时按钮创建配置
+### main.cmd.log 文件夹管理页面属性选择
+### 共享访问签名
+### SQL Server 许可证
+### SSIS 目录创建视图选项概述界面
+### 概述文件资源选项审阅选项选择
+### Azure SQL 数据库 (Azure SQL DB) 配置数据库创建资源审阅选项
+### rgECPT 资源服务器界面显示
+### SSISFramework 数据库
+
+## B
+
+### 32 位接口实现
+### LoggingLevel 属性
+### 执行参数 ExecutionValueParameterSet
+### SettingsNode 类
+### StringConverter 类测试执行
+### TypeConverter 类
+### SettingsNode 类同步执行
+### 执行参数 ExecutionValueParameterSet
+### 函数重载选项
+### package.Execute()
+### SettingsNode 类源代码测试
+### 测试生成程序集
+### 生成/注册过程事件
+### 生成事件页面命令行配置 Notes.txt 属性
+### 注册命令 取消注册 gacutil 命令 gacutil.exe 输出路径
+### 注册和取消注册程序集的步骤
+
+## C
+
+### 编码任务装饰代码继承 Task Microsoft.SqlServer.Dts.Runtime.Task
+### 重写方法 execute 方法 validate 方法属性引用任务方法调查
+### InitializeTask 方法
+### 导航栏对象浏览器
+### 重写方法 连接功能事件处理器方法
+### propertyGridSettings_PropertyValueChanged 事件处理器
+### SettingsView 类 SourceConnection
+### SeeSourceConnection 属性测试 ADO.Net 连接新连接创建
+### SourceConnection 属性 SSIS 包执行使用连接标识
+### ExecuteCatalogPackageTask 类 execute 方法 InitializeTask 方法 returnConnectionManagerIndex 方法
+### 连接相关成员 ADO.Net 连接管理器 _connections 连接对象
+### SettingsNode 构造函数 SSIS 包连接 TypeConverter
+### SeeADONetConnections TypeConverter
+
+## D
+
+### 数据库事务
+### 数据工厂配置 (ECPTFramework) ECPTFramework 测试 SSIS 项目提升和迁移测试
+### 错误消息 执行包对话框显示执行报告框架应用程序执行元数据查询结果
+### 概述报告 Parent.dtsx SSIS 包结果分析
+### Use32bit 执行设置 xp_msver 存储过程
+### TestSSISProject 配置更改配置对话框
+### DelayString 参数值部署目标选择文件夹创建
+### 集成服务 集成服务部署向导路径属性审阅页面
+### RunForSomeTime.dtsx SSIS 包目标 SSIS 目录验证
+### 部署容器 Blob 容器节点配置容器创建
+### ExecuteCatalogPackageTask.msi 文件 Blob 容器文件选择 Main.cmd 文件上传文件存储账户存储资源管理器
+### DevOps 账户 个人服务项目源代码管理 书签代码项目更改按钮 已签入项目代码提交消息文本框
+### ExecuteCatalogPackageTask 传出提交部分项目代码存储库项结果消息团队资源管理器图块
+### DtsTask 接口成员
+### ExecuteCatalogPackageTaskComplexUI 类接口成员方法编辑器窗体
+### ExecuteCatalogPackageTaskComplexUIForm 新建和删除成员方法
+### taskHost 和 connectionService throw 语句内部变量
+
+## E
+
+### ECPTFramework 项目配置 ConnectionString 和密码属性 ConnectionString 属性
+### 项目目录节点解决方案资源管理器
+### 编辑器窗体创建添加新类类声明 ExecuteCatalogPackageTaskComplexUIForm 类窗体构造函数
+### GeneralView 类类声明构造函数和处置容器成员处置方法
+### ExecuteCatalogPackageTaskComplexUI 项目 GeneralNode 类 IDTSTaskUIView 实现代码
+### IDTSTaskUIView 接口 IDTSTaskUIView 语句 InitializeComponent 方法接口处置方法
+### 潜在修复 Microsoft.DataTransformationServices.Controls 引用
+### SettingsView 类类声明构造函数和处置方法 GeneralNode 类
+### GeneralView 类声明 IDTSTaskUIView 实现代码 InitializeComponent 代码接口实现
+### 项目对话框显示 PropertyGrid、ExecuteCatalogPackageTask 和容器成员
+### SettingsNode 类语句 taskIcon 声明视图方法视图可视化
+### 编辑器集成生成解决方案签名程序集 SSIS 包执行目录包任务
+### 控制器设计模式控制器配置控制器/执行
+### ECPTController.dtsx 管理工作流包执行 ReportAndSucceed 执行 RunForSomeTime 执行
+### 虚拟步骤执行引擎 ADO 枚举器
+### ApplicationName 包参数目录连接管理器连接管理器执行目录包任务文件夹属性
+### foreach 应用程序包 foreach 循环容器常规视图获取应用程序包元数据
+### PackageFolder 属性包属性参数映射项目属性属性表达式编辑器
+### SourceConnection SQL 获取应用程序包 SQL 语句属性 T-SQL 结果
+### User::ApplicationPackages 对象类型变量 User::LoggingLevel 变量 User::MaximumRetries 变量 User::Package 变量
+### User::Project 变量 User::RetryIntervalSeconds 变量 User::Synchronized 变量 User::Use32bit 变量
+### 变量映射变量属性元数据驱动执行
+### ApplicationPackages 表 applications 表
+### ArchiveFile.dtsx 函数 fw 架构包表 SSIS 框架测试执行注意事项
+### 执行报告表达式视图 Parent.dtsx 进度/执行结果选项卡
+### ExecuteCatalogPackageTask.Execute 方法 Execute 方法 evaluateStatus 辅助方法
+### ExecuteCatalogPackage 函数 executeSynchronous Main() 方法代码 stopExecution 方法
+### ExecutionValuearameterSet 类型 decodeLoggingLevel 函数 returnExecutionValueParameterSet 函数
+
+## F
+
+### 文件夹和文件夹结构配置程序集路径
+### ComponentGroup 标签 ExecuteCatalogPackageTaskComplexUI GAC 注册
+### ExecuteCatalogPackageTaskComplexUI 任务部署文件夹
+### ExecuteCatalogPackageTask 部署文件夹 ExecuteCatalogPackageTask GAC 注册
+### 片段输出文件任务程序集
+
+## G, H
+
+### gacutil 注册命令 gacutil 取消注册命令
+### GeneralNode 类类构造函数描述属性装饰问题设计时错误键值对名称属性
+### OnCommit 错误属性 SSIS 执行 SQL 任务 taskHost 和任务成员
+### GeneralView 设计时问题 GeneralNode SeeGeneralNode 类
+### IDTSTaskUIView 接口方法实现 throw 语句 OnCommit 方法 OnInitialize 方法测试
+### getLoggingLevels 函数
+### 全局程序集缓存 (GAC) Gregious 错误
+
+## I, J, K
+
+### 检测结束消息执行结果选项卡执行时间和警告 logMessage 函数
+### 起始信息消息同步执行 System.Diagnostics 测试进程更新消息代码执行方法
+### 集成开发环境差异软件开发者 SSIS 目录
+
+## L, M, N
+
+### 提升和迁移框架 ApplicationPackages 元数据 ApplicationPackages 表 applications 表 fw 架构
+### 消息选项卡元数据包表 SSIS 执行框架 SSIS 框架包 SSISFramework 工作数据库 T-SQL 结果
+### logMessage 方法 CheckStatus 方法 componentEvents 错误列表错误消息 raiseEvent 方法
+### 移除替换代码验证方法
+
+## O
+
+### 面向对象编程 (OOP) OnInitialize 方法 OnCommit 方法
+
+## P, Q
+
+### 包位置选项 Azure-SSIS IR 包活动属性列表
+### 公钥令牌值管理员命令提示符剪贴板内容 ExecuteCatalogPackageTaskUI 文件夹高亮选项密钥检索创建/命令
+
+## R
+
+### raiseEvent 方法重构程序集引用部分定义编辑器项目
+### 配置和命名选项 ExecuteCatalogPackageTaskComplexUI 项目创建引用移除选项
+### 重命名类类型选择 IDtsTaskUI 实现问题成员实现引用
+### 任务属性目录属性执行方法 PackageCatalog 属性属性重命名选项
+### 执行方法 UI 概述执行方法重构方法
+### 连接管理器标识 logMessage/raiseEvent 方法 SettingsView.SourceConnection 属性
+### SeeSourceConnection 属性执行方法 returnExecutionValueParameterSet 函数 returnOperationStatus 方法
+
+## S
+
+### SettingsView 集合对象连接相关成员 SeeConnection-related 成员
+### ExecuteCatalogPackageTask 类 FolderName、ProjectName/PackageName 成员文件夹属性和集合集中化集合
+### FolderName 属性 GetFoldersFromCatalog 方法 OnInitialize 方法 PackageFolder 属性赋值
+### propertyGridSettings_PropertyValueChanged SettingsNode 类源代码测试 TypeConverter
+### updateCollections 方法 updateFolders 方法
+### IDTSTaskUIView 接口方法实现 throw 语句 OnInitialize 方法
+### 包属性和集合目录包集合
+### ExecuteCatalogPackageTask 解决方案文件夹、项目和包集合 GetPackagesFromCatalog 方法
+### PackageName 属性属性 SettingsNode 类 TypeConverter updateCollections 方法 updatePackages 方法
+### 项目属性和集合集合文件夹和项目集合 GetProjectsFromCatalog 方法
+### ProjectName 属性项目属性代码 SettingsNode 类任务编辑器 TypeConverter updateCollections 方法 updateProjects 方法
+### 属性重置集合文件夹属性值包属性重置 resetCollections 方法
+### SourceConnection 属性 SSIS 包执行 switch 语句
+### SettingsNode 类测试表达式执行目录包任务表达式视图文件夹、项目和包
+### SSIS 变量 PackageFolder 属性过程完成属性表达式编辑器 User::Folder SSIS 变量
+### 测试 SettingsView.SourceConnection 属性 ConnectionService 属性 OnInitialize 方法
+### propertyGridSettings_PropertyValueChanged
+### 安装程序项目包标签配置生成/安装清理
+### ExecuteCatalogPackageTaskSetup 项目许可协议 msi 文件输出路径属性
+### 生成前后命令行安装过程用户访问控制通知验证
+### Creativecommons.org 功能和图标安装 ExecuteCatalogPackageTask 解决方案
+### ExecuteCatalogPackageTask.wxs 项目创建引用解决方案资源管理器 WiX 工具集模板类别
+### 文件夹和文件夹结构 SeeFolders and folder structure configuration
+### MajorUpgrade/MediaTemplate 标签产品标签 ExecuteCatalogPackageTask.wxs 文件文件夹属性更新选项
+### Wix 标签 xml 标签属性标签路径安装服务器步骤测试过程故障排除日志
+### 安装 MSI 文件清理引发错误 UIRef 和许可证文件标签 WixUIExtension 和 WixUtilExtension 程序集
+### 共享访问签名 (SAS) 配置自定义获取选项粘贴选项
+### SSIS 配置统一资源标识符/查询字符串
+### 签名程序集（密钥文件）管理员命令窗口优点/缺点检查选项
+### 提交全部并推送选项消息项目工件解决方案资源管理器团队资源管理器命令窗口
+### 编辑器集成生成输出路径配置事件命令行 ExecuteCatalogPackageTask
+### ExecuteCatalogPackageTaskComplexUI 属性密钥创建 Notes.txt 文件项目选择密钥生成
+### key.snk 文件注释文件项目目录项目文件夹属性公钥提取签名程序集
+### 解决方案资源管理器是按钮
+### 软件测试 SourceConnection 属性 ADO.Net 连接目录/文件夹/项目/包连接管理
+### execute() 方法 returnCatalog 函数 returnCatalogFolder 函数 returnCatalogPackage 函数 returnCatalogProject 方法
+### 测试执行 ConnectionManagerName connectionService 事件处理器方法目标
+### NEW_CONNECTION 常量 propertyGridSettings_PropertyValueChanged 方法 ServerName
+### returnSelectedConnectionManagerDataSourceValue 函数源代码更新响应 SettingsView
+### 测试验证代码更新错误消息非空字符串值重构方法 SettingsNode String.Empty
+### 测试 try 块 Validate() 方法
+### 源代码管理（版本控制）DevOps 书签代码项目更改按钮 已签入项目代码提交消息文本框
+### ExecuteCatalogPackageTask 传出提交部分项目代码存储库项结果消息团队资源管理器图块类型
+### SQL Server 集成服务 (SSIS) 程序集/扩展选择删除选项设计过程配置
+### DelayString 包参数 DelayString 参数执行执行超时文字覆盖进度选项卡
+### RunForSomeTime.dtsx SQL 任务执行 SSIS 目录报告同步属性 WaitForQuery 变量
+### 执行计划项目配置属性解决方案资源管理器解决方案过程 SSIS 2017 版本
+### TaskType 属性测试无错误编辑器表达式页面无错误包 SettingsView 工具箱
+### 工具箱虚拟文件夹
+### SQL Server Management Studio (SSMS) 同步执行属性异步执行严重错误
+### executeSynchronous 方法 MaximumRetries、RetryIntervalSeconds/OperationTimeoutMinutes 自动重置选项
+### 执行过程 OperationTimeoutMinutes 属性 SettingsView.cs 文件源代码测试属性
+### 计时器检测测试 WaitHandle.WaitAny 解决方案
+
+## T
+
+### 任务编辑器类库 (.NET Framework) 单击事件/窗体 ExecuteCatalogPackageTaskUIForm 构造函数
+### ExecuteCatalogPackageTaskUI.GetView() 窗体类窗体构造函数导入语句属性
+### 属性映射 ServerName 属性语句 TaskHost 声明编码窗体 ExecuteCatalogPackageTaskUI
+### 实现构造函数错误列表显示 ExecuteCatalogPackageTaskUI.cs 类 IDtsTaskUI 接口
+### 接口实现要求 System.Windows.Forms taskHostValue 变量命名项目
+### 项目模板引用重命名操作解决方案资源管理器用户界面窗体删除方法
+### ExecuteCatalogPackageTaskUI 类 GetView 方法 IDtsTaskUI.Delete 初始化方法新窗体重命名窗体
+### 任务编辑器项目、签名绑定任务生成输出路径生成解决方案功能附加程序集
+### ExecuteCatalogPackageTask 项目执行方法 Microsoft.SqlServer.ConnectionInfo 包执行代码引用程序集
+### 引用图标文件生成操作属性 DtsTask 装饰 ExecuteCatalogPackageTaskForm ExecuteCatalogPackageTask 项目
+### 窗体选择对话框属性选择解决方案资源管理器文本属性更新 DtsTask 装饰
+### 生成后生成事件生成前生成事件测试控制流编辑器/配置执行报告
+### 对象资源管理器 SSIS 工具箱任务执行 UI 项目测试编辑器外观和功能
+### 目录包任务类别和属性控制流文件夹下拉列表文件夹属性包属性
+### 项目属性 SettingsView 方法 SourceConnection 属性 SQL Server 实例 SSIS 目录项目
+### SSMS 对象资源管理器验证错误视图执行异步事件消息异步执行配置
+### 事件消息检测消息较长时间同步 MaximumRetries 非同步执行
+### 进度/执行结果选项卡 SSIS 包执行同步执行同步事件消息
+### SSIS 工具箱任务存在用例验证视觉检查
+### 线程管理 Throw 语句
+
+## U
+
+### 统一资源标识符 (URI) SeeShared Access Signature (SAS)
+
+## V
+
+### 验证 attemptConnection 辅助函数连接辅助函数
+### AcquireConnection 方法 attemptConnection returnConnection 和 attemptConnection SourceConnection 属性
+### 测试删除选项 DTSExecResult 变量错误消息更快更好的代码文件夹属性
+### HadACatalog 实例包属性项目属性 SSIS 目录 validateResult
+### Visual Studio 管理员书签代码连接错误生成操作代码更改配置连接链接
+### ExecuteCatalogPackageTask 图标文件生成操作本地存储库 PackageInfo.Execute 超时插件选择
+### 恢复引用源代码源代码管理选项启动屏幕显示任务安装日志
+### 团队资源管理器视图用户账户控制 xp_msver
+
+## W
+
+### WaitHandle.WaitAny 方法 CheckOperationStatus 方法 CheckWaitState 错误实现操作状态
+### returnExecutionValueParameterSet 方法 returnOperationStatus 同步执行 TimerCheckerState
+
+## X, Y, Z
+
+### Execute 方法异步执行 evaluateStatus 辅助方法事件消息
+### ExecuteCatalogPackage 函数 Execute 方法 executeSynchronous 计时器滴答配置
+### Main() 方法代码进度选项卡 ReportAndFail.dtsx returnOperationStatus 方法 RunForSomeTime.dtsx 包
+### stopExecution 方法同步执行 WaitHandle.WaitAny

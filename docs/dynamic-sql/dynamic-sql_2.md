@@ -1,0 +1,8660 @@
+# 2. 防范 SQL 注入
+
+很少有 SQL 漏洞像 SQL 注入那样被频繁利用。这种形式的数据库攻击已经摧毁了公司并毁掉了职业生涯，对数据库管理员来说是一个持续的挑战。作为数据库专业人员，数据是你最宝贵的资产，保护它是你高于一切的责任。SQL 注入不仅限于动态 SQL，它是一种可以应用于 SQL Server 许多领域的技术。因此，在考虑 SQL Server 安全性时，理解并防御它是最重要的优先事项。
+
+
+### 什么是 SQL 注入？
+
+SQL 注入是指黑客试图将恶意的 T-SQL 代码插入到动态 SQL 所使用的参数中。请考虑清单 2-1 中所示的示例。
+
+```
+DECLARE @CMD NVARCHAR(MAX);
+DECLARE @search_criteria NVARCHAR(1000);
+SELECT @CMD = 'SELECT * FROM Person.Person
+WHERE FirstName = ''';
+SELECT @search_criteria = 'Edward';
+SELECT @CMD = @CMD + @search_criteria;
+SELECT @CMD = @CMD + '''';
+PRINT @CMD;
+EXEC sp_executesql @CMD;
+清单 2-1.
+动态 SQL，SQL 注入入门
+```
+
+我们对 `Person.Person` 表执行搜索，查找名字与传入此代码的 `@search_criteria` 值匹配的任何人。生成的命令字符串正如您所期望的那样：
+
+```
+SELECT * FROM Person.Person
+WHERE FirstName = 'Edward'
+```
+
+随着时间的推移，这个搜索被非常非常多的人使用，并扩展到也可以按姓氏、中间名首字母、称谓、电子邮件地址等搜索人！最终，一个姓“O'Brien”的人尝试搜索他们的记录，如清单 2-2 所示。
+
+```
+DECLARE @CMD NVARCHAR(MAX);
+DECLARE @search_criteria NVARCHAR(1000);
+SELECT @CMD = 'SELECT * FROM Person.Person
+WHERE LastName = ''';
+SELECT @search_criteria = 'O''Brien';
+SELECT @CMD = @CMD + @search_criteria;
+SELECT @CMD = @CMD + '''';
+EXEC sp_executesql @CMD;
+清单 2-2.
+使用带有撇号的输入值
+```
+
+结果并非用户所期望的。他们没有得到自己的信息，而是得到了一个 SQL Server 错误：
+
+```
+Msg 102, Level 15, State 1, Line 322
+Incorrect syntax near 'Brien'.
+Msg 105, Level 15, State 1, Line 322
+Unclosed quotation mark after the character string ''.
+```
+
+回到命令字符串并验证其外观是否正确，您会注意到以下情况：
+
+```
+SELECT * FROM Person.Person
+WHERE LastName = 'O'Brien'
+```
+
+“O'Brien”中的撇号破坏了命令字符串，在“O'Brien”的“O”之后关闭了字符串。您的朋友 O'Brien 没有收到预期的数据，而是收到了一个令人费解的错误，并联系您的服务台以查明这个 Web 应用程序为何损坏。这是可能发生情况的最佳场景。用户耸耸肩，并向您的组织提交一个事件来修复此错误，以便他可以在没有奇怪错误消息的情况下搜索他的信息。
+
+让我们考虑另一个例子，其中最终用户更懂技术并且更具恶意。她输入一个带撇号的字符串并返回一条错误消息。她没有向您报告错误，而是灵光一现，开始编写自己的 T-SQL，如清单 2-3 所示。
+
+```
+DECLARE @CMD NVARCHAR(MAX);
+SELECT @CMD = 'SELECT * FROM Person.Person
+WHERE LastName = ''';
+SELECT @search_criteria = 'Smith'' OR 1 = 1 AND '''' = ''';
+SELECT @CMD = @CMD + @search_criteria;
+SELECT @CMD = @CMD + '''';
+EXEC sp_executesql @CMD;
+清单 2-3.
+黑客如何开始对不安全的动态 SQL 使用 SQL 注入
+```
+
+这个狡猾的用户立即意识到该站点容易受到 SQL 注入攻击，并开始修改搜索参数，直到找到一个允许她从该表中提取所有个人数据的参数，而不仅仅是她自己的。通过在 `Smith` 后添加两个撇号，这位不速之客已返回到主 T-SQL 查询，并在末尾附加了 `OR 1 = 1`。最后，她在末尾添加了一些额外的撇号，以正确完成命令字符串并避免语法错误。生成的命令字符串如下：
+
+```
+SELECT * FROM Person.Person
+WHERE LastName = 'Smith' OR 1 = 1 AND '' = ''
+```
+
+`Smith` 这个姓氏与攻击无关。通过添加一个始终为真的条件，黑客有效地绕过了 `WHERE` 子句，并获得了对表中所有数据的访问权限。仅用一条语句，这个黑客就窃取了数万行个人数据，并开始了一次数据泄露，这将对任何被其针对的组织造成巨大伤害！
+
+如果用户名和密码提示是通过动态 SQL 管理的，那么类似的攻击将导致某人获得对未经授权使用的软件应用程序的访问权限。考虑清单 2-4 中的动态 SQL，它验证用户的 ID 和密码。
+
+```
+DECLARE @sql_command NVARCHAR(MAX);
+DECLARE @id INT = 3;
+DECLARE @password NVARCHAR(128) = '';
+SELECT @sql_command = '
+SELECT
+*
+FROM Person.Password
+WHERE BusinessEntityID = ' + CAST(@id AS NVARCHAR(25)) + '
+AND PasswordHash = ''' + @password + ''''
+EXEC (@sql_command)
+清单 2-4.
+验证用户/密码组合的动态 SQL
+```
+
+任何不正确的密码猜测都将导致登录失败，并且不返回结果。但是，如果黑客尝试使用 SQL 注入来完全绕过登录验证怎么办？以下用于 `@password` 的字符串将足以完全使此安全检查失效：
+
+```
+''' OR 1 = 1 AND '''' = '''
+```
+
+通过在条件中包含 `OR`，恶意用户可以找到使用任何用户登录的方法，甚至是管理员。由于这些登录从应用程序的角度看可能是合法的，因此这种攻击可能在为时已晚之前一直未被察觉。
+
+类似地，`UNION ALL` 可以在不触发任何错误的情况下选择额外的数据，如清单 2-5 所示。
+
+```
+DECLARE @sql_command NVARCHAR(MAX);
+DECLARE @id INT = 3;
+DECLARE @password NVARCHAR(128) = ''' UNION ALL SELECT * FROM Person.Password WHERE '''' = ''';
+SELECT @sql_command = '
+SELECT
+*
+FROM Person.Password
+WHERE BusinessEntityID = ' + CAST(@id AS NVARCHAR(25)) + '
+AND PasswordHash = ''' + @password + ''''
+EXEC (@sql_command)
+清单 2-5.
+通过 SQL 注入使用 UNION ALL 来收集额外的安全数据
+```
+
+在此示例中，允许使用空白密码执行原始查询，但附加了一个额外的 `SELECT` 语句，该语句返回 `Password` 表的全部内容。生成的命令字符串如下所示：
+
+```
+SELECT
+*
+FROM Person.Password
+WHERE BusinessEntityID = 3
+AND PasswordHash = '' UNION ALL SELECT * FROM Person.Password WHERE '' = ''
+```
+
+这要更难实现一些，因为两个表需要具有相同的结构，以便在第一个表的列与第二个表不匹配时防止语法错误。不过，如果有时间，黑客可以找到解决此问题的方法，例如向附加表中添加虚拟列、选择特定列或使用 `COLLATE` 来确保语言和区域设置匹配。在此处确定表名以利用它们是猜测的问题，但稍后您将了解黑客如何通过更隐蔽的方式确定它们的方法。
+
+涉及用户名/密码场景的类似攻击是使用注释来删除剩余的 T-SQL，以便用户名被验证，但密码不被验证。此数据库模式是假设的，但用例非常常见，如清单 2-6 所示。
+
+```
+DECLARE @sql_command NVARCHAR(MAX);
+DECLARE @username NVARCHAR(128) = 'edward';
+DECLARE @password NVARCHAR(128) = 'my_password';
+SELECT @sql_command = 'SELECT
+*
+FROM dbo.password
+WHERE username = ''' + @username + ''' AND Password = ''' + @password + '''';
+EXEC(@sql_command);
+清单 2-6.
+用户/密码验证语句
+```
+
+攻击者可能看到这里可能存在 SQL 注入，并尝试通过为用户名输入以下内容来完全移除密码因素：
+
+```'administrator'' --'```
+
+得到的命令字符串显示，`WHERE`子句的剩余部分被注释掉了，从而绕过了密码检查：
+
+```SELECT
+*
+FROM dbo.password
+WHERE username = 'administrator' --' AND Password = 'my_password'```
+
+一个未闭合的注释分隔符 `/*` 可能会被尝试用于绕过多行查询，或那些已采取一些防护措施的查询。
+
+对于一个熟练的黑客来说，这仅仅是个开始。从这里起，他们可以开始测试你数据库的结构，了解表、存储过程、视图的名称，以及应用程序运行所使用的用户的安全权限。为了做到这一点，他们会不断改写搜索框的输入，试图获取更多信息，如代码清单 2-7 所示。
+
+```DECLARE @CMD NVARCHAR(MAX);
+DECLARE @search_criteria NVARCHAR(1000);
+SELECT @CMD = 'SELECT * FROM Person.Person
+WHERE LastName = ''';
+SELECT @search_criteria = 'Smith''; SELECT * FROM sys.tables WHERE '''' = '''
+SELECT @CMD = @CMD + @search_criteria;
+SELECT @CMD = @CMD + '''';
+EXEC sp_executesql @CMD;
+代码清单 2-7.
+从输入参数中闭合动态 SQL 字符串以探测模式对象```
+
+经过对撇号的一番尝试，黑客已经弄明白了如何闭合搜索语句并开始一个属于自己的新语句。通过从 `sys.tables` 选择数据，他现在已经收集了数据库中所有表的列表。如果他无法访问系统视图，那么猜测仍然会产生一些结果，因为大多数数据库的对象名称在某种程度上是可预测的。更多的猜测会导致更高的风险，因为许多失败的 `TSQL` 语句或单个用户由此搜索产生的高活动量最终可能会引起怀疑。不幸的是，大多数公司没有时间或资源来持续监控和守护他们的网络日志。通常，这些漏洞在数据被盗后才被发现，为时已晚。
+
+黑客的下一步将是识别感兴趣的特定表：那些包含密码、信用卡号或其他有价值数据的表。此外，他现在可以运行应用程序用户有权限执行的任何 `SQL` 语句，而不会产生进一步的错误，如代码清单 2-8 所示。
+
+```DECLARE @CMD NVARCHAR(MAX);
+DECLARE @search_criteria NVARCHAR(1000);
+SELECT @CMD = 'SELECT * FROM Person.Person
+WHERE LastName = ''';
+SELECT @search_criteria = 'Smith''; SELECT * FROM Person.Password WHERE '''' = '''
+SELECT @CMD = @CMD + @search_criteria;
+SELECT @CMD = @CMD + '''';
+EXEC sp_executesql @CMD;
+代码清单 2-8.
+使用 SQL 注入自由收集密码数据```
+
+此时，黑客可以获取他能从数据库中收集的任何数据。如果你幸运的话，关键数据会被加密，这降低了立即访问敏感数据的可能性。然而，拥有这种级别的数据库访问权限，黑客可能能够收集足够的额外信息来访问其他系统，并最终解密那些数据。这是一个极好的例子，说明了为什么高权限账户（如 `sa`）绝不应在应用程序登录的上下文中使用。
+
+有一个最坏的情况，在近代历史中已经多次上演。如果黑客想要搞破坏，他可以利用新发现的数据库访问权限来删除数据、截断（truncate）或删除（drop）表，甚至从磁盘删除备份文件。他如何访问磁盘上的文件？如果你的服务器上启用了 `xp_cmdshell`，那么黑客可能能够使用它来访问从那里直接可访问的任何数据。他还可能调整服务器设置、更改数据库和服务器安全性、添加或删除用户等等。此时的限制只受限于你的想象力。
+
+请在所有可从内部网络外部访问的数据库服务器上禁用 `xp_cmdshell`。作为额外的安全措施，在任何非绝对需要的地方禁用它！
+
+除了 `xp_cmdshell`，其他系统存储过程也应该限制其安全性。`xp_regread`、`xp_regwrite`、`xp_servicecontrol`、`xp_loginconfig`、`sp_addextendedproc` 以及许多其他过程可以提供远超你期望的对服务器和操作系统的访问权限。务必要限制对这些过程的访问，以便任何不需要它们的用户无法使用它们。其他可能危险的函数包括 `HOST_NAME()`、`OPENQUERY()`、`OPENROWSET()`、`SHUTDOWN` 和 `KILL`。
+
+另一种使情况雪上加霜的情形是，黑客希望从他们的行动中获利。他们可能会试图敲诈你的公司，以图从其努力中获利：“付钱，否则就看着你珍贵的数据化为灰烬！”更复杂的情况是，黑客试图通过发起 `DDOS`（分布式拒绝服务）攻击来掩盖其数据盗窃行为。大量涌入的 Web/数据请求会压垮你的 Web 服务器，使你无暇顾及他们的真实意图。
+
+还有额外的 `SQL` 注入攻击被记录在案，其中黑客并未窃取数据、删除表或以其他方式立即暴露自己的存在。相反，她会利用新发现的访问权限修改网页代码，插入指向病毒、恶意软件或其他恶意代码的链接，这些恶意代码可以攻击任何访问该网页的人。这极大地扩展了攻击范围，并可能导致重大损害，直到目标意识到发生了什么，移除恶意代码，并修补最初的 `SQL` 注入目标。
+
+这些场景很可怕，但绝非睡前故事出了错。在本章的剩余部分，我们将讨论这种噩梦般的情况，包括你可以采取哪些步骤来缓解导致数据库服务器被外部人员渗透的每一个错误。
+
+
+### 输入净化
+
+防范 SQL 注入的第一步是确保所有输入都是干净的，不会传入无效数据。这是开发人员（通过代码）和数据库管理员（通过 SQL）共同承担的责任。在理想的环境下，输入应在执行的各个阶段都得到净化。最初提示输入的网页或应用程序应努力确保不允许无效条目。一些常见的方法包括：
+
+*   为用户生成自定义错误消息，提示其输入了无效字符或文本。
+*   剥离无效字符，并允许执行继续进行。
+*   为输入数据定义角色，如果条目不符合特定格式，则向用户抛出错误。例如，出生日期可以是 MMDDYYYY 格式，并禁止所有其他条目。
+*   实施一个软件框架，自动为你处理输入净化。
+
+这些努力将极大增强安全性，并确保最终用户能立即收到关于其输入数据的反馈。一个好的应用程序至少会实施其中一种保护措施，但很可能是几种。一个出色的应用程序会实施所有这些措施，即使这些努力看起来冗余或不必要。作为数据库专业人员，你会希望有这些保护措施，但不能依赖它们。确保所有传递到你的`TSQL`中的参数都以同样的勤勉程度进行净化，是你的责任。在软件应用程序的所有层上都这样做，可以在发生错误时确保最高级别的保护。
+
+SQL Server 错误消息应始终在内部通过代码进行处理，永远不要暴露给最终用户。相反，应向他们提供友好的错误消息和报告说明。
+
+净化输入的最简单方法是在代码开头直接处理它们。为了使示例代码尽可能易于阅读，对于任何可重用代码，我们将继续使用存储过程。清单 2-9 重新审视了之前的搜索，并在开头添加了一些基本的输入净化。
+
+```sql
+CREATE PROCEDURE dbo.search_people
+(@search_criteria NVARCHAR(1000) = NULL) -- This comes from user input
+AS
+BEGIN
+SELECT @search_criteria = REPLACE(@search_criteria, '''', '''''');
+DECLARE @CMD NVARCHAR(MAX);
+SELECT @CMD = 'SELECT * FROM Person.Person
+WHERE LastName = ''';
+SELECT @CMD = @CMD + @search_criteria;
+SELECT @CMD = @CMD + '''';
+PRINT @CMD;
+EXEC sp_executesql @CMD;
+END
+GO
+EXEC dbo.search_people 'Smith';
+EXEC dbo.search_people 'O''Brien';
+EXEC dbo.search_people ''' SELECT * FROM Person.Password; SELECT ''';
+```
+清单 2-9. 基本输入净化的搜索过程
+
+此存储过程在顶部包含一个补充：所有撇号实例都被替换为一对撇号。这保证了如果有人输入撇号，它们不会破坏字符串并导致立即错误或明显的 SQL 注入漏洞。三次执行的结果如下：
+
+```sql
+SELECT * FROM Person.Person
+WHERE LastName = 'Smith'
+SELECT * FROM Person.Person
+WHERE LastName = 'O''Brien'
+SELECT * FROM Person.Person
+WHERE LastName = ''' SELECT * FROM Person.Password; SELECT '''
+```
+
+在第一个例子中，输入了`Smith`，所有姓氏为`Smith`的人都像往常一样被返回。当一个姓`O'Brien`的人输入其姓氏时，撇号被加倍，搜索他的名字，并且结果正常找到，没有任何错误消息。当任何恶意用户试图访问数据库中的密码时，他们得到的是一个空的结果集。由于在所有情况下撇号都被加倍，这一串试图进行的 SQL 注入就变成了一个没有漏洞的无害字符串。
+
+SQL Server 有一个内置函数，其目的是确保字符串内容被正确分隔。`QUOTENAME`接受两个参数：要净化的字符串和将被验证的字符。清单 2-10 中的存储过程与上面类似，但`REPLACE`操作已更新为使用`QUOTENAME`。
+
+```sql
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'search_people')
+DROP PROCEDURE search_people;
+GO
+CREATE PROCEDURE dbo.search_people
+(@search_criteria NVARCHAR(1000) = NULL) -- This comes from user input
+AS
+BEGIN
+DECLARE @CMD NVARCHAR(MAX);
+SELECT @CMD = 'SELECT * FROM Person.Person
+WHERE LastName = ';
+SELECT @CMD = @CMD + QUOTENAME(@search_criteria, '''');
+PRINT @CMD;
+EXEC sp_executesql @CMD;
+END
+GO
+EXEC dbo.search_people 'Smith';
+EXEC dbo.search_people 'O''Brien';
+EXEC dbo.search_people ''' SELECT * FROM Person.Password; SELECT ''';
+```
+清单 2-10. 使用 QUOTENAME 实现的输入净化搜索过程
+
+`QUOTENAME`为你处理了撇号净化，因此你不再需要用额外的撇号包裹命令字符串的姓氏部分。此存储过程的输出与上一个例子完全相同。每个姓名都用撇号正确分隔，以确保搜索条件不会导致任何错误发生的机会。除了撇号，`QUOTENAME`还可用于分隔方括号（`[`、`]`）以及引号（`"`）。
+
+
+
+### 参数化动态 SQL
+
+手动使用 `REPLACE` 或 `QUOTENAME` 清理输入，相比毫无防护是**巨大的进步**。这将有助于防范最常见的 SQL 注入攻击，但并不完美。手动输入清理确保某些字符组合被替换为更理想的选项，但其安全性仍取决于你是否在所有使用输入的地方都警惕地进行转义。这往往是一个手动过程，要求数据库开发者必须记住在所有的动态 SQL 语句中正确结合使用 `REPLACE` 或 `QUOTENAME`。
+
+一个更可靠的选择是将责任从开发者转移到 `sp_executesql` 上。这个多功能的存储过程可以接受输入参数，并在执行过程中自动清理它们。考虑一下这个存储过程的新版本，如清单 2-11 所示。
+
+```
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'search_people')
+DROP PROCEDURE search_people;
+GO
+CREATE PROCEDURE dbo.search_people
+(@search_criteria NVARCHAR(50) = NULL) -- 此参数来自用户输入
+AS
+BEGIN
+DECLARE @CMD NVARCHAR(MAX);
+SELECT @CMD = 'SELECT * FROM Person.Person
+WHERE LastName = @search_criteria';
+PRINT @CMD;
+EXEC sp_executesql @CMD, N'@search_criteria
+NVARCHAR(1000)', @search_criteria;
+END
+Listing 2-11.
+带参数的搜索过程
+```
+
+为 `sp_executesql` 进行参数化，其语法分为三部分：
+
+*   要执行的命令字符串 (`@CMD`)
+*   参数列表，包括每个参数的数据类型 (`N'@search_criteria NVARCHAR(1000)'`)
+*   从存储过程传入的参数 (`@search_criteria`)
+
+此存储过程的结果与之前所有的输入清理示例相同。在这种情况下，`sp_executesql` 将自行处理清理工作，确保输入被正确分隔，而无需你提供任何进一步的指令。参数列表也可以存储为一个单独的变量。当参数很多、希望在执行前修改此列表，或者希望 `sp_executesql` 命令尽可能简短清晰时，这会非常有用。
+
+```
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'search_people')
+DROP PROCEDURE search_people;
+GO
+CREATE PROCEDURE dbo.search_people
+(@search_criteria NVARCHAR(1000) = NULL) -- 此参数来自用户输入
+AS
+BEGIN
+DECLARE @CMD NVARCHAR(MAX);
+DECLARE @parameter_list NVARCHAR(MAX) = N'@search_criteria NVARCHAR(1000)';
+SELECT @CMD = 'SELECT * FROM Person.Person
+WHERE LastName = @search_criteria';
+PRINT @CMD;
+EXEC sp_executesql @CMD, @parameter_list, @search_criteria;
+END
+Listing 2-12.
+使用单独参数变量的参数化搜索过程
+```
+
+注意添加了变量 `@parameter_list`，它为存储输入参数列表提供了一个独立的位置。添加此参数是可选的，但有助于提高动态 SQL 执行语句的可读性。
+
+使用 `sp_executesql` 并将所有参数传递给它，可以确保所有输入都被正确分隔，从而防止通过这些输入进行 SQL 注入攻击。
+
+参数列表字符串 (`@parameter_list`) 包含所有与动态 SQL 命令字符串内文本相对应的参数名称。输入参数 (`@search_criteria`) 对应于从动态 SQL 外部单独传入的参数。两个列表中的参数名称可以不同，命名约定由你决定。但请保持一致性，以免让未来的开发者面对每一行 T-SQL 都感到困惑。
+
+`sp_executesql` 语句中允许多少个参数？答案基于 SQL Server 内置的存储过程参数限制。任何存储过程的限制是 2100 个，但对于 `sp_executesql`，命令字符串和参数列表本身也算作参数，因此你实际上有 2098 个参数的限制，这对于即使是最疯狂的程序员来说也应该是绰绰有余了！
+
+前面的例子展示了一个带单个参数的动态 SQL 语句。清单 2-13 展示了具有多个参数时的样子，并且内部和外部的名称是不同的。
+
+```
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'search_people')
+DROP PROCEDURE search_people;
+GO
+CREATE PROCEDURE dbo.search_people
+(@FirstName NVARCHAR(50) = NULL,
+@MiddleName NVARCHAR(50) = NULL,
+@LastName NVARCHAR(50) = NULL,
+@EmailPromotion INT = NULL)
+AS
+BEGIN
+DECLARE @CMD NVARCHAR(MAX);
+DECLARE @parameter_list NVARCHAR(MAX) = N'@FirstName NVARCHAR(50), @MiddleName NVARCHAR(50), @LastName NVARCHAR(50), @EmailPromotion INT';
+SELECT @CMD = 'SELECT * FROM Person.Person
+WHERE 1 = 1';
+IF @FirstName IS NOT NULL
+SELECT @CMD = @CMD + '
+AND FirstName = @FirstName'
+IF @MiddleName IS NOT NULL
+SELECT @CMD = @CMD + '
+AND MiddleName = @MiddleName'
+IF @LastName IS NOT NULL
+SELECT @CMD = @CMD + '
+AND LastName = @LastName'
+IF @EmailPromotion IS NOT NULL
+SELECT @CMD = @CMD + '
+AND EmailPromotion = @EmailPromotion';
+PRINT @CMD;
+EXEC sp_executesql @CMD, @parameter_list, @FirstName, @MiddleName, @LastName, @EmailPromotion;
+END
+Listing 2-13.
+具有多个可选参数的搜索过程
+```
+
+这个搜索存储过程有一些有趣的变化。首先，现在有四个参数传入存储过程。注意 `sp_executesql` 命令的语法：首先是命令字符串，然后是内部参数列表，接着是每个单独传入的参数。确保每个列表中的参数顺序匹配至关重要；否则，你可能会将名字传成姓氏，或者更糟，在期望整数的地方传入了字符串。
+
+这个存储过程的第二个显著变化是所有参数都是可选的。为了实现这一点，`WHERE 1 = 1` 是第一个 `WHERE` 子句，后面跟着每个参数条件。这确保了如果所有参数都是 `NULL`，你不会剩下一个悬空的 `WHERE` 关键字而后面没有任何子句；否则将导致错误。考虑以下存储过程的执行：
+
+```
+EXEC dbo.search_people 'Edward', 'H', 'Johnson', 1
+EXEC dbo.search_people 'Edward', NULL, NULL, 1
+EXEC dbo.search_people
+```
+
+第一个例子提供了所有参数的值，将从 `Person.Person` 表返回一行。TSQL 命令字符串将如下所示：
+
+```
+SELECT * FROM Person.Person
+WHERE 1 = 1
+AND FirstName = @FirstName
+AND MiddleName = @MiddleName
+AND LastName = @LastName
+AND EmailPromotion = @EmailPromotion
+```
+
+第二个例子将中间名和姓氏设为 `NULL`，得到的命令字符串是：
+
+```
+SELECT * FROM Person.Person
+WHERE 1 = 1
+AND FirstName = @FirstName
+AND EmailPromotion = @EmailPromotion
+```
+
+最后一个例子没有提供任何参数，并说明了 `WHERE 1 = 1` 占位符的重要性，当你不知道会提供哪些参数（如果有的话）时，它能保持良好的语法结构：
+
+```
+SELECT * FROM Person.Person
+WHERE 1 = 1
+```
+
+在任何大型应用程序中，如果你搜索的表包含数千（或数百万）行，你可能不希望允许这样的空搜索。通常要求至少一个搜索参数是有益的，这可以防止用户盲目地返回所有数据。将数据库返回的行数限制在一个相对较小的数字也是值得的。常见的默认值包括 10、25、50 和 100，这确保你永远不会无意中允许用户一次查询表中的数百万行。
+
+
+
+仅使用 `sp_executesql` 并不足以确保防御 SQL 注入攻击。所有参数必须如最后几个示例所示，明确地传递到 `sp_executesql` 中。如果参数直接拼接到命令字符串中而未传递到 `sp_executesql`，这些输入将可能通过利用撇号（如先前演示以及本章后续示例所示）而遭受 SQL 注入攻击。务必确保用户没有机会在未进行适当输入清洗的情况下，将其搜索文本直接并入命令字符串！
+
+#### 模式名与方括号
+
+此惯例同样适用于编写标准 SQL 和动态 SQL。当查询动态定义的数据库对象（如表、视图、列或存储过程）时，您无法对这些数据库对象进行参数化。缺乏这种保护，您的 TSQL 将面临潜在的 SQL 注入攻击风险。请思考清单 2-14 中的 TSQL 查询。
+
+```sql
+DECLARE @table_name SYSNAME = 'ErrorLog';
+DECLARE @CMD NVARCHAR(MAX);
+SELECT @CMD = 'SELECT * FROM ' + @table_name;
+PRINT @CMD;
+EXEC sp_executesql @CMD;
+```
+
+清单 2-14. 无 SQL 注入防护的动态表查询
+
+执行此代码将返回 `ErrorLog` 表中的所有行。与之前的示例类似，这个在运行时定义要查询的表的查询，很容易成为 SQL 注入的目标。以下针对 `@table_name` 的恶意输入将导致除了 `ErrorLog` 表之外，`Person.Password` 表的内容也被返回给用户：
+
+```sql
+'ErrorLog; SELECT * FROM Person.Password WHERE '''' = ''''';
+```
+
+一个简单的防御方法是显式包含模式名（即使是默认模式）。此外，为所有对象加上方括号，这将进一步限定 SQL 语句并限制攻击者的能力。
+
+```sql
+DECLARE @table_name SYSNAME = 'ErrorLog; SELECT * FROM Person.Password WHERE '''' = ''''';
+DECLARE @CMD NVARCHAR(MAX);
+SELECT @CMD = 'SELECT * FROM [dbo].[' + @table_name + ']';
+PRINT @CMD;
+EXEC sp_executesql @CMD;
+```
+
+清单 2-15. 添加了模式和方括号的动态表查询
+
+执行这个新版本将产生如下命令字符串：
+
+```sql
+SELECT * FROM [dbo].[ErrorLog; SELECT * FROM Person.Password WHERE '' = '']
+```
+
+执行该 TSQL 将在运行时导致错误：
+
+```sql
+Msg 208, Level 16, State 1, Line 142
+Invalid object name 'dbo.ErrorLog; SELECT * FROM Person.Password WHERE '' = '''.
+```
+
+添加模式名和使用方括号限定，使这个简单的 SQL 注入尝试失败了。假设错误消息被应用程序捕获并返回一个友好的错误，用户将无法确切知道发生了什么。当然，这并非万无一失，非常执着的黑客会继续尝试输入各种命令字符串，直到他们摸清规律并尝试以下输入：
+
+```sql
+'ErrorLog]; SELECT * FROM [Person].Password'
+```
+
+通过闭合方括号，然后用他们的表名重新打开方括号，他们成功绕过了针对此查询的安全防护。虽然您可以采取进一步措施来复杂化命令字符串以挫败潜在的黑客，但这仍然会涉及安全风险。
+
+如前所述，任何未使用 `sp_executesql` 对所有输入进行参数化的命令字符串，都可能容易受到 SQL 注入攻击。一般来说，除非您确定不会有外部访问此系统，否则应避免将数据库对象用作动态 SQL 参数。无论面向何种用户，都应使用 `QUOTENAME` 来正确限定您的参数。虽然它们无法直接传递到 `sp_executesql`，但这至少能确保它们不会像之前展示的那样被利用。
+
+对于仅供 DBA 或开发人员使用的内部过程，这类动态 SQL 语句是合理的，但仍应谨慎。一旦任何未知方（如非技术部门、终端用户或整个互联网）能够访问，风险级别将急剧上升。在以任何形式向外部方提供存储过程之前，务必考虑您的受众，并确保他们无法利用您的代码。即使这些过程是内部使用且被认为安全，运用每一种安全预防措施和 TSQL 最佳实践仍然至关重要。看似不太可能发生的事件，如恶意用户、心怀不满的员工或社会工程攻击，其发生频率之高，足以在任何情况下都不应被视为无关紧要。
+
+#### 有效间距
+
+清单 [2-6 中的示例展示了一种场景：攻击者利用注释移除了登录脚本中的密码检查。此漏洞的主要原因是缺乏参数化或输入清洗，但次要原因是整个 `WHERE` 子句位于单行上。
+
+我不确定是什么驱使任何人将动态 SQL 全部或大部分写在一行上，但这除了使其难以阅读外，还增加了 SQL 注入被用于攻击编写不当的查询的方式。以与标准 SQL 相同的格式和细致程度来编写动态 SQL，不仅会使其更易于维护，而且还将从攻击者的武器库中移除一种非常简单的 SQL 注入攻击方法。
+
+##### 正确输入类型
+
+除了清洗输入外，始终为输入使用正确的数据类型也很重要。SQL 注入专门针对字符串输入，可以在其中插入撇号和恶意的 SQL 代码。非文本数据类型，如 `BIT`、`INT` 或 `DATETIME`，不能成为 SQL 注入的目标。
+
+一些应用程序为了方便，将所有（或大多数）输入参数编写为字符串。使用字符串时，在将它们与动态 SQL 命令字符串拼接时，无需强制转换或转换为字符串。虽然这可能会略微减少开发时间，但它增加了理论上可能遭受 SQL 注入的输入数量。
+
+如果正在评估的任何数据类型本质上不是字符串，请确保它至少在传递到您的存储过程之前存储为非字符串类型。一旦执行将这些参数传递到 TSQL 中，它们就可以被强制转换为字符串并在动态 SQL 中使用，而不会有 SQL 注入的风险。如果需要，可以在存储过程中声明字符串变量，然后用上述转换后的类型填充。由于转换是 SQL Server 内部的，与存储过程外部无关，因此它也免受 SQL 注入的影响。
+
+务必确保数据类型正确。将值存储为非字符串类型可确保它们不会成为 SQL 注入的目标。
+
+同样，确保应用程序始终验证输入，以确保它们符合预期类型。作为字符串传递到 TSQL 语句中的整数可能允许将算术运算安全地嵌入字符串中。如果恶意用户意识到他们可以将 `"5"` 替换为 `"5 + 1"`，那么他们会立即开始探测其他非字符串输入，以确定它们是否被盲目转换为字符串。参数从用户输入的那一刻起，直到被存储过程使用，都应该具有正确的类型。这可以防止任何被操纵的机会，此外还能降低复杂性和开发人员因混淆数据类型而犯错的可能性。
+
+
+
+### 盲注 SQL 注入
+
+即使黑客无法通过 SQL 注入获得对数据库服务器的完全访问权限，他们仍然可以利用某些查询元素来逐步获取有关服务器、其安全设置和数据的信息。这可以通过前面演示的 SQL 注入方法实现，也可以通过修改直接传递给应用程序的 URL 或其他数据来实现。
+
+这种攻击最简单的例子是修改 HTTP 字符串以查看用户原本无法访问的数据，例如用户个人资料、私人图片或即将进行的旅行计划。这种攻击几乎不需要 TSQL 知识，因此非常常见，通常是针对 Web 应用程序的首批尝试之一。防范这些数据窃取尝试的方法是确保网页本身不允许 URL 被随意修改。此外，如果对所有访问敏感数据的请求都验证用户、客户端或 Web 浏览器数据，那么拒绝未授权访问就会变得容易得多。
+
+如果黑客能通过动态 SQL 获得部分 SQL Server 访问权限，但受到安全限制，他们可以利用有限的权限探测服务器，逐步发现限制、安全设置、数据元素等。他们会发送 `IF` 语句形式的请求，这些语句的求值结果为真或假。或者，恶意用户可能提出导致错误消息的问题，从而根据语句是否抛出错误来判断结果。`TRY/CATCH` 可用于管理错误消息，从而减少这些查询对 Web 或数据库日志的影响。还可以使用延迟，根据响应完成所需的时间来帮助诊断响应。即使显示的是友好错误信息，该信息也能确认他们拥有足够的权限来查询服务器信息并且成功了。
+
+清单 2-16 展示了一些可能针对易受攻击的服务器发起的盲注 SQL 查询的简单示例。
+
+```
+IF CURRENT_USER = 'dbo' SELECT 1 ELSE SELECT 0;
+IF @@VERSION LIKE '%12.0%' SELECT 1 ELSE SELECT 0;
+IF (SELECT COUNT(*) FROM Person.Person WHERE FirstName = 'Edward' AND LastName = 'Pollack') > 0
+WAITFOR DELAY '00:00:05'
+ELSE
+WAITFOR DELAY '00:00:00';
+BEGIN TRY
+DECLARE @sql_command NVARCHAR(MAX);
+SELECT @sql_command = 'SELECT COUNT(*) FROM dbo.password;'
+EXEC (@sql_command)
+END TRY
+BEGIN CATCH
+SELECT 0
+END CATCH;
+清单 2-16.
+可能在盲注 SQL 注入攻击中使用的示例查询
+```
+
+前三个例子使用基本的“是/否”问题来尝试了解服务器信息。最后一个例子则更隐蔽，涉及创建额外的动态 SQL 来进一步探测数据库对象，而在此过程中不会引发数据库错误。如果存在语法错误，`TRY/CATCH` 就不起作用，因此查询无效表会返回错误消息。注入或追加额外的动态 SQL 可以让攻击者验证表的存在，而不会导致语法或解析错误。
+
+盲注是一种较慢的攻击方法，但随着时间的推移，它可以揭示系统的关键数据。每个查询都揭示一小块信息，在拥有足够数据后，黑客可能能够更改/绕过安全限制，从而像没有采取任何安全预防措施一样执行查询。
+
+### 检测与预防
+
+预防是防止 SQL 注入的最佳方式，但和任何大型软件系统一样，总会存在一些早于你编写的代码，其中可能包含安全漏洞。我们如何防御现有的威胁，或者那些我们尚未识别的威胁呢？
+
+#### 安全测试
+
+对于公司而言，让第三方供应商对其应用程序进行渗透测试已成为一项常规安全任务。这为公正的外部来源提供了一个机会，来探测你的环境中是否存在任何 SQL 注入（或其他漏洞）的常见迹象。或者，如果你有自己的工具集足以胜任，这些测试也可以内部进行。这是发现非常规、老旧或隐藏漏洞的绝佳方法。
+
+这类测试通常是为了满足合规标准而必须进行的，例如 HIPAA（健康保险流通与责任法案）。如果你在一家公司或一个行业中工作，其软件存储了敏感数据，请进行必要的研究，以确保你的安全测试和验证符合你所在行业的合规标准。如果你与其他国家的客户开展业务，可能还需要满足额外的合规要求。
+
+检测 SQL 注入漏洞最常见的方法包括：盲目地用各种注入语句填充应用程序输入，试图生成应用程序错误或诱导网页产生异常的 HTTP 响应。例如，执行一组有效的搜索并测量响应时间。接下来，向应用程序提供 SQL 注入语句。通过比较这些响应时间，可以判断注入的 SQL 是否被执行了。
+
+检查错误消息也很常见。如果一组典型的 SQL 注入语句能导致异常的应用程序或 SQL 错误，那么就存在进一步被利用的可能性。
+
+重要的是要理解，虽然安全公司拥有各种工具来防御 SQL 注入攻击，但黑客也拥有自己的一套类似工具。只要能证明存在任何安全漏洞，无论其可能性多小或多隐蔽，黑客都很可能最终会发现并立即加以利用。
+
+#### 应用程序流量扫描
+
+可以部署轻量级监视器来扫描传入流量，查找异常的数据模式。例如，从预期仅发送文本的应用程序中，是否有常见的 SQL 命令或语法被发送到你的数据库服务器？搜索分号、撇号或 TSQL 关键字（如 `SELECT`、`WHERE` 和 `FROM`）是定位和管理黑客攻击来源的有效方法。
+
+虽然这些扫描可能非常有用，但其价值完全取决于有效信息与干扰信息的比例。捕获 SQL 注入攻击的需求需要与应用程序流量中可能存在常见 SQL 字符或关键字的可能性进行权衡。实际上，任何对互联网开放的应用程序都会被黑客盲目地针对常见漏洞进行攻击。
+
+如果是这种情况，那么就需要你来确定正常一天的流量基线（在没有任何实际攻击发生的情况下）。一旦建立，你就可以将警报限制在可疑活动足够多、需要你进一步调查的场景。
+
+
+#### 日志审查
+
+与监控网络、应用程序或数据库流量类似，您可以定期扫描 Web 日志、应用程序日志或数据库错误日志，以确定是否有任何异常或值得关注的活动发生。可以进行与应用程序流量类似的搜索，结果可以随时间进行趋势分析，从而生成关于 SQL 注入尝试、常见目标和来源的概览。
+
+利用这些数据，您可以审查最常见的目标，并确保它们不易受 SQL 注入攻击。此外，您可以分析攻击来源，以确定是否存在任何模式。许多公司会阻止来自特定国家、域名或 IP 范围的 Web 流量，以便在不影响合法终端用户活动的情况下消除风险。
+
+请注意，出于安全考虑，密码更改请求默认情况下不会被记录。因此，如果注入的 TSQL 语句包含 `sp_password`，它们将避开 SQL Server 日志（尽管在应用程序或 Web 日志中它们仍会正常显示）。有许多可用的方法来审核密码更改，其中一些将在第 4 章中介绍。
+
+#### 代码审查
+
+所有新的应用程序代码都应遵循一个审查流程，由经验丰富的开发人员进行审查，并且所有 TSQL 都应由数据库管理员进行审查。如果数据库脚本包含动态 SQL，则可以重点关注，确保不存在 SQL 注入漏洞。即使审查快速且有针对性，也有可能发现并修复任何重大问题。即使只发现了一个漏洞，该流程本身在消除该漏洞方面也是完全合理的。
+
+对于更大、更旧的应用程序，对现有代码进行顺序审查可以提供额外的防御层以抵御攻击。虽然审查所有现有代码听起来很耗时，但您可以通过基于常见错误的存在进行过滤来大大减少审查量。例如，对于 SQL 注入审查，您可以特别筛选出数据库脚本/对象，并仅审查那些包含 `EXEC`、`sp_executesql` 或 `xp_cmdshell` 的脚本/对象。
+
+#### 软件补丁
+
+务必保持您的服务器处于最新状态！除了 SQL Server，还要及时更新您的操作系统、应用软件以及任何常用工具或框架的服务包和补丁。许多常用软件产品中每天都会发现漏洞，其中一些可能允许对您的数据进行未授权访问。
+
+虽然 SQL 注入通常与动态 SQL 相关联，但过去也曾发现过一种漏洞，即看似合法的 HTTP 或命令字符串从 Web 或其他应用程序直接传递到您的应用程序中。抵御此类意外攻击最现成的方法是定期审查应用程序的补丁说明。如果发现任何相关的安全漏洞，请立即修补。
+
+#### 限制 URL 长度
+
+如前所述，恶意的 SQL 或应用程序请求有可能通过 HTTP 请求传递到应用程序中。如果 URL 过长，某些 Web 服务器可能不会记录完整的 URL。这是黑客可能探测您的系统漏洞而其行为不会立即被注意到的一种方式。他们可以创建一个异常长的 URL，希望它要么被截断，要么根本不被记录。
+
+大多数 Web 服务器允许您设置允许的 URL 字符串长度限制，除非任何应用程序需要长 URL，否则设置该限制是有益的。虽然您可以选择任何限制值，但 2048 个字符是常见的。与安全策略一样，只允许您的应用程序正常运行（包括未来增长）所必需的长度。
+
+例如，在 Microsoft IIS 中，当设置了此限制时，较长的 URL 将向客户端返回一个 404 错误，不提供进一步的详细信息。但是，服务器日志将包含有关请求被阻止原因的附加信息，以便您可以识别潜在威胁：
+
+*   `404.10: 请求标头过长`
+*   `404.13: 内容长度过长`
+*   `404.14: URL 过长`
+*   `404.15: 查询字符串过长`
+
+#### 对敏感数据使用视图和/或脱敏
+
+当需要访问加密的敏感数据时（如密码或信用卡号码），考虑仅向提供这些查询所需最少字段的视图授予权限。拒绝直接访问关键表，可以消除黑客访问它们并利用 SQL 注入渗透其中的能力。
+
+例如，一个密码表可能包含各种信息，不仅可能泄露密码哈希细节，还可能泄露密码策略、用户名、锁定的账户、最近登录时间等。应用程序可能只需要访问加密的密码（或哈希）和用于身份验证的数据（例如用户 ID）。
+
+SQL Server 2016 包含一项新的安全功能：动态数据脱敏。这对于需要部分敏感数据的任何场景都非常有效，例如社会安全号码或信用卡号码的最后四位数字。对于没有 `UNMASK` 权限的用户，敏感数据的预定部分将被模糊处理。这一额外的数据混淆层提供了额外的防御，防止未授权用户获取您重要数据的完整详情。
+
+数据脱敏虽然方便，但并非设计为一种坚固的安全功能。截至 SQL Server 2016 CTP 2.1，可以通过使用 `CAST` 将列转换为其基础数据类型来部分取消脱敏数据，这会部分破解该过程并将其恢复为默认脱敏状态。还存在一些其他技巧，涉及将脱敏表与辅助表连接，并在从结果连接中选择数据时取消数据脱敏。这些漏洞很可能在 SQL Server 2016 的正式发布版中得到修复，但目前它们是合理的担忧。
+
+尽管存在这些限制，动态数据脱敏仍然是保护关键数据这座“保险库”的另一道锁，它要么会阻止黑客继续尝试，要么会足够地减慢他们的速度，让您的安全团队有额外的时间正面应对威胁。当只需要数据验证而不需要完全访问该数据时，这是一个绝佳的工具，可以只提供所需的内容，不多不少。
+
+### 结论
+
+SQL 注入是贯穿应用程序开发生命周期中最常被利用的漏洞之一。事实上，许多政府、企业和独立调查都持续将 SQL 注入列为整个计算领域的 **头号** 漏洞。这显然是一个非常严肃的话题，也是在设计、开发、测试、部署和维护软件应用程序时必须时刻牢记的一点。
+
+防范 SQL 注入最简单有效的方法是积极主动地编写安全的 T-SQL 和代码。思考用户输入将如何整合到搜索参数中，并最终用于数据库查询。一旦定位到这些敏感区域，就要通过多层次的安全措施来处理。实施 `sp_executesql` 是一个良好的开端，但结合输入验证、参数化和显式架构引用会更加有效。根据你的应用程序，尽可能多地采取额外步骤，因为每一步都是为你的数据保险库加的一把锁。
+
+如果管理层质疑这些额外步骤所需的时间和精力，请随时向他们解释你正在应对的漏洞。列出潜在的威胁以及它们一旦成为现实的后果。安全常常被视为一种不便，但作为数据库专业人员，证明其必要性并确保你的数据尽可能安全是你的责任。永远不要让关乎安全的“正确”做法与发布日期、效率或资源纠缠在一起。忽视这些相对简单的开发步骤，其后果之严重，不容忽视。
+
+第 4 章将更详细地讨论安全问题。SQL 注入如此重要，值得在 SQL Server 安全层级中占据一个独立而特殊的位置。从长远来看，记录你的安全努力及其所应对的威胁，其价值将不言自明。
+
+# 3. 大规模搜索
+
+实现动态 SQL 最常见、最通用且最有用的场景之一是在执行复杂搜索时。想想你喜欢的网站以及它们各自提供的搜索功能。有些搜索可能很简单：你前往右上角的单个文本框，输入一些文字，然后获得结果。其他的搜索——例如搜索酒店、航班或租车——可能涉及数十个（甚至更多）可选参数。动态 SQL 可以让你精简搜索查询，只处理必要的部分。此外，你还可以高度自定义搜索以及返回的数据。你甚至可以分析输入，根据其结构来确定正确的操作步骤。
+
+### 为何使用动态搜索？
+
+假设你想在产品表中进行搜索，但在此过程中需要将这些数据与其他表连接起来。根据应用程序的不同，涉及的表数量可能很少，也可能非常庞大。以酒店搜索为例，如果你想针对每一个可能的搜索参数进行查询，很可能需要连接 50 张表。清单 3-1 是一个相对较小的产品搜索示例，它可以从使用动态 SQL 中受益。
+
+```sql
+CREATE PROCEDURE dbo.search_products
+@product_name NVARCHAR(50) = NULL, @product_number NVARCHAR(25) = NULL, @product_model NVARCHAR(50) = NULL,   @product_subcategory NVARCHAR(50) = NULL, @product_sizemeasurecode NVARCHAR(50) = NULL, @product_weightunitmeasurecode NVARCHAR(50) = NULL
+AS
+BEGIN
+SET NOCOUNT ON;
+SET @product_name = '%' + @product_name + '%';
+SET @product_number = '%' + @product_number + '%';
+SET @product_model = '%' + @product_model + '%';
+SELECT
+Product.Name AS product_name,
+Product.ProductNumber AS product_number,
+ProductModel.Name AS product_model_name,
+ProductSubcategory.Name AS product_subcategory_name,
+SizeUnitMeasureCode.Name AS size_unit_measure_code,
+WeightUnitMeasureCode.Name AS weight_unit_measure_code
+FROM Production.Product
+LEFT JOIN Production.ProductModel
+ON Product.ProductModelID = ProductModel.ProductModelID
+LEFT JOIN Production.ProductSubcategory
+ON Product.ProductSubcategoryID = ProductSubcategory.ProductSubcategoryID
+LEFT JOIN Production.UnitMeasure SizeUnitMeasureCode
+ON Product.SizeUnitMeasureCode = SizeUnitMeasureCode.UnitMeasureCode
+LEFT JOIN Production.UnitMeasure WeightUnitMeasureCode
+ON Product.WeightUnitMeasureCode = WeightUnitMeasureCode.UnitMeasureCode
+WHERE (Product.Name LIKE @product_name OR @product_name IS NULL)
+AND (Product.ProductNumber LIKE @product_number OR @product_number IS NULL)
+AND (ProductModel.Name LIKE @product_model OR @product_model IS NULL)
+AND (ProductSubcategory.Name = @product_subcategory OR @product_subcategory IS NULL)
+AND (SizeUnitMeasureCode.Name = @product_sizemeasurecode OR @product_sizemeasurecode IS NULL)
+AND (WeightUnitMeasureCode.Name = @product_weightunitmeasurecode OR @product_weightunitmeasurecode IS NULL);
+END
+```
+清单 3-1.
+带六个可选参数的搜索存储过程（未使用动态 SQL）
+
+此存储过程用于搜索产品，并提供了多种搜索选项供用户选择。用户输入中可以提供或省略产品名称、产品编号、产品型号、产品子类别、尺寸度量和重量度量。在此特定示例中，假设产品名称、产品编号和产品型号是通配符搜索，因此在传入参数后为每个参数添加了 `%`。其他参数假设是从预先填充的菜单中选择的，确保传入的值是精确的，因此无需将它们转换为通配符搜索。
+
+对于此搜索，无论传入的参数如何，我们都将始终返回相同的六个列。因此，我们对所有参与连接的表使用 `LEFT JOIN`，以确保每个产品都有一行数据，即使任何连接条件为 `NULL`。为了确保未使用的参数不会遗漏结果，所有 `WHERE` 子句中都添加了一个额外的检查，使得如果输入为 `NULL`，该检查将评估为 true。由此产生的逻辑允许你选择以下情况之一：
+
+*   参数来自用户输入，应针对相应的列进行评估。`NULL` 检查评估为 `FALSE`，并且不影响此逻辑。
+*   参数未从用户处传入，因此针对它的比较无关紧要。相反，`NULL` 检查评估为 true，这意味着整个 `WHERE` 子句评估为 `TRUE`。
+
+以下三个示例说明了其工作原理：
+
+
+### 动态 SQL 示例：带可选参数的存储过程
+
+#### 参数搜索示例
+
+```
+EXEC dbo.search_products @product_number = 'BK-M18', @product_model = 'Mountain', @product_subcategory = 'Mountain Bikes';
+```
+
+在此搜索中，提供了三个参数，您将搜索产品编号包含 `BK-M18`、产品型号包含单词 "Mountain" 且必须属于 "Mountain Bikes" 子类别的任何产品。其余三个参数不参与 `WHERE` 子句的构造，而是用于第二个 `NULL` 检查的评估。返回了十个符合这些规格的结果。
+
+```
+EXEC dbo.search_products @product_name = 'Mountain-500 Black, 48';
+```
+
+在这里，用户确切知道要查找的内容，并输入了特定的产品名称。所有其他参数均为 `NULL`，并从搜索逻辑中丢弃。返回一行包含其搜索的产品。
+
+```
+EXEC dbo.search_products;
+```
+
+在此最后一个示例中，用户未输入任何搜索条件，仅运行了一个空搜索。存储过程允许这样做；它返回了所有产品。所有输入均为 `NULL`，因此它们绕过了 `WHERE` 子句谓词。
+
+#### 讨论与动态 SQL 介绍
+
+回顾这个存储过程时，它是准确的，返回了预期的结果，但也有些冗长，并且为了达成目标评估了相当多的 `WHERE` 子句谓词。无论提供什么参数，所执行的 T-SQL 都非常相似，这在评估许多参数时可能会成为问题。
+
+随着业务逻辑随时间增长并变得更加复杂，这些查询无疑也会增长并增加规模和复杂性。一个简单的单列 `LEFT JOIN` 可能不再足以处理这个新逻辑。`WHERE` 子句可能会附加更多选项，例如能够进行通配符搜索、相等搜索、包含 `AND/OR` 逻辑等。虽然这个存储过程可能会随着时间的推移而不断增长以涵盖所有这些新需求，但您绝对不希望最终执行的 T-SQL 无限增长。当您连接数十个表、发出子查询、运行存在性检查以及构造复杂的 `WHERE` 子句时，性能将成为问题。而这正是动态 SQL 的用武之地！有关使用参数限制连接的示例，请参见清单 3-2。
+
+#### 使用动态 SQL 的存储过程实现
+
+```
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'search_products')
+BEGIN
+DROP PROCEDURE dbo.search_products;
+END
+GO
+CREATE PROCEDURE dbo.search_products
+@product_name NVARCHAR(50) = NULL, @product_number NVARCHAR(25) = NULL, @product_model NVARCHAR(50) = NULL,
+@product_subcategory NVARCHAR(50) = NULL, @product_sizemeasurecode NVARCHAR(50) = NULL,
+@product_weightunitmeasurecode NVARCHAR(50) = NULL
+AS
+BEGIN
+SET NOCOUNT ON;
+SET @product_name = '%' + @product_name + '%';
+SET @product_number = '%' + @product_number + '%';
+SET @product_model = '%' + @product_model + '%';
+DECLARE @sql_command NVARCHAR(MAX);
+DECLARE @parameter_list NVARCHAR(MAX) = '@product_name NVARCHAR(50), @product_number NVARCHAR(25),
+@product_model NVARCHAR(50), @product_subcategory NVARCHAR(50), @product_sizemeasurecode NVARCHAR(50),
+@product_weightunitmeasurecode NVARCHAR(50)';
+SELECT @sql_command = '
+SELECT
+Product.Name AS product_name,
+Product.ProductNumber AS product_number,
+ProductModel.Name AS product_model_name,
+ProductSubcategory.Name AS product_subcategory_name,
+SizeUnitMeasureCode.Name AS size_unit_measure_code,
+WeightUnitMeasureCode.Name AS weight_unit_measure_code
+FROM Production.Product
+LEFT JOIN Production.ProductModel
+ON Product.ProductModelID = ProductModel.ProductModelID
+LEFT JOIN Production.ProductSubcategory
+ON Product.ProductSubcategoryID = ProductSubcategory.ProductSubcategoryID
+LEFT JOIN Production.UnitMeasure SizeUnitMeasureCode
+ON Product.SizeUnitMeasureCode = SizeUnitMeasureCode.UnitMeasureCode
+LEFT JOIN Production.UnitMeasure WeightUnitMeasureCode
+ON Product.WeightUnitMeasureCode = SizeUnitMeasureCode.UnitMeasureCode
+WHERE 1 = 1'
+IF @product_name IS NOT NULL
+SELECT @sql_command = @sql_command + '
+AND Product.Name LIKE @product_name'
+IF @product_number IS NOT NULL
+SELECT @sql_command = @sql_command + '
+AND Product.ProductNumber LIKE @product_number'
+IF @product_model IS NOT NULL
+SELECT @sql_command = @sql_command + '
+AND ProductModel.Name LIKE @product_model'
+IF @product_subcategory IS NOT NULL
+SELECT @sql_command = @sql_command + '
+AND ProductSubcategory.Name = @product_subcategory'
+IF @product_sizemeasurecode IS NOT NULL
+SELECT @sql_command = @sql_command + '
+AND SizeUnitMeasureCode.Name = @product_sizemeasurecode'
+IF @product_weightunitmeasurecode IS NOT NULL
+SELECT @sql_command = @sql_command + '
+AND WeightUnitMeasureCode.Name = @product_weightunitmeasurecode'
+PRINT @sql_command;
+EXEC sp_executesql @sql_command, @parameter_list, @product_name, @product_number,
+@product_model, @product_subcategory, @product_sizemeasurecode,      @product_weightunitmeasurecode
+END
+```
+清单 3-2. 使用动态 SQL 的带六个可选参数的搜索存储过程
+
+#### 动态 SQL 优势说明
+
+此存储过程使用动态 SQL 为您提供对 `WHERE` 子句的完全控制。现在，您不再总是对所有列进行六次检查，而是在提供相关参数时才包含相应的检查。考虑之前的第一个示例：
+
+```
+EXEC dbo.search_products @product_number = 'BK-M18', @product_model = 'Mountain', @product_subcategory = 'Mountain Bikes';
+```
+
+之前，搜索使用了所有六个 `WHERE` 子句部分（每个参数一个），即使某些参数为 `NULL`。使用新的动态 SQL 版本，生成的命令字符串将仅包含那些参数不为 `NULL` 的 `WHERE` 子句部分，如清单 3-3 所示。
+
+```
+SELECT
+Product.Name AS product_name,
+Product.ProductNumber AS product_number,
+ProductModel.Name AS product_model_name,
+ProductSubcategory.Name AS product_subcategory_name,
+SizeUnitMeasureCode.Name AS size_unit_measure_code,
+WeightUnitMeasureCode.Name AS weight_unit_measure_code
+FROM Production.Product
+LEFT JOIN Production.ProductModel
+ON Product.ProductModelID = ProductModel.ProductModelID
+LEFT JOIN Production.ProductSubcategory
+ON Product.ProductSubcategoryID = ProductSubcategory.ProductSubcategoryID
+LEFT JOIN Production.UnitMeasure SizeUnitMeasureCode
+ON Product.SizeUnitMeasureCode = SizeUnitMeasureCode.UnitMeasureCode
+LEFT JOIN Production.UnitMeasure WeightUnitMeasureCode
+ON Product.WeightUnitMeasureCode = SizeUnitMeasureCode.UnitMeasureCode
+WHERE 1 = 1
+AND Product.ProductNumber LIKE @product_number
+AND ProductModel.Name LIKE @product_model
+AND ProductSubcategory.Name = @product_subcategory
+```
+清单 3-3. 清单 3-2 中存储过程的输出
+
+请注意，只包含了必要的 `WHERE` 子句部分。`WHERE 1 = 1` 始终存在，与输入参数无关。虽然可以添加一些逻辑来移除对这个默认 `WHERE` 子句的需求，但包含它成本微不足道，并避免了为不断增长的存储过程添加任何更复杂的逻辑。
+
+
+
+#### 自定义搜索网格
+
+目前看来，费这么大劲精简`WHERE`子句似乎并不值得，但这仅仅是个开始！下一步合乎逻辑的举措是审视另一个大规模搜索的常见用例：自定义搜索网格。在这种略有不同的搜索中，输出列同样由用户控制。此前，每次搜索都返回相同的六个列，但对于任何希望在搜索功能中融入灵活性的大型应用程序来说，这种场景并不常见。
+
+处理这类搜索有两种基本方法。第一种是在每个查询中包含所有列和联接。然后应用程序可以挑选出需要的列，舍弃不需要的。对于这个选项，你不是选择六个输出列，而是将所有最终用户可能在其自定义结果网格中请求的列都添加进来。对于非常小的表，这种方式尚可运行且相对容易维护，但想象一下，当有海量列可供选择时，比如`图 3-1`所示的文件资源管理器窗口中的情况。
+
+![A371168_1_En_3_Fig1_HTML.jpg](img/A371168_1_En_3_Fig1_HTML.jpg)
+
+`图 3-1`. Windows 文件资源管理器列选择器
+
+在这个列选择器中，有数百个列可供选择。始终收集所有这些数据，而不顾用户需求，这个想法相当可怕。对于许多文件类型，只有一小部分列选择是有意义的，为每个访问的文件夹收集所有这些数据会效率低下，且难以有效维护。
+
+如果你将此逻辑应用于存储过程，并包含所查询的六个表中所有可能的列，你将不得不列出 38 列，以确保最终用户拥有他们可能从这些实体中需要的一切。如果搜索查询中加入了`AdventureWorks`中所有与产品相关的表，最终结果将包含数百列，确保良好性能将是一项艰巨的任务。选择所有列的弊端不仅体现在 SQL Server 处理查询的性能上，还延伸到网络 IO、磁盘 IO、内存和服务器 CPU。所有这些额外的数据都需要先从数据库移动到应用程序，然后才能最终被整理，并从数据集中移除多余的列。
+
+实现搜索网格的第二种且更通用的解决方案是使查询的每个部分都动态化。除了`WHERE`子句，使联接和选择的列也动态化。这确保了你最终执行的命令字符串相对较小，只读取你需要的表，并且只返回你想要的列。为使此示例易于阅读，假设产品名称和产品编号将始终被返回。另外，还会传入一组比特位，用于决定选择哪些其他列，其中包括一些筛选列，如`清单 3-4`所示。
+
+
+
+### 清单 3-4. 使用动态 SQL 的搜索网格存储过程
+
+```sql
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'search_products')
+BEGIN
+DROP PROCEDURE dbo.search_products;
+END
+CREATE PROCEDURE dbo.search_products
+@product_name NVARCHAR(50) = NULL, @product_number NVARCHAR(25) = NULL, @product_model NVARCHAR(50) = NULL,
+@product_subcategory NVARCHAR(50) = NULL, @product_sizemeasurecode NVARCHAR(50) = NULL,
+@product_weightunitmeasurecode NVARCHAR(50) = NULL,
+@show_color BIT = 0, @show_safetystocklevel BIT = 0, @show_reorderpoint BIT = 0, @show_standard_cost BIT = 0,
+@show_catalog_description BIT = 0, @show_subcategory_modified_date BIT = 0, @show_product_model BIT = 0,
+@show_product_subcategory BIT = 0, @show_product_sizemeasurecode BIT = 0, @show_product_weightunitmeasurecode BIT = 0
+AS
+BEGIN
+SET NOCOUNT ON;
+-- 为将作为通配符搜索的参数添加 "%" 分隔符。
+SET @product_name = '%' + @product_name + '%';
+SET @product_number = '%' + @product_number + '%';
+SET @product_model = '%' + @product_model + '%';
+DECLARE @sql_command NVARCHAR(MAX);
+-- 为筛选条件定义参数列表
+DECLARE @parameter_list NVARCHAR(MAX) = '@product_name NVARCHAR(50), @product_number NVARCHAR(25),
+@product_model NVARCHAR(50), @product_subcategory NVARCHAR(50), @product_sizemeasurecode NVARCHAR(50),
+@product_weightunitmeasurecode NVARCHAR(50)';
+-- 为 SELECT 列生成命令字符串部分
+SELECT @sql_command = '
+SELECT
+Product.Name AS product_name,
+Product.ProductNumber AS product_number,';
+IF @show_product_model = 1 SELECT @sql_command = @sql_command + '
+ProductModel.Name AS product_model_name,';
+IF @show_product_subcategory = 1 SELECT @sql_command = @sql_command + '
+ProductSubcategory.Name AS product_subcategory_name,';
+IF @show_product_sizemeasurecode = 1 SELECT @sql_command = @sql_command + '
+SizeUnitMeasureCode.Name AS size_unit_measure_code,';
+IF @show_product_weightunitmeasurecode = 1 SELECT @sql_command = @sql_command + '
+WeightUnitMeasureCode.Name AS weight_unit_measure_code,';
+IF @show_color = 1 SELECT @sql_command = @sql_command + '
+Product.Color AS product_color,';
+IF @show_safetystocklevel = 1 SELECT @sql_command = @sql_command + '
+Product.SafetyStockLevel AS product_safety_stock_level,';
+IF @show_reorderpoint = 1 SELECT @sql_command = @sql_command + '
+Product.ReorderPoint AS product_reorderpoint,';
+IF @show_standard_cost = 1 SELECT @sql_command = @sql_command + '
+Product.StandardCost AS product_standard_cost,';
+IF @show_catalog_description = 1 SELECT @sql_command = @sql_command + '
+ProductModel.CatalogDescription AS productmodel_catalog_description,';
+IF @show_subcategory_modified_date = 1 SELECT @sql_command = @sql_command + '
+ProductSubcategory.ModifiedDate AS product_subcategory_modified_date';
+-- 如果命令字符串末尾有逗号，在继续之前移除它：
+IF (SELECT SUBSTRING(@sql_command, LEN(@sql_command), 1)) = ','
+SELECT @sql_command = LEFT(@sql_command, LEN(@sql_command) - 1);
+SELECT @sql_command = @sql_command + '
+FROM Production.Product'
+-- 根据搜索所需的表组合 JOIN。
+IF (@product_model IS NOT NULL OR @show_product_model = 1 OR @show_catalog_description = 1)
+SELECT @sql_command = @sql_command + '
+LEFT JOIN Production.ProductModel
+ON Product.ProductModelID = ProductModel.ProductModelID';
+IF (@product_subcategory IS NOT NULL OR @show_subcategory_modified_date = 1 OR @show_product_subcategory = 1)
+SELECT @sql_command = @sql_command + '
+LEFT JOIN Production.ProductSubcategory
+ON Product.ProductSubcategoryID = ProductSubcategory.ProductSubcategoryID';
+IF (@product_sizemeasurecode IS NOT NULL OR @show_product_sizemeasurecode = 1)
+SELECT @sql_command = @sql_command + '
+LEFT JOIN Production.UnitMeasure SizeUnitMeasureCode
+ON Product.SizeUnitMeasureCode = SizeUnitMeasureCode.UnitMeasureCode';
+IF (@product_weightunitmeasurecode IS NOT NULL OR @show_product_weightunitmeasurecode = 1)
+SELECT @sql_command = @sql_command + '
+LEFT JOIN Production.UnitMeasure WeightUnitMeasureCode
+ON Product.WeightUnitMeasureCode = SizeUnitMeasureCode.UnitMeasureCode'
+SELECT @sql_command = @sql_command + '
+WHERE 1 = 1'
+-- 根据搜索引用和所需的表构建 WHERE 子句。
+IF @product_name IS NOT NULL
+SELECT @sql_command = @sql_command + '
+AND Product.Name LIKE @product_name'
+IF @product_number IS NOT NULL
+SELECT @sql_command = @sql_command + '
+AND Product.ProductNumber LIKE @product_number'
+IF @product_model IS NOT NULL
+SELECT @sql_command = @sql_command + '
+AND ProductModel.Name LIKE @product_model'
+IF @product_subcategory IS NOT NULL
+SELECT @sql_command = @sql_command + '
+AND ProductSubcategory.Name = @product_subcategory'
+IF @product_sizemeasurecode IS NOT NULL
+SELECT @sql_command = @sql_command + '
+AND SizeUnitMeasureCode.Name = @product_sizemeasurecode'
+IF @product_weightunitmeasurecode IS NOT NULL
+SELECT @sql_command = @sql_command + '
+AND WeightUnitMeasureCode.Name = @product_weightunitmeasurecode'
+PRINT @sql_command;
+EXEC sp_executesql @sql_command, @parameter_list, @product_name, @product_number,
+@product_model, @product_subcategory, @product_sizemeasurecode,    @product_weightunitmeasurecode
+END
+GO
+EXEC dbo.search_products @product_number = 'BK-M18', @product_model = 'Mountain', @product_subcategory = 'Mountain Bikes';
+EXEC dbo.search_products @product_name = 'Mountain-500 Black, 48';
+EXEC dbo.search_products;
+GO
+```
+
+
+
+此处的第一项改动是：为可添加到搜索结果网格中的每个列，新增了十个对应的参数。这种做法看起来略显随意，不过显式的参数列表便于轻松排查故障。每个参数都命名明确、易于理解和记录。另一种替代方案是采用位图实现，在单个参数内调整各个位。这虽然能将参数列表从每个参数一个缩减到仅需一个，但也会降低可读性和可维护性——因为此时参数将变为一个十六进制数字而非一组位值。例如，若选中了第 1 位、第 6 位和第 7 位，生成的位图对应的`VARBINARY`表示形式将是`0x00000061`。为确保其可用性和可维护性，每个位都需要详细记录，以便任何修改或使用此存储过程的人都能清楚了解其工作机制。
+
+尽管此存储过程参数众多，但除非终端用户确实需要筛选并显示全部内容，否则大部分参数在单一场景下并不会被同时使用。请注意，附加的位位列并未包含在`sp_executesql`的参数中。这些位位列仅用于构建命令字符串，并非动态 SQL 所必需。因此，增加更多位不会导致`sp_executesql`语句膨胀，尽管它会为`search_products`存储过程添加更多参数。正因如此，本示例中的`sp_executesql`语句与前一示例保持相同。
+
+列列表也被拆分为一系列参数检查。可选列仅在其对应的位位列被设置时才会包含。例如，若`@show_product_model`设为 1，则`ProductModel.Name`列将被纳入`SELECT`语句。以下`EXEC`语句演示了针对`ProductModel.Name`的单一筛选，并包含该名称及产品颜色：
+
+```
+EXEC dbo.search_products @product_model = 'Mountain', @show_product_model = 1, @show_color = 1
+```
+
+此次搜索生成的命令字符串如清单 3-5 所示。
+
+```
+SELECT
+Product.Name AS product_name,
+Product.ProductNumber AS product_number,
+ProductModel.Name AS product_model_name,
+Product.Color AS product_color
+FROM Production.Product
+LEFT JOIN Production.ProductModel
+ON Product.ProductModelID = ProductModel.ProductModelID
+WHERE 1 = 1
+AND ProductModel.Name LIKE @product_model
+清单 3-5.
+根据清单 3-4 中的存储过程生成的命令字符串
+```
+
+请注意，实际执行的 T-SQL 仅包含满足用户请求所必需的内容。查询的所有部分都经过定制化处理，以精确匹配所请求的搜索条件。
+
+本示例仅返回用户明确调用的列。如果需要，也可以编写 T-SQL，使得当任何一列被选中时返回表中所有列，或者仅返回终端用户可能选择的列。采用这种方法，若`@show_product_model = 1`，则`ProductModel.Name`和`ProductModel.CatalogDescription`将被选中。应用程序随后可以移除不需要的列。这种替代方案更便于长期维护和更新，但会牺牲少量性能，因为返回的数据量将超出实际需求，如清单 3-6 所示。
+
+
+
+### 使用较少条件语句的简化 SELECT 语句搜索过程
+
+```sql
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'search_products')
+BEGIN
+    DROP PROCEDURE dbo.search_products;
+END
+GO
+
+-- 通过检查避免空搜索
+CREATE PROCEDURE dbo.search_products
+    @product_name NVARCHAR(50) = NULL,
+    @product_number NVARCHAR(25) = NULL,
+    @product_model NVARCHAR(50) = NULL,
+    @product_subcategory NVARCHAR(50) = NULL,
+    @product_sizemeasurecode NVARCHAR(50) = NULL,
+    @product_weightunitmeasurecode NVARCHAR(50) = NULL,
+    @show_color BIT = 0,
+    @show_safetystocklevel BIT = 0,
+    @show_reorderpoint BIT = 0,
+    @show_standard_cost BIT = 0,
+    @show_catalog_description BIT = 0,
+    @show_subcategory_modified_date BIT = 0,
+    @show_product_model BIT = 0,
+    @show_product_subcategory BIT = 0,
+    @show_product_sizemeasurecode BIT = 0,
+    @show_product_weightunitmeasurecode BIT = 0
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF COALESCE(@product_name, @product_number, @product_model, @product_subcategory,
+        @product_sizemeasurecode, @product_weightunitmeasurecode) IS NULL
+        RETURN;
+
+    -- 为将要作为通配符搜索的参数添加 "%" 分隔符。
+    SET @product_name = '%' + @product_name + '%';
+    SET @product_number = '%' + @product_number + '%';
+    SET @product_model = '%' + @product_model + '%';
+
+    DECLARE @sql_command NVARCHAR(MAX);
+
+    -- 定义筛选条件的参数列表
+    DECLARE @parameter_list NVARCHAR(MAX) = '@product_name NVARCHAR(50), @product_number NVARCHAR(25),
+        @product_model NVARCHAR(50), @product_subcategory NVARCHAR(50), @product_sizemeasurecode NVARCHAR(50),
+        @product_weightunitmeasurecode NVARCHAR(50)';
+
+    -- 为 SELECT 列生成简化的命令字符串部分
+    SELECT @sql_command = '
+        SELECT
+            Product.Name AS product_name,
+            Product.ProductNumber AS product_number,';
+
+    IF @show_product_model = 1 OR @show_catalog_description = 1
+        SELECT @sql_command = @sql_command + '
+            ProductModel.Name AS product_model_name,
+            ProductModel.CatalogDescription AS productmodel_catalog_description,';
+
+    IF @show_product_subcategory = 1 OR @show_subcategory_modified_date = 1
+        SELECT @sql_command = @sql_command + '
+            ProductSubcategory.Name AS product_subcategory_name,
+            ProductSubcategory.ModifiedDate AS product_subcategory_modified_date,';
+
+    IF @show_product_sizemeasurecode = 1
+        SELECT @sql_command = @sql_command + '
+            SizeUnitMeasureCode.Name AS size_unit_measure_code,';
+
+    IF @show_product_weightunitmeasurecode = 1
+        SELECT @sql_command = @sql_command + '
+            WeightUnitMeasureCode.Name AS weight_unit_measure_code,';
+
+    IF @show_color = 1 OR @show_safetystocklevel = 1 OR @show_reorderpoint = 1 OR @show_standard_cost = 1
+        SELECT @sql_command = @sql_command + '
+            Product.Color AS product_color,
+            Product.SafetyStockLevel AS product_safety_stock_level,
+            Product.ReorderPoint AS product_reorderpoint,
+            Product.StandardCost AS product_standard_cost';
+
+    -- 如果命令字符串的末尾有逗号，在继续之前将其移除：
+    IF (SELECT SUBSTRING(@sql_command, LEN(@sql_command), 1)) = ','
+        SELECT @sql_command = LEFT(@sql_command, LEN(@sql_command) - 1);
+
+    SELECT @sql_command = @sql_command + '
+        FROM Production.Product'
+
+    -- 根据搜索所需的表来组合 JOIN。
+    IF (@product_model IS NOT NULL OR @show_product_model = 1 OR @show_catalog_description = 1)
+        SELECT @sql_command = @sql_command + '
+            LEFT JOIN Production.ProductModel
+                ON Product.ProductModelID = ProductModel.ProductModelID';
+
+    IF (@product_subcategory IS NOT NULL OR @show_subcategory_modified_date = 1 OR @show_product_subcategory = 1)
+        SELECT @sql_command = @sql_command + '
+            LEFT JOIN Production.ProductSubcategory
+                ON Product.ProductSubcategoryID = ProductSubcategory.ProductSubcategoryID';
+
+    IF (@product_sizemeasurecode IS NOT NULL OR @show_product_sizemeasurecode = 1)
+        SELECT @sql_command = @sql_command + '
+            LEFT JOIN Production.UnitMeasure SizeUnitMeasureCode
+                ON Product.SizeUnitMeasureCode = SizeUnitMeasureCode.UnitMeasureCode';
+
+    IF (@product_weightunitmeasurecode IS NOT NULL OR @show_product_weightunitmeasurecode = 1)
+        SELECT @sql_command = @sql_command + '
+            LEFT JOIN Production.UnitMeasure WeightUnitMeasureCode
+                ON Product.WeightUnitMeasureCode = SizeUnitMeasureCode.UnitMeasureCode'
+
+    SELECT @sql_command = @sql_command + '
+        WHERE 1 = 1'
+
+    -- 根据搜索所引用和需要的表构建 WHERE 子句。
+    IF @product_name IS NOT NULL
+        SELECT @sql_command = @sql_command + '
+            AND Product.Name LIKE @product_name'
+
+    IF @product_number IS NOT NULL
+        SELECT @sql_command = @sql_command + '
+            AND Product.ProductNumber LIKE @product_number'
+
+    IF @product_model IS NOT NULL
+        SELECT @sql_command = @sql_command + '
+            AND ProductModel.Name LIKE @product_model'
+
+    IF @product_subcategory IS NOT NULL
+        SELECT @sql_command = @sql_command + '
+            AND ProductSubcategory.Name = @product_subcategory'
+
+    IF @product_sizemeasurecode IS NOT NULL
+        SELECT @sql_command = @sql_command + '
+            AND SizeUnitMeasureCode.Name = @product_sizemeasurecode'
+
+    IF @product_weightunitmeasurecode IS NOT NULL
+        SELECT @sql_command = @sql_command + '
+            AND WeightUnitMeasureCode.Name = @product_weightunitmeasurecode'
+
+    PRINT @sql_command;
+    EXEC sp_executesql @sql_command, @parameter_list, @product_name, @product_number,
+        @product_model, @product_subcategory, @product_sizemeasurecode, @product_weightunitmeasurecode
+END
+GO
+```
+
+清单 3-6 中的 TSQL 显示了使用较少条件语句所带来的差异。生成的命令字符串可能包含一些额外的列，但存储过程变得更简单了，只有五个条件，而不是十个。这可以视为较小规模搜索或数据集相对直接的情况下的替代方案。如果将来每个表所需的列数增加，可能需要重新设计以保持高效的查询执行。或者，对于非常小的表，也可以使用 `SELECT TableName.*` 来进一步减小存储过程的大小。以下 TSQL 展示了针对 `ProductModel` 表的这一改动：
+
+```sql
+IF @show_product_model = 1 OR @show_catalog_description = 1
+    SELECT @sql_command = @sql_command + '
+        ProductModel.*,';
+```
+
+虽然简单，但这将返回数量不确定的列，如果表持续添加新列，这可能成为未来的瓶颈。此外，使用这种语法，你会失去对列名的控制，这可能导致在许多表为不同数据元素使用相同列名的情况下出现重复项。在 `AdventureWorks` 中，你将无法区分产品名称和产品模型名称，因为两列都简单地称为 `Name`。在使用 `*` 返回表中所有列时请务必谨慎。对于结构非常可预测且不会发生变化的小型表，这可能是一个有用的工具。另一方面，如果表发生变化，此存储过程很容易中断或返回额外的意外数据。
+
+在这个动态搜索中，连接只在需要从某个表中获取列时才会发生。这发生在通过输入参数位显式请求了某个列，或者对其进行了筛选时。
+
+动态连接、动态 `SELECT` 语句和动态 `WHERE` 子句的组合确保了你不会访问任何对搜索网格非必需的表。虽然存储过程本身变大了，但它生成的命令字符串却在缩小，这是本次练习的主要目标。
+
+#### 搜索网格注意事项
+
+上一节介绍的存储过程在可定制性方面是一个巨大的进步，但它比之前的搜索更复杂。任何增加的复杂性都伴随着一系列考量，这些考量有助于做出明智的设计决策，并避免与此灵活性级别相关的陷阱。
+
+
+
+##### 禁止空白搜索
+
+到目前为止，所有搜索的一个共同主题是尽可能赋予最终用户对其查看和筛选内容的最大控制权。然而，如果数据集庞大且用户请求大量数据，这可能带来潜在风险。通常，除非数据集足够小，或以不会给数据库服务器造成压力的方式进行了分页，否则不应允许用户执行空白搜索。也就是说，如果用户转到搜索页面并直接点击"搜索"而没有提供任何附加条件，程序应要么不执行操作，要么返回错误：
+
+```sql
+IF COALESCE(@product_name, @product_number, @product_model, @product_subcategory, @product_sizemeasurecode, @product_weightunitmeasurecode) IS NULL
+RETURN;
+```
+
+这个位于存储过程开头的额外 `COALESCE` 语句会在所有筛选条件都未填充时立即退出。考虑以下 `EXEC` 语句：
+
+```sql
+EXEC dbo.search_products @show_product_model = 1;
+EXEC dbo.search_products;
+```
+
+对于这两种搜索尝试，存储过程一旦执行到 `COALESCE` 检查就会退出。如果需要，可以使用 `RAISEERROR` 向发起搜索的应用程序抛回特定错误。无论如何，由应用程序负责处理未返回数据集或抛出错误的情况，并确保最终用户收到友好且有用的提示信息，说明其搜索为何无效。
+
+##### 数据分页
+
+你很少会希望盲目地返回结果集中的所有行。想想你最喜欢的互联网搜索引擎：默认情况下，几乎没有哪个引擎会一次性返回超过 25 个结果。在网络搜索场景中，一次搜索可能返回数百万条结果。对搜索服务提供商和你自己的计算机而言，避免返回数百万行数据无疑是有益的！
+
+根据所使用的 SQL Server 版本，分页可以通过多种方式实现。最简单的方法是应用程序请求一组特定的 ID，然后在用户点击"下一页"时请求额外的 ID 集。由于用户通常不会点击浏览数百页的搜索结果，每次点击时查询数据库不太可能对资源造成显著消耗。如果数据集的特点是最终用户最终希望查看所有内容，那么一次性选择所有数据并允许应用程序根据需要进行分页，可能会比反复选择 25 行数据更高效。以下 TSQL 语句在颜色为 `NULL` 时返回 25 种产品：
+
+```sql
+SELECT  Name,
+        ProductNumber,
+        Color,
+        Size,
+        DaysToManufacture
+FROM    Production.Product
+WHERE   Product.Color IS NULL
+        AND ProductID BETWEEN 316 AND 359
+```
+
+或者，可以使用 CTE，以便比较行号，而不是直接提取一组产品的 ID：
+
+```sql
+WITH CTE_PRODUCTS AS (
+    SELECT
+        ROW_NUMBER() OVER (ORDER BY ProductID ASC) AS rownum,
+        Name,
+        ProductNumber,
+        Color,
+        Size,
+        DaysToManufacture
+    FROM Production.Product
+    WHERE Product.Color IS NULL)
+SELECT
+    Name,
+    ProductNumber,
+    Color,
+    Size,
+    DaysToManufacture
+FROM CTE_PRODUCTS
+WHERE rownum BETWEEN 5 AND 29
+```
+
+这两个查询返回的结果是相同的。虽然第二个查询对应用程序来说更容易处理（因为它不需要管理 `ProductID`），但它的效率会较低，因为每次执行搜索时都需要重新排序数据。ID 搜索只是使用聚集索引查找直接获取 25 行，而不是在分页前为整个数据集添加行号。
+
+从 SQL Server 2012 开始，新增了 `OFFSET` 功能，允许在不需要窗口函数或显式 ID 引用的情况下进行分页。以下语句将返回 25 种产品，从基于 `ProductID` 的第 51^(个)产品开始：
+
+```sql
+SELECT  Name,
+        ProductNumber,
+        Color,
+        Size,
+        DaysToManufacture
+FROM    Production.Product
+WHERE   Product.Color IS NULL
+ORDER BY ProductID ASC
+OFFSET 50 ROWS
+FETCH NEXT 25 ROWS ONLY
+```
+
+使用此语法时，必须存在 `ORDER BY` 子句，因为需要确定用于分页的列。`OFFSET` 决定在选择您感兴趣的数据之前跳过多少行。最后，`FETCH NEXT` 告诉 SQL Server 从该起始点开始检索多少行。`FETCH NEXT` 是可选的，如果省略，将返回偏移量之后的所有数据。从应用程序的角度来看，这种语法是最简单、最易用的，因为 `OFFSET` 和 `FETCH NEXT` 的行数可以由应用程序、TSQL 或用户输入提供，以便快速返回恰好所需的结果集。
+
+你将在后续章节中更详细地研究性能问题，但这里值得指出的是，根据所使用的 TSQL 语法，分页性能可能会有很大差异。不同的用例会适合不同的方法，但这里提到的每个选项都能够基于提供的任何用户输入，有效地返回分页结果。
+
+
+### 条件分页
+
+如果一个数据集的大小可能差异很大，那么在收集数据之前对其进行一些初步分析可能是有益的。例如，如果你知道一个数据集只包含 13 行，那么就没有必要对其进行分页。你可以用单条语句从这 13 行结果中选择所有行，无需进一步处理。同样地，如果一个结果集有 30 行，你知道它会适合放在 1-2 个页面上，这取决于每页显示多少条结果。
+
+对于这两种情况，最终用户很可能会查看大部分（如果不是全部）结果。如果一次搜索返回了巨大的结果集，那么你就知道分页是必要的。此外，你几乎可以肯定用户不会查看结果集中的所有结果。如果结果是根据相关性分数返回的（例如网络搜索引擎），那么用户很可能只会查看前 10 或 20 条结果，然后就会继续前进或调整他们的搜索条件。
+
+#### 动态页面大小
+
+如果希望的话，页面大小也可以是动态的，作为使结果集尽可能有用的另一种方式。例如，如果返回了 26 条结果，仅为一条结果而需要点击到新页面会有点浪费。相反，一次性返回全部 26 条结果会更简单、更高效，也更方便用户。
+
+如果结果是冗长的，并且包含占用大量空间的额外详细信息，那么自动返回较少的结果（基于冗长程度）可能是有利的。
+
+#### 特定于应用的分页
+
+了解应用程序的工作方式有助于确定最佳的分页方法。下面是一个搜索示例，它根据跟踪号的通配符搜索返回订单的行项目详细信息。作为一项常见搜索，`CarrierTrackingNumber` 很可能会被索引，并且大多数搜索只会针对单个跟踪号进行。然而，关于如何执行搜索，应用程序可能有不同的要求，如清单 3-7 所示。
+
+```sql
+CREATE PROCEDURE dbo.search_sales_order_detail
+@tracking_number NVARCHAR(25), @offset_by_this_many_rows INT = 0, @row_count_to_return INT = 25, @return_all_results BIT = 0
+AS
+BEGIN
+SET NOCOUNT ON;
+-- Add wildcard delimiters to the tracking number
+SELECT @tracking_number = '%' + @tracking_number + '%';
+-- If the result set is small, return all results to the application for display.
+IF @return_all_results = 1
+BEGIN
+SELECT
+SalesOrderHeader.OrderDate,
+SalesOrderHeader.ShipDate,
+SalesOrderHeader.Status,
+SalesOrderHeader.PurchaseOrderNumber,
+SalesOrderDetail.CarrierTrackingNumber,
+SalesOrderDetail.OrderQty,
+SalesOrderDetail.UnitPrice,
+SalesOrderDetail.UnitPriceDiscount,
+SalesOrderDetail.LineTotal,
+Product.Name,
+Product.ProductNumber
+FROM Sales.SalesOrderHeader
+INNER JOIN Sales.SalesOrderDetail
+ON SalesOrderHeader.SalesOrderID = SalesOrderDetail.SalesOrderID
+INNER JOIN Production.Product
+ON SalesOrderDetail.ProductID = Product.ProductID
+WHERE CarrierTrackingNumber LIKE @tracking_number
+ORDER BY SalesOrderDetail.SalesOrderDetailID;
+END
+ELSE
+BEGIN
+SELECT
+SalesOrderHeader.OrderDate,
+SalesOrderHeader.ShipDate,
+SalesOrderHeader.Status,
+SalesOrderHeader.PurchaseOrderNumber,
+SalesOrderDetail.CarrierTrackingNumber,
+SalesOrderDetail.OrderQty,
+SalesOrderDetail.UnitPrice,
+SalesOrderDetail.UnitPriceDiscount,
+SalesOrderDetail.LineTotal,
+Product.Name,
+Product.ProductNumber
+FROM Sales.SalesOrderHeader
+INNER JOIN Sales.SalesOrderDetail
+ON SalesOrderHeader.SalesOrderID = SalesOrderDetail.SalesOrderID
+INNER JOIN Production.Product
+ON SalesOrderDetail.ProductID = Product.ProductID
+WHERE CarrierTrackingNumber LIKE @tracking_number
+ORDER BY SalesOrderDetail.SalesOrderDetailID
+OFFSET @offset_by_this_many_rows ROWS
+FETCH NEXT @row_count_to_return ROWS ONLY;
+END
+END
+GO
+```
+
+清单 3-7. 使用多种输入参数的销售订单明细搜索
+
+此搜索提供了四个选项。跟踪号输入（可以是全部或部分跟踪号）是唯一必需的选项。`@offset_by_this_many_rows` 决定你是否在搜索中向前跳过，而 `@row_count_to_return` 表示要选择的行数。`@return_all_results` 参数可以设置为 `1`，以绕过分页逻辑并返回所有结果。
+
+如果输入是一个完整的跟踪号，返回 shipment 的所有部分在逻辑上是合理的，并且返回的数据不太可能异常庞大，这将很有用。在此示例中，应用程序负责检查输入格式以验证这一点，但如果一个完整的跟踪号总是导致返回所有数据是普遍恒定的，那么存储过程也可以这样做。
+
+#### 执行示例
+
+输入参数上设置了默认值以简化假设，但如果应用程序希望始终填充它们，则可以省略这些默认值。让我们考虑一些对这个新搜索的示例输入：
+
+```sql
+EXEC dbo.search_sales_order_detail '4911-403C-98', NULL, NULL, 1;
+```
+
+这次搜索是针对一个完整的跟踪号。因此，应用程序指示应返回所有结果，无论数据大小如何。这是通过将 `@return_all_results` 设置为 `1` 来实现的。此执行返回 12 行，它们构成了所有承运商跟踪号为 `4911-403C-98` 的销售订单明细。
+
+```sql
+EXEC dbo.search_sales_order_detail '491';
+```
+
+这次搜索更加通用，只搜索跟踪号的三个字符。没有任何额外输入时，存储过程默认只选择前 25 行。如果需要更多行，应用程序将需要提供额外的参数值来解决此问题：
+
+```sql
+EXEC dbo.search_sales_order_detail '491', 25, 50, 0;
+```
+
+通过添加 25 行的偏移量和 50 行的行计数，此存储过程调用将返回此跟踪号搜索的接下来的 50 行。如果用户继续点击“下一页”，则可以通过增加偏移量来返回更多结果。或者，用户会细化他们的搜索，在跟踪号输入字符串中添加更多字符，以便更有效地找到他们想要的内容。
+
+#### 总结
+
+此示例不涉及任何动态 SQL，但所使用的技术可以应用于任何搜索机制，以在结果集中包含某种程度的分页。分页是一种常见且通常必要的方法，用于对数据集增加控制，通过最终用户提高定制化，并通过不一次返回过多数据来保持良好的性能。
+
+##### 搜索限制
+
+如果你曾尝试在电脑上使用非常宽泛的搜索词来搜索一个文件夹，那么你已经体验过运行此类宽泛搜索所带来的延迟。在为任何应用程序构建搜索过程时，重要的是要禁止或限制任何可能对搜索体验以及服务器性能造成压力的用户输入。一种常见的方法是不允许空白搜索。也就是说，如果用户尝试在搜索框中没有任何文本的情况下点击“执行”，程序要么不执行任何操作，要么返回一条请求更多信息的消息。或者，搜索可以简单地抓取前`50`个结果显示，并等待用户进一步输入以决定后续步骤。在此过程的任何环节，你都不希望从数据库服务器返回过多的数据，也不希望让最终用户永远等待数据出现。
+
+另一种限制数据量的方法是确保无法从自定义搜索网格中请求过多列。如果一个结果网格理论上可以有`500`个不同的列，那么将其限制在一个小得多的数字是符合你最大利益的。根据应用程序的不同，十列可能足够，或者`25`列，甚至可能是`50`列。这个限制将基于平均应用程序使用情况以及列的宽度和返回数据所需的资源量。如果搜索在超过`30`列后开始出现延迟，那么将结果网格中的列数上限设为`25`将是明智之举。
+
+##### 基于输入的搜索
+
+前面的例子允许将参数传递给搜索存储过程，从而实现了相当程度的定制化。作为额外的步骤，你可以解析用户输入，并根据格式判断正在搜索的数据类型。这对于许多网页上常见的角落搜索框非常有用。在这些应用程序中，有时会提供高级搜索功能，但普通用户希望在一个地方输入文本并立即获得反馈。这些搜索可能有点混乱，因为它们可能需要搜索多种类型的数据，并且同时对许多不同列进行宽泛搜索很可能会表现不佳并返回错误结果。如果搜索说明指出文本在默认为单一文本描述之前可以以多种形式输入，你就可以优化搜索，使其专注于少数几个已编制索引的列，而不是一次搜索所有可能的搜索条件。代码清单 3-8 展示了一个允许输入多种格式的销售订单搜索。
+
+```sql
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'search_sales_order_detail')
+BEGIN
+DROP PROCEDURE dbo.search_sales_order_detail;
+END
+GO
+CREATE PROCEDURE dbo.search_sales_order_detail
+@input_search_data NVARCHAR(25), @offset_by_this_many_rows INT = 0, @row_count_to_return INT = 25, @return_all_results BIT = 0
+AS
+BEGIN
+SET NOCOUNT ON;
+-- For this search procedure, do not allow blank input. If blank is entered, return immediately with no result set.
+-- Input parameter does not allow NULLs
+IF LTRIM(RTRIM(@input_search_data)) = ''
+RETURN;
+-- Pad the input string with spaces, in case it isn't 25 characters long. This will avoid string truncation below.
+SET @input_search_data = @input_search_data + REPLICATE(' ', 25 - LEN(@input_search_data));
+-- Parse the @input_search_data to determine the data it references
+DECLARE @input_type NVARCHAR(25);
+-- Search by Sales Order Number: Starts with "SO" and at least 5 numbers
+IF (LEFT(@input_search_data, 2) = 'SO' AND ISNUMERIC(SUBSTRING(@input_search_data, 3, 5)) = 1)
+SET @input_type = 'SalesOrderNumber';
+ELSE
+-- Search by Purchase Order Number: Starts with "PO" and at least 10 numbers
+IF (LEFT(@input_search_data, 2) = 'PO' AND ISNUMERIC(SUBSTRING(@input_search_data, 3, 10)) = 1)
+SET @input_type = 'PurchaseOrderNumber';
+ELSE
+-- Search by Account Number: Starts with two number, a hyphen, 4 numbers, a hyphen, and at least 6 additional numbers
+IF (ISNUMERIC(LEFT(@input_search_data, 2)) = 1 AND SUBSTRING(@input_search_data, 3, 1) = '-' AND ISNUMERIC(SUBSTRING(@input_search_data, 4, 4)) = 1
+AND SUBSTRING(@input_search_data, 8, 1) = '-' AND ISNUMERIC(SUBSTRING(@input_search_data, 9, 6)) = 1)
+SET @input_type = 'AccountNumber';
+ELSE
+-- Search by Carrier Tracking Number: 4 Alphanumeric, 1 hyphen, 4 alphanumeric, one hyphen, and two alphanumeric
+IF (PATINDEX('%[^a-zA-Z0-9]%' , LEFT(@input_search_data, 4)) = 0 AND SUBSTRING(@input_search_data, 5, 1) = '-' AND PATINDEX('%[^a-zA-Z0-9]%' , SUBSTRING(@input_search_data, 6, 4)) = 0
+AND SUBSTRING(@input_search_data, 10, 1) = '-' AND PATINDEX('%[^a-zA-Z0-9]%' , SUBSTRING(@input_search_data, 11, 2)) = 0)
+SET @input_type = 'CarrierTrackingNumber';
+ELSE
+-- Search by Product Number: Starts with two letters, a dash, and four alphanumeric characters: AA-12YZ
+IF (PATINDEX('%[^a-zA-Z]%' , LEFT(@input_search_data, 2)) = 0 AND SUBSTRING(@input_search_data, 3, 1) = '-' AND PATINDEX('%[^a-zA-Z0-9]%' , SUBSTRING(@input_search_data, 4, 4)) = 0)
+SET @input_type = 'ProductNumber';
+ELSE
+-- Default our input to carrier tracking number, if no other format is identified.
+SET @input_type = 'CarrierTrackingNumber';
+-- Remove additional padding to prevent bad string matches.
+-- Add a wildcard delimiter to the end of the input, to account for additional characters at the end.
+SELECT @input_search_data = LTRIM(RTRIM(@input_search_data)) + '%';
+DECLARE @sql_command NVARCHAR(MAX);
+DECLARE @parameter_list NVARCHAR(MAX);
+-- Create the parameter list and initial command string
+SET @parameter_list = '@input_search_data NVARCHAR(25), @offset_by_this_many_rows INT, @row_count_to_return INT';
+SET @sql_command = '
+SELECT
+SalesOrderHeader.OrderDate,
+SalesOrderHeader.ShipDate,
+SalesOrderHeader.Status,
+SalesOrderHeader.PurchaseOrderNumber,
+SalesOrderHeader.AccountNumber,
+SalesOrderHeader.SalesOrderNumber,
+SalesOrderDetail.CarrierTrackingNumber,
+SalesOrderDetail.OrderQty,
+SalesOrderDetail.UnitPrice,
+SalesOrderDetail.UnitPriceDiscount,
+SalesOrderDetail.LineTotal,
+Product.Name,
+Product.ProductNumber
+FROM Sales.SalesOrderHeader
+INNER JOIN Sales.SalesOrderDetail
+ON SalesOrderHeader.SalesOrderID = SalesOrderDetail.SalesOrderID
+INNER JOIN Production.Product
+ON SalesOrderDetail.ProductID = Product.ProductID';
+-- Based on the value of @input_type, dynamically generate the WHERE clause.
+IF @input_type = 'ProductNumber'
+SET @sql_command = @sql_command + '
+WHERE Product.ProductNumber LIKE @input_search_data';
+ELSE IF @input_type = 'SalesOrderNumber'
+SET @sql_command = @sql_command + '
+WHERE SalesOrderHeader.SalesOrderNumber LIKE @input_search_data';
+ELSE IF @input_type = 'PurchaseOrderNumber'
+SET @sql_command = @sql_command + '
+WHERE SalesOrderHeader.PurchaseOrderNumber LIKE @input_search_data';
+ELSE IF @input_type = 'AccountNumber'
+SET @sql_command = @sql_command + '
+WHERE SalesOrderHeader.AccountNumber LIKE @input_search_data';
+ELSE IF @input_type = 'CarrierTrackingNumber'
+SET @sql_command = @sql_command + '
+WHERE SalesOrderDetail.CarrierTrackingNumber LIKE @input_search_data';
+SET @sql_command = @sql_command + '
+ORDER BY SalesOrderDetail.SalesOrderDetailID';
+-- If there are any row limitations, append them here
+SET @sql_command = @sql_command + '
+OFFSET @offset_by_this_many_rows ROWS';
+IF @return_all_results = 0
+SET @sql_command = @sql_command + '
+FETCH NEXT @row_count_to_return ROWS ONLY;';
+PRINT @sql_command;
+EXEC sp_executesql @sql_command, @parameter_list, @input_search_data, @offset_by_this_many_rows, @row_count_to_return;
+END
+```
+
+代码清单 3-8. 基于字符串形式检测输入类型的销售订单明细搜索
+
+
+### 动态 SQL 输入处理
+
+字符串比较在存储过程的早期检查 `@input_search_data`，并确定字符串中字母数字 `&` 符号的位置。通过解析此参数，可以评估其中存储的数据类型，并分配 `@input_type`。构建动态 SQL 语句时，`WHERE` 子句完全基于所提供的输入类型。`PATINDEX` 用于确定字符串中是否存在特定范围之外的任何字符。如果想验证一个由四个字符组成的字符串是否是字母数字，那么检查是否存在不在 a-z、A-Z 或 0-9 范围内的字符即可实现该目标。脱字符 `^` 表示逻辑 `NOT`，因此如果输入字符串中存在任何非字母数字字符，比较字符串 `'%[^a-zA-Z0-9]%'` 将返回非零结果。
+
+或者，也可以在搜索框旁边出现一个下拉菜单，指示输入类型是什么。这也有效，但前面的示例侧重于一键式解决方案的理念，这在潜在输入数量（及其结构）有限时是有利的。对于最终用户来说，这也是一种更简单、更快速的界面，便于学习和利用。如果更可取，输入解析也可以在应用程序中管理。
+
+### 输入解析的权衡
+
+先前实现的主要缺点是灵活性，但如果应用程序控制了可以提供的输入类型，则无需检查每种可能的字母和数字组合。虽然此处未演示，但也可以使用更通用的检查来处理不同的数据类型。例如，任何以 `PO` 开头的字符串都是采购订单号，任何以 `SO` 开头的字符串都是销售订单号。在此实现中，如果输入字符串与任何类型检查都不匹配，我们默认使用承运人跟踪号。这是任意的，也可以默认为任何格式，或者返回无结果（如果那样更可取）。
+
+### 存储过程执行示例
+
+以下是示例存储过程的一些执行示例：
+
+```
+EXEC dbo.search_sales_order_detail @input_search_data = 'BK-M82B-42';
+```
+
+这表示基于产品编号搜索特定产品。命令字符串中生成的 `WHERE` 子句将仅显示为对此列的检查：
+
+```
+WHERE Product.ProductNumber LIKE @input_search_data
+ORDER BY SalesOrderDetail.SalesOrderDetailID
+OFFSET @offset_by_this_many_rows ROWS
+FETCH NEXT @row_count_to_return ROWS ONLY;
+```
+
+该语句的剩余部分对于任何不显式希望返回所有结果（使用 `@return_all_results` 参数）的执行都是恒定的。
+
+```
+EXEC dbo.search_sales_order_detail @input_search_data = 'PO125', @offset_by_this_many_rows = 0, @row_count_to_return = 50, @return_all_results = 0;
+```
+
+此语句搜索采购订单号的一部分，同时一次返回 50 行，而不是默认的 25 行：
+
+```
+WHERE SalesOrderHeader.PurchaseOrderNumber LIKE @input_search_data
+ORDER BY SalesOrderDetail.SalesOrderDetailID
+OFFSET @offset_by_this_many_rows ROWS
+FETCH NEXT @row_count_to_return ROWS ONLY;
+```
+
+此 TSQL 段与上一个段之间唯一的区别是筛选基于 `PurchaseOrderNumber`，而不是 `ProductNumber`。无论传入的值如何，行偏移量和要返回的行计数都由其各自的参数指定。
+
+```
+EXEC dbo.search_sales_order_detail @input_search_data = 'SO43662', @return_all_results = 1;
+```
+
+这是一个基于特定销售订单号的搜索。通过将 `@return_all_results` 设置为 `1`，省略了 `FETCH NEXT` 部分，从而生成以下命令字符串：
+
+```
+WHERE SalesOrderHeader.SalesOrderNumber LIKE @input_search_data
+ORDER BY SalesOrderDetail.SalesOrderDetailID
+OFFSET @offset_by_this_many_rows ROWS
+```
+
+偏移量仍然被指定，但由于未提供值，默认为零。
+
+#### 结果行计数
+
+即使只返回 25（或 10 或 50）行的分页集，返回查询的总行数也是有益的。你可能想知道结果集包含 118 行，而当前仅显示了 25 行。通常，最终用户需要知道，除了当前正在查看第 51-75 行之外，他们正在查看的是总共 118 行中的一部分。这提供了关于其搜索词有效性的即时反馈，以及对结果集是否符合其预期的一些验证。如果总行数过高，反应将是优化搜索以使其更具体。如果行数太少，那么用户会想验证他们输入的是有效数据，并且他们正在搜索的数据肯定在系统中，并且可以根据搜索条件获得。
+
+这个计数可以作为一个单独的操作提前计算，这将导致使用与数据检索本身相同的过滤器执行一个额外的查询。清单 3-9 是一个使用简单采购订单搜索的示例。
+
+```
+SELECT
+COUNT(*)
+FROM Sales.SalesOrderHeader
+INNER JOIN Sales.SalesOrderDetail
+ON SalesOrderHeader.SalesOrderID = SalesOrderDetail.SalesOrderID
+INNER JOIN Production.Product
+ON SalesOrderDetail.ProductID = Product.ProductID
+WHERE SalesOrderHeader.PurchaseOrderNumber LIKE 'PO125%';
+清单 3-9.
+检索特定结果集的行数
+```
+
+这个计数可以作为一个单独的查询执行，并缓存以供以后使用，以防用户继续分页浏览其当前结果集。这允许你执行一次昂贵的计数操作，而不是每次访问相同数据集时都执行一次。清单 3-10 中的查询返回 `290` 作为匹配指定条件的行数。
+
+```
+SELECT
+COUNT(SalesOrderDetailID) OVER (ORDER BY SalesOrderDetailID ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS row_count_current,
+COUNT(SalesOrderDetailID) OVER (ORDER BY SalesOrderDetailID ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS row_count_total,
+SalesOrderHeader.OrderDate,
+SalesOrderHeader.ShipDate,
+SalesOrderHeader.Status,
+SalesOrderHeader.PurchaseOrderNumber,
+SalesOrderHeader.AccountNumber,
+SalesOrderHeader.SalesOrderNumber,
+SalesOrderDetail.CarrierTrackingNumber,
+SalesOrderDetail.OrderQty,
+SalesOrderDetail.UnitPrice,
+SalesOrderDetail.UnitPriceDiscount,
+SalesOrderDetail.LineTotal,
+Product.Name,
+Product.ProductNumber
+FROM Sales.SalesOrderHeader
+INNER JOIN Sales.SalesOrderDetail
+ON SalesOrderHeader.SalesOrderID = SalesOrderDetail.SalesOrderID
+INNER JOIN Production.Product
+ON SalesOrderDetail.ProductID = Product.ProductID
+WHERE SalesOrderHeader.PurchaseOrderNumber LIKE 'PO125%'
+ORDER BY SalesOrderDetail.SalesOrderDetailID;
+清单 3-10.
+在结果集旁检索当前和总行数
+```
+
+此查询返回相同的结果集，但包含一些额外的计数。第一个计数 `row_count_current` 是按 `SalesOrderDetailID` 排序的当前销售订单明细记录的行号。另一方面，`row_count_total` 将返回结果集的总行数，而不管当前行号是什么（如前所述，它是 `290`）。`ROWS` 子句是 SQL Server 2012 及更高版本独有的语法，允许你更具体地确定窗口函数处理数据行的范围。`ROWS UNBOUNDED PRECEDING AND CURRENT ROW` 将从结果集的开始处计数到当前行，因此根据 `ORDER BY` 子句返回递增的行计数。另一方面，`ROWS UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING` 将返回数据集中所有行的计数，而不管当前行号如何。`UNBOUNDED PRECEDING` 引用结果集的开始，而 `UNBOUNDED FOLLOWING` 引用结果集的结束。
+
+
+
+最后一步是将这些努力结合起来，以便在对数据集进行分页的同时也能检索行数，如代码清单 3-11 所示。
+
+```sql
+WITH CTE_SEARCH_DATA AS (
+SELECT
+COUNT(SalesOrderDetailID) OVER (ORDER BY SalesOrderDetailID ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS row_count_current,
+COUNT(SalesOrderDetailID) OVER (ORDER BY SalesOrderDetailID ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS row_count_total,
+SalesOrderHeader.OrderDate,
+SalesOrderHeader.ShipDate,
+SalesOrderHeader.Status,
+SalesOrderHeader.PurchaseOrderNumber,
+SalesOrderHeader.AccountNumber,
+SalesOrderHeader.SalesOrderNumber,
+SalesOrderDetail.CarrierTrackingNumber,
+SalesOrderDetail.OrderQty,
+SalesOrderDetail.UnitPrice,
+SalesOrderDetail.UnitPriceDiscount,
+SalesOrderDetail.LineTotal,
+Product.Name,
+Product.ProductNumber
+FROM Sales.SalesOrderHeader
+INNER JOIN Sales.SalesOrderDetail
+ON SalesOrderHeader.SalesOrderID = SalesOrderDetail.SalesOrderID
+INNER JOIN Production.Product
+ON SalesOrderDetail.ProductID = Product.ProductID
+WHERE SalesOrderHeader.PurchaseOrderNumber LIKE 'PO125%')
+SELECT
+*
+FROM CTE_SEARCH_DATA
+ORDER BY CTE_SEARCH_DATA.row_count_current
+OFFSET 25 ROWS
+FETCH NEXT 50 ROWS ONLY;
+```
+**代码清单 3-11.** 在带数据分页的结果集旁边检索当前和总行数
+
+最后一个示例将之前的查询放入了一个公用表表达式中，并使用 `row_count_current` 执行分页操作，以确定结果集从何处开始偏移。将数据收集、行数统计和分页全部集中在一条语句中的便利性可能非常有用，但必须权衡性能。你将在后面的章节中了解更多关于这些语句性能的知识，但与此同时，一如既往，在发布前务必彻底测试所有新的 T-SQL，以避免任何无意中造成的性能问题。
+
+也可以使用动态 SQL 来确定是否需要在结果集中包含行数统计。当结果集较小，或者你不需要行数统计来进行任何进一步的操作时，这有助于减少所需的工作量。代码清单 3-12 说明了这种用法。
+
+```sql
+DECLARE @include_row_counts BIT = 0;
+DECLARE @sql_command NVARCHAR(MAX);
+SELECT @sql_command = '
+WITH CTE_SEARCH_DATA AS (
+SELECT';
+IF @include_row_counts = 1
+SELECT @sql_command = @sql_command + '
+COUNT(SalesOrderDetailID) OVER (ORDER BY SalesOrderDetailID ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS row_count_current,
+COUNT(SalesOrderDetailID) OVER (ORDER BY SalesOrderDetailID ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS row_count_total,';
+SELECT @sql_command = @sql_command + '
+SalesOrderHeader.OrderDate,
+SalesOrderHeader.ShipDate,
+SalesOrderHeader.Status,
+SalesOrderHeader.PurchaseOrderNumber,
+SalesOrderHeader.AccountNumber,
+SalesOrderHeader.SalesOrderNumber,
+SalesOrderDetail.CarrierTrackingNumber,
+SalesOrderDetail.OrderQty,
+SalesOrderDetail.UnitPrice,
+SalesOrderDetail.UnitPriceDiscount,
+SalesOrderDetail.LineTotal,
+Product.Name,
+Product.ProductNumber
+FROM Sales.SalesOrderHeader
+INNER JOIN Sales.SalesOrderDetail
+ON SalesOrderHeader.SalesOrderID = SalesOrderDetail.SalesOrderID
+INNER JOIN Production.Product
+ON SalesOrderDetail.ProductID = Product.ProductID
+WHERE SalesOrderHeader.PurchaseOrderNumber LIKE ''PO125%'')
+SELECT
+*
+FROM CTE_SEARCH_DATA';
+IF @include_row_counts = 1
+SELECT @sql_command = @sql_command + '
+ORDER BY CTE_SEARCH_DATA.row_count_current';
+ELSE
+SELECT @sql_command = @sql_command + '
+ORDER BY CTE_SEARCH_DATA.OrderDate';
+SELECT @sql_command = @sql_command + '
+OFFSET 25 ROWS
+FETCH NEXT 50 ROWS ONLY;';
+PRINT @sql_command;
+EXEC sp_executesql @sql_command;
+```
+**代码清单 3-12.** 使用动态 SQL 使行数统计成为结果集的可选组件
+
+参数 `@include_row_counts` 决定是否将窗口函数包含在命令字符串中，并相应地更新 `ORDER BY` 子句。在这个特定示例中，它被设置为零，生成的命令字符串如代码清单 3-13 所示。
+
+```sql
+WITH CTE_SEARCH_DATA AS (
+SELECT
+SalesOrderHeader.OrderDate,
+SalesOrderHeader.ShipDate,
+SalesOrderHeader.Status,
+SalesOrderHeader.PurchaseOrderNumber,
+SalesOrderHeader.AccountNumber,
+SalesOrderHeader.SalesOrderNumber,
+SalesOrderDetail.CarrierTrackingNumber,
+SalesOrderDetail.OrderQty,
+SalesOrderDetail.UnitPrice,
+SalesOrderDetail.UnitPriceDiscount,
+SalesOrderDetail.LineTotal,
+Product.Name,
+Product.ProductNumber
+FROM Sales.SalesOrderHeader
+INNER JOIN Sales.SalesOrderDetail
+ON SalesOrderHeader.SalesOrderID = SalesOrderDetail.SalesOrderID
+INNER JOIN Production.Product
+ON SalesOrderDetail.ProductID = Product.ProductID
+WHERE SalesOrderHeader.PurchaseOrderNumber LIKE 'PO125%')
+SELECT
+*
+FROM CTE_SEARCH_DATA
+ORDER BY CTE_SEARCH_DATA.OrderDate
+OFFSET 25 ROWS
+FETCH NEXT 50 ROWS ONLY;
+```
+**代码清单 3-13.** 代码清单 3-12 中生成的命令字符串（省略了行数统计）
+
+### 其他过滤考虑因素
+
+为了实现特定的功能，可以对任何这些搜索方法应用无数的修改。例如，动态 SQL 可以用来控制报表查询中使用的分组，以快速检索特定的总和或计数，同时省略其他部分。代码清单 3-14 是一个简单的 T-SQL 语句示例，该语句将根据输入参数包括两种不同汇总中的一种（或两种，或都不包括）。
+
+```sql
+DECLARE @start_date DATE = '2014-06-01';
+DECLARE @end_date DATE = '2014-06-30';
+DECLARE @include_order_count BIT = 1;
+DECLARE @include_order_total BIT = 1;
+IF @include_order_count = 0 AND @include_order_total = 0
+RETURN;
+DECLARE @parameter_list NVARCHAR(MAX);
+DECLARE @sql_command NVARCHAR(MAX);
+SELECT @parameter_list = '@start_date DATE, @end_date DATE'
+SELECT @sql_command = '
+SELECT';
+IF @include_order_count = 1
+SELECT @sql_command = @sql_command + '
+COUNT(DISTINCT SalesOrderDetail.SalesOrderDetailID) AS sales_order_count,';
+IF @include_order_total = 1
+SELECT @sql_command = @sql_command + '
+SUM(SalesOrderDetail.LineTotal) AS total_revenue,';
+SELECT @sql_command = @sql_command + '
+1 AS place_holder
+FROM Sales.SalesOrderHeader
+INNER JOIN Sales.SalesOrderDetail
+ON SalesOrderHeader.SalesOrderID = SalesOrderDetail.SalesOrderID
+WHERE OrderDate BETWEEN @start_date AND @end_date';
+PRINT @sql_command;
+EXEC sp_executesql @sql_command, @parameter_list, @start_date, @end_date;
+```
+**代码清单 3-14.** 使用动态 SQL 根据输入参数返回总和/计数
+
+两个输入参数决定是否应包含所有销售订单明细行的数量统计，或所有行费用的总和，或两者都包含，或都不包含。这可以极大地扩展，以减少存储过程中必要的复杂操作数量。或者，也可以使用 `IF…THEN` 语句来分别检查是否应该评估每个指标。这对于少量变量来说效果很好，但对于可能涉及许多不同表的复杂数据集，将它们全部收集在一个高效步骤中，可能比逐个获取每个指标更快、更有效。
+
+
+### 结论
+
+使用动态 SQL 创建灵活、高效的搜索例程，可以解锁无数种快速访问数据的方式，同时定制 TSQL 解决方案以应对应用程序可能带来的任何挑战。我们本可以轻松地用数百页的篇幅来举例说明，不同的参数组合与 TSQL 技术如何能够创造出新颖或创新的搜索方法。
+
+无需多言，这种灵活性本身就是创新的源泉。当你遇到挑战，不确定如何获取所需的所有可能结果集时，请尝试实验，将硬编码的约定转化为参数。虽然一个动态 SQL 存储过程乍看之下可能更为复杂，但所增加的控制逻辑行可以很容易地被格式化和文档化，以确保最终代码既易于阅读又便于维护。
+
+## 4. 权限与安全
+
+第 2 章介绍了 SQL 注入，以及编写不当的 TSQL 可能成为恶意攻击目标的多种方式。本章退后一步，回顾 SQL Server 安全的最佳实践，重点关注动态 SQL 及其典型用例。安全是一个庞大的主题，如果展开讨论，很容易就能占据数千页的篇幅。它也在不断演变，随着每一天过去，新产品发布，旧产品被发现漏洞。此处的目标是涵盖在使用动态 SQL 开发数据库解决方案时，你需要格外注意的最重要和最常见的方面，而不会过多地深入特殊情况或边缘案例。
+
+#### 最小权限原则
+
+安全方面最重要的考量来自“最小权限原则”。该原则指出，对于任何应用程序，其可用的权限应恰好是执行其功能所必需的，不多也不少。在数据库层面，这一原则至关重要，因为数据库安全是防止数据被盗的最后屏障。一旦黑客获得了对您数据的无限制访问，就几乎没有什么可以保护的了。最重要的考量是确定应用程序应以哪个用户身份运行，以及应为该用户分配哪些权限。
+
+公司经常犯的最重大错误是为他们的应用程序使用 `sysadmin` 用户。这很方便，因为它总是有效，无论执行的是什么 TSQL。无论应用程序做什么，这个用户都将提供对一切的完全访问权限。虽然方便，但它构成了一个安全噩梦，因为使用此帐户的应用程序可能执行不应被允许的操作。更糟糕的是，如果应用程序以某种方式被攻陷，并且恶意用户获得了执行 TSQL 命令的权限，他们将拥有一切的访问权。
+
+考虑以下假设的应用程序和功能列表：
+*   订单处理系统
+*   文件传输应用程序
+*   报告生成
+*   软件安装程序
+*   备份软件
+
+这些应用程序执行的功能非常不同，访问数据库服务器的方式也大相径庭。为了满足这些功能，SQL Server 登录名和用户应被授予哪些类型的权限？应用程序需要读取权限吗？写入权限？它需要更改任何服务器配置或设置吗？应用程序是仅访问单个数据库还是一组数据库？可以将应用程序限制在对少数几个对象的权限上吗？显然，为所有内容创建具有细粒度访问权限的手动策略可能工作量过大，得不偿失，并将构成最深入的解决方案。在不深入那么多细节的情况下，这些应用程序通常需要什么来运行？
+
+*   **订单处理系统**：对特定数据库或一组数据库的读写权限（`select`、`insert`、`update` 和 `delete`）将提供创建、更新、删除订单状态以及报告状态的能力。如果数据通过存储过程读/写，则需要执行这些例程的权限。应用程序不太可能有任何理由调整服务器设置、更改数据库架构、访问文件数据或访问其他数据库或服务器中不相关的数据。
+*   **文件传输应用程序**：对记录文件传输的表具有读写权限。用户可能还需要直接访问文件系统进行读写。如果可能，请不要使用 `xp_cmdshell` 执行文件访问。这个系统存储过程在数据库服务器上启用后，提供了对操作系统的巨大访问权限。一个拥有对数据和操作系统无限制访问权限的数据库登录名非常强大，对于任何试图攻陷此应用程序的黑客来说都是一个极具诱惑力的目标。
+*   **报告生成**：理想情况下，对单独的报告数据库具有只读访问权限。报告通常在从作为其整体数据源的事务数据中分离出来时运行效果最佳。将报告限制为只读访问的能力大大减少了这些应用程序被黑客攻击或破坏的方式。如果需要，可以进一步将读取访问权限细分为这些报告所需的表或存储过程。这确保了只有在需要时才会访问受保护或敏感的数据。
+*   **软件安装程序**：安装软件时，应用程序通常会请求尽可能多的权限，经常寻找 `sysadmin` 用户。重要的是，如果授予了这个级别的权限，它应该是临时的。通常，安装或升级软件是不频繁且不规则的事件。因此，如果需要一个具有高级别权限的单独用户，该用户永远不应被其他应用程序、用户或功能使用。不要使用 `sa` 或搭便车使用其他服务帐户，以免不同用途混淆。由 DBA 使用自己的帐户进行安装是可以接受的，只要他拥有安装所需的权限。
+*   **备份软件**：所需的主要权限是备份数据库。该软件可能还需要访问一些元数据来读取有关数据库的数据或写入日志数据，但这种访问权限可能是最小的。该软件可以仅在没有进一步权限需求的备份操作员帐户下运行。
+
+这些是基于您在开发或 IT 中常见的软件应用程序的一些典型示例，但每个环境都有其自己的一套应用程序和安全需求。只要权限被缩减到应用程序所需的最低水平，您就可以确保任何可能因额外权限而暴露的安全漏洞永远不会成为现实。
+
+然而，“最小权限原则”并不仅适用于数据库服务器。安全最好以分层方式组织，数据库是最低层，是最终用户最后访问的一层。确保任何最终可以访问数据库服务器的应用程序也仅以其所需的权限运行。安全性的每一层都为保护您数据的保险库增加了一把额外的锁。
+
+
+### 细粒度权限 vs. 角色权限
+
+最常见的权限错误涉及服务器级别的 `sysadmin` 角色或数据库级别的 `db_owner` 角色。`Sysadmin` 为登录账户提供对 SQL Server 所有功能的完全访问权限，是任何登录可用的最全面的权限。`db_owner` 用户角色则提供对单个数据库的所有维护和配置功能的访问权限，以及对该数据库内所有对象的访问权限。这两个角色通常会提供远超应用程序所需的访问权限。它们常被出于便利性而使用，但如果系统遭到入侵，可能会留下严重的安全漏洞。
+
+一般来说，应避免为任何应用程序登录分配 `sysadmin` 角色，尤其是当应用程序可从互联网和/或公众访问时。`db_owner` 通常被分配给访问其特定功能的数据库的应用程序，但该角色提供的权限很少是应用程序按预期工作所必需的。应用程序是否需要更改数据库配置设置、访问系统视图或拥有删除数据库的权限？很可能这些功能并不需要，在配置应用程序用户时应谨慎行事。
+
+虽然分配更精细的角色可能需要更多时间、精力和规划，但这样做可以确保你不会留下一个恶意行为可能针对数据库服务器的漏洞。如果一个应用程序只需要对一组 20 个表的读写权限，那么考虑分配 `db_datareader` 和 `db_datawriter`，而不是 `db_owner`。如果数据库包含其他敏感数据，考虑仅将权限授予那 20 个表，而不是其他表。尽管人们倾向于信任他们使用的应用程序，但无论开源还是专有软件，每天都可能发现漏洞。如果任何漏洞可能被你所依赖的应用程序利用，那么确保它对数据库服务器的访问权限最小化，将大大减少攻击造成的损害，并确保数据尽可能安全。
+
+要审查此领域所有服务器和数据库角色，将会是一个冗长且有些偏离主题的题外话。微软为所有内置角色提供了详尽的文档，如果这些角色不够用，还提供了如何创建自定义角色的文档。以下 MSDN 链接提供了关于服务器和数据库角色的当前文档，以及许多有用的相关主题的链接：
+
+*   服务器角色：[`https://msdn.microsoft.com/en-us/library/ms188659.aspx`](https://msdn.microsoft.com/en-us/library/ms188659.aspx)
+*   数据库角色：[`https://msdn.microsoft.com/en-us/library/ms189121.aspx`](https://msdn.microsoft.com/en-us/library/ms189121.aspx)
+
+### 动态 SQL 与所有权链
+
+编写、测试和执行动态 SQL 时，其权限的运行方式与你通常体验到的不同。任何使用 `EXEC` 或 `EXECUTE` 执行的字符串都将在其自身的作用域下运行，尽管安全上下文不会改变。这起初可能会令人困惑，并可能导致运行动态 SQL 时出现安全错误。清单 4-1 展示了一个说明此行为的示例。
+
+```sql
+CREATE PROCEDURE dbo.ownership_chaining_example
+AS
+BEGIN
+SET NOCOUNT ON;
+-- Select the current security context for reference
+SELECT SUSER_SNAME();
+SELECT COUNT(*) FROM Person.Person;
+DECLARE @sql_command NVARCHAR(MAX);
+SELECT @sql_command = 'SELECT SUSER_SNAME();
+SELECT COUNT(*) FROM Person.Person';
+EXEC sp_executesql @sql_command;
+END
+GO
+```
+**清单 4-1.** 用于演示所有权链的简单存储过程
+
+当你执行此存储过程时，结果正是你所期望的：返回当前安全上下文的用户（我），然后使用标准 TSQL 返回 `Person.Person` 表中的行数。此后，使用动态 SQL 执行相同的操作。结果如图 4-1 所示。
+
+![A371168_1_En_4_Fig1_HTML.jpg](img/A371168_1_En_4_Fig1_HTML.jpg)
+
+**图 4-1.** 内联 TSQL 与动态 SQL 中的所有权链
+
+用户 Edward 是一个 `sysadmin`，这为他提供了对这台 SQL Server 上所有内容的完全访问权限。到目前为止的结果并不令人惊讶。安全上下文和来自 `Person.Person` 的计数都被返回了，无论是在动态 SQL 部分之外还是之内。如果由一个不同用户执行该存储过程，一个权限比该用户少得多的用户，会发生什么？为了说明这一点，我们将创建一个名为 `VeryLimitedUser` 的用户，默认情况下没有任何权限。
+
+```sql
+CREATE USER VeryLimitedUser WITHOUT LOGIN;
+GO
+CREATE ROLE VeryLimitedRole;
+GO
+EXEC sys.sp_addrolemember 'VeryLimitedRole', 'VeryLimitedUser';
+GO
+```
+
+接下来，我们将仅授予该用户对上述存储过程的执行权限：
+
+```sql
+GRANT EXECUTE ON dbo.ownership_chaining_example TO VeryLimitedRole;
+GO
+```
+
+权限分配完毕后，我们将临时切换安全上下文，并使用这个新用户执行存储过程：
+
+```sql
+EXECUTE AS USER = 'VeryLimitedUser';
+GO
+EXEC dbo.ownership_chaining_example;
+GO
+REVERT;
+GO
+```
+
+执行的结果与之前的不相同。如图 4-2 所示，它们需要一些额外的解释才能理解。
+
+![A371168_1_En_4_Fig2_HTML.jpg](img/A371168_1_En_4_Fig2_HTML.jpg)
+
+**图 4-2.** 因缺乏所有权链而导致权限错误之前的结果
+
+当尝试使用动态命令从 `Person.Person` 中选择计数时，SQL Server 返回了一个错误：
+
+```sql
+Msg 229, Level 14, State 5, Line 40
+The SELECT permission was denied on the object 'Person', database 'AdventureWorks2014', schema 'Person'.
+```
+
+通常，当用户对存储过程拥有 `execute` 权限时，存储过程中包含的任何 TSQL 都会正常运行，无论用户是否对其他对象拥有权限。在前面的例子中，`VeryLimitedUser` 没有对 `Person.Person` 的读取权限。尽管有此限制，但被授予对存储过程的执行权限使其能够访问该表。但对于动态 SQL 语句内的 `SELECT` 操作，情况并非如此。这里发生了什么！？
+
+
+
+#### SQL Server 中的所有权链
+
+SQL Server 中的所有权链是一种重要的安全机制。其核心在于，为了在一个拥有众多对象的数据库中实现高效且有意义的安全性，初始调用 T-SQL 的用户的权限会通过其内部调用的任何其他 T-SQL 传递下去。例如，当您执行一个存储过程（并且拥有执行的权限）时，其中调用的所有额外 T-SQL 也会成功执行。同样，一个拥有视图权限的用户，不需要同时拥有该视图所基于的所有底层对象的权限。一旦授予了对视图的访问权限，也就隐式地授予了对其中所有表、视图和函数的后续权限。
+
+所有权链极大地简化了 SQL Server 内部的安全性，允许您快速、安全地将权限委托给存储过程或视图，而不必同时授予对其中每个被引用对象的访问权限。对于安全管理员来说，这节省了大量时间，并允许他们基于逻辑或业务需求来提供权限，而无需为每个被引用的对象分配精细的安全设置。
+
+#### 动态 SQL 对所有权链的打破
+
+然而，所有权链规则有一个重大例外，那就是动态 SQL。一旦执行动态 SQL 字符串，链就会被打破，执行将重置为初始调用者的权限。在之前的例子中，用户`VeryLimitedUser` 能够访问`Person.Person`表而无需对其拥有显式权限，这要归功于所有权链。但在动态 SQL 执行的那一刻，权限就恢复为`VeryLimitedUser`自身在存储过程上下文之外的权限。因此，该用户由于对`Person.Person`没有显式权限而无法访问它，并抛出了错误。
+
+请注意，当所有权链被打破时，安全上下文并不会改变。无论所有权链的状态如何，上面针对当前用户安全上下文返回的结果都是相同的。由于该用户没有登录名，安全上下文被返回为一个系统生成的数字字符串。
+
+请务必留意所有权链，并确保执行存储过程的用户对该过程本身以及其中调用的任何对象或动态 SQL 都拥有足够的权限。
+
+通常，这种所有权链的断裂不会造成问题——前提是分配给用户的权限与该用户执行的任何 T-SQL（无论是动态的还是其他形式的）所需的权限相似。仔细测试那些使用动态 SQL 的存储过程和 T-SQL 语句，可以确保结果符合预期，并且不会意外抛出权限错误。务必抓住机会，使用最终将在生产环境中运行该存储过程的登录名或用户对其进行测试。同时，在一个与生产环境足够相似的环境中进行测试，以便提前发现任何所有权链问题。通常，开发者在沙盒环境中工作，他们的个人登录名拥有广泛的权限。因此，所有代码都能以`sysadmin`或`db_owner`的身份成功运行，但当代码移到生产环境且权限受到更多限制时，可能就无法顺利运行了。
+
+### 动态切换安全上下文
+
+通常，所有权链带来的这些场景不会在数据库开发中造成问题。但在某些孤立场景中，您可能希望允许特定的 T-SQL 语句或存储过程在另一个用户的安全上下文下运行。在以下两种情况下，默认权限可能不够：一个用户权限太少，由于所有权链被打破或对特定对象权限不足而触发各种安全错误；或者，您可能有一个拥有远超所需权限的用户，并希望在执行敏感存储过程时减少其权限。
+
+有多种方法可以更改特定对象或执行的安全性，我们将通过示例逐一演示。请注意，这些赋值操作应该是罕见的例外，而非规则。如果您发现越来越多的存储过程被赋予动态特殊权限，那可能表明您的整体安全方法存在缺陷。考虑为应用程序用户重新分配一组更合适的数据库角色，或者在必要时，创建一个提供所需一切权限的新角色。在 T-SQL 中手动调整权限难以记录和跟踪，因此会大大增加长期的复杂性。尽量减少这类例外情况将大大提高可维护性，并使理解代码更容易，尤其是在排查错误或调查异常行为时。
+
+之前展示过一个更改权限的例子，那就是使用 `EXECUTE AS` 来更改用户的安全上下文。这要求执行上下文更改的用户拥有模仿目标用户所需的权限。这一点很重要；否则，一个权限极小的用户可能会尝试模仿`sysadmin`或其他具有广泛服务器访问权限的账户。考虑以下 T-SQL：
+
+```sql
+SELECT SUSER_SNAME() AS SUSER_SNAME, USER_NAME() AS USER_NAME, ORIGINAL_LOGIN() AS ORIGINAL_LOGIN;
+GO
+EXECUTE AS USER = 'VeryLimitedUser';
+SELECT SUSER_SNAME() AS SUSER_SNAME, USER_NAME() AS USER_NAME, ORIGINAL_LOGIN() AS ORIGINAL_LOGIN;
+GO
+```
+
+这里，选择了一些关于当前用户的基本信息，包括原始登录名，它将返回此连接的初始登录名，无论之后权限如何变化。初始权限如下所示：
+
+```
+Edward, dbo, Edward
+```
+
+切换到受限用户后，当前安全信息变为：
+
+```
+S-1-9-3-609289169-1216273702-1805054397-27368224, VeryLimitedUser, Edward
+```
+
+这表明登录名和用户已更改为受限访问的测试用户，但原始登录名仍然是 Edward。
+
+```sql
+EXECUTE AS USER = 'Edward';
+GO
+```
+
+尝试切换回 Edward 的上下文将失败，并返回以下错误：
+
+```
+Msg 15517, Level 16, State 1, Line 48
+Cannot execute as the database principal because the principal "Edward" does not exist, this type of principal cannot be impersonated, or you do not have permission.
+```
+
+现在您正以`VeryLimitedUser`的身份执行，切换到 Edward 失败，因为该用户没有模仿系统管理员所需的权限。在此连接上返回到以 Edward 身份执行的唯一方法是使用`REVERT`命令：
+
+```sql
+REVERT;
+GO
+SELECT SUSER_SNAME() AS SUSER_SNAME, USER_NAME() AS USER_NAME, ORIGINAL_LOGIN() AS ORIGINAL_LOGIN;
+GO
+```
+
+现在安全上下文回到了起点：
+
+```
+Edward, dbo, Edward
+```
+
+如果您想更改安全上下文并且之后不能再更改，`WITH NO REVERT`选项可以实现这一点：
+
+```sql
+EXECUTE AS USER = 'VeryLimitedUser' WITH NO REVERT;
+```
+
+一旦添加了这个选项，权限就被锁定在`VeryLimitedUser`，直到此存储过程或连接结束。任何尝试`EXECUTE AS`另一个用户或恢复（revert）的操作都将失败。
+
+
+
+```
+REVERT;
+GO
+EXECUTE AS USER = 'Edward';
+```
+
+执行以上任一语句都将返回以下错误：
+
+```
+Msg 15196, Level 16, State 1, Line 55
+The current security context is non-revertible. The "Revert" statement failed.
+Msg 15517, Level 16, State 1, Line 56
+Cannot execute as the database principal because the principal "Edward" does not exist, this type of principal cannot be impersonated, or you do not have permission.
+```
+
+#### 使用 `REVERT` 和 `WITH NO REVERT`
+
+这些错误提醒你 `REVERT` 将不起作用，并且你无法切换用户。`WITH NO REVERT` 是一种极佳的方式，可以确保整个存储过程或连接都使用单一用户身份执行，并且任何人都无法尝试获取比此身份更多的权限。使用此选项结束 `EXECUTE AS` 语句的唯一方式是存储过程完成，或者连接结束或被终止。
+
+#### `EXECUTE AS OWNER`
+
+下一种更改权限的方法是为存储过程分配特定的安全上下文。完成此操作后，该存储过程在执行时，无论调用者是谁，都将始终以此用户身份执行，如清单 4-2 所示。
+
+```sql
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'ownership_chaining_example')
+BEGIN
+DROP PROCEDURE dbo.ownership_chaining_example;
+END
+GO
+CREATE PROCEDURE dbo.ownership_chaining_example
+WITH EXECUTE AS OWNER
+AS
+BEGIN
+SET NOCOUNT ON;
+-- Select the current security context, for reference
+SELECT SUSER_SNAME() AS security_context_no_dynamic_sql;
+SELECT COUNT(*) AS table_count_no_dynamic_sql FROM Person.Person;
+DECLARE @sql_command NVARCHAR(MAX);
+SELECT @sql_command = 'SELECT SUSER_SNAME() AS security_context_in_dynamic_sql;
+SELECT COUNT(*) AS table_count_in_dynamic_sql FROM Person.Person';
+EXEC sp_executesql @sql_command;
+END
+GO
+```
+清单 4-2. 演示 `EXECUTE AS OWNER` 的存储过程
+
+`EXECUTE AS OWNER` 选项将导致存储过程始终以其所有者的权限执行，无论哪个用户运行它。这使得通常无权访问存储过程内部对象的用户能够运行它。或者，拥有比所有者更多权限的用户仍将使用所有者的权限执行它。对象的所有者通常是其创建者，除非日后被更改。
+
+#### `EXECUTE AS CALLER`
+
+一个可能限制性更强且更有用的权限更改是强制存储过程在其调用者的上下文中执行。这类似于打破所有权链，如清单 4-2 中的动态 SQL 所示。`EXECUTE AS CALLER` 实现了这一点，如清单 4-3 所示。
+
+```sql
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'ownership_chaining_example')
+BEGIN
+DROP PROCEDURE dbo.ownership_chaining_example;
+END
+GO
+CREATE PROCEDURE dbo.ownership_chaining_example
+WITH EXECUTE AS CALLER
+AS
+BEGIN
+SET NOCOUNT ON;
+-- Select the current security context, for reference
+SELECT SUSER_SNAME() AS security_context_no_dynamic_sql;
+SELECT COUNT(*) AS table_count_no_dynamic_sql FROM Person.Person;
+DECLARE @sql_command NVARCHAR(MAX);
+SELECT @sql_command = 'SELECT SUSER_SNAME() AS security_context_in_dynamic_sql;
+SELECT COUNT(*) AS table_count_in_dynamic_sql FROM Person.Person';
+EXEC sp_executesql @sql_command;
+END
+GO
+```
+清单 4-3. 演示 `EXECUTE AS CALLER` 的存储过程
+
+执行时，存储过程将以调用它的任何用户的权限运行。因此，其中访问的所有对象也将检查该用户的权限。这确保了调用存储过程的用户对内部引用的所有对象都具有权限。
+
+#### 处理动态 SQL
+
+重要的是要记住，无论进行任何此类安全调整，动态 SQL 仍会打破所有权链。确保动态 SQL 成功执行的唯一方法是使用具有足够权限的用户运行调用的 TSQL，或者为特定的执行授予更精细的权限，如清单 4-4 所示。
+
+```sql
+CREATE LOGIN EdwardJr WITH PASSWORD = 'AntiSemiJoin17', DEFAULT_DATABASE = AdventureWorks2014;
+GO
+USE AdventureWorks2014
+GO
+CREATE USER EdwardJr FROM LOGIN EdwardJr;
+EXEC sp_addrolemember 'db_owner', 'EdwardJr';
+GO
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'ownership_chaining_example')
+BEGIN
+DROP PROCEDURE dbo.ownership_chaining_example;
+END
+GO
+CREATE PROCEDURE dbo.ownership_chaining_example
+AS
+BEGIN
+SET NOCOUNT ON;
+-- Select the current security context, for reference
+SELECT SUSER_SNAME() AS security_context_no_dynamic_sql;
+SELECT COUNT(*) AS table_count_no_dynamic_sql FROM Person.Person;
+DECLARE @sql_command NVARCHAR(MAX);
+SELECT @sql_command = 'EXECUTE AS LOGIN = ''EdwardJr'';
+SELECT SUSER_SNAME() AS security_context_in_dynamic_sql;
+SELECT COUNT(*) AS table_count_in_dynamic_sql FROM Person.Person';
+EXEC sp_executesql @sql_command;
+END
+GO
+```
+清单 4-4. 在动态 SQL 中嵌入安全上下文更改的存储过程
+
+此代码在动态 SQL 内显式更改安全上下文。这是在所有权链被打破后确保特定权限集的另一种方法。在此例中，`EdwardJr` 是一个新用户，对 `AdventureWorks` 数据库中的所有对象拥有读取、写入和执行权限。该用户没有其他服务器权限。你可以以系统管理员 Edward 的身份执行此存储过程：
+
+```sql
+EXEC dbo.ownership_chaining_example;
+```
+
+结果如图 4-3 所示。
+
+![A371168_1_En_4_Fig3_HTML.jpg](img/A371168_1_En_4_Fig3_HTML.jpg)
+图 4-3. 执行动态 SQL 时更改安全上下文
+
+请注意，动态 SQL 中的安全上下文不再与存储过程调用者（Edward）相同，而是更改为新用户 EdwardJr，该用户的权限远少于系统管理员。当所有权链频繁被打破时，这是为动态 SQL 设置可预测权限级别的绝佳方法。
+
+#### 处理权限错误
+
+如果权限有限的用户尝试运行此存储过程，他们会遇到问题：
+
+```sql
+GRANT EXECUTE ON dbo.ownership_chaining_example TO VeryLimitedRole;
+EXECUTE AS USER = 'VeryLimitedUser';
+EXEC dbo.ownership_chaining_example;
+REVERT;
+GO
+```
+
+此代码授予 `VeryLimitedUser` 执行权限，切换安全上下文，并运行存储过程。初始的 `SELECT` 成功，因为该用户通过 `GRANT EXECUTE` 拥有足够的权限，但一旦你尝试切换到 EdwardJr，就会抛出错误：
+
+```
+Msg 15406, Level 16, State 1, Line 142
+Cannot execute as the server principal because the principal "EdwardJr" does not exist, this type of principal cannot be impersonated, or you do not have permission.
+```
+
+该受限用户没有必要的权限来模拟 EdwardJr 或任何其他用户，因此在尝试更改权限时立即被阻止。如果你希望限制谁可以执行特定的动态 SQL 块，这种行为可能是可取的。一如既往，让你的代码业务需求决定数据访问所需的最低权限级别，并在必要时据此调整。
+
+
+
+### 安全灾难从何而来？
+
+这个问题的答案有很多，有些显而易见，另一些则更出人意料。让我们考虑一种可能的安全灾难定义：**任何非组织或其安全人员意愿所采取的行动**。这个定义故意较为宽泛，因为我们希望考虑所有可能导致“坏事”发生的方式。任何与数据库打交道足够久的人都经历过以下情况之一：
+
+*   有黑客试图（或疑似试图）攻击您的组织。
+*   心怀不满的员工在未获得适当授权的情况下修改了数据。
+*   开发人员在她临时编写的 T-SQL 中忘记了 `WHERE` 子句。
+*   一次计划的软件发布出了差错，导致数据丢失。
+*   硬件或软件故障导致基础设施进入非预期状态。
+*   通过应用程序的合法使用进行了非预期的更改。
+*   软件或硬件升级产生了意料之外的后果。
+
+您很可能还能列举出许多其他足以让您夜不能寐的灾难，但所有这一切的关键都可以归结为两个基本类别：**缺乏规划**和**人为失误**。如何以一种既有意义又不突兀的方式来管理每一种风险？为了不让讨论偏离动态 SQL 太远，让我们简要回顾这些风险，并为管理它们提供一些起点。
+
+#### SQL 注入与纵深防御
+
+请记住之前的讨论：SQL 注入在最坏的情况下被利用时，可能会在错误的时间将服务器的完全控制权拱手交给错误的人。第 2 章针对这一特定的安全威胁提供了解决方案，并指出保护应用程序的最佳方式是在多个层面上提供足够的安全性，使得绕过这些安全措施的总成本变得极高。没有万无一失的方法能保护系统免受所有威胁。就像一个有足够动力的强盗很可能可以闯入任何人的房子一样，一个野心勃勃的黑客（或团队）也能找到办法给您制造麻烦。通过避免任何可能使您的应用程序成为诱人目标的明显安全漏洞，可以阻止攻击。看到坚固的锁、结实的窗户以及明显的安防系统标志的强盗，很可能会转向更容易的目标。
+
+#### 缺乏规划
+
+缺乏规划很少会显而易见，直到为时已晚。公司常常推迟高可用性和灾难恢复解决方案的实施，直到经历第一次灾难惊吓之后。渗透测试往往是在发现一次备受瞩目的黑客攻击企图后才首次进行。更严格的升级测试通常是在某次升级出问题之后才被计划和执行。应用程序中的确认提示功能，往往是在客户第一次意外删除了大量数据之后才被加入。适当的规划可以通过员工共同努力来实现，他们将审查应用程序、软件和硬件功能中的常见安全威胁作为其工作职责的一部分。理想情况下，一个由来自不同部门和背景的个人组成的团队会参与其中。虽然数据库专业人员很可能会在服务器中发现有问题的 T-SQL，但开发人员会发现应用程序中的坏代码，而客服代表可能了解客户在数据方面遇到麻烦的主要方式。
+
+#### 最小权限原则
+
+除非用户绝对需要，否则不要为他们分配数据库角色。不惜一切代价避免使用 `sysadmin` 服务器角色。除非应用程序或用户确实需要，否则应尽量减少使用 `db_owner` 数据库角色。
+
+如前所述，为应用程序和工具提供所需的最小权限（但不多给）是避免灾难的关键。考虑到 SQL Server 中有大量功能默认包含在 `sysadmin` 和 `db_owner` 中。随着每个新版本的 SQL Server 发布，都会添加新功能，而这些特性通常也会被包含在这些角色中。因此，如果一个应用程序被分配了拥有这些角色之一的用户，它可能会在升级后获得新的权限。一些目前未使用的功能——如复制、内存 OLTP、AlwaysOn 等——可能会在这些角色下被无意中变得可配置。在为任何应用程序或员工提供登录名时，务必仔细考虑。考虑它拥有的访问权限以及它可能造成的最坏情况，并判断这些情况是否可以接受。必须强调的是，如果用户的权限不允许，他们就无法制造麻烦。当权限是通过数据库或服务器角色隐式授予时，这一点尤其重要。
+
+#### 人为失误与社会工程学
+
+并非所有危险行为都是技术性的。许多许多可怕的事情是由于人为失误、人性弱点或两者结合而发生的。考虑这个每天在全球各地公司上演的情景：一名客服代表接起电话。电话那头是另一个部门的经理。此人听起来很在行，并要求访问有关您最大客户之一的受限数据。这位代表因害怕质疑此人，便提供了数据，挂断电话，并完全忘记了此事。麻烦在于，打电话的人根本不是公司员工，却已经获取了重要信息。他仅仅花了几分钟就得到了它！这种技术被称为**社会工程学**，它构成了巨大威胁。再多的技术也无法阻止人们按软件设计的方式使用软件，尤其当他们有动机这样做时。
+
+前面提到的其他一些例子也有类似的意外不幸主题。忘记 `WHERE` 子句的开发人员或心怀不满的员工并非通过黑客技术制造麻烦；他们只是误用了手头的工具有两种策略来防御这类事件。
+
+#### 防御策略：访问控制与教育
+
+第一种是运用“**最小权限原则**”。值得再次强调已经讨论过的内容：仅提供用户完成其日常工作职能所需的访问权限。没有生产环境写入权限的员工无法对表执行 `truncate` 或 `delete` 操作。如果新的 DBA 没有进行数据定义语言更改的能力，他就不会意外地在生产环境中运行更改数据库结构的脚本。如果员工即将被解雇，请务必立即撤销其访问权限，以防止任何报复的机会。每年（或尽可能更频繁地）审查安全角色和用户访问权限，以确保组织或软件的变更不需要相应的权限变更。
+
+第二种针对人性弱点的防御手段是**教育**。让所有员工了解您公司的数据和安全政策。如果这些政策尚不存在，那么与相关经理合作创建它们。教育所有员工都很重要，因为任何能访问数据的人——无论是通过 `SQL Server Management Studio` 还是他们办公桌上的终端软件——都可能犯下长远来看代价高昂的错误。对于开发人员、质量保证专家、IT 人员和其他技术人员，鼓励他们安全地访问数据。存在许多工具可以高亮显示并颜色编码连接字符串，或者对任何没有 `WHERE` 子句或影响整张表的 T-SQL 语句发出警告。知道您连接的是生产服务器，可以避免脚本本意是用于开发数据库却意外地在生产环境中运行的可怕情况。
+
+
+
+编写结构良好、文档齐全且可维护的代码是维护数据安全的关键第一步。如果在付出了所有这些努力之后，数据却因人为错误而泄露，那对任何 IT 部门来说都是极大的讽刺。请务必在所有方面保持谨慎，确保应用程序可能遭受攻击的任何角度都得到妥善防御。无论数据库泄露是源于 SQL 注入黑客攻击、心怀恐惧的客服代表，还是数据库管理员的误操作，对组织整体而言并无区别。最终结果是相似的，这应当提供所有必要的动力，尽最大可能将应用程序环境中的人为因素隔离开来。
+
+### 用户、密码与不便
+
+本章讨论了安全角色、所有权链以及所有可能导致灾难的人为错误方式。所有这些情况都涉及一个共同元素：用户。要使任何这些情况发生，用户的账户必须以某种方式被不当使用。没有什么比定期更改密码更能引起抱怨的了，但强大且一致的密码策略是防御密码黑客攻击或旧账户被复活用于恶意目的的好方法。
+
+在使用 Windows 身份验证时，请确保为所有 Windows 用户配置了可接受的密码策略。要求密码满足一定级别的复杂性，不允许用户重复使用密码，并强制用户定期重置密码。这不仅会将账户被泄露的可能性降到最低，还会大大降低较少使用（或被遗忘）的账户在不知情的情况下被使用的可能性。还要确保 Active Directory 保持最新状态，并且所有员工的账户在离职时都被禁用。微软坚持认为 Windows 身份验证是 SQL Server 推荐的安全形式，但要确保你的服务器尽可能安全，那些 Windows 账户本身也必须是安全的。当使用 Windows 身份验证时，你的 SQL Server 的安全性等同于被授予访问权限的 Windows 用户的安全性。必要时与你的网络或系统管理员合作，确保所有 Windows 账户都是安全的，然后确认只有必要的账户才能访问你的 SQL 服务器。
+
+如果使用 SQL Server 身份验证，请务必为每个服务器做出同样明智的决策，如图 4-4 所示。
+
+![A371168_1_En_4_Fig4_HTML.jpg](img/A371168_1_En_4_Fig4_HTML.jpg)
+
+图 4-4.
+典型的 SQL Server 用户身份验证选项
+
+创建用户时，你可以配置他们的安全设置。也可以随时通过选择用户属性来调整设置。请务必强制执行密码策略和过期策略，如图 4-4 中的复选框所示。这些策略继承自 Windows，可能来自服务器策略或 Active Directory/组策略。此策略可以包含额外的安全功能，例如锁定登录尝试失败次数过多的用户。
+
+包括 IT 专业人员在内的用户都会抱怨更改密码和处理策略带来的不便。然而，这些规则带来的好处远远超过了不便。如果员工习惯了密码规则，并且有长期被公平应用的记录，他们的抱怨通常会降到最低。在处理安全规则时，往往是打破习惯最可能导致混淆和错误。提前规划并为你的数据库服务器配置强大、一致的用户安全策略，将有助于以很少的成本（对你或你的用户而言）在长期内保护你的数据。
+
+### 动态 SQL 维护
+
+随着时间的推移，所有数据库对象都需要一定程度的维护。随着应用程序的发展、表的增长、对象的添加和删除以及软件的升级，存储过程、函数、视图、作业、维护计划等也需要更新。这种维护是任何软件生命周期的常规部分，但在动态 SQL 的情况下更为关键。每当创建或更改存储过程或函数等对象时，系统会检查其中的语法和对象引用是否有效。如果存在任何语法错误或任何对象不正确，将立即抛出错误，并且`CREATE/ALTER`语句将失败。由于动态 SQL 命令字符串不受解析或绑定约束，即使其内容无效，它们也会始终创建成功。
+
+这为开发人员和数据库管理员带来了重大的维护挑战。当对象的引用不受任何 SQL Server 限制强制执行时，如何维护它们？在设计和规划应用程序版本时，有几种解决方案可以让您的生活更轻松。第一个也是最基本的解决方案是记录存储过程、作业、函数和其他对象及其依赖关系。无需过度详细，但此文档应易于搜索，并允许任何人快速查找对象的基本功能并验证任何主要依赖关系。一些组织会在称为数据字典的数据库中实现此文档。数据字典没有硬性规定；它们只是将数据库模式组织成可管理的参考指南的一种方式。具体细节留待每个组织根据自己开发和维护流程的最佳实践进行管理。
+
+无论是作为数据库、电子表格、Wiki 还是文本文档实现，以某种方式组织你的数据库对象都将为整个组织提供一个宝贵的工具。他们将能够轻松了解数据库对象，而无需追踪领域专家寻求帮助。此外，当计划应用程序变更时，确定依赖关系和受这些变更影响的区域将显著更容易。最简单的数据字典将是表、列、索引、存储过程等的列表。可以添加额外信息，描述每个对象的功能、最常处理它们的开发人员以及与其他对象或软件模块的关系。
+
+如果说文档是组织应用程序开发环境的方式，那么清理则是防止其不可避免地陷入无法维护的混乱状态的方法。组织非常重视在软件中创建新功能，并且通常对快速发布新功能表现出浓厚兴趣，特别是如果这些新功能能为组织赚钱的话。必须在新技术功能和技术债之间保持微妙的平衡。技术债是每个开发人员都再熟悉不过的累积待办事项清单。急需升级但没人有时间进行的升级、清理未使用的对象、旧代码的性能优化等等，都是技术债的例子。无论你的文档多么出色，要跟踪所有这些例外和遗留物都会变得困难。随着新项目成为焦点，资深开发人员退休或离职，开发人员会逐渐忘记它们。清理旧的数据库对象和对已弃用 TSQL 的引用对于保持代码可维护性至关重要。
+
+
+
+那些你今天视而不见、抛之脑后的对象，未来很容易成为安全漏洞。人人都已忘却的 `Dynamic SQL`，很快就会变成无人愿去解读的、巨大而杂乱的文本字符串。应用程序运行正常，没人愿意去碰一个文档匮乏的未知对象。要防止这种情况，应将其作为发布周期的常规环节，定期审查所有潜在依赖项，并采取适当措施加以处理。确保所有不再需要的对象都被移除。那些需要更新的对象，应进行分析并应用正确的更新。随着你的软件、安全策略和规定的改变，这些遗留物会变成安全隐患。过去被认为坚固有效的旧加密算法，最终会因现代技术使其过于薄弱而遭弃用。适用于所有新存储过程的新编码标准，无法防范十年前写下的糟糕存储过程。当年公司初创时，由每天工作 16 小时的开发者所编写的 `TSQL`，需要与更专业开发团队所创建的新对象一视同仁地进行处理。
+
+虽然文档对于如何利用、引用和管理新旧对象极为有用，但你如何进行最初的搜索，以找出那繁多的引用呢？SQL Server 提供了许多系统视图，这些视图详细提供了数据库对象、它们之间的关系，以及其 `CREATE` 语句中包含的 `TSQL` 文本。通过利用这些视图，你可以构建一个多功能的搜索存储过程，该过程使用各种系统视图和 `Dynamic SQL` 来返回包含给定搜索项的对象列表，如清单 4-5 所示。
+
+
+
+### 清单 4-5. 架构搜索存储过程
+
+#### 架构搜索存储过程
+
+```sql
+CREATE PROCEDURE dbo.search_all_schema
+@searchString NVARCHAR(MAX)
+AS
+BEGIN
+SET NOCOUNT ON;
+-- 这是您想要在数据库和作业中搜索的字符串。MSDB、model 以及任何名称类似于 tempDB 的数据库将被忽略
+SET @searchString = '%' + @searchString + '%';
+DECLARE @sql NVARCHAR(MAX);
+DECLARE @database_name NVARCHAR(MAX);
+DECLARE @databases TABLE (database_name NVARCHAR(MAX));
+IF EXISTS (SELECT * FROM tempdb.sys.tables WHERE name = '##object_data')
+BEGIN
+DROP TABLE ##object_data;
+END
+CREATE TABLE ##object_data
+(
+database_name NVARCHAR(MAX),
+table_name SYSNAME,
+objectname SYSNAME,
+object_type NVARCHAR(MAX)
+);
+IF EXISTS (SELECT * FROM tempdb.sys.tables WHERE name = '##index_data')
+BEGIN
+DROP TABLE ##index_data;
+END
+CREATE TABLE ##index_data
+(
+database_name NVARCHAR(MAX),
+table_name SYSNAME,
+index_name SYSNAME,
+key_column_list NVARCHAR(MAX),
+include_column_list NVARCHAR(MAX)
+);
+INSERT INTO @databases
+(database_name)
+SELECT
+name
+FROM sys.databases
+WHERE name NOT IN ('msdb', 'model', 'tempdb')
+AND state_desc  'OFFLINE';
+DECLARE DBCURSOR CURSOR FOR SELECT database_name FROM @databases;
+OPEN DBCURSOR;
+FETCH NEXT FROM DBCURSOR INTO @database_name;
+WHILE @@FETCH_STATUS = 0
+BEGIN
+SET @sql = '
+USE ' + @database_name + ';
+WITH CTE_SCHEMA_METADATA AS (
+SELECT db_name() AS database_name, '''' AS table_name, o.Name AS objectname, CASE o.Type
+WHEN ''P'' THEN ''存储过程'' WHEN ''TR'' THEN ''触发器'' WHEN ''V'' THEN ''视图'' WHEN ''C'' THEN ''检查约束'' WHEN ''D'' THEN ''默认值'' WHEN ''FN'' THEN ''标量函数'' WHEN ''IF'' THEN ''内联函数''
+WHEN ''F'' THEN ''外键'' WHEN ''PK'' THEN ''主键'' WHEN ''R'' THEN ''规则'' WHEN ''TA'' THEN ''程序集触发器'' WHEN ''UQ'' THEN ''唯一约束'' WHEN ''TF'' THEN ''表值函数'' ELSE o.Type END AS object_type
+-- 视图、存储过程、触发器、检查约束、默认约束和规则。
+FROM
+(
+SELECT id,
+CAST(COALESCE(MIN(CASE WHEN sc.colId = 1 THEN sc.text END), '''') AS NVARCHAR(max)) +
+CAST(COALESCE(MIN(CASE WHEN sc.colId = 2 THEN sc.text END), '''') AS NVARCHAR(max)) +
+CAST(COALESCE(MIN(CASE WHEN sc.colId = 3 THEN sc.text END), '''') AS NVARCHAR(max)) +
+CAST(COALESCE(MIN(CASE WHEN sc.colId = 4 THEN sc.text END), '''') AS NVARCHAR(max)) +
+CAST(COALESCE(MIN(CASE WHEN sc.colId = 5 THEN sc.text END), '''') AS NVARCHAR(max)) +
+CAST(COALESCE(MIN(CASE WHEN sc.colId = 6 THEN sc.text END), '''') AS NVARCHAR(max)) +
+CAST(COALESCE(MIN(CASE WHEN sc.colId = 7 THEN sc.text END), '''') AS NVARCHAR(max)) +
+CAST(COALESCE(MIN(CASE WHEN sc.colId = 8 THEN sc.text END), '''') AS NVARCHAR(max)) +
+CAST(COALESCE(MIN(CASE WHEN sc.colId = 9 THEN sc.text END), '''') AS NVARCHAR(max)) +
+CAST(COALESCE(MIN(CASE WHEN sc.colId = 10 THEN sc.text END), '''') AS NVARCHAR(max)) +
+CAST(COALESCE(MIN(CASE WHEN sc.colId = 11 THEN sc.text END), '''') AS NVARCHAR(max)) +
+CAST(COALESCE(MIN(CASE WHEN sc.colId = 12 THEN sc.text END), '''') AS NVARCHAR(max)) +
+CAST(COALESCE(MIN(CASE WHEN sc.colId = 13 THEN sc.text END), '''') AS NVARCHAR(max)) +
+CAST(COALESCE(MIN(CASE WHEN sc.colId = 14 THEN sc.text END), '''') AS NVARCHAR(max)) +
+CAST(COALESCE(MIN(CASE WHEN sc.colId = 15 THEN sc.text END), '''') AS NVARCHAR(max)) +
+CAST(COALESCE(MIN(CASE WHEN sc.colId = 16 THEN sc.text END), '''') AS NVARCHAR(max)) +
+CAST(COALESCE(MIN(CASE WHEN sc.colId = 17 THEN sc.text END), '''') AS NVARCHAR(max)) +
+CAST(COALESCE(MIN(CASE WHEN sc.colId = 18 THEN sc.text END), '''') AS NVARCHAR(max)) +
+CAST(COALESCE(MIN(CASE WHEN sc.colId = 19 THEN sc.text END), '''') AS NVARCHAR(max)) +
+CAST(COALESCE(MIN(CASE WHEN sc.colId = 20 THEN sc.text END), '''') AS NVARCHAR(max)) +
+CAST(COALESCE(MIN(CASE WHEN sc.colId = 21 THEN sc.text END), '''') AS NVARCHAR(max)) +
+CAST(COALESCE(MIN(CASE WHEN sc.colId = 22 THEN sc.text END), '''') AS NVARCHAR(max)) +
+CAST(COALESCE(MIN(CASE WHEN sc.colId = 23 THEN sc.text END), '''') AS NVARCHAR(max)) +
+CAST(COALESCE(MIN(CASE WHEN sc.colId = 24 THEN sc.text END), '''') AS NVARCHAR(max)) +
+CAST(COALESCE(MIN(CASE WHEN sc.colId = 25 THEN sc.text END), '''') AS NVARCHAR(max)) +
+CAST(COALESCE(MIN(CASE WHEN sc.colId = 26 THEN sc.text END), '''') AS NVARCHAR(max)) +
+CAST(COALESCE(MIN(CASE WHEN sc.colId = 27 THEN sc.text END), '''') AS NVARCHAR(max)) [text]
+FROM syscomments SC
+WHERE SC.colId IS NOT NULL
+GROUP BY id
+) C
+INNER JOIN sysobjects O
+ON C.id = O.id
+WHERE C.text LIKE ''' + @searchString + '''
+AND NAME NOT LIKE ''%syncobj%''
+UNION ALL
+SELECT db_name() AS database_name, ST.name AS table_name, '''' AS objectname, ''表'' AS object_type -- 表（仅名称）
+FROM sys.tables ST
+WHERE ST.name LIKE ''' + @searchString + '''
+UNION ALL
+SELECT db_name() AS database_name, ST.name AS table_name, SC.name AS column_name, ''列'' AS object_type -- 列
+FROM sys.tables ST
+INNER JOIN sys.columns SC
+ON ST.object_id = SC.object_id
+WHERE SC.name LIKE ''' + @searchString + '''
+UNION ALL
+SELECT
+db_name() AS database_name, ST.name AS table_name, SI.name AS column_name, ''索引'' AS object_type -- 索引（仅名称）
+FROM sys.indexes SI
+INNER JOIN sys.tables ST
+ON ST.object_id = SI.object_id
+WHERE SI.name LIKE ''' + @searchString + ''')
+INSERT INTO ##object_data
+(database_name, table_name, objectname, object_type)
+SELECT
+*
+FROM CTE_SCHEMA_METADATA
+ORDER BY object_type ASC, objectname ASC;
+WITH CTE_INDEX_COLUMNS AS (
+SELECT -- 用户索引（列名匹配搜索字符串）
+db_name() AS database_name,
+TABLE_DATA.name AS table_name,
+INDEX_DATA.name AS index_name,
+STUFF(( SELECT '', '' + SC.name
+FROM sys.tables AS ST
+INNER JOIN sys.indexes SI
+ON ST.object_id = SI.object_id
+INNER JOIN sys.index_columns IC
+ON SI.object_id = IC.object_id
+AND SI.index_id = IC.index_id
+INNER JOIN sys.all_columns SC
+ON ST.object_id = SC.object_id
+AND IC.column_id = SC.column_id
+WHERE INDEX_DATA.object_id = SI.object_id
+AND INDEX_DATA.index_id = SI.index_id
+AND IC.is_included_column = 0
+ORDER BY IC.key_ordinal
+FOR XML PATH('''')), 1, 2, '''') AS key_column_list,
+STUFF(( SELECT ', ' + SC.name
+FROM sys.tables AS ST
+INNER JOIN sys.indexes SI
+ON ST.object_id = SI.object_id
+INNER JOIN sys.index_columns IC
+ON SI.object_id = IC.object_id
+AND SI.index_id = IC.index_id
+INNER JOIN sys.all_columns SC
+ON ST.object_id = SC.object_id
+AND IC.column_id = SC.column_id
+WHERE INDEX_DATA.object_id = SI.object_id
+AND INDEX_DATA.index_id = SI.index_id
+AND IC.is_included_column = 1
+ORDER BY IC.key_ordinal
+FOR XML PATH('''')), 1, 2, '''') AS include_column_list,
+''索引列'' AS object_type
+FROM sys.indexes INDEX_DATA
+INNER JOIN sys.tables TABLE_DATA
+ON TABLE_DATA.object_id = INDEX_DATA.object_id
+WHERE TABLE_DATA.is_ms_shipped = 0       )
+INSERT INTO ##index_data
+(database_name, table_name, index_name, key_column_list, include_column_list)
+SELECT
+database_name, table_name, index_name, key_column_list, ISNULL(include_column_list, '''') AS include_column_list
+FROM CTE_INDEX_COLUMNS
+WHERE CTE_INDEX_COLUMNS.key_column_list LIKE ''' + @searchString + '''
+OR CTE_INDEX_COLUMNS.include_column_list LIKE ''' + @searchString + ''';'
+EXEC sp_executesql @sql;
+FETCH NEXT FROM DBCURSOR INTO @database_name;
+END
+SELECT
+*
+FROM ##object_data;
+SELECT
+*
+FROM ##index_data
+-- 搜索以查看任何作业步骤中是否存在文本
+SELECT
+j.job_id,
+s.srvname,
+j.name,
+js.step_id,
+js.command,
+j.enabled
+FROM msdb.dbo.sysjobs j
+INNER JOIN msdb.dbo.sysjobsteps js
+ON js.job_id = j.job_id
+INNER JOIN master.dbo.sysservers s
+ON s.srvid = j.originating_server_id
+WHERE js.command LIKE @searchString;
+DROP TABLE ##object_data;
+DROP TABLE ##index_data;
+END
+GO
+```
+
+
+### SQL Server 全文搜索存储过程与技术债务管理
+
+此存储过程功能相当广泛，但提供了一个出色的研究工具，可以搜索服务器上的所有数据库以及 SQL Server Agent 作业，查找任何作为 `@searchString` 参数提供的文本。由于数据库级别的系统视图在每个数据库中有所不同，因此有必要逐个数据库查询这些视图。使用动态 SQL 可以快速遍历所有数据库（`msdb`、`model`、`tempdb` 以及任何脱机数据库除外）。它返回三个结果集：数据库对象、索引和作业。如果需要，可以使用 `UNION ALL` 将这些输出表合并为单个输出表，但为了本演示的目的，我们将它们分开，这样每个结果集的可读性更高。
+
+#### 搜索功能示例
+
+如果你需要执行一个通用的搜索，例如确定 `BusinessEntityContact` 表是否在服务器的任何地方被引用，你可以按如下方式运行存储过程：
+
+```
+EXEC dbo.search_all_schema N'BusinessEntityContact';
+```
+
+图 4-5 中的结果数据集包括两个数据库中的四个视图、两个表值函数、两个表和八个索引。未找到以此名称命名的索引或作业。如果希望限制数据库名称，以免浪费额外资源并返回所有数据库的结果，可以轻松添加另一个参数来指定数据库搜索词。
+
+![A371168_1_En_4_Fig5_HTML.jpg](img/A371168_1_En_4_Fig5_HTML.jpg)
+
+*图 4-5. 使用表名执行架构搜索的输出示例*
+
+这种搜索功能在研究软件变更、现有对象和依赖关系时极其有用。查找一个表名的所有实例只需要几秒钟的研究时间，而不是几个小时。此存储过程可用于搜索更具体的搜索词，例如主键的名称：
+
+```
+EXEC dbo.search_all_schema N'PK_Sales';
+```
+
+图 4-6 中的结果显示了一组有限的主键，它们都以你提供的搜索词开头。
+
+![A371168_1_En_4_Fig6_HTML.jpg](img/A371168_1_En_4_Fig6_HTML.jpg)
+
+*图 4-6. 使用主键名称执行架构搜索的输出示例*
+
+这产生了一些“噪音”，因为许多主键恰好包含了你正在寻找的特定名称。从结果集中清除噪音是一项微不足道的任务，尽管这些额外结果在寻找与目标搜索对象类似的模式时可能有用。图 4-7 中的最后一个示例显示了使用对象的完整架构和表名进行更具体搜索的结果。
+
+![A371168_1_En_4_Fig7_HTML.jpg](img/A371168_1_En_4_Fig7_HTML.jpg)
+
+*图 4-7. 使用完整表名执行架构搜索的输出示例*
+
+```
+EXEC dbo.search_all_schema N'Production.Product';
+```
+
+此执行显示了非常具体的结果，因为只有两个存储过程和一个孤立的作业引用了 `Production.Product` 的完整文本。
+
+#### 应用与扩展
+
+像这样的工具是有效跟进数据库模式维护的宝贵方法。如果有一些针对你的数据库环境的功能是此存储过程未涉及的，请考虑修改它以添加进一步的过滤器、搜索能力，或针对特定应用程序的硬编码需求。SQL Server 中还有许多其他对象未在此处处理，但可以包括，例如复制发布名称、链接服务器名称、登录名、用户或 SSIS 包详情。添加这些（或其他）对象的任务将是向动态 SQL 部分附加额外的 T-SQL 代码，以包含所需的任何其他对象。
+
+利用搜索功能协助移除废弃功能、更新依赖关系，并确保你的团队在技术债务变得难以管理之前，具备必要的知识，以尽可能高效有效地处理它。这些定期搜索有助于确保应用程序的最大安全性，因为潜在的安全漏洞可以被快速发现和修补。搜索 `sp_executesql` 和 `EXEC` 有助于发现动态 SQL 的所有使用情况，这对于验证数据库服务器内的 T-SQL 是否存在 SQL 注入漏洞可能很有价值。
+
+# 清理 house
+
+一项经常被忽视，以便推进新功能的任务是移除旧的列、表、存储过程或其他 T-SQL。典型的开发周期包括废弃未使用的功能，并基本上将其标记为未来移除。常常被忽略的是关于这些对象如何以及何时被移除的细节。在时机到来之前，它们不太可能得到完全更新或维护。无论如何，它们都是技术债务，除非付出特殊努力来处理，否则将无限期存在。
+
+一旦你全力投入到升级、新功能和其他研发工作中，清理工作就变成了遥远的记忆。即使是 SQL Server 本身也充满了长长的废弃功能列表。废弃功能是指被标记为未来移除，但为了向后兼容目的而在过渡期间保留的功能。为了提供背景，在撰写本文时，SQL Server 2016 CTP 总共有 254 个废弃功能。相比之下，已中止的功能数量为 30。已中止的功能是从产品中移除且不再可用的功能。显然，结束对某个功能的支持并停止升级它，比完全移除它的麻烦要容易得多。如果这对微软来说是一个缓慢的过渡，那么对任何人来说显然都是一个挑战！
+
+#### 管理功能废弃与移除
+
+管理软件功能废弃和移除的一个好方法，是将中止过程纳入标准开发生命周期。当一个功能被标记为不再需要时，包含一个将其移除的时间表。除了创建时间表之外，还要确保包含足够的细节，以便可以执行中止操作。考虑以下问题：
+
+- 为了完全移除此功能，需要处理哪些组件？
+- 移除每个组件需要多少工作量？
+- 谁需要参与每个组件的移除工作？
+- 这项工作将如何适应新功能的开发时间表？
+- 在移除之前，这些功能需要什么维护？
+
+作为技术债务，这项工作的优先级通常低于新功能。提出并回答这些问题有助于确保重要的维护工作不会被遗忘。最后一点在倡导这项工作时至关重要：为了正确维护旧组件，需要哪些持续的工作和维护？这可能包括软件许可成本、额外的硬件使用、云存储和处理能力、文档，以及任何其他可能耗费时间和金钱的东西。
+
+#### 风险与影响
+
+正如扁桃体或阑尾可能成为你健康的负担一样，旧功能会随着时间的推移慢慢阻碍进展。更重要的是，它们提供了更容易遭受安全漏洞的区域，因为它们不再是你开发工作的前沿。通常，废弃功能的维护很快，质量保证最少，因为它们对应用程序不再那么关键，甚至可能不再在前端使用。这些事实必须作为应用程序常规开发的一部分来应对，但当涉及动态 SQL 时，对 DBA 尤为重要，因为它可能提供额外的访问权限，这些权限随着时间的推移可能会变得不受欢迎。
+
+
+### SQL Server 安全实践：弃用功能与权限管理
+
+#### 弃用不安全功能与代码移除
+
+如果正在弃用使用动态 SQL、`xp_cmdshell` 或 SQL Server 中任何可能为数据库对象提供额外访问权限的功能，请考虑作为流程的一部分采取额外步骤来保护它们。如果应用程序不再使用该功能，请考虑移除动态 SQL 部分，并用令牌占位符替换。这确保了任何一方，无论是组织内部还是外部，都无法以任何方式滥用它。此策略可用于任何不再使用但必须维护以确保软件构建成功完成的 T-SQL。如果一个功能不再使用但无法被直接丢弃，请考虑将其缩减至开发流程所允许的最小范围。这不仅会降低安全风险，而且在需要移除时会使过程更容易，因为更多的功能可能已经不存在了。
+
+移除未使用和过时的代码可能是防止未来发生意外安全漏洞的最有效方法之一。
+
+移除功能时的一个常见错误是意外地让其部分仍在使用，或者某些组件仍在应用程序中运行。也许一个搜索过程在软件加载时仍然运行，即使结果未被应用程序捕获。另一种可能性是，存在一个不再被任何活动页面链接的网页，但通过手动输入 URL 或通过收藏夹访问该页面仍可访问。在弃用过程中移除核心功能将突出显示这些被遗漏的机会，并提供简单的 QA 反馈，以便这些漏洞可以被迅速关闭。这可以简化停止使用的过程，并消除由于意外/隐藏代码路径导致的未来开发错误或安全漏洞的可能性。
+
+#### 登录与用户使用
+
+“**最小权限原则**”告诉您，只为登录名和用户完成其工作提供所需的权限，不多也不少。为了有效实施，一个隐含的步骤是不要在多个应用程序或用户之间共享登录名。每个单独的 SQL Server 登录名，无论它使用 Windows 身份验证还是 SQL Server 身份验证，都应服务于一个独特且单一的目的。这通过以下方式大大提高了安全性：
+
+*   更容易禁用然后删除与旧应用程序或已离职员工相关的未使用登录名。
+*   为每个单独的应用程序提供更细粒度的权限控制。
+*   阻止不同员工，特别是来自不同部门或担任不同角色的员工，共享用户。
+*   通过保持对安全性的微妙关注，鼓励负责任的开发习惯。
+*   允许更轻松地将应用程序迁移到新的服务器或平台。
+*   提高对安全威胁、漏洞或攻击的响应速度。
+
+考虑这样一个场景：一个应用程序在三个数据库上拥有 `db_owner` 权限。一名新员工入职并将为您的组织维护此应用程序。她被提供了一个标准登录名、访问权限和关联账户。作为便利，该用户也被授予了应用程序所使用的登录名的凭据。这使得新员工可以立即开始她的应用程序开发工作，而无需任何额外的安全请求。一年后，应用程序扩展，需要额外的权限来访问一些系统视图和管理一些服务器设置。
+
+几年后，该员工离开了公司，IT 部门忘记了她拥有应用程序登录名的访问权限，因此他们未能更改密码或考虑这些事实带来的后果。该员工发现她通过应用程序登录名的访问权限仍然完好无损，并决定悄悄窃取一些组织数据。从这一点开始，该组织就被入侵了，而且极有可能直到采取某些引起他们注意的行动之前，她的访问都不会被发现。除了窃取数据，她还可以更改数据库设置、修改数据，甚至删除应用程序数据库。
+
+解决此问题的方法是从一开始就绝不让该员工共享登录名。创建新的登录名或修改其标准凭据以合并这些额外权限可能会花费一些额外时间。文档也将是关键，以确保任何可能需要审计、更改或禁用其访问权限的人员都可以访问该用户的额外访问权限。登录名共享的时间越长，就越容易忘记这种双重性的本质，并对其“正常工作”变得自满。
+
+一个同样令人沮丧的情况是，将个人的登录名用作应用程序的登录凭据。只要该员工在组织内工作，这种设置就可以正常工作，但一旦他离开，事情就变得棘手了。如果 IT 注意到共享用户，他们将被迫快速计划一次临时权限更改。这可能涉及更改应用程序密码或创建新的应用程序用户。这两者都可能需要停机时间以促进更改。如果共享用户未被记录在案，并且在该员工离职时按照标准程序被禁用，应用程序将立即停止工作。结果将是计划外的停机时间，并且负责该应用程序的人员可能需要加班到深夜。
+
+
+
+### 审计用户与登录
+
+防范任何不期望的安全状况的一个额外保障措施，是定期安排并实施对所有 SQL Server 登录名和用户的审计。要验证权限在符合当前安全策略和应用需求方面是充分且相关的。确保所有登录名和用户都是必需的，并且将登录名映射到用户的权限也是必要的。这个过程从组织和技术层面看可能都令人望而生畏，但通过使用合适的脚本以及与所有相关方进行有效沟通，可以使其变得更容易。通常情况下，经理和同事们都会乐意帮助你确保他们的数据安全，并遵守任何相关标准。
+
+在 TSQL 脚本领域，有许多可能有用的脚本。本章提供了一些作为起点，但你可以随意修改这些或在网上搜索更深入的版本。目标是识别所有登录名和用户、自定义的安全对象，以及登录名和用户之间的映射关系。首先，让我们使用清单 4-6 中的脚本简要查看服务器上的所有登录名和角色。
+
+#### 列出服务器登录名和角色
+
+```sql
+SELECT
+    server_principals.name AS Login_Name,
+    server_principals.type_desc AS Account_Type
+FROM sys.server_principals
+WHERE server_principals.name NOT LIKE '%##%'
+ORDER BY server_principals.name, server_principals.type_desc;
+```
+
+*清单 4-6. 用于检索服务器登录名和角色列表的脚本*
+
+此查询将返回类似于图 4-8 的结果。
+
+![A371168_1_En_4_Fig8_HTML.jpg](img/A371168_1_En_4_Fig8_HTML.jpg)
+
+*图 4-8. 来自清单 4-6 中 TSQL 的服务器登录名和角色列表*
+
+结果包含所有 SQL 登录名，例如我自己的登录名 `Edward`，以及我的测试登录名 `EdPollack` 和 `EdwardJr`。Windows 身份验证用户 `SANDILE\Edward` 也在此服务器上。此外，还有 SQL Server 服务和服务器级角色使用的各种系统登录名。可以按类型进行过滤，以将结果集限制为仅非系统登录名。`U` 表示 Windows 登录名，`S` 表示 SQL 登录名，`G` 表示 Windows 组。仅过滤这些类型将使结果集减少到你最可能感兴趣审计的内容，如图 4-9 所示。
+
+![A371168_1_En_4_Fig9_HTML.jpg](img/A371168_1_En_4_Fig9_HTML.jpg)
+
+*图 4-9. 移除服务器角色后的登录名列表*
+
+此查询可以轻松地在所有生产服务器上执行，并且可以聚合结果，以便快速查看哪些登录名存在于哪些服务器上。这可以快速洞察不应存在的登录名，或者在给定服务器上可能缺失的登录名。
+
+#### 暴露自定义安全对象
+
+接下来的研究将涉及暴露自定义的安全对象。如果对某个对象授予了特定权限，你肯定想知道这些权限是什么、授予了谁，并验证它们确实是必要的。这是一个特别容易因疏忽或遗漏而出错的领域，因为从 SQL Server Management Studio GUI 验证这些细节可能既缓慢又繁琐。
+
+清单 4-7 中的查询返回任何显式分配的对象级权限列表，如图 4-10 所示。为了减少列表中的大量干扰信息，任何系统安全对象都被省略了。
+
+```sql
+SELECT
+    OBJECT_NAME(database_permissions.major_id) AS object_name,
+    USER_NAME(database_permissions.grantee_principal_id) AS role_name,
+    database_permissions.permission_name
+FROM sys.database_permissions
+WHERE database_permissions.class = 1
+    AND OBJECTPROPERTY(database_permissions.major_id, 'IsMSSHipped') = 0
+ORDER BY OBJECT_NAME(database_permissions.major_id);
+```
+
+*清单 4-7. 列出任何用户创建的安全对象的脚本*
+
+![A371168_1_En_4_Fig10_HTML.jpg](img/A371168_1_En_4_Fig10_HTML.jpg)
+
+*图 4-10. 移除系统安全对象后的对象级权限*
+
+在我的本地服务器上，有一些权限授予了某些存储过程。我的 sysadmin 用户 `Edward` 被包含在内可能看起来有些奇怪，但万一我的用户账户权限被降低，了解我拥有的任何额外安全对象对于完整地完成该任务将至关重要。此查询可以在生产服务器上运行，让你知道随着时间的推移分配给不同用户和角色的特殊权限。这可以确保实施的任何安全变更都考虑到了所有存在的例外情况。
+
+#### 收集登录名到用户的映射
+
+另一项你经常需要完成的任务是收集服务器登录名与每个数据库内用户之间的关联关系。这些关系决定了登录名在给定数据库内可能拥有的额外权限。例如，一个登录名在服务器级别可能没有被分配显式权限，但在数据库级别可能被授予各种与其工作或应用职责相符的权限。
+
+清单 4-8 中的脚本使用 SQL Server 系统存储过程收集登录名映射列表，将结果直接插入到一个临时表中。然后从临时表中返回结果。`sp_msloginmappings` 的输出格式为每个登录名一个输出集，因此非常难以用于报告或分析。通过将结果直接返回到临时表，你可以将所有映射数据放入单个结果集中，你可以随意对其进行筛选、排序或读取。我在本地计算机上的结果集如图 4-11 所示。
+
+```sql
+CREATE TABLE #login_user_mapping (
+    login_name NVARCHAR(MAX),
+    database_name NVARCHAR(MAX),
+    user_name NVARCHAR(MAX),
+    alias_name NVARCHAR(MAX));
+
+INSERT INTO #login_user_mapping
+EXEC master.dbo.sp_msloginmappings;
+
+SELECT
+    *
+FROM #login_user_mapping
+ORDER BY database_name,
+    user_name;
+
+DROP TABLE #login_user_mapping;
+```
+
+*清单 4-8. 用于返回服务器登录名与数据库用户之间关系的 TSQL*
+
+![A371168_1_En_4_Fig11_HTML.jpg](img/A371168_1_En_4_Fig11_HTML.jpg)
+
+*图 4-11. 此 SQL Server 上所有登录名/用户映射的完整列表*
+
+每个登录名都与一个数据库和一个用户相关联。如果存在任何别名，它们也会被返回。这让你可以跟踪给定登录名有权访问哪些数据库。通常，当一个登录名被删除时，与该登录名关联的任何用户将保留在各自的数据库中，直到管理员进行处理。此查询返回的结果可以确保你在禁用或删除服务器登录名时，正确地清理所有数据库用户。
+
+还有许多其他系统视图和存储过程可用于分析 SQL Server 安全性，但本章讨论的这几个应该提供了一个坚实的起点，让你能够评估数据库环境，并在了解这些信息后识别出任何可以轻松解决的重要安全缺陷。
+
+
+
+#### 内存消耗
+
+之前，本章简要讨论了字符串截断对动态 SQL 的影响，以及它如何导致命令字符串执行错误或引发错误。迄今为止的大多数动态 SQL 示例的命令字符串都相对较短，其长度是根据传入的参数预先确定的。在命令字符串的长度由特定数量的对象或数据量控制的情况下，生成的字符串可能非常大。与在 SQL Server 中定义的其他标量参数一样，命令字符串也存储在内存中。考虑清单 4-9 中的动态 SQL。
+
+```sql
+DECLARE @databases TABLE
+(database_name NVARCHAR(MAX));
+INSERT INTO @databases
+(database_name)
+SELECT
+databases.name
+FROM sys.databases;
+DECLARE @sql_command NVARCHAR(MAX) = '';
+SELECT @sql_command = @sql_command + '
+DBCC CHECKDB (' + database_name + ');'
+FROM @databases;
+PRINT @sql_command;
+EXEC sp_executesql @sql_command;
+```
+
+清单 4-9. 用于检查此实例上所有数据库完整性的动态 SQL
+
+此动态 SQL 将创建一个命令字符串，该字符串将在此 SQL Server 实例上对所有数据库运行 `DBCC CHECKDB`。命令字符串将为每个数据库包含一行，无论服务器上存在多少个数据库。由于此特定命令很短，因此在我的服务器上，命令字符串将如下所示：
+
+```sql
+DBCC CHECKDB (master);
+DBCC CHECKDB (tempdb);
+DBCC CHECKDB (model);
+DBCC CHECKDB (msdb);
+DBCC CHECKDB (AdventureWorks2012);
+DBCC CHECKDB (AdventureWorks2014);
+DBCC CHECKDB (AdventureWorks2008);
+```
+
+虽然此示例很短，但试想一下，如果我的服务器上有 500 个数据库会发生什么。在这种情况下，命令字符串将长达 500 行。这仍然不算特别大，但如果对象数量或涉及的文本变得太长，就会引入潜在的内存问题。例如，如果你要为服务器上所有数据库中的所有表组装一个行数报告怎么办？在这种情况下，在一个有 500 个数据库且每个数据库有 500 个表的服务器上，你将拥有一个长达 250,000 行的命令字符串。如果每个命令的文本类似于 `SELECT COUNT(*) FROM schema_name.table_name`，那么每行文本大约为 300 字节。总的命令字符串大小将约为 75MB，这远低于服务器可能拥有的内存量，但它说明了无界语句可能带来的潜在性能和安全性威胁。
+
+编写动态 SQL 时，请注意命令字符串的长度。如果它可能无界地增长，请考虑添加一个截止点以防止其变得过大。或者，分批处理语句，以便一次处理一组行，而不是一次性处理所有行。虽然命令字符串增长到千兆字节大小的情况很少见，但这并非不可能，也不应被忽视。过度的增长也可能由于开发人员的错误而发生，例如，如果你忘记递增计数器或推进游标。如果你允许字符串无限增长，服务器内存最终将耗尽。结果很可能是某种形式的 SQL Server 崩溃，这可能会影响其数据库托管在此服务器上的其他应用程序。
+
+```sql
+SET NOCOUNT ON;
+DECLARE @databases TABLE
+(database_name NVARCHAR(MAX));
+CREATE TABLE ##tables
+(database_name NVARCHAR(MAX),
+schema_name NVARCHAR(MAX),
+table_name NVARCHAR(MAX),
+row_count BIGINT);
+DECLARE @sql_command NVARCHAR(MAX) = '';
+INSERT INTO @databases
+(database_name)
+SELECT
+databases.name
+FROM sys.databases
+WHERE databases.name <> 'tempdb';
+DECLARE @current_database NVARCHAR(MAX);
+WHILE EXISTS (SELECT * FROM @databases)
+BEGIN
+SELECT TOP 1 @current_database = database_name FROM @databases;
+SELECT @sql_command = @sql_command + '
+USE [' + @current_database + ']
+INSERT INTO ##tables
+(database_name, schema_name, table_name, row_count)
+SELECT
+''' + @current_database + ''',
+schemas.name,
+tables.name,
+COUNT(*)
+FROM sys.tables
+INNER JOIN sys.schemas
+ON tables.schema_id = schemas.schema_id';
+EXEC sp_executesql @sql_command;
+DELETE FROM @databases WHERE database_name = @current_database;
+END
+SELECT @sql_command = '';
+SELECT @sql_command = @sql_command + '
+UPDATE ##tables
+SET row_count = (SELECT COUNT(*)
+FROM [' + database_name + '].[' + schema_name + '].[' + table_name + '])
+WHERE database_name = ''' + database_name + '''
+AND schema_name = ''' + schema_name + '''
+AND table_name = ''' + table_name + ''';'
+FROM ##tables;
+SELECT (LEN(@sql_command) * 2) AS length_of_large_sql_command
+EXEC sp_executesql @sql_command;
+SELECT
+*
+FROM ##tables;
+DROP TABLE ##tables;
+```
+
+清单 4-10. 用于收集此 SQL Server 实例上所有表的行数的动态 SQL
+
+清单 4-10 中的 TSQL 使用动态 SQL 构建了一个很长的命令字符串，该字符串将收集服务器上所有数据库（`TempDB` 除外）中所有表的行数。服务器上的数据库和表越多，字符串就越大。在执行命令字符串之前，你返回了其长度（以字节为单位），该长度计算为字符串中字符数的两倍。字符乘以二，是为了说明命令字符串是 `NVARCHAR` 数据类型这一事实，该类型由双字节 UNICODE 字符组成。在我本地有六个数据库的服务器上，此命令字符串的长度为 3.04MB。在数据库和表多得多的服务器上，其长度可能会变得过长。清单 4-11 展示了一个分批处理的示例，该示例限制了一次处理的行数，确保命令字符串不会变得太大。此特定示例分别处理每个数据库的行数，这通常足以限制命令字符串的总体大小。相应的 TSQL 见清单 4-11。
+
+```sql
+SET NOCOUNT ON;
+DECLARE @databases TABLE
+(database_name NVARCHAR(MAX));
+CREATE TABLE ##tables
+(database_name NVARCHAR(MAX),
+schema_name NVARCHAR(MAX),
+table_name NVARCHAR(MAX),
+row_count BIGINT);
+DECLARE @sql_command NVARCHAR(MAX) = '';
+INSERT INTO @databases
+(database_name)
+SELECT
+databases.name
+FROM sys.databases
+WHERE databases.name <> 'tempdb';
+DECLARE @current_database NVARCHAR(MAX);
+WHILE EXISTS (SELECT * FROM @databases)
+BEGIN
+SELECT TOP 1 @current_database = database_name FROM @databases;
+SELECT @sql_command = '';
+SELECT @sql_command = @sql_command + '
+USE [' + @current_database + ']
+INSERT INTO ##tables
+(database_name, schema_name, table_name, row_count)
+SELECT
+''' + @current_database + ''',
+schemas.name,
+tables.name,
+COUNT(*)
+FROM sys.tables
+INNER JOIN sys.schemas
+ON tables.schema_id = schemas.schema_id';
+EXEC sp_executesql @sql_command;
+SELECT @sql_command = '';
+SELECT @sql_command = @sql_command + '
+UPDATE ##tables
+SET row_count = (SELECT COUNT(*)
+FROM [' + database_name + '].[' + schema_name + '].[' + table_name + '])
+WHERE database_name = ''' + database_name + '''
+AND schema_name = ''' + schema_name + '''
+AND table_name = ''' + table_name + ''';'
+FROM ##tables
+WHERE database_name = @current_database;
+EXEC sp_executesql @sql_command;
+DELETE FROM @databases WHERE database_name = @current_database;
+END
+SELECT
+*
+FROM ##tables;
+DROP TABLE ##tables;
+```
+
+清单 4-11. 用于收集所有表行数的分批处理动态 SQL
+
+
+
+# 5. 管理作用域
+
+### 结论
+
+所有这些安全建议可能看起来与动态 SQL 的主题相去甚远，但对于确保您所进行的开发既有效又安全至关重要。采纳并实施这些建议中的任何一条或全部最佳实践，可以大大降低 SQL 注入的风险，以及其他可能无意中在您的系统中制造漏洞的攻击方式。如果您对此主题感兴趣，市面上有许多书籍和课程会更深入地探讨安全问题。本章旨在提供 SQL Server 安全性的入门介绍和概述，重点关注动态 SQL 及其面临的最重大安全威胁。
+
+当您继续探索动态 SQL 如何执行强大的搜索、维护或数据转换的进一步示例时，请牢记与安全相关的考虑因素可能对不仅您的查询，而且对您的整个 SQL Server 的完整性产生持久影响。现在就做出正确的决定，远比日后回来清理先前开发工作留下的错误要容易得多。
+
+## 清单 4-11.
+
+```sql
+FROM sys.tables
+INNER JOIN sys.schemas
+ON tables.schema_id = schemas.schema_id';
+EXEC sp_executesql @sql_command;
+SELECT @sql_command = '';
+SELECT @sql_command = @sql_command + '
+UPDATE ##tables
+SET row_count = (SELECT COUNT(*)
+FROM [' + database_name + '].[' + schema_name + '].[' + table_name + '])
+WHERE database_name = ''' + database_name + '''
+AND schema_name = ''' + schema_name + '''
+AND table_name = ''' + table_name + ''';'
+FROM ##tables
+WHERE database_name = @current_database;
+SELECT (LEN(@sql_command) * 16) + 2 AS length_of_large_sql_command
+EXEC sp_executesql @sql_command;
+DELETE FROM @databases WHERE database_name = @current_database;
+END
+SELECT
+*
+FROM ##tables;
+DROP TABLE ##tables;
+```
+
+使用批处理命令字符串创建的动态 SQL，用于收集此 SQL Server 实例上所有表的行数
+
+行数 T-SQL 重写版本中唯一的区别是，行数的收集发生在主循环中，在每个数据库的表被枚举之后。这将命令字符串的生成拆分为每个数据库一个。它没有创建一个 3MB 的命令字符串，而是创建并执行了六个不同的命令字符串，每个都不超过 475KB。在由于要分析的对象数量庞大而导致命令字符串长度可能变得非常长的场景中，批处理可以确保内存压力永远不会成为安全或稳定性问题，即使在处理极大数据集时也是如此。
+
+### 什么是作用域？
+
+为了尽可能容易地理解作用域，您需要理解这些术语，并将看几个为什么这是一个重要主题的例子。作用域可以定义为变量或对象在任何 SQL Server 对象内可用的位置和持续时间。考虑以下简单的 T-SQL 语句：
+
+```sql
+DECLARE @FirstName NVARCHAR(50) = 'Edward';
+SELECT
+*
+FROM Person.Person
+WHERE FirstName = @FirstName;
+```
+
+这是 T-SQL 最简单的形式之一，但上面定义的变量的作用域是什么？在这些语句中没有任何中断或控制流变更的情况下，`@FirstName` 在整个示例中都处于作用域内，并且可以（如您所期望的那样）被紧随其后的 `SELECT` 语句使用。如果您在返回结果之前结束批处理会怎样？
+
+```sql
+DECLARE @FirstName NVARCHAR(50) = 'Edward';
+GO
+SELECT
+*
+FROM Person.Person
+WHERE FirstName = @FirstName;
+```
+
+这个简单的更改，在 `SELECT` 之前添加一个 `GO`，将导致错误：
+
+```
+Msg 137, Level 15, State 2, Line 20
+必须声明标量变量 "@FirstName"。
+```
+
+当批处理结束时，所有局部定义的变量将不再可用，并且对于此 T-SQL 的剩余部分超出作用域。根据定义，`GO` 在任何时候使用都会结束一个批处理并触发此行为。任何封装在其自身对象中的 T-SQL——例如触发器、函数或存储过程——也将在其自身的作用域内执行。任何从外部访问这些对象内定义变量的尝试都会导致类似于以下错误的错误：
+
+```sql
+CREATE PROCEDURE dbo.get_people
+AS
+BEGIN
+DECLARE @FirstName NVARCHAR(50) = 'Edward';
+SELECT
+*
+FROM Person.Person
+WHERE FirstName = @FirstName;
+END
+GO
+EXEC dbo.get_people;
+SELECT @FirstName;
+```
+
+这个存储过程将执行与前一个相同的搜索。如所示执行它会得到完全相同的结果，但如果您尝试返回 `@FirstName` 的值，则会返回相同的错误。默认情况下，在存储过程中声明的变量从其外部的任何地方都不可用。同样的约定也适用于动态 SQL。因此，在确定变量的声明、修改和返回位置时，理解这一点非常重要。
+
+可以向存储过程添加参数，以便于数据的进出自如，使其值能够保持作用域并在您工作的其他地方使用。清单 5-1 中的示例展示了变量如何传递到存储过程，以及值如何被显式返回。
+
+### 清单 5-1.
+
+```sql
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'get_people')
+BEGIN
+DROP PROCEDURE dbo.get_people;
+END
+GO
+CREATE PROCEDURE dbo.get_people
+@first_name NVARCHAR(50), @person_with_most_entries NVARCHAR(50) OUTPUT
+AS
+BEGIN
+DECLARE @person_count INT;
+SELECT TOP 1
+@person_with_most_entries = Person.FirstName
+FROM Person.Person
+GROUP BY Person.FirstName
+ORDER BY COUNT(*) DESC;
+SELECT
+*
+FROM Person.Person
+WHERE FirstName = @first_name;
+RETURN @@ROWCOUNT;
+END
+GO
+```
+
+说明输入和输出参数的存储过程
+
+此示例传入一个名字用于搜索。您还传入一个额外的字符串，该字符串将被 `Person.Person` 中最常见的名字覆盖。在存储过程中，将返回 `Person.Person` 中具有传入名字的所有行。最后，具有该名字的行数将用作存储过程的返回值。一个执行示例如下所示：
+
+```sql
+DECLARE @person_with_most_entries NVARCHAR(50);
+DECLARE @person_count INT;
+EXEC @person_count = dbo.get_people 'Edward', @person_with_most_entries OUTPUT;
+SELECT @person_with_most_entries AS person_with_most_entries;
+SELECT @person_count AS person_count
+```
+
+
+
+请注意 `OUTPUT` 关键字的使用。这个 T-SQL 保留字有多种用法，但在处理存储过程时，它表示传入的参数在其值发生变化时，将在存储过程执行期间**保留这些更改**。为了使其正常工作，`OUTPUT` 也必须在存储过程的参数列表中明确指定。
+
+执行时，将执行搜索并返回所有名为 "Edward" 的人。此外，`@person_with_most_entries` 变量将作为一个输出变量被更新。最后，所提供名字的人数将从存储过程返回并存储在 `@person_count` 中。当这些变量在最后被选中时，将返回预期的值，如图 5-1 所示。
+
+![A371168_1_En_5_Fig1_HTML.jpg](img/A371168_1_En_5_Fig1_HTML.jpg)
+图 5-1. `dbo.get_people` 存储过程的执行结果
+
+### 在动态 SQL 中管理作用域
+处理动态 SQL 中的作用域与处理存储过程中的作用域没有太大区别。可以将动态 SQL 语句中的所有内容想象成与你的其余 T-SQL 代码是分离的，并相应地处理。为了说明其相似之处，请考虑以下 T-SQL 代码，它与之前的搜索示例类似：
+
+```
+DECLARE @sql_command NVARCHAR(MAX);
+SELECT @sql_command = '
+DECLARE @FirstName NVARCHAR(50) = ''Edward'';
+SELECT
+*
+FROM Person.Person
+WHERE FirstName = @FirstName;'
+EXEC sp_executesql @sql_command;
+SELECT @FirstName
+```
+
+在这个例子中，变量 `@FirstName` 在命令字符串内声明，因此它在动态 SQL 语句的作用域之外**不可用**。最后的 `SELECT` 语句将失败，因为 `@FirstName` 不再存在：
+
+```
+Msg 137, Level 15, State 2, Line 84
+必须声明标量变量 "@FirstName"。
+```
+
+类似地，在命令字符串外部声明的变量也无法在内部使用。最后，多个命令字符串各自在自己的作用域中执行。在一个命令字符串中声明的变量在另一个动态 SQL 语句中将不可用。
+
+作用域的存在既是为了方便，也是作为一种安全特性。如果在代码中某处声明的变量在任何地方都可用，那么你需要非常仔细地跟踪每一个变量，以确保在打算使用新变量时不会意外地重用现有变量。将 T-SQL 片段彼此分离并打破所有权链，有助于将不同的 SQL 语句分隔开来，并防止任何一个应用程序或函数越界。虽然一开始可能觉得需要更仔细地管理所有这些变量很不方便，但 SQL Server 在任何情况下都提供了许多有效的工具来做到这一点。
+
+### 在动态 SQL 中使用 OUTPUT
+默认情况下，任何传递到 `sp_executesql` 的变量都是**只读的**。也就是说，它们可以在需要时在动态 SQL 的作用域内使用，但当动态 SQL 执行完毕，控制权返回到调用它的 T-SQL 时，对参数所做的任何更改都不会被保存。请考虑清单 5-2 中的 T-SQL 代码，重点关注对 `@FirstName` 参数的 `UPDATE` 操作。
+
+```
+DECLARE @sql_command NVARCHAR(MAX);
+DECLARE @parameter_list NVARCHAR(MAX);
+DECLARE @first_name NVARCHAR(50) = 'Edward';
+SELECT @sql_command = '
+SELECT
+*
+FROM Person.Person
+WHERE FirstName = @first_name;
+SELECT @first_name = ''Xavier'';
+SELECT @first_name;
+'
+SELECT @parameter_list = '@first_name NVARCHAR(50)'
+EXEC sp_executesql @sql_command, @parameter_list, @first_name;
+SELECT @first_name;
+GO
+清单 5-2. 动态 SQL：在命令字符串内重新分配参数
+```
+
+在此示例中，命令字符串内执行的最后一个操作是将名称 "Xavier" 重新赋给参数 `@first_name`。尽管该参数是只读的，但你被允许在动态 SQL 内更改其值。新值将保持有效且在作用域内，直到动态 SQL 结束。需要重点注意的是，尽管你在动态 SQL 内外使用了相同的变量名 `@first_name`，但它们仍然被视为完全独立的变量。根据你的应用程序需求，使用不同的变量名可能有助于区分不同的变量，而使用相同的变量名则可以在跨不同作用域的 T-SQL 语句中更明显地看出一个不同的值正在被使用。输出结果如图 5-2 所示。
+
+![A371168_1_En_5_Fig2_HTML.jpg](img/A371168_1_En_5_Fig2_HTML.jpg)
+图 5-2. 在没有 `OUTPUT` 操作符的情况下，在动态 SQL 内重新分配变量
+
+搜索结果如预期那样返回。从动态 SQL 内部对名字的 `SELECT` 操作表明，重新分配参数是被允许并且成功的。当你在动态 SQL 执行完毕后再次检查该变量时，你会发现 `@first_name` 被设置为 "Edward" 而不是 "Xavier"。作为一个小调整，你可以更改变量名，如清单 5-3 所示，这有助于强调它们是彼此独立且不同的。
+
+```
+DECLARE @sql_command NVARCHAR(MAX);
+DECLARE @parameter_list NVARCHAR(MAX);
+DECLARE @first_name_calling_sql NVARCHAR(50) = 'Edward';
+SELECT @sql_command = '
+SELECT
+*
+FROM Person.Person
+WHERE FirstName = @first_name_within_dynamic_sql;
+SELECT @first_name_within_dynamic_sql = ''Xavier'';
+SELECT @first_name_within_dynamic_sql;
+'
+SELECT @parameter_list = '@first_name_within_dynamic_sql NVARCHAR(50)'
+EXEC sp_executesql @sql_command, @parameter_list, @first_name_calling_sql;
+SELECT @first_name_calling_sql;
+清单 5-3. 重写清单 5-2 中的 T-SQL，其返回相同的结果
+```
+
+这个稍有不同的版本产生的结果与上面完全相同。唯一的区别在于，调用 T-SQL 中的变量名改为 `@first_name_calling_sql`，而动态 SQL 语句的参数改为 `@first_name_within_dynamic_sql`。
+
+如果你有意希望保存在动态 SQL 内部对参数所做的更改，并将其传回最初传入的原始参数怎么办？解决方案与存储过程几乎相同。只需为任何需要将其值传回调用 T-SQL 的参数添加 `OUTPUT` 关键字，它就会像前面的例子一样工作，如清单 5-4 所示。
+
+
+
+```sql
+DECLARE @sql_command NVARCHAR(MAX);
+DECLARE @parameter_list NVARCHAR(MAX);
+DECLARE @first_name_calling_sql NVARCHAR(50) = 'Edward';
+SELECT @sql_command = '
+SELECT
+*
+FROM Person.Person
+WHERE FirstName = @first_name_within_dynamic_sql;
+SELECT @first_name_within_dynamic_sql = ''Xavier'';
+SELECT @first_name_within_dynamic_sql;
+'
+SELECT @parameter_list = '@first_name_within_dynamic_sql NVARCHAR(50) OUTPUT'
+EXEC sp_executesql @sql_command, @parameter_list, @first_name_calling_sql OUTPUT;
+SELECT @first_name_calling_sql;
+```
+代码清单 5-4. 使用 OUTPUT 永久修改参数
+
+此示例显式地将名字参数标记为 `OUTPUT` 参数。这表明，如果在动态 SQL 内更改了该值，那么在命令字符串执行完毕并切换回调用 TSQL 的作用域后，该更改将会持久化。输出结果如图 5-3 所示。
+
+![A371168_1_En_5_Fig3_HTML.jpg](img/A371168_1_En_5_Fig3_HTML.jpg)
+
+图 5-3. 使用 OUTPUT 来持久化 `@first_name_within_dynamic_sql` 的结果
+
+这次，当你将 `@first_name_within_dynamic_sql` 的值更改为 `"Xavier"` 时，该值会从动态 SQL 传回 `sp_executesql`，并一直保留，直到你再次对它进行操作。当你想让一个参数在动态 SQL 内部改变，或者想无缝地传入传出变量时，这极其有用。
+
+请注意，在这段 TSQL 中，`OUTPUT` 关键字被同时附加到了参数列表和 `sp_executesql` 语句中的参数名上。该关键字必须在两个地方都应用，否则参数值将不会按预期更新。如果在参数列表中省略了 `OUTPUT`，SQL Server 就不知道该参数意图从动态 SQL 语句中持久化。结果是会产生一条明确指出问题的错误信息：
+
+```
+Msg 8162, Level 16, State 2, Line 152
+The formal parameter "@first_name_within_dynamic_sql" was not declared as an OUTPUT parameter, but the actual parameter passed in requested output.
+```
+
+幸运的是，这条消息非常易于理解，并清楚地说明了如何修复错误。SQL Server 不允许将 `OUTPUT` 参数传递给一个未以相同方式声明的变量。
+
+如果你在参数列表中将参数声明为 `OUTPUT` 变量，但在 `sp_executesql` 命令中没有这样声明，会发生什么？在这种情况下，不会抛出错误。在参数列表中使用 `OUTPUT` 关键字声明参数，而在执行命令字符串时不包含相同的关键字，是完全合法的。结果将是 TSQL 成功执行，但名字参数的值不会从动态 SQL 持久化回调用 TSQL。表 5-1 总结了 `OUTPUT` 变量的不同使用方式的结果。
+
+表 5-1. OUTPUT 不同用法的结果：绿色为好，红色为坏
+
+| 参数列表 | 输入变量 | 结果 |
+| --- | --- | --- |
+|   |   | 参数值未持久化。 |
+|   | `OUTPUT` | SQL Server 抛出错误。 |
+| `OUTPUT` |   | 参数值仍未持久化。 |
+| `OUTPUT` | `OUTPUT` | 参数值从动态 SQL 持久化。 |
+
+成功更改参数值并将其返回给调用 TSQL 的唯一方法，是在参数列表和传入的变量上都使用 `OUTPUT`。为避免在编写动态 SQL 时产生混淆，请避免出现一个变量声明为 `OUTPUT` 而另一个没有的混合情况。其中一种情况的结果将是错误信息，这当然不可取。另一种模糊情况将导致一段难以理解的代码，其目的对其他开发人员来说不清晰，并可能导致未来的编码错误。
+
+任何允许传递给存储过程的参数，包括表甚至游标，都可以传递给动态 SQL。不过，表变量（下一节讨论）是只读的，不能设置为 `OUTPUT` 参数。
+
+### 表变量和临时表
+
+在 SQL Server 中持久化数据的另一种方法是创建表变量或临时表并将数据存储在其中。这两者的行为各有特点，提供了一种在动态 SQL 中管理数据的替代方法。本节将更详细地讨论每一种，并说明其行为以及它们如何影响你的 TSQL。
+
+#### 表变量
+
+考虑代码清单 5-5 中的 TSQL。
+
+```sql
+DECLARE @sql_command NVARCHAR(MAX);
+DECLARE @parameter_list NVARCHAR(MAX);
+DECLARE @last_names TABLE (
+last_name NVARCHAR(50));
+SELECT @sql_command = '
+SELECT DISTINCT
+FirstName
+FROM Person.Person
+WHERE LastName IN (SELECT last_name FROM @last_names)'
+EXEC sp_executesql @sql_command;
+```
+代码清单 5-5. 在动态 SQL 中使用在其外部声明的表变量的结果
+
+运行此 TSQL 会立即导致错误：
+
+```
+Msg 1087, Level 15, State 2, Line 197
+Must declare the table variable "@last_names".
+```
+
+虽然 `@last_names` 表变量可能在此示例开头创建，但它不存在于动态 SQL 的作用域内。动态 SQL 试图使用该数据返回一组名字，但找不到它。因此，任何访问它的尝试都将失败。你可以将表变量传递给动态 SQL。这只是需要额外的一步：声明一个自定义类型并将其用作数据类型，如代码清单 5-6 所示。
+
+```sql
+CREATE TYPE last_name_table AS TABLE
+(last_name NVARCHAR(50));
+GO
+DECLARE @sql_command NVARCHAR(MAX);
+DECLARE @parameter_list NVARCHAR(MAX);
+DECLARE @first_name_calling_sql NVARCHAR(50) = 'Edward';
+DECLARE @last_names AS last_name_table;
+INSERT INTO @last_names
+(last_name)
+SELECT
+LastName
+FROM Person.Person WHERE FirstName = @first_name_calling_sql;
+SELECT @sql_command = '
+SELECT DISTINCT
+FirstName
+FROM Person.Person
+WHERE LastName IN (SELECT last_name FROM @last_name_table)
+'
+SELECT @parameter_list = '@first_name_within_dynamic_sql NVARCHAR(50), @last_name_table last_name_table READONLY'
+EXEC sp_executesql @sql_command, @parameter_list, @first_name_calling_sql, @last_names;
+```
+代码清单 5-6. 将表变量传递给动态 SQL
+
+第一步是创建一个表类型，该类型只需创建一次，供此示例的其余部分使用。它像任何其他参数一样作为参数传递给 `sp_executesql`，但必须在参数列表中被声明为 `READONLY`。表变量始终是只读的，不能在传递它们进入的动态 SQL 中被修改。如果你试图从表变量中删除记录，或对其进行任何更改，你将收到错误：
+
+```
+Msg 10700, Level 16, State 1, Line 255
+The table-valued parameter "@last_name_table" is READONLY and cannot be modified.
+```
+
+SQL Server 提供了一个非常直接的错误信息，提醒你试图更改表变量将会失败。
+
+
+
+#### 临时表
+
+临时表怎么样？让我们重试初始示例，使用临时表代替表变量，如代码清单 5-7 所示。
+
+```sql
+DECLARE @sql_command NVARCHAR(MAX);
+DECLARE @parameter_list NVARCHAR(MAX);
+CREATE TABLE #last_names (
+last_name NVARCHAR(50));
+SELECT @sql_command = '
+SELECT DISTINCT
+FirstName
+FROM Person.Person
+WHERE LastName IN (SELECT last_name FROM #last_names)'
+EXEC sp_executesql @sql_command;
+DROP TABLE #last_names
+```
+
+**代码清单 5-7. 在外部声明的动态 SQL 中使用临时表的结果**
+
+结果不是错误消息，而是一个结果集（虽然是空的）。如果你在动态 SQL 中修改临时表会怎样？代码清单 5-8 显示了生成的 T-SQL。
+
+```sql
+DECLARE @sql_command NVARCHAR(MAX);
+DECLARE @parameter_list NVARCHAR(MAX);
+CREATE TABLE #last_names (
+last_name NVARCHAR(50));
+INSERT INTO #last_names
+(last_name)
+SELECT 'Thomas'
+SELECT @sql_command = '
+SELECT DISTINCT
+FirstName
+FROM Person.Person
+WHERE LastName IN (SELECT last_name FROM #last_names);
+INSERT INTO #last_names
+(last_name)
+SELECT ''Smith'';
+'
+EXEC sp_executesql @sql_command;
+SELECT * FROM #last_names;
+DROP TABLE #last_names;
+```
+
+**代码清单 5-8. 在动态 SQL 中修改临时表的结果**
+
+结果表明临时表不仅可以在动态 SQL 中访问，而且成功写入了，如图 5-4 所示。
+
+![A371168_1_En_5_Fig4_HTML.jpg](img/A371168_1_En_5_Fig4_HTML.jpg)
+
+**图 5-4. 在外部创建的临时表也可以在动态 SQL 内部访问**
+
+第一个结果集显示临时表在动态 SQL 中是可访问的。第二个结果集显示它可以在动态 SQL 内部被修改，并且这些结果在示例的后面部分被保留了下来。这非常有用，并提供了一种简单的方法来管理需要在动态 SQL 和其他 T-SQL 之间无缝传递的数据。既然你正在兴头上，如果你在动态 SQL 内部声明一个临时表并尝试在后面的代码中访问它，会发生什么？代码清单 5-9 显示了实现这一点的 T-SQL。
+
+```sql
+DECLARE @sql_command NVARCHAR(MAX);
+DECLARE @parameter_list NVARCHAR(MAX);
+SELECT @sql_command = '
+CREATE TABLE #last_names (
+last_name NVARCHAR(50));
+INSERT INTO #last_names
+(last_name)
+SELECT ''Thomas'';
+'
+EXEC sp_executesql @sql_command;
+SELECT DISTINCT
+FirstName
+FROM Person.Person
+WHERE LastName IN (SELECT last_name FROM #last_names);
+```
+
+**代码清单 5-9. 在动态 SQL 中创建临时表并稍后访问的结果**
+
+你的运气用完了；此示例导致错误：
+
+```
+Msg 208, Level 16, State 0, Line 316
+Invalid object name '#last_names'.
+```
+
+虽然在调用 T-SQL 中声明的临时表可以在动态 SQL 中访问，但反之则不成立。表 `#last_names` 仅存在于动态 SQL 的作用域内，在其他地方将不可用。类似地，在后面的代码中另一个动态 SQL 块中引用该临时表也会导致相同的错误。换句话说，以下示例也会因相同的错误消息而失败，如代码清单 5-10 所示。
+
+```sql
+DECLARE @sql_command NVARCHAR(MAX);
+DECLARE @parameter_list NVARCHAR(MAX);
+SELECT @sql_command = '
+CREATE TABLE #last_names (
+last_name NVARCHAR(50));
+INSERT INTO #last_names
+(last_name)
+SELECT ''Thomas'';
+'
+EXEC sp_executesql @sql_command;
+SELECT @sql_command = '
+SELECT DISTINCT
+FirstName
+FROM Person.Person
+WHERE LastName IN (SELECT last_name FROM #last_names);'
+EXEC sp_executesql @sql_command;
+```
+
+**代码清单 5-10. 在后续动态 SQL 中重用临时表同样无效**
+
+在创建和访问临时表时要小心，以确保它们在需要时可用，而在代码后面需要时不会超出作用域。还要记住，这些临时表仅在你当前的 SQL Server 连接中可用。如果你尝试从此连接从单独的应用程序或连接访问临时表，它也将不可用。
+
+最后，当连接结束时，临时表会自动删除。良好的做法是在你使用完临时表后删除它们，但如果你不这样做，SQL Server 会为你删除它们。此自动删除仅发生在创建临时表的连接结束时。如果该连接无限期保持，那么临时表也将无限期保留。如果在同一会话中稍后声明了同名的表，则将导致错误，因为该表已存在。
+
+
+
+### 全局临时表
+
+#### 概念
+
+一个最终可用的选项是全局临时表。这些表的声明方式与标准临时表类似，但使用 `##` 前缀而不是 `#`。全局临时表在服务器范围内对任何访问其创建所在的同一 SQL Server 实例的 T-SQL 都可用。此访问不受连接或数据库访问限制。
+
+一旦创建，全局临时表将一直存在，直到所有与之的连接结束。该表可以在动态 SQL 或调用 T-SQL 的作用域内创建，并且仍然可在服务器上的任何其他作用域中使用。
+
+#### 使用示例
+
+考虑清单 5-11 中的示例，与前一个类似。
+
+```sql
+DECLARE @sql_command NVARCHAR(MAX);
+DECLARE @parameter_list NVARCHAR(MAX);
+SELECT @sql_command = '
+CREATE TABLE ##last_names (
+last_name NVARCHAR(50));
+INSERT INTO ##last_names
+(last_name)
+SELECT ''Thomas'';'
+EXEC sp_executesql @sql_command;
+SELECT @sql_command = '
+SELECT DISTINCT
+FirstName
+FROM Person.Person
+WHERE LastName IN (SELECT last_name FROM ##last_names);'
+EXEC sp_executesql @sql_command;
+SELECT * FROM ##last_names;
+-- 清单 5-11.
+-- 全局临时表使用示例
+```
+
+此 T-SQL 在动态 SQL 中声明了一个全局临时表。然后它使用该全局临时表从 `Person.Person` 中选择一些名字，之后再次在调用的 T-SQL 中访问它。一切都按预期工作（有时确实如此）！请注意，在示例结束时，全局临时表没有被删除。因此，它将保持可用，直到使用它的所有连接都结束或者您显式删除它。如果您想再次访问它或从其他位置访问它，这可能是有益的。但如果您忘记了它，并在未来尝试声明同名的临时表，这也可能带来问题：
+
+```sql
+CREATE TABLE ##last_names (
+last_name NVARCHAR(50));
+```
+
+当您运行此表创建语句时，会生成错误：
+
+```
+Msg 2714, Level 16, State 6, Line 351
+There is already an object named '##last_names' in the database.
+```
+
+在创建或使用全局临时表的任何代码中，管理它们至关重要。忘记删除临时表可能碰巧没问题，如果您恰好结束了连接，它会被 SQL Server 自动删除。但如果另一个连接正在使用该表，它将不会被 SQL Server 删除，因为它仍处于使用状态。处理临时表的最佳实践是在不再需要时删除它们。这消除了表持续存在并在之后被无意访问，或者在已存在时尝试创建的可能性。
+
+务必在不再需要时删除临时表。这确保它不会干扰未来的表创建，也不会在不再需要时被以某种方式访问。
+
+#### 服务器范围内的可用性
+
+既然有 `##last_names` 表可用，让我们看看全局临时表的另一个特性——它们在服务器任何位置的可用性：
+
+```sql
+CREATE DATABASE temp_table_test;
+GO
+USE temp_table_test;
+GO
+SELECT
+*
+FROM ##last_names;
+```
+
+即使在这个全新的数据库中，全局临时表仍然可用。由于您尚未删除此 SQL Server 连接，它将无限期地对服务器上的任何其他连接保持可用。这引出了关于全局临时表安全性的讨论，而它们恰好没有任何安全性。一旦创建，全局临时表对任何数据库中的任何登录名或用户在任何地方都是可用的，没有限制。
+
+#### 安全问题
+
+在上一章中，您创建了一个名为 `VeryLimitedUser` 的用户，该用户只能访问一个存储过程，而没有对任何其他数据库、表或 SQL Server 功能的显式访问权限。当此用户尝试访问全局临时表时会发生什么？
+
+```sql
+EXECUTE AS USER = 'VeryLimitedUser';
+GO
+SELECT
+*
+FROM ##last_names;
+REVERT;
+GO
+DROP TABLE ##last_names;
+GO
+```
+
+尽管在服务器上几乎没有权限，但此用户可以毫无问题地从全局临时表中选择数据。这引发了全局临时表的一个潜在安全问题，因为根据设计，它们可被服务器上的任何其他人访问，无论其具体权限如何。此外，无法在全局临时表上设置权限来限制此行为。请注意您创建的任何全局临时表。请确保，如果另一个用户能够访问它，此访问不会带来问题。如果您的全局临时表包含任何敏感数据，请考虑以其他格式存储它，例如表变量、标准临时表或用于暂存或临时数据的永久表。对数据进行哈希处理或加密也是限制其访问的好方法，因为它将降低其他连接的可用性。
+
+#### 命名冲突
+
+另一个可能发生的问题是，当来自两个不同连接的两个全局临时表具有相同的名称时。由于这些表是全局的，并且在 SQL Server 实例的整个范围内有效，因此不能有两个这样的表共享相同的名称。如果发生这种情况，将抛出错误，第二个尝试声明新表的人将无法继续，除非重命名它。
+
+
+
+### 使用永久表进行临时存储
+
+当特定功能需要频繁存储临时数据时，创建永久表是一种高效且安全的方法。对于前面的例子，可以按照示例清单 5-12 所示的另一种方式来管理姓氏列表。
+
+```sql
+CREATE TABLE last_names_staging (
+last_name NVARCHAR(50) NOT NULL CONSTRAINT PK_last_names_staging    PRIMARY KEY CLUSTERED);
+DECLARE @sql_command NVARCHAR(MAX);
+DECLARE @parameter_list NVARCHAR(MAX);
+SELECT @sql_command = '
+INSERT INTO last_names_staging
+(last_name)
+SELECT ''Thomas'';'
+EXEC sp_executesql @sql_command;
+SELECT @sql_command = '
+SELECT DISTINCT
+FirstName
+FROM Person.Person
+WHERE LastName IN (SELECT last_name FROM last_names_staging);'
+EXEC sp_executesql @sql_command;
+SELECT * FROM last_names_staging;
+```
+*清单 5-12. 使用永久表进行临时存储*
+
+在此示例中，一切工作方式都与前面的例子相同，只是“临时存储”实际上是永久的。为了存储临时数据而创建永久对象可能看起来违反直觉，但这样做有很多好处：
+
+*   数据被永久保留，与连接无关。
+*   可以从服务器上的任何位置访问表，与数据库无关。
+*   可以对表应用安全性，确保只有授权访问。
+*   可以向表添加索引、统计信息、约束等。
+*   无需访问 `TempDB`。
+
+使用永久表的缺点很少，但很显著：
+
+*   它成为一个需要维护和文档记录的永久对象。
+*   必须管理其使用，以确保数据始终相关。
+
+总结以上所有要点：当数据需要更长期存储或优化变得重要时，请使用永久表。虽然可以在临时表和表变量上放置索引（存在限制），但拥有一个永久位置来暂存临时数据非常方便，并消除了不断管理临时对象的需要。
+
+同样重要的是，仅在有合理且高效的情况下才将表用于此目的。为所有临时数据创建/访问创建永久表可能会迅速导致大量需要关心和维护的对象。一个有助于组织的选项是在其自己的模式中创建表，从而将其与数据库中的其他对象分开。或者，对于较小的用例，给这些表添加前缀可能足以轻松组织和查找它们。
+
+当不再需要“永久临时表”时，可以轻松删除它。这个清理步骤很重要，因为您不希望用不需要的、临时的或未使用的对象弄乱服务器。创建任何永久数据库对象都隐含着有效记录和管理它的责任。当有一天不再需要它时，请花额外的时间将其弃用并最终移除。
+
+### 从动态 SQL 直接将数据输出到表
+
+收集来自任何存储过程（包括动态 SQL）数据的最后一种方法是将其作为 `EXEC` 语句的一部分直接插入到表中。如示例清单 5-13 所示，这是对临时存储的一种新变化，消除了在动态 SQL 中显式管理它的需要。
+
+```sql
+DECLARE @sql_command NVARCHAR(MAX);
+DECLARE @parameter_list NVARCHAR(MAX);
+CREATE TABLE #last_names (
+last_name NVARCHAR(50));
+SELECT @sql_command = '
+SELECT
+LastName
+FROM Person.Person
+WHERE FirstName = ''Edward'';
+'
+INSERT INTO #last_names
+(last_name)
+EXEC sp_executesql @sql_command;
+SELECT
+*
+FROM #last_names
+DROP TABLE #last_names;
+```
+*清单 5-13. 将动态 SQL 输出直接插入另一个表*
+
+在此示例中，您在 TSQL 开头声明了临时表 `#last_names`。请注意，当您执行命令字符串时，输出直接放入临时表中，而无需传递参数或管理其他对象。这是一种非常方便且高效的方式，可以保存动态 SQL 或任何其他存储过程的输出。这也是保存系统存储过程输出的绝佳方式，如示例清单 5-14 所示。
+
+```sql
+CREATE TABLE #sp_who_data
+(
+spid SMALLINT,
+ecid SMALLINT,
+status NCHAR(30),
+loginame NCHAR(128),
+hostname NCHAR(128),
+blk CHAR(5),
+dbname NCHAR(128),
+cmd NCHAR(16),
+request_id INT
+)
+INSERT INTO #sp_who_data
+(spid, ecid, status, loginame, hostname, blk, dbname, cmd, request_id)
+EXEC sp_who;
+SELECT * FROM #sp_who_data
+WHERE dbname = 'AdventureWorks2012'
+DROP TABLE #sp_who_data;
+```
+*清单 5-14. 使用 INSERT…EXEC 语法收集 sp_who 的输出*
+
+一个非常常见的管理需求是查看当前的 SQL Server 连接，并收集有关谁连接到哪个数据库以及他们在做什么的详细信息。执行 `sp_who` 可以收集该数据，但它仅将结果输出到结果窗口。在连接繁忙的服务器上，您会希望通过数据库、用户或其他条件过滤该数据。您可能还希望将其永久记录以用于审计或其他安全目的。将该数据直接插入表中的能力使您能够高效地将其过滤到单个数据库，并仅获取该数据库的连接，而不是整个服务器的连接。请注意，`#sp_who_data` 表中的数据类型取自 MSDN，并非我活跃想象力的产物：
+
+```text
+https://msdn.microsoft.com/en-us/library/ms174313.aspx
+```
+
+相同的语法可应用于任何存储过程、系统存储过程或动态 SQL 输出。虽然方便，但它也有些不灵活。数据要插入的表必须提前定义，并且必须与输出数据的结构完全相同。虽然在创建临时表的同时执行命令字符串会很方便，但 SQL Server 不允许该语法：
+
+```sql
+SELECT
+EXEC sp_who
+INTO #sp_who_data;
+SELECT INTO #sp_who_data
+EXEC sp_who;
+SELECT INTO #sp_who_data
+(EXEC sp_who);
+```
+
+无论您多么有创意，都无法强迫 SQL Server 为您动态创建临时表。`SELECT INTO` 不允许与存储过程执行结合使用，任何重新排列 TSQL 都无法使其神奇地工作。因此，您必须始终提前定义输出的目标表。
+
+### 结论
+
+尽管作用域阻止您在动态 SQL、其他 TSQL 和其他存储过程执行之间轻松移动数据，但存在许多工具，提供了多种方法来实现这一点。与任何工具箱一样，请始终为每项工作选择正确的工具。通常，数据越临时，就越不需要创建复杂的结构或方法来管理它。如果数据只需要一次，或者仅在特定存储过程的持续时间内需要，请考虑使用 `INSERT..EXEC` 语法或临时表。如果将来其他连接可能需要数据，则全局临时表有助于确保在需要时可用。谨慎使用全局临时表，因为它们缺乏其他数据结构的安全性和作用域限制。仅在确定需要时才使用它们。最后，对于将来需要长期使用的数据，永久表可以是一种很好的方式来保存该数据，并在未来长时间内高效、安全地管理它。
+
+
+
+### 清理
+
+以下 TSQL 将清理本章中创建的所有对象（如果存在）：
+
+```
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'get_people')
+BEGIN
+    DROP PROCEDURE dbo.get_people;
+END
+GO
+IF EXISTS (SELECT * FROM sys.databases WHERE databases.name = 'temp_table_test')
+BEGIN
+    DROP DATABASE temp_table_test;
+END
+GO
+```
+
+# 6. 性能优化
+
+如果对动态 SQL 的讨论不深入其性能，那是不完整的。动态 SQL 可以极大地提高性能，但如果使用不当，也会增加复杂性。与安全方面的情况类似，优化是一个可以轻松占据比本书更大篇幅的主题。因此，本章重点讨论动态 SQL 及其相关的性能问题。
+
+### 查询执行过程
+
+在深入探讨动态 SQL 的性能以及监控和调整性能的各种方法之前，有必要快速回顾一下查询执行的过程。当你执行一条 TSQL 语句时，从开始到结果返回并完成，中间发生了什么？查询执行通常分为四个步骤，将在以下各节中讨论。
+
+#### 解析
+
+查询会被检查语法，如果有任何未识别或无效的 TSQL 命令，将抛出错误。此外，查询会被分解为一个非常高级的步骤列表，SQL Server 将在后续过程中遵循这些步骤。这些步骤是简单的操作，例如从表中选择数据、连接另一个表或执行某些动态 SQL 或存储过程。
+
+#### 绑定
+
+此步骤主要关注验证对象，并确保它们有效且在正确的上下文中使用。表、列、函数、存储过程以及任何其他命名对象都会对照 SQL Server 的系统目录进行检查，以验证名称是否正确以及使用是否正确。此时，如果没有收到错误，那么你就知道语法和对象名称都是正确的。在解析步骤中生成的列表会结合这个新信息，生成所谓的代数化树（algebrized tree）。这个树是一个必须执行的步骤列表，以便查询能够正确执行。
+
+#### 优化
+
+这是执行过程中最复杂的部分，涉及 SQL Server 需要获取来自绑定步骤的树，并非常非常快地为其找到一个好的执行计划。这个工作进行的方式类似于国际象棋程序如何在一局棋中尝试找到最佳走法。基本上，查询优化器会提出一个可能的执行计划并为其分配一个成本，然后评估更多的执行计划，直到它认为找到了一个足够好的计划。
+
+查询优化是一场与时间的赛跑，因为查询本身需要时间来处理，但优化过程也需要时间。优化器需要权衡这一点，以便既不过多浪费时间来优化一个简单的查询，也要花费足够的时间来找到一个性能良好的计划。例如，如果你有一个需要两秒钟执行的查询，而优化器可以多花一秒钟来节省半秒钟的执行时间，那么这样做就是在浪费时间。如果它只需花费 0.1 秒的努力就能节省 1.5 秒，那将是一笔非常划算的交易。除了时间，还会考虑服务器资源（如 CPU）。这个过程发生得非常快，并且是 SQL Server 最复杂的组件之一。
+
+优化的结果是一个详细的步骤列表，SQL Server 可以按照这个列表执行以返回原始查询中期望的结果。
+
+#### 执行
+
+执行来自优化过程的步骤，并采取任何必要的操作以完成它们。
+
+#### 优化工具
+
+为了审查性能并基于此做出明智的决策，你需要定义一套你将继续使用的工具，以协助这个过程。如果没有你习惯使用的多个指标，就不可能就性能做出始终如一的良好决策。如果一个查询很慢，你需要知道它的哪个部分是瓶颈，并确定为什么会出现这种情况。
+
+##### 查询执行计划
+
+查询执行计划是可用工具中最直观也是最首要的。执行计划是优化器在优化步骤中提出的步骤，由 SQL Server 执行。
+
+可以通过在 SQL Server Management Studio 中单击“包含实际执行计划”图标或使用键盘快捷键`Ctrl+M`来查看查询的实际执行计划，如图 6-1 所示。
+
+![A371168_1_En_6_Fig1_HTML.jpg](img/A371168_1_En_6_Fig1_HTML.jpg)
+
+图 6-1。在 SQL Server Management Studio 中启用和使用查询执行计划
+
+图 6-1 中圈出了启用实际执行计划的图标。单击此图标后，你会在结果窗口中看到一个名为“执行计划”的附加选项卡。此选项卡中包含每个已执行查询的部分，包括查询文本。图形部分从右向左阅读，由表示 SQL Server 执行的操作（如读取表、连接数据集、排序等）的图标组成。如果 SQL Server 认为新索引可能有助于查询性能，它会在查询文本和图形计划之间用绿色建议该索引。将鼠标悬停在图标上将显示该步骤的详细信息，包括处理的行数、估计的 I/O、CPU 和子树成本，如图 6-2 所示。
+
+![A3711168_1_En_6_Fig2_HTML.jpg](img/A3711168_1_En_6_Fig2_HTML.jpg)
+
+图 6-2。查看执行计划中任何步骤的详细属性
+
+子树成本是在优化步骤中确定的成本的指示，让你了解查询的哪些部分执行成本最高。
+
+步骤之间的线条宽度将指示该步骤处理的行数的相对多少。将鼠标悬停在其中一条线上将提供有关该线所代表的数据传输的一些基本信息。图 6-3 显示了这些详细信息的示例。
+
+![A371168_1_En_6_Fig3_HTML.jpg](img/A371168_1_En_6_Fig3_HTML.jpg)
+
+图 6-3。查看执行计划一个步骤的输出详情
+
+执行计划还可能包括警告、错误或 SQL Server 在执行查询时遇到的其他问题。如有疑问，请仔细检查任何有问题的步骤，这可能揭示查询性能不佳的有用原因。将鼠标悬停在执行计划的任何部分都将提供有关该步骤的更多详细信息。打开一个步骤的属性将返回有关该步骤执行情况的额外信息数组。
+
+
+##### STATISTICS IO
+
+SQL Server 可以提供关于哪些表被读取以及针对这些表的读取次数等信息。可以通过以下 T-SQL 开启此功能：
+
+```sql
+SET STATISTICS IO ON;
+```
+
+这是非常重要的信息，因为它反映了整体的 I/O 使用情况。如果某个查询运行缓慢，可能是由于对某个表进行了过多的读取。执行计划可能并不总是能体现 I/O 瓶颈的严重性，但了解到一个仅返回两行的查询却需要进行一百万次读取，这就表明可能存在某个问题。通常，这两者会相互关联，从而为理解查询为何缓慢提供一个坚实的基础。一旦启用，`STATISTICS IO` 会在文本输出屏幕中添加详细信息，如图 6-4 所示。
+
+![A371168_1_En_6_Fig4_HTML.jpg](img/A371168_1_En_6_Fig4_HTML.jpg)
+
+**图 6-4.** STATISTICS IO 的输出示例
+
+虽然这里详细列出了许多操作，但本节的讨论仅限于前四个。
+
+###### 对象 (Objects)
+
+正在访问的表或视图的名称。
+
+###### 扫描计数 (Scan Count)
+
+这表明一个对象是否被多次读取。此处的高数值可能表明 SQL Server 在反复读取相同的数据，这可能是查询效率低下的一个潜在迹象。
+
+###### 逻辑读取 (Logical Reads)
+
+这是针对所指示对象进行的读取次数，无论数据是否缓存在内存中。在本章中，凡是涉及到 I/O 读取活动的讨论，都将以此指标为参考，因为它即使在物理读取发生变化时，对于给定查询也保持不变。
+
+###### 物理读取 (Physical Reads)
+
+这是指数据尚未位于缓冲区高速缓存中的读取次数。每当为查询读取数据时，该数据会被放入内存，并一直保留在那里，直到其过期或稍后被替换。数据从存储系统首次读入内存的操作可能非常耗时。如果查询不断进行物理读取，这可能表明查询读取了过多数据，或者服务器上存在内存压力。
+
+当你执行一个查询并首次访问数据时，此数值将与逻辑读取次数相同，但所有后续执行都将显示此指标为零，因为数据在首次执行后已位于内存中。
+
+##### STATISTICS TIME
+
+对于任何数据使用者而言，最重要的指标可能就是服务器返回他们所需数据所需的时间。作为数据库专业人员，我们最常听到的抱怨是：“太慢了！”该指标会分解每个步骤的执行时间，这对于确定存储过程中哪个查询花费了最多的执行时间非常有用。以下是与之前执行计划中使用的相同查询的 `STATISTICS TIME` 输出：
+
+```sql
+SQL Server parse and compile time:
+CPU time = 0 ms, elapsed time = 0 ms.
+SQL Server Execution Times:
+CPU time = 0 ms, elapsed time = 64 ms.
+```
+
+解析和编译时间是 SQL Server 执行前面讨论的解析、绑定和优化步骤所花费的时间。执行时间是实际运行查询本身所花费的时间。
+
+这些时间非常有用，但必须谨慎对待。执行时间受许多不同变量的影响。如果执行计划被缓存并重用，解析和编译时间将为零。如果数据缓存在内存中，执行时间将快得多。外部因素，如网络延迟、I/O 延迟或其他进程的争用，都会影响执行时间。因此，重要的是基于查询的多次试执行来做出优化决策，以确保不是根据异常或边缘情况做出决定。
+
+根据经验，在对查询执行进行计时时，我会尝试至少运行 10-20 次，以便对其在生产环境（可能被反复运行）中的表现有一个良好的了解。你个人测试查询的频率应基于其重要性和复杂性，以及你所在组织的质量保证政策。如有疑问，请花时间运行足够的试验次数，直到你对结果感到满意，并且在必要时有信心使用这些结果来向他人证明你的决策是合理的。
+
+##### 使用所有这些工具！
+
+在分析查询性能时，使用尽可能多的性能指标非常重要。执行计划本身可能无法说明全部情况，执行时间也不会提供调优查询所需的全部信息。虽然存在更多工具，但这里讨论的三种工具（当协同使用时）可以提供对查询性能、瓶颈所在以及开始调优以提高性能的线索等方面的非常扎实的理解。
+
+### 动态 SQL 与标准 SQL
+
+虽然在命令字符串内执行的 T-SQL 将像任何其他标准 SQL 语句一样由 SQL Server 处理，但在性能方面存在一些值得注意的潜在差异。
+
+#### 查询解析与绑定
+
+查询执行的前两个阶段的一个重要部分是检查语法和对象名称，并验证你在编写查询时是否犯了任何会阻止其执行的错误。字符串的内容在运行时进行评估，在你最初编写和测试查询时不受这些过程的影响。由于动态 SQL 命令字符串是一个字符串，直到你执行它之前，其内容的有效性都不会被检查。你可以通过点击图 6-5 所示的图标来解析查询并验证其语法。
+
+![A371168_1_En_6_Fig5_HTML.jpg](img/A371168_1_En_6_Fig5_HTML.jpg)
+
+**图 6-5.** 在 SQL Server Management Studio 中手动解析查询
+
+此功能允许你在尝试执行 T-SQL 之前验证语法并检查任何明显的错误。以下查询在解析时将产生语法错误：
+
+```sql
+SELECT & FROM Person.Person;
+```
+
+我的笔误将星号 (`*`) 替换成了与号 (`&`)。当我点击解析图标来验证语法时，结果是一个错误：
+
+```sql
+Msg 102, Level 15, State 1, Line 18
+Incorrect syntax near '&'.
+```
+
+相反，如果这是作为动态 SQL 编写的，则不会抛出此类错误：
+
+```sql
+DECLARE @sql_command NVARCHAR(MAX);
+SELECT @sql_command = 'SELECT & FROM Person.Person;';
+EXEC (@sql_command);
+```
+
+解析器在执行 `@sql_command` 之前不会检查其内容，执行时它被当作一个新的查询，需要经历解析、绑定、优化和执行过程。它解析时没有错误，但在执行时会抛出类似的错误：
+
+```sql
+Msg 102, Level 15, State 1, Line 19
+Incorrect syntax near '&'.
+```
+
+因此，在执行命令字符串之前，仔细打印并进行测试非常重要。
+
+#### 执行计划缓存
+
+SQL Server 中执行的每一个唯一查询都会生成一个查询执行计划。是什么让一个查询成为“唯一”？这是由它的精确文本决定的。为了生成执行计划而优化查询需要消耗时间和服务器资源，这是一个相对昂贵的过程，尤其是对于更复杂的查询。考虑代码清单 6-1 中的查询，假设它在服务器上频繁运行，每分钟 500 次。
+
+```sql
+DECLARE @FirstName NVARCHAR(MAX) = 'Edward';
+DECLARE @sql_command NVARCHAR(MAX);
+SELECT @sql_command = '
+SELECT
+*
+FROM Person.Person
+WHERE FirstName = "" + @FirstName + "";
+';
+PRINT @sql_command;
+EXEC sp_executesql @sql_command;
+```
+
+代码清单 6-1. 一个将为每个名字生成新执行计划的 T-SQL 示例
+
+当它首次执行时，会为其精确文本创建一个执行计划，打印结果如下：
+
+```sql
+SELECT
+*
+FROM Person.Person
+WHERE FirstName = 'Edward';
+```
+
+注意名字 `Edward` 被包含在 SQL 文本中。假设该查询再次运行，但使用不同的名字：
+
+```sql
+DECLARE @FirstName NVARCHAR(MAX) = 'Xavier';
+DECLARE @sql_command NVARCHAR(MAX);
+SELECT @sql_command = '
+SELECT
+*
+FROM Person.Person
+WHERE FirstName = "" + @FirstName + "";
+'
+PRINT @sql_command;
+EXEC sp_executesql @sql_command;
+```
+
+生成的 SQL 文本将与上次运行的查询不同：
+
+```sql
+SELECT
+*
+FROM Person.Person
+WHERE FirstName = 'Xavier';
+```
+
+因此，每个查询将获得一个不同的执行计划。检查时间统计信息的数据，你可以看到在执行前处理查询花费了一定的时间：
+
+```sql
+SQL Server parse and compile time:
+CPU time = 0 ms, elapsed time = 1 ms.
+```
+
+一微秒看起来可能不多，但如果它每分钟执行 500 次，你每天最终会多出 720,000 毫秒的额外执行时间！对于一个更复杂的查询，这可能会累积成巨大的延迟。当执行计划被重用时，解析和编译时间指示的时间将为零，这对于频繁执行的查询来说是更理想的情况。
+
+这个困境的解决方案与你在前面章节中看到的许多安全问题和 SQL 注入问题的解决方案相同：**参数化查询**！重写查询将 `FirstName` 更改为一个可以反复使用同一执行计划的参数：
+
+```sql
+DECLARE @FirstName NVARCHAR(MAX) = 'Edward';
+DECLARE @sql_command NVARCHAR(MAX);
+DECLARE @parameter_list NVARCHAR(MAX) = '@first_name NVARCHAR(MAX)';
+SELECT @sql_command = '
+SELECT
+*
+FROM Person.Person
+WHERE FirstName = @first_name;'
+PRINT @sql_command;
+EXEC sp_executesql @sql_command, @parameter_list, @FIrstName;
+```
+
+当这个版本的简单查询打印 `@sql_command` 时，结果文本如下：
+
+```sql
+SELECT
+*
+FROM Person.Person
+WHERE FirstName = @first_name;
+```
+
+实际上，无论传递给动态 SQL 命令字符串的 `@FirstName` 值是什么，查询文本都将相同。因此，你只需为优化查询支付一次代价，之后执行计划将从那时起被反复重用。这相当于每天为此查询减少了 12 分钟的延迟。如果它是一个更复杂的查询，需要 20 毫秒来解析和编译，那么节省的时间将是 4 小时的延迟！
+
+让我们快速证明这一点，并展示我所描述的行为是真实的，而不仅仅是理论上的。首先，你需要清除过程缓存，这将为你提供一个干净的工作环境，没有干扰：
+
+```sql
+DBCC FREEPROCCACHE;
+```
+
+执行此 `DBCC` 命令将清除缓存中的所有执行计划数据。这是创建干净测试环境的好方法，但应仅在与生产工作负载隔离的环境中使用！对于本地测试服务器上的测试目的，这是一种辅助工作的好方法。
+
+**除非你绝对确定，否则切勿在生产环境中清除过程缓存！** 这会从缓存中删除所有查询执行计划数据，在繁忙的服务器上可能导致巨大延迟，因为查询需要重新优化！
+
+现在，让我们在 `Person.Person` 上运行之前的查询几次，每次都使用各种不同的名字。这仅仅是为了向缓存添加执行数据以供后续演示，因此任何在此表上运行的查询最终都会进入缓存并在下方可见。完成后，你可以构建一个 T-SQL 语句从缓存中读取查询数据，如代码清单 6-2 所示。
+
+```sql
+SELECT
+cached_plans.objtype AS ObjectType,
+OBJECT_NAME(sql_text.objectid, sql_text.dbid) AS ObjectName,
+cached_plans.usecounts AS ExecutionCount,
+sql_text.TEXT AS QueryText
+FROM sys.dm_exec_cached_plans AS cached_plans
+CROSS APPLY sys.dm_exec_sql_text(cached_plans.plan_handle) AS sql_text
+WHERE sql_text.TEXT LIKE '%Person.Person%';
+```
+
+代码清单 6-2. 可以从查询计划缓存中检索 SQL 文本的 T-SQL
+
+这仅返回计划缓存中少量相关列供你查看，但如果你想，也可以修改以返回更多数据。此查询的结果如图 6-6 所示。
+
+![A371168_1_En_6_Fig6_HTML.jpg](img/A371168_1_En_6_Fig6_HTML.jpg)
+
+图 6-6. 查询计划缓存中的示例数据
+
+结果是当前计划缓存中所有 T-SQL 文本包含字符串 `"Person.Person"` 的查询。第一个查询是我刚刚运行以收集此数据的查询。第二个是参数化查询，我用多种不同的名字运行了它。请注意，执行计数表明它已被重用多次。剩下的六个查询是之前的非参数化查询，分别用于名字 `Edward`、`Xavier`、`Thomas`、`Jesse`、`James` 和 `T-Rex`！！！。无论返回的结果如何（或者没有结果），所有这些查询在计划缓存中都有单独的条目，尽管这些查询本质上是相同的。
+
+请注意，在对象类型下，参数化查询被列为 `Prepared` 而不是 `Adhoc`，这表明执行的 T-SQL 中没有变量可以改变其内部的 T-SQL 文本。通过完全参数化，查询计划也变得确定。更改你正在搜索的名字不会改变 SQL 文本，因此也不会改变执行计划。如果此查询非常频繁地执行，用于大量不同的名字，非参数化查询将很快用大量相同搜索的条目填满计划缓存。随着时间的推移，这将非常浪费，不仅消耗资源不断编译查询执行计划，最终还会将更重要的查询挤出缓存。因此，无论何时处理任何需要频繁执行的查询，请确保它可以重复执行但只需要一个执行计划。
+
+#### 简化查询
+
+在之前关于动态搜索的讨论中，你能够使用动态 SQL 来移除 T-SQL 语句中过多的连接或 `WHERE` 子句。虽然动态 SQL 更复杂，但执行的最终 T-SQL 更简单。既然你已经掌握了一些性能评估工具，你可以验证这个说法！请参阅代码清单 6-3 了解此存储过程。
+
+
+### 动态搜索过程
+
+#### 代码逻辑说明
+
+`代码清单 6-3` 展示了一个动态搜索存储过程，它能够在需要时选择性地查询对象。
+
+#### SQL 代码实现
+
+以下代码块定义了存储过程 `dbo.search_products`：
+
+```sql
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'search_products')
+BEGIN
+    DROP PROCEDURE dbo.search_products;
+END
+GO
+
+-- 带检查的搜索，以避免空搜索
+CREATE PROCEDURE dbo.search_products
+    @product_name NVARCHAR(50) = NULL,
+    @product_number NVARCHAR(25) = NULL,
+    @product_model NVARCHAR(50) = NULL,
+    @product_subcategory NVARCHAR(50) = NULL,
+    @product_sizemeasurecode NVARCHAR(50) = NULL,
+    @product_weightunitmeasurecode NVARCHAR(50) = NULL,
+    @show_color BIT = 0,
+    @show_safetystocklevel BIT = 0,
+    @show_reorderpoint BIT = 0,
+    @show_standard_cost BIT = 0,
+    @show_catalog_description BIT = 0,
+    @show_subcategory_modified_date BIT = 0,
+    @show_product_model BIT = 0,
+    @show_product_subcategory BIT = 0,
+    @show_product_sizemeasurecode BIT = 0,
+    @show_product_weightunitmeasurecode BIT = 0
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF COALESCE(@product_name, @product_number, @product_model, @product_subcategory,
+                 @product_sizemeasurecode, @product_weightunitmeasurecode) IS NULL
+        RETURN;
+
+    -- 为将作为通配符搜索的参数添加 "%" 分隔符。
+    SET @product_name = '%' + @product_name + '%';
+    SET @product_number = '%' + @product_number + '%';
+    SET @product_model = '%' + @product_model + '%';
+
+    DECLARE @sql_command NVARCHAR(MAX);
+
+    -- 为筛选条件定义参数列表
+    DECLARE @parameter_list NVARCHAR(MAX) = '@product_name NVARCHAR(50), @product_number NVARCHAR(25),
+        @product_model NVARCHAR(50), @product_subcategory NVARCHAR(50), @product_sizemeasurecode NVARCHAR(50),
+        @product_weightunitmeasurecode NVARCHAR(50)';
+
+    -- 为 SELECT 列生成简化的命令字符串部分
+    SELECT @sql_command = '
+        SELECT
+            Product.Name AS product_name,
+            Product.ProductNumber AS product_number,';
+
+    IF @show_product_model = 1 OR @show_catalog_description = 1
+        SELECT @sql_command = @sql_command + '
+            ProductModel.Name AS product_model_name,
+            ProductModel.CatalogDescription AS productmodel_catalog_description,';
+
+    IF @show_product_subcategory = 1 OR @show_subcategory_modified_date = 1
+        SELECT @sql_command = @sql_command + '
+            ProductSubcategory.Name AS product_subcategory_name,
+            ProductSubcategory.ModifiedDate AS product_subcategory_modified_date,';
+
+    IF @show_product_sizemeasurecode = 1
+        SELECT @sql_command = @sql_command + '
+            SizeUnitMeasureCode.Name AS size_unit_measure_code,';
+
+    IF @show_product_weightunitmeasurecode = 1
+        SELECT @sql_command = @sql_command + '
+            WeightUnitMeasureCode.Name AS weight_unit_measure_code,';
+
+    IF @show_color = 1 OR @show_safetystocklevel = 1 OR @show_reorderpoint = 1 OR @show_standard_cost = 1
+        SELECT @sql_command = @sql_command + '
+            Product.Color AS product_color,
+            Product.SafetyStockLevel AS product_safety_stock_level,
+            Product.ReorderPoint AS product_reorderpoint,
+            Product.StandardCost AS product_standard_cost';
+
+    -- 如果命令字符串的末尾有逗号，在继续之前将其移除：
+    IF (SELECT SUBSTRING(@sql_command, LEN(@sql_command), 1)) = ','
+        SELECT @sql_command = LEFT(@sql_command, LEN(@sql_command) - 1);
+
+    SELECT @sql_command = @sql_command + '
+        FROM Production.Product'
+
+    -- 根据搜索所需连接的表来组合 JOIN。
+    IF (@product_model IS NOT NULL OR @show_product_model = 1 OR @show_catalog_description = 1)
+        SELECT @sql_command = @sql_command + '
+            LEFT JOIN Production.ProductModel
+                ON Product.ProductModelID = ProductModel.ProductModelID';
+
+    IF (@product_subcategory IS NOT NULL OR @show_subcategory_modified_date = 1 OR @show_product_subcategory = 1)
+        SELECT @sql_command = @sql_command + '
+            LEFT JOIN Production.ProductSubcategory
+                ON Product.ProductSubcategoryID = ProductSubcategory.ProductSubcategoryID';
+
+    IF (@product_sizemeasurecode IS NOT NULL OR @show_product_sizemeasurecode = 1)
+        SELECT @sql_command = @sql_command + '
+            LEFT JOIN Production.UnitMeasure SizeUnitMeasureCode
+                ON Product.SizeUnitMeasureCode = SizeUnitMeasureCode.UnitMeasureCode';
+
+    IF (@product_weightunitmeasurecode IS NOT NULL OR @show_product_weightunitmeasurecode = 1)
+        SELECT @sql_command = @sql_command + '
+            LEFT JOIN Production.UnitMeasure WeightUnitMeasureCode
+                ON Product.WeightUnitMeasureCode = SizeUnitMeasureCode.UnitMeasureCode';
+
+    SELECT @sql_command = @sql_command + '
+        WHERE 1 = 1';
+
+    -- 根据搜索引用和需要的表来构建 WHERE 子句。
+    IF @product_name IS NOT NULL
+        SELECT @sql_command = @sql_command + '
+            AND Product.Name LIKE @product_name';
+
+    IF @product_number IS NOT NULL
+        SELECT @sql_command = @sql_command + '
+            AND Product.ProductNumber LIKE @product_number';
+
+    IF @product_model IS NOT NULL
+        SELECT @sql_command = @sql_command + '
+            AND ProductModel.Name LIKE @product_model';
+
+    IF @product_subcategory IS NOT NULL
+        SELECT @sql_command = @sql_command + '
+            AND ProductSubcategory.Name = @product_subcategory';
+
+    IF @product_sizemeasurecode IS NOT NULL
+        SELECT @sql_command = @sql_command + '
+            AND SizeUnitMeasureCode.Name = @product_sizemeasurecode';
+
+    IF @product_weightunitmeasurecode IS NOT NULL
+        SELECT @sql_command = @sql_command + '
+            AND WeightUnitMeasureCode.Name = @product_weightunitmeasurecode';
+
+    PRINT @sql_command;
+
+    EXEC sp_executesql @sql_command, @parameter_list, @product_name, @product_number,
+        @product_model, @product_subcategory, @product_sizemeasurecode,
+        @product_weightunitmeasurecode;
+END
+```
+
+
+### 动态搜索与静态搜索存储过程的对比
+
+以下是您在第 4 章中看到的动态搜索。这个存储过程可能看起来很长，但它的长度确保了只有在进行的搜索需要时，才会查询表并返回列。
+
+这个存储过程的设计使得只有当某个表的数据需要用于`WHERE`子句或连接时，才会查询该表。此外，只有当调用应用程序需要时，查询才会返回列。现在它已经创建好了，让我们为可能的用户搜索运行它，如清单 6-4 所示。
+
+```sql
+EXEC dbo.search_products @product_name = 'Mountain Frame', @product_number = 'FR-M21B', @product_model = 'LL Mountain Frame',
+@show_color = 0, @show_safetystocklevel = 0,
+@show_reorderpoint = 0, @show_standard_cost = 1, @show_catalog_description = 1, @show_subcategory_modified_date = 0,
+@show_product_model = 1, @show_product_subcategory = 1
+```
+**清单 6-4.** 清单 6-3 中存储过程的执行示例
+
+这个搜索传入了各种参数，也有一些参数被省略了。用户对自行车架的尺寸没有兴趣，因此省略了这些变量的参数。结果集是图 6-7 中显示的五个山地自行车架。
+
+![A371168_1_En_6_Fig7_HTML.jpg](img/A371168_1_En_6_Fig7_HTML.jpg)
+**图 6-7.** 从清单 6-4 中的 TSQL 执行搜索过程得到的结果
+
+执行的命令字符串如清单 6-5 所示。
+
+```sql
+SELECT
+Product.Name AS product_name,
+Product.ProductNumber AS product_number,
+ProductModel.Name AS product_model_name,
+ProductModel.CatalogDescription AS productmodel_catalog_description,
+ProductSubcategory.Name AS product_subcategory_name,
+ProductSubcategory.ModifiedDate AS product_subcategory_modified_date,
+Product.Color AS product_color,
+Product.SafetyStockLevel AS product_safety_stock_level,
+Product.ReorderPoint AS product_reorderpoint,
+Product.StandardCost AS product_standard_cost
+FROM Production.Product
+LEFT JOIN Production.ProductModel
+ON Product.ProductModelID = ProductModel.ProductModelID
+LEFT JOIN Production.ProductSubcategory
+ON Product.ProductSubcategoryID = ProductSubcategory.ProductSubcategoryID
+WHERE 1 = 1
+AND Product.Name LIKE @product_name
+AND Product.ProductNumber LIKE @product_number
+AND ProductModel.Name LIKE @product_model
+AND ProductSubcategory.Name = @product_subcategory
+```
+**清单 6-5.** 执行清单 6-4 中的搜索过程生成的命令字符串
+
+由于传入的参数不需要，这个 TSQL 中省略了一些连接和`WHERE`子句。这对性能有什么影响？以下是本次执行的 IO 统计信息：
+
+```
+Table 'ProductModel'. Scan count 0, logical reads 10, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'ProductSubcategory'. Scan count 0, logical reads 10, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'Product'. Scan count 1, logical reads 14, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+```
+
+总 IO 是 34 次读取：`ProductModel`上 10 次，`ProductSubcategory`上 10 次，`Product`上 14 次。同一执行的执行计划如图 6-8 所示。
+
+![A371168_1_En_6_Fig8_HTML.jpg](img/A371168_1_En_6_Fig8_HTML.jpg)
+**图 6-8.** 清单 6-4 中存储过程执行的执行计划
+
+该计划显示了对 IO 统计中引用的三个表的访问，以及将所有这些数据组合在一起所需的各种步骤。作为比较，整个查询的估计子树成本是 0.014。
+
+动态搜索的替代方案是静态搜索，其中自动连接所有表并返回所有列以备需要。清单 6-6 中的存储过程展示了这一点。
+
+```sql
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'search_products')
+BEGIN
+DROP PROCEDURE dbo.search_products;
+END
+GO
+CREATE PROCEDURE dbo.search_products
+@product_name NVARCHAR(50) = NULL, @product_number NVARCHAR(25) = NULL, @product_model NVARCHAR(50) = NULL,
+@product_subcategory NVARCHAR(50) = NULL, @product_sizemeasurecode NVARCHAR(50) = NULL,
+@product_weightunitmeasurecode NVARCHAR(50) = NULL
+AS
+BEGIN
+SELECT @product_name = '%' + @product_name + '%';
+SELECT @product_number = '%' + @product_number + '%';
+SELECT @product_model = '%' + @product_model + '%';
+SELECT
+Product.Name AS product_name,
+Product.ProductNumber AS product_number,
+ProductModel.Name AS product_model_name,
+ProductModel.CatalogDescription AS productmodel_catalog_description,
+ProductSubcategory.Name AS product_subcategory_name,
+ProductSubcategory.ModifiedDate AS product_subcategory_modified_date,
+SizeUnitMeasureCode.Name AS size_unit_measure_code,
+WeightUnitMeasureCode.Name AS weight_unit_measure_code,
+Product.Color AS product_color,
+Product.SafetyStockLevel AS product_safety_stock_level,
+Product.ReorderPoint AS product_reorderpoint,
+Product.StandardCost AS product_standard_cost
+FROM Production.Product
+LEFT JOIN Production.ProductModel
+ON Product.ProductModelID = ProductModel.ProductModelID
+LEFT JOIN Production.ProductSubcategory
+ON Product.ProductSubcategoryID = ProductSubcategory.ProductSubcategoryID
+LEFT JOIN Production.UnitMeasure SizeUnitMeasureCode
+ON Product.SizeUnitMeasureCode = SizeUnitMeasureCode.UnitMeasureCode
+LEFT JOIN Production.UnitMeasure WeightUnitMeasureCode
+ON Product.WeightUnitMeasureCode = SizeUnitMeasureCode.UnitMeasureCode
+WHERE (Product.Name LIKE @product_name OR @product_name IS NULL)
+AND (Product.ProductNumber LIKE @product_number OR @product_number IS NULL)
+AND (ProductModel.Name LIKE @product_model OR @product_model IS NULL)
+AND (ProductSubcategory.Name = @product_subcategory OR @product_subcategory IS NULL)
+AND (SizeUnitMeasureCode.Name = @product_sizemeasurecode OR @product_sizemeasurecode IS NULL)
+AND (WeightUnitMeasureCode.Name = @product_weightunitmeasurecode OR @product_weightunitmeasurecode IS NULL);
+END
+```
+**清单 6-6.** 无论参数如何都检查并返回所有数据的搜索过程
+
+这个 TSQL 更容易阅读和理解。搜索是直截了当的，返回你可能想要的所有可能的列，连接所有表，并在`WHERE`子句中检查所有搜索参数，即使它们没有在存储过程参数中指定。输出上的唯一差异是任何你在上一个版本中明确省略的额外列。你可以运行与之前相同的执行语句来评估性能：
+
+```sql
+EXEC dbo.search_products @product_name = 'Mountain Frame', @product_number = 'FR-M21B', @product_model = 'LL Mountain Frame',
+@product_subcategory = 'Mountain Frames'
+```
+
+这个新版本的执行计划和 IO 统计信息如图 6-9 所示。
+
+![A371168_1_En_6_Fig9_HTML.jpg](img/A371168_1_En_6_Fig9_HTML.jpg)
+**图 6-9.** 更包容的搜索过程的执行计划
+
+### SQL 性能对比与分页优化
+
+```
+Table 'UnitMeasure'. Scan count 1, logical reads 21, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'ProductSubcategory'. Scan count 0, logical reads 10, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'ProductModel'. Scan count 0, logical reads 10, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'Product'. Scan count 1, logical reads 14, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+```
+
+性能上的主要区别在于，你必须访问 `UnitMeasure` 表两次才能收集产品的尺寸和重量度量数据。尽管对于已运行的搜索来说，这些列并非必需，但简化的 TSQL 并不会区分你需要什么和不需要什么。它用设计的简单性换取了性能上的复杂性。
+
+结果是，同样的搜索需要额外进行 21 次读取，并且子树成本为 0.022。执行时间对比如何？在我本地服务器上进行的 20 次执行试验中，动态 SQL 方法平均耗时 40ms。而那个“简化版”则耗时 50ms。这些性能下降可能看起来并不巨大，因为它们查询的是相对较小的表。如果 `UnitMeasure` 表更大，那么额外的工作量也会变得更加显著。此外，如果你不是需要查询 4 个表，而是 100 个呢？如果用户可以选择的可能列数以千计呢？如果你经常被迫在不需要时也从 100 个表中读取数据，在生产服务器上结果将会非常明显。
+
+另外请记住，每次访问不同表的搜索都会导致一个独特的执行计划。在这种情况下，这种行为是可取的，因为当需要查询的对象较少时，你希望得到一个更小、更精简的执行。不过，对于不同的参数值不会创建额外的计划，只有在查询文本本身发生改变的情况下才会。这种情况会在添加连接、`WHERE` 子句被赋予额外参数，或者列被添加到结果集时发生。
+
+当涉及非常大量的表、列、过滤器或其他变量时，最终的搜索需要足够智能，不去查询不需要的对象。实现这一点所需的逻辑可以在应用程序代码中执行，也可以在 SQL Server 中执行，但必须以某种方式处理，以消除查询那些不需要对象所需的额外资源开销。动态 SQL 是在 SQL Server 中实现此目标的绝佳工具，尽管需要详尽的文档和干净的代码，以确保性能的提升不是以可维护性为代价换来的。
+
+#### 分页性能
+
+分页可能是一个开销很大的过程，尤其是在频繁使用时。交互式搜索通常需要额外的聚合数据，而这些数据可能不存在于行级别，例如：
+
+*   总行数
+*   当前行号
+*   列的总和、平均值、最小值或最大值
+*   页面大小
+*   相关或关联的结果
+
+将这些数据与结果集内联返回会引发许多问题，例如是单独计算聚合还是使用窗口函数计算。这是一个没有单一答案的领域。整体数据源的大小、分布和索引情况都很重要。此外，了解结果集的返回百分比也会影响决策过程。为了开始这项分析，让我们回顾几种不同的数据分页方式，并深入探讨每种方法的性能。
+
+清单 6-7 中的查询返回 25 条搜索结果，供用户分页浏览。
+
+```sql
+WITH CTE_PRODUCTS AS (
+SELECT
+ROW_NUMBER() OVER (ORDER BY OrderDate ASC) AS rownum,
+SalesOrderHeader.SalesOrderID,
+SalesOrderHeader.Status,
+SalesOrderHeader.OrderDate,
+SalesOrderHeader.ShipDate,
+SalesOrderDetail.UnitPrice,
+SalesOrderDetail.LineTotal
+FROM Sales.SalesOrderHeader
+INNER JOIN Sales.SalesOrderDetail
+ON SalesOrderHeader.SalesOrderID = SalesOrderDetail.SalesOrderID
+WHERE SalesOrderHeader.SalesPersonID = 277
+)
+SELECT
+*
+FROM CTE_PRODUCTS
+WHERE rownum BETWEEN 51 AND 75
+```
+
+**清单 6-7.** 使用基于订单日期的行号进行基本数据分页
+
+如图 6-10 所示，此查询的性能相对直接。
+
+![A371168_1_En_6_Fig10_HTML.jpg](img/A371168_1_En_6_Fig10_HTML.jpg)
+
+**图 6-10.** 清单 6-7 中基本分页 TSQL 的执行计划
+
+```
+Table 'SalesOrderDetail'. Scan count 9, logical reads 42, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'SalesOrderHeader'. Scan count 1, logical reads 689, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+```
+
+生成的执行计划由对 `SalesOrderDetail` 的查找和对 `SalesOrderHeader` 的扫描组成，因为你正在收集特定销售人员的订单数据。请注意，对 `SalesOrderDetail` 的读取量相对较低。分页可以提高存储系统的读取性能，因为它最终一次返回的数据量远小于总量。
+
+这就引出了一个重要考量：你是立即返回所有数据，在用户点击“下一步”时使用，还是只返回 25 行，在用户请求更多时才返回？这个问题可以通过调整最外层 `SELECT` 语句中返回的行数来解决。以下是分别返回第 51-200 行、第 51-500 行和第 51-1000 行时的 `STATISTICS` IO 输出：
+
+```
+Table 'SalesOrderDetail'. Scan count 19, logical reads 79, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'SalesOrderHeader'. Scan count 1, logical reads 689, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+```
+
+```
+Table 'SalesOrderDetail'. Scan count 41, logical reads 157, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'SalesOrderHeader'. Scan count 1, logical reads 689, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+```
+
+```
+Table 'SalesOrderDetail'. Scan count 77, logical reads 277, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'SalesOrderHeader'. Scan count 1, logical reads 689, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+```
+
+
+当你承诺从 `SalesOrderDetail` 返回更多数据时，这些读取操作会随之增加。为了在性能方面做出明智的决定，你必须判断用户平均会点击多少次“下一页”。如果他们通常只浏览一两页就转而处理其他工作，那么每次返回少量数据集是最优的。如果用户最终会翻阅大部分甚至全部数据集，那么直接将所有内容返回到临时表或应用程序会更有意义。
+
+#### 包含总结果数的数据分页
+
+让我们为这个查询增加一些复杂度。如果你希望在搜索结果中同时包含总结果数该怎么办？有很多方法可以实现这一点。代码清单 6-8 展示了一些示例，同时附有性能指标和说明。
+
+```sql
+WITH CTE_PRODUCTS AS (
+    SELECT
+        ROW_NUMBER() OVER (ORDER BY OrderDate ASC) AS rownum,
+        SalesOrderHeader.SalesOrderID,
+        SalesOrderHeader.Status,
+        SalesOrderHeader.OrderDate,
+        SalesOrderHeader.ShipDate,
+        SalesOrderDetail.UnitPrice,
+        SalesOrderDetail.LineTotal
+    FROM Sales.SalesOrderHeader
+    INNER JOIN Sales.SalesOrderDetail
+        ON SalesOrderHeader.SalesOrderID = SalesOrderDetail.SalesOrderID
+    WHERE SalesOrderHeader.SalesPersonID = 277
+)
+SELECT
+    *,
+    (SELECT COUNT(*) FROM CTE_PRODUCTS) AS total_result_count
+FROM CTE_PRODUCTS
+WHERE rownum BETWEEN 51 AND 75;
+```
+
+代码清单 6-8. 数据分页，在最外层 SELECT 中以子查询形式包含总结果数
+
+这第一个示例在最终的 `SELECT` 中创建了一个子查询，该子查询返回公共表表达式中的总行数。在这种情况下，每次用户请求更多结果时，都会返回整个结果集并重新计算行数。此方法的性能如图 6-11 所示。
+
+![A371168_1_En_6_Fig13_HTML.jpg](img/A371168_1_En_6_Fig13_HTML.jpg)
+
+图 6-13. 使用窗口函数确定行数时的性能
+
+![A371168_1_En_6_Fig12_HTML.jpg](img/A371168_1_En_6_Fig12_HTML.jpg)
+
+图 6-12. 在执行前缓存行数时的搜索性能
+
+![A371168_1_En_6_Fig11_HTML.jpg](img/A371168_1_En_6_Fig11_HTML.jpg)
+
+图 6-11. 每次执行都返回行数时的搜索查询性能
+
+```
+Table 'SalesOrderDetail'. Scan count 10, logical reads 318, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'SalesOrderHeader'. Scan count 2, logical reads 692, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'Workfile'. Scan count 0, logical reads 0, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'Worktable'. Scan count 0, logical reads 0, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+```
+
+为了计算行数，需要额外访问每个表，现在查询必须对每个表进行一次扫描和一次查找。总体读取量增加了 279 次，即 38%。这不是一种非常高效的方法，但它很方便，并且可以通过动态 SQL 轻松控制。一旦获取了行数，就可以将其存储并由应用程序重复使用，使用动态 SQL 在最终查询中过滤掉额外的子查询。这引出了一个问题：是否应该像代码清单 6-9 所示，单独计算行数并在必要时重复使用。
+
+#### 通过单独计算行数进行数据分页
+
+```sql
+SELECT COUNT(*) AS total_result_count
+FROM Sales.SalesOrderHeader
+INNER JOIN Sales.SalesOrderDetail
+    ON SalesOrderHeader.SalesOrderID = SalesOrderDetail.SalesOrderID
+WHERE SalesOrderHeader.SalesPersonID = 277;
+
+WITH CTE_PRODUCTS AS (
+    SELECT
+        ROW_NUMBER() OVER (ORDER BY OrderDate ASC) AS rownum,
+        SalesOrderHeader.SalesOrderID,
+        SalesOrderHeader.Status,
+        SalesOrderHeader.OrderDate,
+        SalesOrderHeader.ShipDate,
+        SalesOrderDetail.UnitPrice,
+        SalesOrderDetail.LineTotal
+    FROM Sales.SalesOrderHeader
+    INNER JOIN Sales.SalesOrderDetail
+        ON SalesOrderHeader.SalesOrderID = SalesOrderDetail.SalesOrderID
+    WHERE SalesOrderHeader.SalesPersonID = 277
+)
+SELECT
+    *
+FROM CTE_PRODUCTS
+WHERE rownum BETWEEN 51 AND 75;
+```
+
+代码清单 6-9. 通过将行数计算作为单独操作进行数据分页
+
+这种替代方法在获取实际数据之前先计算总行数。这可以返回给应用程序一次并反复使用，直到用户放弃本次搜索。这可以通过存储过程中的 `RETURN` 值、作为结果集返回给等待的应用程序、将其保存到临时表供以后重复使用，或使用其他类似方法来实现。
+
+```
+Table 'Workfile'. Scan count 0, logical reads 0, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'Worktable'. Scan count 0, logical reads 0, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'SalesOrderDetail'. Scan count 1, logical reads 276, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'SalesOrderHeader'. Scan count 1, logical reads 3, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'SalesOrderDetail'. Scan count 9, logical reads 42, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'SalesOrderHeader'. Scan count 1, logical reads 689, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+```
+
+IO 数据显示，以这种方式计算行数的开销与之前的示例相同。显示的两个执行计划分别涵盖行数计算（第一个计划）和数据选择（第二个计划）。总体而言，在所需操作以及每个操作消耗的资源方面，其开销与之前类似。
+
+#### 使用窗口函数进行数据分页
+
+下一个示例将计数操作移入公共表表达式中，如代码清单 6-10 所示。
+
+```sql
+WITH CTE_PRODUCTS AS (
+    SELECT
+        ROW_NUMBER() OVER (ORDER BY OrderDate ASC) AS rownum,
+        COUNT(SalesOrderDetail.SalesOrderDetailID) OVER (ORDER BY SalesOrderDetail.SalesOrderDetailID ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS total_result_count,
+        SalesOrderHeader.SalesOrderID,
+        SalesOrderHeader.Status,
+        SalesOrderHeader.OrderDate,
+        SalesOrderHeader.ShipDate,
+        SalesOrderDetail.UnitPrice,
+        SalesOrderDetail.LineTotal
+    FROM Sales.SalesOrderHeader
+    INNER JOIN Sales.SalesOrderDetail
+        ON SalesOrderHeader.SalesOrderID = SalesOrderDetail.SalesOrderID
+    WHERE SalesOrderHeader.SalesPersonID = 277
+)
+SELECT
+    *
+FROM CTE_PRODUCTS
+WHERE rownum BETWEEN 51 AND 75;
+```
+
+代码清单 6-10. 使用窗口函数计算总行数进行数据分页
+
+`ORDER BY` 后的语法表示行数应针对整个数据集（`UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING`）。再次，行数计算被包含在数据检索中，但它的性能如何呢？
+
+
+
+#### 性能分析
+
+```
+表 'Worktable'。扫描计数 3，逻辑读取 16130，物理读取 0，预读 0，lob 逻辑读取 0，lob 物理读取 0，lob 预读 0。
+表 'SalesOrderDetail'。扫描计数 473，逻辑读取 1626，物理读取 0，预读 0，lob 逻辑读取 0，lob 物理读取 0，lob 预读 0。
+表 'SalesOrderHeader'。扫描计数 1，逻辑读取 689，物理读取 0，预读 0，lob 逻辑读取 0，lob 物理读取 0，lob 预读 0。
+```
+
+怎么回事！？执行计划看起来足够简单，两个表似乎只访问了一次。然而，IO 统计数据却讲述了一个截然不同的故事！为了计算 CTE 中的计数，SQL Server 会为结果集中处理的**每一行**重新计算它！读取次数比之前所有例子高出数个数量级，这表明看起来不错的语法并不总是表现良好。你可以尝试简化 TSQL 来改进性能，如清单 6-11 所示。
+
+#### 简化窗口函数方法
+
+```tsql
+WITH CTE_PRODUCTS AS (
+SELECT
+ROW_NUMBER() OVER (ORDER BY OrderDate ASC) AS rownum,
+COUNT(*) OVER () AS total_result_count,
+SalesOrderHeader.SalesOrderID,
+SalesOrderHeader.Status,
+SalesOrderHeader.OrderDate,
+SalesOrderHeader.ShipDate,
+SalesOrderDetail.UnitPrice,
+SalesOrderDetail.LineTotal
+FROM Sales.SalesOrderHeader
+INNER JOIN Sales.SalesOrderDetail
+ON SalesOrderHeader.SalesOrderID = SalesOrderDetail.SalesOrderID
+WHERE SalesOrderHeader.SalesPersonID = 277
+)
+SELECT
+*
+FROM CTE_PRODUCTS
+WHERE rownum BETWEEN 51 AND 75;
+```
+
+清单 6-11. 使用简化窗口函数进行数据分页
+
+性能与之前几乎完全相同。尽管移除了额外的语法，这种方法的执行效率极低。在更大的数据集上，当 SQL Server 试图在遍历数据的每一行上计算计数时，这种方法会导致显著更多的读取和延迟。
+
+最后一个选项是从一开始就持久化整个数据集。如果搜索结果不是特别大，或者你可以将其限制在一个相对紧凑的范围内，那么你可以针对这种特定场景进行优化，如清单 6-12 所示。
+
+#### 持久化完整数据集
+
+```tsql
+SELECT
+ROW_NUMBER() OVER (ORDER BY OrderDate ASC) AS rownum,
+SalesOrderHeader.SalesOrderID,
+SalesOrderHeader.Status,
+SalesOrderHeader.OrderDate,
+SalesOrderHeader.ShipDate,
+SalesOrderDetail.UnitPrice,
+SalesOrderDetail.LineTotal
+INTO #orders
+FROM Sales.SalesOrderHeader
+INNER JOIN Sales.SalesOrderDetail
+ON SalesOrderHeader.SalesOrderID = SalesOrderDetail.SalesOrderID
+WHERE SalesOrderHeader.SalesPersonID = 277;
+SELECT @@ROWCOUNT AS total_result_count;
+CREATE CLUSTERED INDEX IX_temp_orders_rownum ON #orders (rownum);
+SELECT * FROM #orders WHERE rownum BETWEEN 1 AND 25;
+SELECT * FROM #orders WHERE rownum BETWEEN 26 AND 50;
+SELECT * FROM #orders WHERE rownum BETWEEN 51 AND 75;
+SELECT * FROM #orders WHERE rownum BETWEEN 76 AND 100;
+DROP TABLE #orders;
+```
+
+清单 6-12. 在数据被选中后使用行计数计算进行数据分页
+
+此示例将整个数据集选入一个临时表。然后使用 `@@ROWCOUNT` 获取总行数，这不需要访问任何数据即可返回。由于你假设需要访问返回的大部分数据，接下来的操作是在临时表的 `rownum` 上创建聚集索引。这确保了每个在 `rownum` 上进行筛选的查询都将非常高效。以下是此搜索版本的 IO 统计数据：
+
+```
+表 'SalesOrderDetail'。扫描计数 473，逻辑读取 1626，物理读取 0，预读 0，lob 逻辑读取 0，lob 物理读取 0，lob 预读 0。
+表 'SalesOrderHeader'。扫描计数 1，逻辑读取 689，物理读取 0，预读 0，lob 逻辑读取 0，lob 物理读取 0，lob 预读 0。
+表 '#orders'。扫描计数 1，逻辑读取 62，物理读取 0，预读 0，lob 逻辑读取 0，lob 物理读取 0，lob 预读 0。
+表 '#orders'。扫描计数 1，逻辑读取 2，物理读取 0，预读 0，lob 逻辑读取 0，lob 物理读取 0，lob 预读 0。
+表 '#orders'。扫描计数 1，逻辑读取 2，物理读取 0，预读 0，lob 逻辑读取 0，lob 物理读取 0，lob 预读 0。
+表 '#orders'。扫描计数 1，逻辑读取 2，物理读取 0，预读 0，lob 逻辑读取 0，lob 物理读取 0，lob 预读 0。
+表 '#orders'。扫描计数 1，逻辑读取 2，物理读取 0，预读 0，lob 逻辑读取 0，lob 物理读取 0，lob 预读 0。
+```
+
+你在收集搜索中所有数据的前期付出了高昂的代价，累计了 2,315 次读取！添加索引在临时表上又花费了 62 次读取，但从这一点开始，所有分页结果的获取都变得非常廉价，因为你可以有效地使用该索引。基于 IO，这一切努力值得吗？原始搜索需要 731 次读取。基于这个数字，在第四次对结果集进行分页浏览后，这种新方法就会开始显现优势。如前所述，当数据集不是特别大，并且你平均知道需要多次分页浏览时，一次性检索所有数据是有效的。
+
+查询执行计划也讲述了类似的故事，如图 6-14 所示。
+
+![A371168_1_En_6_Fig14_HTML.jpg](img/A371168_1_En_6_Fig14_HTML.jpg)
+
+图 6-14. 为后续重复查询提前收集所有数据时的性能
+
+对于针对现有数据集执行的后续每次分页搜索结果，都会重复第三个执行计划。数据收集查询的子树成本为 1.99，索引创建成本为 0.8，返回分页搜索结果的成本为 0.003。这些结果与 IO 统计数据吻合良好。为了检索整个结果集中的 7,825 行数据，前期投入了相当多的精力，但从那时起，访问成本相比之下就非常低了。
+
+请注意，通过保存和重用计数，如果底层数据发生变化，它不会更新。在某些搜索场景中这可以容忍，即结果集在再次运行搜索之前必须保持不变，但这可能并非在所有用例中都可接受。如果数据集需要在每次点击浏览结果时刷新，那么存储结果和计数以供后续使用可能不足以满足该业务需求。在此类场景中，请考虑数据的结构。如果新数据被追加到数据集的末尾，则可以将其作为对现有搜索的额外操作进行检索。例如，在前面的例子中，你可以检查临时表中最大的 `SalesOrderDetailID`，然后将任何更新的、在 `SalesOrderHeader` 和 `SalesOrderDetail` 中的额外新数据添加到数据集中。或者，如果数据具有最后修改日期和/或最后创建日期，你可以使用这些日期来快速收集自初始搜索完成以来发生更改的数据。
+
+#### 用于分页的 OFFSET 函数
+
+你尚未见到的最后一个分页选项是 `OFFSET` 功能。它允许你对结果集进行排序，偏移到该排序中的任意行号，并从该点开始选择任意数量的行。此 TSQL 如清单 6-13 所示。
+
+
+
+#### 使用 OFFSET 实现数据分页
+
+```sql
+SELECT
+SalesOrderHeader.SalesOrderID,
+SalesOrderHeader.Status,
+SalesOrderHeader.OrderDate,
+SalesOrderHeader.ShipDate,
+SalesOrderDetail.UnitPrice,
+SalesOrderDetail.LineTotal
+FROM Sales.SalesOrderHeader
+INNER JOIN Sales.SalesOrderDetail
+ON SalesOrderHeader.SalesOrderID = SalesOrderDetail.SalesOrderID
+WHERE SalesOrderHeader.SalesPersonID = 277
+ORDER BY SalesOrderDetailID ASC
+OFFSET 50 ROWS
+FETCH NEXT 25 ROWS ONLY
+```
+代码清单 6-13. 使用 OFFSET 实现数据分页
+
+`OFFSET` 的语法很简单，它让你能够对数据集进行分页，而无需自行计算行号。此示例的 I/O 统计信息和执行计划如图 6-15 所示。
+
+![A371168_1_En_6_Fig15_HTML.jpg](img/A371168_1_En_6_Fig15_HTML.jpg)
+
+图 6-15. 使用 OFFSET 运算符进行分页的性能
+
+```
+表 'SalesOrderDetail'。扫描计数 9，逻辑读取 45，物理读取 0，预读 0，lob 逻辑读取 0，lob 物理读取 0，lob 预读 0。
+表 'SalesOrderHeader'。扫描计数 1，逻辑读取 689，物理读取 0，预读 0，lob 逻辑读取 0，lob 物理读取 0，lob 预读 0。
+```
+
+执行计划与之前见过的类似，读取次数也与第一个使用 `ROW_NUMBER` 的示例大致相当。使用 `OFFSET` 的关键在于确保 `ORDER BY` 子句是基于你想要用来分页的列。在前面的例子中，使用了 `OrderDate` 来确定结果集的顺序，但根据业务需求，也可以使用其他列。
+
+##### 过滤索引
+
+默认情况下，索引会应用于给定表中的所有行。在大型表上，索引的读取成本可能变得很高，维护起来也耗时且耗费资源。如果你有一个或一组查询都依赖于相同的筛选条件，你可以创建一个仅适用于这些筛选条件的索引。这个过滤索引只会在使用那些完全相同的筛选条件时生效，因此首次创建时确保其正确性至关重要！
+
+过滤索引的一个常见用途是，当你有一个表，其中特定的状态或标志表示你感兴趣的数据，而其余的数据则总是被忽略。考虑代码清单 6-14 中的存储过程，它执行采购订单的搜索。
+
+```sql
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'get_in_process_purchasing_data')
+BEGIN
+DROP PROCEDURE dbo.get_in_process_purchasing_data;
+END
+GO
+CREATE PROCEDURE dbo.get_in_process_purchasing_data
+@return_detail_data BIT
+AS
+BEGIN
+SET NOCOUNT ON;
+DECLARE @sql_command NVARCHAR(MAX);
+SELECT @sql_command = '
+SELECT
+PurchaseOrderHeader.PurchaseOrderID,
+PurchaseOrderHeader.OrderDate,
+PurchaseOrderHeader.ShipDate,
+PurchaseOrderHeader.SubTotal,
+PurchaseOrderHeader.Freight';
+IF @return_detail_data = 1
+SELECT @sql_command = @sql_command + ',
+PurchaseOrderDetail.PurchaseOrderDetailID,
+PurchaseOrderDetail.OrderQTY,
+PurchaseOrderDetail.UnitPrice,
+Product.Name,
+Product.ProductNumber';
+SELECT @sql_command = @sql_command + '
+FROM purchasing.PurchaseOrderHeader
+INNER JOIN purchasing.PurchaseOrderDetail
+ON PurchaseOrderHeader.PurchaseOrderID = PurchaseOrderDetail.PurchaseOrderID';
+IF @return_detail_data = 1
+SELECT @sql_command = @sql_command + '
+INNER JOIN Production.Product
+ON Product.ProductID = PurchaseOrderDetail.ProductID';
+SELECT @sql_command = @sql_command + '
+WHERE PurchaseOrderHeader.Status = 2';
+EXEC sp_executesql @sql_command;
+END
+GO
+```
+代码清单 6-14. 带有常用状态筛选器的简单动态搜索
+
+这个存储过程使用一个参数来决定是否返回详细数据，从而执行搜索。更重要的是，所有执行中都存在一个共同的筛选条件：
+
+`WHERE PurchaseOrderHeader.Status = 2`
+
+为了说明性能基线，你可以添加一个标准的覆盖索引来帮助减少对 `PurchaseOrderHeader` 的读取：
+
+```sql
+CREATE NONCLUSTERED INDEX IX_PurchaseOrderHeader_status_INC
+ON Purchasing.PurchaseOrderHeader (OrderDate, status)
+INCLUDE (PurchaseOrderID, ShipDate, SubTotal, Freight);
+GO
+```
+
+现在，你可以执行一次详细的查询：
+
+```sql
+EXEC dbo.get_in_process_purchasing_data @return_detail_data = 1;
+```
+
+结果集包含 57 行，包含了存储过程中动态 SQL 可能返回的所有列。此执行的性能如下：
+
+```
+表 'Product'。扫描计数 0，逻辑读取 114，物理读取 0，预读 0，lob 逻辑读取 0，lob 物理读取 0，lob 预读 0。
+表 'PurchaseOrderDetail'。扫描计数 12，逻辑读取 24，物理读取 0，预读 0，lob 逻辑读取 0，lob 物理读取 0，lob 预读 0。
+表 'PurchaseOrderHeader'。扫描计数 1，逻辑读取 24，物理读取 0，预读 0，lob 逻辑读取 0，lob 物理读取 0，lob 预读 0。
+```
+
+请注意，即使使用了覆盖索引，`PurchaseOrderHeader` 仍然有 24 次读取。执行计划如图 6-16 所示。
+
+![A371168_1_En_6_Fig16_HTML.jpg](img/A371168_1_En_6_Fig16_HTML.jpg)
+
+图 6-16. 为搜索查询使用覆盖索引时的执行计划
+
+整个查询的子树成本是 0.095894。由于这个存储过程有一个自动的 `status = 2` 筛选器，你可以通过将该筛选器直接添加到索引中来改进索引：
+
+
+
+### 过滤索引：性能优化与注意事项
+
+#### 创建与示例
+
+```sql
+IF EXISTS (SELECT * FROM sys.indexes WHERE indexes.name = 'IX_PurchaseOrderHeader_status_INC')
+BEGIN
+DROP INDEX IX_PurchaseOrderHeader_status_INC ON Purchasing.PurchaseOrderHeader
+END
+GO
+CREATE NONCLUSTERED INDEX IX_PurchaseOrderHeader_status_INC
+ON Purchasing.PurchaseOrderHeader (OrderDate, status)
+INCLUDE (PurchaseOrderID, ShipDate, SubTotal, Freight)
+WHERE status = 2;
+```
+
+请注意索引`INCLUDE`部分下方的过滤器。为索引添加过滤器会改变其结构，使其仅包含与过滤器匹配的行数据。当你需要始终如一地查询表中很小一部分数据时，过滤索引能极大地提升性能。一个更小的索引：
+
+*   使 SQL Server 的读取速度更快，这意味着它可以用更少的逻辑读取操作更快地返回数据
+*   减少在其上执行索引维护所需的时间
+*   占用更少的磁盘存储空间
+
+使用新的过滤索引执行存储过程后，返回的性能指标如下：
+
+```
+Table 'Product'. Scan count 0, logical reads 114, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'PurchaseOrderDetail'. Scan count 12, logical reads 24, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'PurchaseOrderHeader'. Scan count 1, logical reads 2, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+```
+
+在`PurchaseOrderHeader`上只有两次逻辑读取，比你之前看到的少了很多！这个改进后的执行计划如图 6-17 所示。
+
+![A371168_1_En_6_Fig17_HTML.jpg](img/A371168_1_En_6_Fig17_HTML.jpg)
+
+图 6-17. 使用过滤覆盖索引时的性能
+
+请注意，尽管执行计划看起来和之前相似，但`PurchaseOrderHeader`上的索引扫描成本已经降低，整体子树成本降低了 25%。
+
+#### 性能与权衡
+
+当经常只需要表中的一小部分数据子集时，过滤索引是管理查询的绝佳方法。在非常大的表上，性能差异可能是巨大的！但需要谨慎，因为过滤索引有两个注意事项：
+
+*   `WHERE`子句必须精确。虽然查询优化器会尽力使用过滤索引，但它只能在查询的`WHERE`子句与索引过滤条件重叠时才能利用它。如果查询变化很大导致过滤器不匹配，SQL Server 将忽略该过滤索引并尝试使用其他索引。
+*   当数据写入带有过滤索引的表时，SQL Server 必须检查更改的数据是否匹配过滤器。这意味着在修改数据时可能需要进行少量额外的读取操作，以正确维护过滤索引。虽然此成本通常很低，但在处理大型数据集时认识到这一点很重要。对于本例，任何修改`status`的`UPDATE`操作都需要验证这些更改是否会导致数据被添加或从过滤索引中移除。在带有复合`WHERE`子句的过滤索引中，修改其任何列都会导致类似的检查。
+
+在考虑为索引添加过滤器时，好处通常会超过成本。如果一个表包含 1 亿行，其中 1 万行包含当前或相关数据，那么你可以预期索引上的读取以及存储空间将减少到原始量的大约 0.01%。这是一个显著的改进！
+
+##### 基数
+
+在讨论性能问题时，讨论基数及其对你执行的查询意味着什么是很重要的。基数指的是一个操作影响的行数。在优化查询时，SQL Server 必须确定执行计划的每个部分将影响多少行。这个计数将决定重要的决策，例如是扫描还是查找表，或者是使用合并连接还是哈希连接。对基数的解释如果不简要概述统计信息，将是不完整的。
+
+
+
+### 统计信息
+
+默认情况下，系统会在给定表的所有索引和列上创建统计信息。统计信息提供了表中一组简单而强大的值列表。例如，您可以使用以下语句查看给定索引的统计信息：
+
+```sql
+DBCC SHOW_STATISTICS (“Sales.SalesOrderheader”, IX_SalesOrderHeader_CustomerID);
+```
+
+此执行的结果由三组数据组成，如图 6-18 所示。
+
+![A371168_1_En_6_Fig18_HTML.jpg](img/A371168_1_En_6_Fig18_HTML.jpg)
+
+**图 6-18. `DBCC SHOW_STATISTICS` 的示例输出**
+
+返回的第一行是统计信息的概览，包括名称、最后更新时间、表中的总行数以及采样的行数。对于较小的表，采样的行数将等于行数，但在较大的表中会变少。更新统计信息并非没有成本，如果数据在性质上相对均匀，扫描数百万行来更新可能不值得。步骤（Steps）是将数据划分为的范围数量，其中 200 是 SQL Server 将使用的最大值。在此示例中，总共采样了 31,465 行（整个表），并被划分为 153 个范围，其中计算了 `CustomerID` 的值。
+
+第二个结果集显示了索引中涉及的每个列（包括此索引引用回的聚集索引列）的密度（Density）。密度等于 1 / （唯一值的数量）。对于前面的值：
+
+```sql
+SELECT DISTINCT CustomerID FROM Sales.SalesOrderheader;
+```
+
+此查询为 `CustomerID` 返回 19,119 个唯一值。1/19119 = 5.230399E-05，这正是提供的值。`CustomerID` 和 `SalesOrderID`（聚集主键列）的组合在本例中与主键一样唯一：
+
+```sql
+SELECT DISTINCT CustomerID, SalesOrderID FROM Sales.SalesOrderheader;
+```
+
+此查询返回 31,465 个值：1/31465 = 3.178134E-05，即上面的第二个值。
+
+密度是查询优化器的一个重要指标，因为它快速提供了列唯一性的洞察，从而可以推断出每个独立值平均可能有多少个潜在值。为了进一步确定细节并扩展密度的概念，让我们回顾上面最后一个数据集，即统计信息直方图。直方图显示了 `CustomerID` 的值范围以及落入该范围的行数。
+
+例如，查看直方图的一行：
+
+| RANGE_HI_KEY | RANGE_ROWS | EQ_ROWS | DISTINCT_RANGE_ROWS | AVG_RANGE_ROWS |
+| --- | --- | --- | --- | --- |
+| 11331 | 84 | 27 | 30 | 2.8 |
+| 11417 | 173 | 7 | 85 | 2.035294 |
+| 11439 | 68 | 6 | 21 | 3.238095 |
+
+在范围 11331 < X < 11417 中找到了 173 个值。此外，还有七个值等于该范围的最大值（11417）。在此范围内有 85 个可能的值（11417 – 11331 - 1），平均范围行数（每值）为 2.035294。
+
+这一切都很好，但它意味着什么？这些数据有些深奥，但它为查询优化器提供了巨大的价值。它可以使用这些数据非常快速地交叉检查筛选条件、分组和连接，并确定如何处理查询。如果一个筛选条件非常宽泛，并且最终会返回表中的大部分行，则很可能使用表扫描。在这种情况下，返回所有内容比有选择性地挑选大量行更快。如果筛选条件非常严格，优化器会很快意识到索引查找是返回结果的最快方式。
+
+查询优化器的好坏完全取决于统计信息提供的数据。如果这些数据因任何原因变得不准确，结果可能是次优的执行计划、糟糕的性能，以及用户在深夜荒谬的时间打电话向你寻求帮助。
+
+SQL Server 中有三个设置指导如何在数据库中处理统计信息。它们都包含在系统视图中，可以像这样查看给定数据库的设置：
+
+
+
+SELECT
+is_auto_update_stats_on,
+is_auto_create_stats_on,
+is_auto_update_stats_async_on
+FROM sys.databases WHERE name = 'AdventureWorks2014';
+
+移除过滤器将返回此 SQL Server 上所有数据库的信息。此查询的结果如下：
+
+| is_auto_update_stats_on | is_auto_create_stats_on | is_auto_update_stats_async_on |
+| --- | --- | --- |
+| 1 | 1 | 0 |
+
+这些值代表什么？
+
+`Auto_update_stats_on` 告诉你 SQL Server 是否会自动更新过时的统计信息，默认情况下是开启的。这并不能保证统计信息一定能带来准确的执行计划，但能处理统计信息被判定为过时的几种用例。关于这一点，后面还会有更多介绍！
+
+`Auto_create_stats_on` 指示是否会在需要时自动在列和索引上创建统计信息，默认情况下是开启的。这个功能很有用，除非你对手动维护统计信息非常有信心，否则不应将其关闭。此设置不适用于视图，对于视图，你需要在需要时手动创建统计信息。
+
+`Auto_update_stats_async_on` 决定统计信息是在查询执行之前还是之后更新，默认是关闭的。开启此选项可以加快查询执行速度，但可能导致不准确的执行计划。因此建议保持关闭。
+
+对于这些设置，通常默认值就是最佳选择，除非你有非常充分的理由进行更改。自动更新统计信息涉及什么，它在何时发生？
+
+默认情况下，数据库设置为开启 `AUTO_UPDATE_STATISTICS`。这将在以下情况发生时导致统计信息更新：
+
+*   向空表中插入行时。
+*   表中的行数从少于 500 行增加到超过 500 行，且增量至少为 500 行时。
+*   表中的行数从超过 500 行的基础上增加了 500 行，再加 20% 时。
+
+这些场景会在行数发生显著变化时更新统计信息，但对于复杂的生产环境来说，可能不够全面。为了确保统计信息完全是最新的，即使未满足上述标准，你也可以考虑手动或在维护计划中更新统计信息。可以一次性更新数据库中的所有统计信息，如下所示：
+
+```sql
+EXEC sys.sp_updatestats ;
+```
+
+这将重新计算数据库中每个表上的所有统计信息。通常不建议这样做，因为需要扫描的数据量可能非常大，耗时很长，并且可能导致重要的生产负载争用。如果不能一次性更新所有内容，还有哪些替代方案？
+
+更新统计信息可能是一项非常消耗 I/O 的操作。仅在必要时执行此维护，并且仅针对需要更新的对象进行。
+
+可以使用以下语法更新任何单个对象上的统计信息：
+
+```sql
+UPDATE STATISTICS Production.Product ;
+```
+
+这将更新表 `Production.Product` 上的所有统计信息。此外，也可以更新单个统计信息：
+
+```sql
+UPDATE STATISTICS Production.Product PK_Product_ProductID;
+```
+
+此语句仅更新 `Production.Product` 上主键的统计信息。
+
+下一个合乎逻辑的问题是，“你怎么知道什么时候应该手动更新统计信息？” 通常，除非有特定原因，否则你无需担心这个过程。SQL Server 的默认设置对于大多数常见的数据库设计来说是可靠的。如果你不需要执行昂贵的维护操作，那当然不应该做！但是，当统计信息确实变得过时时会发生什么？
+
+为了便于演示此示例，我们将关闭统计信息的自动更新。**切勿在生产环境中这样做！** 但是，出于测试目的，这是观察过时统计信息对查询优化和执行影响的好方法：
+
+```sql
+ALTER DATABASE AdventureWorks2014
+SET AUTO_UPDATE_STATISTICS OFF;
+```
+
+执行此操作后，你可以使用之前的查询验证数据库上的统计信息设置：
+
+| is_auto_update_stats_on | is_auto_create_stats_on | is_auto_update_stats_async_on |
+| --- | --- | --- |
+| 0 | 1 | 0 |
+
+```sql
+SELECT
+is_auto_update_stats_on,
+is_auto_create_stats_on,
+is_auto_update_stats_async_on
+FROM sys.databases WHERE name = 'AdventureWorks2014';
+```
+
+请注意，`is_auto_update_stats_on` 现在已禁用，因此，统计信息只有在你手动更新时才会更新。此示例使用 `Production.Product` 表上 `Weight` 列的一个新索引：
+
+```sql
+CREATE NONCLUSTERED INDEX IX_Product_Weight ON Production.Product (Weight);
+```
+
+考虑以下查询：
+
+```sql
+SELECT
+ProductID,
+Weight,
+Name
+FROM Production.Product
+WHERE Weight = 170
+```
+
+这从表中返回一行（总共 504 行）。性能指标如图 6-19 所示。
+
+![A371168_1_En_6_Fig19_HTML.jpg](img/A371168_1_En_6_Fig19_HTML.jpg)
+
+图 6-19.
+简单索引查找操作的性能
+
+```
+Table 'Product'. Scan count 1, logical reads 4, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+```
+
+这是一个相对简单的例子！在 `Production.Product` 上进行了 4 次读取，执行计划对新索引执行了查找，并且为了检索 `Name` 列（它不在你上面创建的索引中）执行了键查找。现在，让我们向表中插入大量新数据，如清单 6-15 所示。
+
+```sql
+-- Turn off execution plan here
+SET STATISTICS IO OFF
+SET STATISTICS TIME OFF
+DECLARE @count INT = 1
+WHILE @count < 2000
+BEGIN
+INSERT INTO Production.Product
+( Name ,
+ProductNumber ,
+MakeFlag ,
+FinishedGoodsFlag ,
+Color ,
+SafetyStockLevel ,
+ReorderPoint ,
+StandardCost ,
+ListPrice ,
+Size ,
+SizeUnitMeasureCode ,
+WeightUnitMeasureCode ,
+Weight ,
+DaysToManufacture ,
+ProductLine ,
+Class ,
+Style ,
+ProductSubcategoryID ,
+ProductModelID ,
+SellStartDate ,
+SellEndDate ,
+DiscontinuedDate ,
+rowguid ,
+ModifiedDate
+)
+SELECT
+'Hoverboard' + CAST(@count AS VARCHAR(25)),
+'HOV-' + CAST(@count AS VARCHAR(25)),
+1 AS MakeFlag ,
+1 AS FinishedGoodsFlag ,
+NULL AS Color ,
+500 AS SafetyStockLevel ,
+375 AS ReorderPoint ,
+55 AS StandardCost ,
+100 AS ListPrice ,
+NULL AS Size ,
+NULL AS SizeUnitMeasureCode ,
+'G' AS WeightUnitMeasureCode ,
+170 AS Weight ,
+5 AS DaysToManufacture ,
+NULL AS ProductLine ,
+'H' AS Class ,
+NULL AS Style ,
+5 AS ProductSubcategoryID ,
+97 AS ProductModelID ,
+'1/1/2015' AS SellStartDate ,
+NULL AS SellEndDate ,
+NULL AS DiscontinuedDate ,
+NEWID() AS rowguid,
+CURRENT_TIMESTAMP AS ModifiedDate
+SET @count = @count + 1
+END
+```
+
+清单 6-15.
+向 Product 表填充 1,999 个新产品的 T-SQL
+
+此查询将向 `Production.Product` 表插入 1,999 行数据，所有行的重量 (Weight) 都相同（170）。关闭执行计划和统计信息指标将大大加快插入速度，因为你正在使用一个快速而粗略的循环来完成任务。完成后，你可以重新运行之前运行非常高效的查询：
+
+```sql
+SET STATISTICS IO ON;
+SET STATISTICS TIME ON;
+SET NOCOUNT ON;
+SELECT
+ProductID,
+Weight,
+Name
+FROM Production.Product
+WHERE Weight = 170;
+```
+
+执行完成得足够快，但深入查看性能指标则揭示了另一个情况。如图 6-20 所示。
+
+![A371168_1_En_6_Fig20_HTML.jpg](img/A371168_1_En_6_Fig20_HTML.jpg)
+
+图 6-20.
+针对更大结果集的搜索查询的性能
+
+```
+Table 'Product'. Scan count 1, logical reads 4008, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+```
+
+
+
+### 统计信息、执行计划与性能优化
+
+执行计划与之前得到的相同，但对`Production.Product`表的读取次数显著增加！对于一个仅返回三列、大约有 2，500 行的表，4，004 次读取似乎非常高。通过关闭统计信息自动更新，你移除了查询优化器寻找良好执行计划的最重要工具：准确的统计信息。让我们回顾一下你在图 6-21 中使用的索引的统计信息。
+
+![A371168_1_En_6_Fig21_HTML.jpg](img/A371168_1_En_6_Fig21_HTML.jpg)
+
+图 6-21.
+Production.Product 表上`IX_Product_Weight`索引的过时统计信息
+
+```sql
+DBCC SHOW_STATISTICS (“Production.Product”, IX_Product_Weight);
+```
+
+注意，对于包含 170 的范围，尽管你添加了 1,999 行，但只有一个相等行。查询优化器无法根据如此不准确的数据做出明智的决策。为了说明这一点，你可以手动更新此索引上的统计信息：
+
+```sql
+UPDATE STATISTICS Production.Product IX_Product_Weight;
+```
+
+运行`DBCC`命令重新检查`IX_Product_Weight`索引的统计信息，会显示你期望看到的变化，如图 6-22 所示。
+
+![A371168_1_En_6_Fig22_HTML.jpg](img/A371168_1_En_6_Fig22_HTML.jpg)
+
+图 6-22.
+Production.Product 表上`IX_Product_Weight`索引的更新后统计信息
+
+现在报告了 2,000 行权重等于 170，这与插入后的预期相符。统计信息更新后，你可以最后一次运行测试查询：
+
+```sql
+SELECT
+ProductID,
+Weight,
+Name
+FROM Production.Product
+WHERE Weight = 170
+```
+
+这一次，性能指标看起来不那么令人担忧了，如图 6-23 所示。
+
+![A371168_1_En_6_Fig23_HTML.jpg](img/A371168_1_En_6_Fig23_HTML.jpg)
+
+图 6-23.
+使用更新后统计信息执行前述搜索查询的性能
+
+```text
+Table 'Product'. Scan count 1, logical reads 58, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+```
+
+现在只需要 58 次读取，而不是 4004 次，并且选择了聚集索引扫描作为最有效的数据检索方法。事实证明，当你希望返回表中很大一部分数据时，直接返回所有内容并丢弃不需要的部分，比遍历索引查找所有必要行更快。一旦查询优化器获得了关于索引内容的准确数据，它就能够选择扫描，知道这是最佳行动方案。
+
+#### Trace Flag 2371
+
+在 SQL Server 中，还有另一种管理自动更新统计信息的方法，即从 SQL Server 2008 R2 Service Pack 1 开始可用的跟踪标志。跟踪标志 2371 旨在满足超大表的需求，因为用于自动更新统计信息的度量标准通常不太适合这些表。对于拥有数百万行的表，等待 20%的行发生变化，你可能被迫等待很长时间。
+
+当你启用此跟踪标志后，更新统计信息的触发时机公式会变得有些动态。当一个表超过 25,000 行时，触发统计信息更新所需的修改行百分比会降低。这解决了大表的需求，同时不会改变小表的功能。
+
+如果你负责一个包含数百万或数十亿行表的数据库，那么此跟踪标志可以显著提升性能，并避免手动管理统计信息。可以如下启用此跟踪标志：
+
+```sql
+DBCC TRACEON (2371);
+```
+
+一如既往，在对 SQL Server 跟踪标志进行更改之前，请务必对数据库环境进行彻底评估，并测试以确保此更改是有益的。虽然当你获得新的性能功能或选项时可能会非常兴奋，但对这些更改进行充分的质量保证对于确保它们既必要又有帮助至关重要。
+
+关于此跟踪标志的更多文档可以在 MSDN 上找到：
+
+```text
+http://blogs.msdn.com/b/saponsqlserver/archive/2011/09/07/changes-to-automatic-update-statistics-in-sql-server-traceflag-2371.aspx
+```
+
+### 回到动态 SQL
+
+我们已经讨论了统计信息、它们如何被使用，以及不准确的统计信息如何影响性能。这与动态 SQL 和你的日常任务有什么关系？基数是查询优化每一步中使用的数量度量。在每一步中，查询优化器必须使用统计信息来确定该步骤预期返回的行数，无论是查找、连接还是过滤。如果统计信息不准确，即使只在单一步骤中，也可能导致次优的执行计划，使得性能比应有的更差，或者（最坏情况）慢到无法接受。
+
+你可以通过将鼠标悬停在执行计划中的任何步骤上来检查基数，如图 6-24 所示。
+
+![A371168_1_En_6_Fig24_HTML.jpg](img/A371168_1_En_6_Fig24_HTML.jpg)
+
+图 6-24.
+在 SQL Server Management Studio 中查看行计数
+
+将鼠标悬停在聚集索引扫描和合并连接之间的箭头上，显示优化器估计有 31,465 行输出到连接。然而，执行时实际的行数是 31,431。如此小的差异很少会引起性能问题，但如果你在审查查询执行计划时注意到实际行数和估计行数差异很大，那么一定要仔细检查统计信息并确保其准确性。
+
+动态 SQL 引入了查询可能经常变化，或在少数几个常见用例之间切换的场景。统计信息出错，或者执行计划以次优方式被使用或重用的可能性变得更高。第 8 章讨论了参数嗅探，并深入探讨了基数和不良估计如何导致性能问题。理解这些问题可以在它们出现时大大减少困惑。
+
+
+#### 查询提示
+
+你可以通过多种方式来引导查询优化器，使其精确执行你想要的操作。以 SQL Server 中最常用的提示之一 `NOLOCK` 为例，如代码清单 6-16 所示。
+
+```
+SELECT
+SalesOrderDetail.SalesOrderDetailID,
+SalesOrderDetail.SalesOrderID,
+SalesOrderDetail.ProductID
+FROM Sales.SalesOrderDetail WITH (NOLOCK)
+WHERE ProductID = 713;
+```
+
+代码清单 6-16.
+`NOLOCK` 查询提示示例
+
+`NOLOCK` 是一个常用提示，可用于 `SELECT` 语句，通过从内存中读取现有数据（脏页）来避免争用，即使其他事务正在操作相关数据。乍一看，这似乎很出色——没有争用！但它是一把双刃剑，因为你很可能在 `UPDATE` 操作进行时执行 `SELECT`，却永远无法返回在该 `UPDATE` 语句中被更改或未提交的数据。
+
+`NOLOCK` 是查询提示的一个例子，这个功能的命名有些不当，因为它更像是一条命令而非提示。提示通常用作解决性能问题的手段。例如，如果数据库管理员观察到频繁的锁定或死锁，可能会使用 `NOLOCK` 来阻止此类争用的发生。在数据及时性不关键、你只需了解特定时间点数据概况的报表类环境中，这个提示可能很有用。即便如此，你也需要反思为何要在高度事务性的环境中运行报表查询。只有在回答了这个问题后，你才可以放心地进行这项更改。
+
+使用查询提示的缺点在于，你是在明确指示查询优化器该做什么，就好像你比它更聪明一样。虽然有时你可能确实更了解情况，但在任何繁忙的生产环境中，情况都可能发生变化。今天完美运行的提示，明天可能就毫无用处，甚至会阻碍性能。
+
+滥用连接提示往往是一个错误，如代码清单 6-17 所示。
+
+```
+DECLARE @ProductID INT = 713;
+SELECT
+SalesOrderDetail.SalesOrderDetailID,
+SalesOrderDetail.SalesOrderID,
+SalesOrderDetail.ProductID,
+SalesOrderHeader.OrderDate
+FROM Sales.SalesOrderDetail
+INNER LOOP JOIN Sales.SalesOrderHeader
+ON SalesOrderDetail.SalesOrderID = SalesOrderHeader.SalesOrderID
+WHERE ProductID = @ProductID;
+SELECT
+SalesOrderDetail.SalesOrderDetailID,
+SalesOrderDetail.SalesOrderID,
+SalesOrderDetail.ProductID,
+SalesOrderHeader.OrderDate
+FROM Sales.SalesOrderDetail
+INNER MERGE JOIN Sales.SalesOrderHeader
+ON SalesOrderDetail.SalesOrderID = SalesOrderHeader.SalesOrderID
+WHERE ProductID = @ProductID;
+SELECT
+SalesOrderDetail.SalesOrderDetailID,
+SalesOrderDetail.SalesOrderID,
+SalesOrderDetail.ProductID,
+SalesOrderHeader.OrderDate
+FROM Sales.SalesOrderDetail
+INNER HASH JOIN Sales.SalesOrderHeader
+ON SalesOrderDetail.SalesOrderID = SalesOrderHeader.SalesOrderID
+WHERE ProductID = @ProductID;
+```
+
+代码清单 6-17.
+使用连接提示强制优化器采用特定连接方式
+
+当在查询中连接两个表时，查询优化器会选择其认为最佳的连接类型。有时你可能会发现，如果覆盖默认设置并强制使用某种特定连接，可以获得更好的性能。然而，这并不总是有效，如果你回顾上面的性能数据，会看到各种不同的结果：
+
+```
+Warning: The join order has been enforced because a local join hint is used.
+Table 'SalesOrderHeader'. Scan count 0, logical reads 1322, physical reads 0, read-ahead reads 19, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'SalesOrderDetail'. Scan count 1, logical reads 3, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Warning: The join order has been enforced because a local join hint is used.
+Table 'Worktable'. Scan count 0, logical reads 0, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'SalesOrderHeader'. Scan count 1, logical reads 688, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'SalesOrderDetail'. Scan count 1, logical reads 3, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Warning: The join order has been enforced because a local join hint is used.
+Table 'Workfile'. Scan count 0, logical reads 0, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'Worktable'. Scan count 0, logical reads 0, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'SalesOrderHeader'. Scan count 1, logical reads 689, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'SalesOrderDetail'. Scan count 1, logical reads 3, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+```
+
+当你查看 IO 统计信息时，可以发现强制使用 `LOOP` 连接导致的读取次数远高于 `HASH` 或 `MERGE` 连接。`@ProductID` 的不同值可能导致不同的连接方式，从而产生更好或更差的性能结果。请注意，SQL Server 会提醒你连接顺序已被查询提示强制执行。这是它委婉地告诉你，接下来发生的一切都是你造成的，如果结果不如预期，你不能打电话向微软投诉。
+
+类似地，这些查询的执行计划看起来也不同，每个计划都反映了不同的子树开销。你可以在图 6-25 的三个执行计划中看到这些差异。
+
+![A371168_1_En_6_Fig25_HTML.jpg](img/A371168_1_En_6_Fig25_HTML.jpg)
+
+图 6-25.
+使用查询提示强制不同连接时的执行计划
+
+强制使用特定连接最终会适得其反。也许 `HASH` 连接现在看起来是最佳选择，因为你看到一个大表与一个小表连接，但数据和应用程序的使用情况可能会改变。当你的调整最终变得无关紧要时，你可能要到为时已晚、性能下降时才会记起或注意到问题，因为当初进行更改的用例已不再适用。变化是数据库设计和管理中的常态，你必须编写足够灵活的脚本，以确保它们在数月甚至数年后仍然适用。查询提示对你的设计施加了限制，减少了优化器可选择的选项。如果这些选项在未来可能有用，那么你的提示将会阻止它们的使用。
+
+另一个常用的查询提示是 `RECOMPILE`，它会强制 SQL Server 为查询创建新的执行计划，即使查询计划缓存中已存在合适的计划。这通常用作规避不良执行计划或确保每次都找到最佳计划的方法。然而，优化过程开销很大，在繁忙的生产服务器上，频繁重新编译大量查询所产生的成本可能导致 CPU 利用率异常高以及查询延迟。考虑在最后一个测试查询中添加提示，如代码清单 6-18 所示。
+
+```
+DECLARE @ProductID INT = 713;
+SELECT
+SalesOrderDetail.SalesOrderDetailID,
+SalesOrderDetail.SalesOrderID,
+SalesOrderDetail.ProductID,
+SalesOrderHeader.OrderDate
+FROM Sales.SalesOrderDetail
+INNER JOIN Sales.SalesOrderHeader
+ON SalesOrderDetail.SalesOrderID = SalesOrderHeader.SalesOrderID
+WHERE ProductID = @ProductID
+OPTION (RECOMPILE);
+```
+清单 6-18.
+使用 `RECOMPILE` 提示来强制创建并使用新的执行计划
+
+运行此查询，你会发现执行计划和 IO 统计信息中，几乎所有内容似乎都正常。而你会在 `STATISTICS TIME` 结果中发现一个看似微小却意义重大的差异：
+
+```
+SQL Server parse and compile time:
+CPU time = 0 ms, elapsed time = 1 ms.
+```
+
+在输出中请注意，无论你运行查询多少次，解析和编译时间总是非零的。这就是强制重新编译执行计划所付出的代价。一毫秒可能看起来微不足道，但对于涉及许多表和连接的更复杂查询，这个时间可能会高得多。增加的耗时如果再加上频繁的执行，那么持续创建新执行计划所需的时间和开销将显著影响性能。
+
+查询提示应谨慎使用，仅在必要时，并且所有其他替代方案都已穷尽后才考虑使用。随着时间的推移，提示可能会从有益变为对数据库性能造成破坏。
+
+你可以轻松查阅数十种查询提示，了解其常见用法以及潜在的陷阱，但通常重要的是要认识到，查询提示往往是绕过更大问题的权宜之计。很多时候，提示被用来掩盖设计不良的表、编写低效的查询、糟糕的索引或其他本可以通过修复来解决性能问题的错误。
+
+别误会，查询提示确实有其正当的用途。然而，重要的是要将它们视为最后手段，而不是应该频繁使用的工具。只有在经过极其彻底的测试并确信发生破坏性更改的可能性极低后，才应实施它们。可用的查询和表提示列表可以在 MSDN 上找到：
+
+```
+https://msdn.microsoft.com/en-us/library/ms181714.aspx
+```
+
+请注意文章顶部附近的警告：
+
+```
+如果一个或多个查询提示导致查询优化器无法生成有效的计划，则会引发错误 8622。
+```
+
+有些提示可能会移除查询优化器可用的唯一有效转换。如果发生这种情况，查询可能无法执行，产生错误，并且很可能在一个令人不适的深夜把你吵醒。了解这些选项很重要，但在实施时要谨慎。只有在认为必要且安全时才使用提示，并首先利用所有替代方案。如果可以重写查询、添加索引或修改视图，请首先考虑这些类似的更改，然后再对查询优化器发号施令。
+
+### 结论
+
+性能优化是一个庞大的主题，而本章对这些重要主题的快速浏览只是触及了皮毛。在查询调优、索引、统计信息或其他提高性能的方法方面，还有许多可以深入挖掘的途径。
+
+在着手处理每个问题时，都要心中有计划并进行彻底的研究。SQL Server 提供了许多工具，使你可以轻松评估性能和资源消耗，并找到让你的关键查询执行更快的方法。始终测试并确认任何更改的预期结果，并确保你的预测与测试结果相符。虽然你的性能假设被你未曾考虑的其他指标推翻可能会令人惭愧，但这仍然比将次优的更改发布到生产环境中要好得多。
+
+本书后续的许多示例将进一步深入探讨性能。这将使你能够应用迄今为止所学的知识，并学习多种测试其中一些结论的方法。期待看到更多关于执行计划、统计信息和查询比较的示例，这些将有助于你探索动态 SQL。
+
+### 清理
+
+清单 6-19 中的 `TSQL` 会清理本章中创建的任何对象（如果它们存在的话）。
+
+```
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'search_products')
+BEGIN
+DROP PROCEDURE dbo.search_products;
+END
+GO
+IF EXISTS (SELECT * FROM sys.indexes WHERE indexes.name = 'IX_PurchaseOrderHeader_status_INC')
+BEGIN
+DROP INDEX IX_PurchaseOrderHeader_status_INC ON Purchasing.PurchaseOrderHeader
+END
+GO
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'get_in_process_purchasing_data')
+BEGIN
+DROP PROCEDURE dbo.get_in_process_purchasing_data;
+END
+```
+清单 6-19.
+用于清理本章所创建对象的脚本
+
+# 7. 可扩展的动态列表
+
+生成数据列表是一项常见的任务，具有广泛的用例。也许你想以特定的格式或语法将数据输出到应用程序或文件。也许阅读数据列表的最佳格式是单行文本，而不是表格格式。也许你想在存储数据之前，使用需要快速构建的特定字符串格式将其存入表中。
+
+虽然这不是 SQL Server 经常宣传的功能，但它可以通过性能相当好的方式来实现。另一方面，以难以置信的低效方式来构建列表生成也非常容易。本章将讨论生成列表的许多不同方法。除了语法，本章还回顾了性能和可维护性，以确保哪种方法最适合这项工作毫无疑问。
+
+本章将频繁引用性能调优。有关读取执行计划、查看 IO 统计信息以及动态 SQL 和查询调优与优化方面的其他注意事项的详细信息，请参阅第 6 章。
+
+### 什么是动态列表
+
+介绍这个主题最简单的方式是通过一个例子。假设你想要输出一个人员的 ID 列表，并以逗号分隔。一种常用的方法是通过使用一个 `CURSOR`（游标）来逐段构建这个字符串，如代码清单 7-1 所示。
+
+```
+DECLARE @nextid INT;
+DECLARE @myIDs NVARCHAR(MAX) = '';
+DECLARE idcursor CURSOR FOR
+SELECT TOP 100
+BusinessEntityID
+FROM Person.Person
+ORDER BY LastName;
+OPEN idcursor;
+FETCH NEXT FROM idcursor INTO @nextid;
+WHILE @@FETCH_STATUS = 0
+BEGIN
+SET @myIDs = @myIDs + CAST(@nextid AS NVARCHAR) + ',';
+FETCH NEXT FROM idcursor INTO @nextid;
+END
+SET @myIDs = LEFT(@myIDs, LEN(@myIDs) - 1);
+CLOSE idcursor;
+DEALLOCATE idcursor;
+SELECT @myIDs AS comma_separated_output;
+```
+
+#### 代码清单 7-1.
+使用游标方法构建逗号分隔的 ID 列表的示例
+
+在这段 T-SQL 中，声明了一个用于 100 个 ID 的 `CURSOR`，并逐个遍历循环，同时使用 ID 和逗号逐步构建字符串 `@myIDs`。最后的字符串修改使用了 `LEFT` 函数来移除循环遗留下来的末尾逗号。结果将是 100 个以逗号分隔的 `BusinessEntityID`。文本输出将类似这样：
+
+```
+285,293,295,2170,38,211,2357,297,291,299,121,16867,16901,16724,10263,10312,...
+```
+
+我们在这里将列表截断到 16 个 ID 之后，因为没有必要浪费空间展示全部...
+
+![A371168_1_En_7_Figa_HTML.jpg](img/A371168_1_En_7_Figa_HTML.jpg)
+
+一般来说，在任何可以使用基于集合的方法的场景中编写 T-SQL 时，都应避免使用迭代。SQL Server 被设计为高效地处理数据集，当你尝试逐行提取数据时，通常会导致性能低下。这是涉及循环的 T-SQL 可能极其低效的一个例子。首先看一下图 7-1 所示的执行计划。
+
+![A371168_1_En_7_Fig1_HTML.jpg](img/A371168_1_En_7_Fig1_HTML.jpg)
+
+#### 图 7-1.
+一个遍历循环的简单 SELECT 查询的执行计划
+
+执行计划在前两个查询后被截断，因为接下来的 99 个查询与第二个完全相同。很明显，为了确定 SQL Server 在生成此列表时付出的总体努力，你必须考虑 101 个执行计划。因此，除了读取游标本身（这不是一个免费的操作）之外，还需要从 `Person.Person` 读取超过 100 次。在我的 SQL Server 上，总共花了 10 秒来运行。对于一个旨在读取 100 个 ID 的 T-SQL 应用程序来说，这相当慢！虽然大部分执行时间是由于生成了 100 个额外的执行计划，但这说明任何看似简单的任务，只要执行次数足够多，累积起来也会变得非常痛苦。
+
+为了更深入地了解这里引入的低效性，让我们也查看一下 IO 统计信息：
+
+```
+Table 'Worktable'. Scan count 0, logical reads 201, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'Person'. Scan count 1, logical reads 318, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'Worktable'. Scan count 0, logical reads 2, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'Person'. Scan count 0, logical reads 3, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+```
+
+第一组 IO 统计信息涵盖了初始的游标声明。第二组代表了 `WHILE` 循环的单次迭代，这将被重复另外 99 次。如果把所有涉及查询的逻辑读取总数相加，你会得到 1019 次读取，这对于一个仅打算返回 100 个整数值的操作来说是相当多的。
+
+虽然这个例子的输出正是你想要的，但为了达到目的，它消耗了相对巨大的计算资源。想象一下，如果你想要一个包含一千或一百万个 ID 的列表会怎样？如果你要的不是 ID 列表，而是大型字符串列表呢？结果很容易导致数百万次读取，并且查询会使服务器陷入停顿！正确的输出是可取的，但如果性能不可扩展且难以维护，像这样的代码将来会随着软件变更以及你对数据规模或可接受性能指标的假设失效而重新困扰你。
+
+
+### 使用 XML 创建动态列表
+
+很明显，除了最小的数据集外，使用任何形式的循环来生成字符串都是低效的。一种广泛使用的替代方法是从基础表中选择所需数据，并使用 XML 进行格式化。请看以下语法示例（如清单 7-2 所示），它生成了与上一个例子中的循环相同的列表。
+
+```
+DECLARE @myIDs NVARCHAR(MAX) = '';
+SET @myIDs = STUFF((SELECT TOP 100 ',' + CAST(BusinessEntityID AS NVARCHAR)
+FROM Person.Person
+ORDER BY LastName
+FOR XML PATH(''), TYPE
+).value('.', 'NVARCHAR(MAX)'), 1, 1, '');
+SELECT @myIDs;
+GO
+清单 7-2.
+使用 XML 生成 ID 列表
+```
+
+你首先应该注意到，这个语法更复杂，可读性也稍差。结果集与预期相同：
+
+```
+285,293,295,2170,38,211,2357,297,291,299,121,16867,16901,16724,10263,10312,...
+```
+
+要理解 XML 如何生成此列表，你可以分解查询，从最内层的 TSQL 开始，然后逐步构建：
+
+```
+SELECT TOP 100 ',' + CAST(BusinessEntityID AS NVARCHAR) AS ID_CSV
+FROM Person.Person
+ORDER BY LastName;
+```
+
+这个 `SELECT` 语句返回一个 ID 列表，每个 ID 前都有一个逗号，如图 7-2 所示。
+
+![A371168_1_En_7_Fig2_HTML.jpg](img/A371168_1_En_7_Fig2_HTML.jpg)
+*图 7-2.*
+将用于 XML 生成列表的 ID 列表
+
+这里没什么特别的。下一步将把所有数据行连接成 XML 格式，在 SQL Server 中这将显示为逗号分隔的列表：
+
+```
+SELECT (SELECT TOP 100 ',' + CAST(BusinessEntityID AS NVARCHAR)
+FROM Person.Person
+ORDER BY LastName
+FOR XML PATH(''));
+```
+
+这个 `SELECT` 的结果将显示一个接近成品的结果：
+
+```
+285,293,295,2170,38,211,2357,297,291,299,121,16867,16901,16724,10263,10312,...
+```
+
+在你能认为这个查询被完全剖析和正确之前，还有两件未完成的事情需要处理。首先是确保 XML 输出是正确的数据类型：
+
+```
+SELECT (SELECT TOP 100 ',' + CAST(BusinessEntityID AS NVARCHAR)
+FROM Person.Person
+ORDER BY LastName
+FOR XML PATH(''), TYPE
+).value('.', 'NVARCHAR(MAX)');
+```
+
+XML `value` 方法将 XML 结果转换为提供的数据类型，然后返回。如果这是一个非常长的列表，这种转换可以确保你不会在过程中遇到字符串截断的问题。如果区分很重要，它还可以让你在 `VARCHAR` 和 `NVARCHAR` 之间进行选择。本例使用 `NVARCHAR(MAX)` 作为返回的数据类型。由于数据类型转换对你正在查看的 SQL Server 输出是不可见的，此查询的结果与上一步的输出相同。
+
+最后一步是移除左侧那个讨厌的逗号，这可以通过多种字符串处理技术来实现。上面使用 `STUFF` 将逗号分隔的列表内容塞入位置 1 的字符中，而该位置正好是你想要移除的逗号。这种方法很方便，因为它可以在一个步骤中完成，如果你不需要，不必将结果存储在变量中。另一种方法是使用 `RIGHT` 或 `SUBSTRING` 来移除前导逗号：
+
+```
+DECLARE @myIDs NVARCHAR(MAX) = '';
+SET @myIDs = (SELECT TOP 100 ',' + CAST(BusinessEntityID AS NVARCHAR)
+FROM Person.Person
+ORDER BY LastName
+FOR XML PATH(''), TYPE
+).value('.', 'NVARCHAR(MAX)');
+SELECT RIGHT(@myIDs, LEN(@myIDs) - 1);
+SELECT SUBSTRING(@myIDs, 2, LEN(@myIDs) - 1);
+```
+
+每个 `SELECT` 的结果都是相同的，并且与你期望的输出匹配：
+
+```
+285,293,295,2170,38,211,2357,297,291,299,121,16867,16901,16724,10263,10312,...
+```
+
+现在你已经看到 XML 可用于生成逗号分隔的列表，你应该采取额外的步骤对其进行性能测试，并确定其效率水平。首先，检查查询的 IO 统计信息：
+
+```
+Table 'Person'. Scan count 1, logical reads 3, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+```
+
+这看起来很棒！读取次数相当于你直接运行 `Person.Person` 上的 `SELECT` 语句而不应用任何额外格式化时的预期值。使用 XML 将读取次数从 1019 次减少到了 3 次，我认为这在任何一天都是一笔极好的交易！接下来，让我们看看执行计划的样子，如图 7-3 所示。
+
+![A371168_1_En_7_Fig3_HTML.jpg](img/A371168_1_En_7_Fig3_HTML.jpg)
+*图 7-3.*
+使用 XML 生成列表的性能
+
+对于一个获取 ID 列表的查询来说，这有点复杂。XML 读取器在幕后执行的魔法并非免费，在这里变得很清楚，因为它消耗了查询 97% 的资源。检查执行计划的子树成本，你会发现它大约是 1.09，这与之前 `WHILE` 循环方法的查询成本相似。换句话说，XML 的成本与之前循环中的 100 次查询类似。虽然它大大减少了磁盘 IO，但如果你严重依赖 XML，则有可能消耗大量的 CPU。
+
+
+### 基于集合的字符串构建
+
+虽然 XML 解决方案更好，但它并不完美。其执行计划有些令人困惑，并说明了 XML 的 CPU 消耗可能很高。让我们考虑另一种选项，如清单 7-3 所示。
+
+```
+DECLARE @myIDs NVARCHAR(MAX) = '';
+SELECT TOP 100 @myIDs = @myIDs + CAST(BusinessEntityID AS NVARCHAR) + ','
+FROM Person.Person
+ORDER BY LastName;
+SET @myIDs = LEFT(@myIDs, LEN(@myIDs) - 1);
+SELECT @myIDs;
+```
+清单 7-3.
+通过直接将字符串构建到变量中来生成 ID 列表
+
+这段 T-SQL 代码在美观上要好得多。它如此简单，可能会让你挠头并问：“它是如何工作的？” 当你执行它时，结果与之前的示例相同：
+
+```
+285,293,295,2170,38,211,2357,297,291,299,121,16867,16901,16724,10263,10312,...
+```
+
+SQL Server 允许你通过单个步骤将字符串数据直接 `SELECT` 到一个标量变量中。这种字符串构建让人想起动态 SQL，即使你并非为了生成它而执行命令字符串。该语句的一般结构如下：
+
+声明一个字符串，通常是 `VARCHAR(MAX)` 或 `NVARCHAR(MAX)`。将字符串变量设置为等于空字符串（或任何你想要的起始字符）。`SELECT @variable = @variable` 加上列和字符串数据的组合。从字符串末尾移除尾随逗号。根据需要处理逗号分隔的列表。
+
+首先，让我们看看 IO 统计信息，以确定为了生成此列表读取了多少数据：
+
+```
+表 'Person'。扫描计数 1，逻辑读取 3，物理读取 0，预读 0，lob 逻辑读取 0，lob 物理读取 0，lob 预读 0。
+```
+
+与 XML 解决方案一样，读取次数与单独执行 `SELECT` 查询所需的次数相同。三次读取来生成该列表是非常出色的。图 7-4 显示了执行计划。
+
+![A371168_1_En_7_Fig4_HTML.jpg](img/A371168_1_En_7_Fig4_HTML.jpg)
+图 7-4.
+使用基于字符串的 SELECT 生成列表的性能
+
+这个执行计划可以说是简单到极致：对目标表的一次扫描，以及一些用于组装字符串的低成本操作。此操作的子树成本为 0.004，显著低于你目前为止看到的所有其他字符串构建技术。移除 XML 元素大大降低了 XML 阅读器为了将数据处理成所需输出格式所需的开销。此外，SQL Server 可以在完全基于集合的操作中构建字符串，无需迭代、临时表或其他任何昂贵的介质。
+
+这种方法异常快速、高效，并且易于编码和维护。没有循环或 XML，使得生成的 T-SQL 代码足够简单，初学者也可以尝试和理解。只需要最少的文档就可以解释其作用以及为何选择此方法。
+
+动态构建的列表不限于单个列或标量字符串值。你可以自由地根据需要构建尽可能多的数据元素，无论是列数据、标量变量、字符串字面量还是从其他数据类型转换而来的字符串。清单 7-4 展示了如何生成包含多个变量的列表。
+
+```
+DECLARE @myData NVARCHAR(MAX) = '';
+SELECT @myData =
+@myData + 'ContactTypeID: ' + CAST(ContactTypeID AS NVARCHAR) + ',Name: ' + Name + ','
+FROM person.ContactType
+SET @myData = LEFT(@myData, LEN(@myData) - 1);
+SELECT @myData;
+```
+清单 7-4.
+使用多列和字符串字面量构建列表
+
+此示例与上一个类似，但包含了 `Name` 列以及值之前的列名。此 T-SQL 的语法与前面的示例几乎相同，唯一的区别在于 `SELECT` 语句中连接的列和字面量。`@myData` 的值最终为：
+
+```
+ContactTypeID: 1,Name: Accounting Manager,ContactTypeID: 2,Name: Assistant Sales Agent,ContactTypeID: 3,Name: Assistant Sales Representative,ContactTypeID: 4,Name: Coordinator Foreign Markets,ContactTypeID: 5,Name: Export Administrator,...
+```
+
+如果你希望为数据添加标题、额外的列、标签或任何其他有用的信息嵌入到字符串中，将其放入其中相对简单。你可以包含在字符串中的内容没有限制，尽管值得检查输出的长度，以确保接收数据的任何应用程序、报表或文件能够处理预期的最大尺寸。
+
+你可以做的最后一个简化是通过巧妙使用 `ISNULL` 来消除在末尾移除尾随逗号的需要。清单 7-5 展示了这个简短的示例。
+
+```
+DECLARE @myData NVARCHAR(MAX);
+SELECT @myData =
+ISNULL(@myData + ',','') + 'ContactTypeID: ' + CAST(ContactTypeID AS NVARCHAR) + ',Name: ' + Name
+FROM person.ContactType;
+SELECT @myData;
+```
+清单 7-5.
+使用 `ISNULL` 在 `SELECT` 语句中消除前导逗号
+
+`ISNULL` 可以通过检查 `@myData` 的值是否为 `NULL` 来实现这一点：
+
+不要为 `@myData` 分配初始的空字符串值。如果 `@myData` 是 `NULL`（这只发生在第一个值时），则插入一个空字符串。如果 `@myData` 不是 `NULL`，则插入一个逗号。
+
+这种逻辑将隐式消除本会引入的前导逗号，从而将 SQL 语句的数量减少一条。此查询的结果与上一个示例相同。T-SQL 的性能也相同。也可以使用 `COALESCE` 代替 `ISNULL`，效果相同：
+
+```
+DECLARE @myData NVARCHAR(MAX);
+SELECT @myData =
+COALESCE(@myData + ',','') + 'ContactTypeID: ' + CAST(ContactTypeID AS NVARCHAR) + ',Name: ' + Name
+FROM person.ContactType;
+SELECT @myData;
+```
+
+使用 `ISNULL`、`LEFT` 还是 `COALESCE` 语句是个人偏好问题，但可以说，这些选项明显优于循环或 XML，后两者都会带来额外的复杂性和性能问题。
+
+
+### 重新审视安全性
+
+虽然这里介绍的各种字符串构建方法并非传统意义上的动态 SQL，但它们与构建用于动态 SQL 的命令字符串具有许多相同的优点和缺点。前面章节中列出的冗长安全顾虑清单在这里依然和以前一样重要。
+
+任何时候，当你使用至少一个来自外部源的参数来构建字符串时，SQL 注入的威胁就变得与执行开放式网络搜索时一样真实。清单 7-6 中的示例说明了如何使用一个接受外部源参数的存储过程来构建字符串。
+
+```sql
+CREATE PROCEDURE dbo.return_person_data
+@last_name NVARCHAR(MAX) = NULL, @first_name NVARCHAR(MAX) = NULL
+AS
+BEGIN
+SET NOCOUNT ON;
+DECLARE @return_data NVARCHAR(MAX) = '';
+DECLARE @sql_command NVARCHAR(MAX);
+DECLARE @parameter_list NVARCHAR(MAX);
+SELECT @parameter_list = '@output_data NVARCHAR(MAX) OUTPUT';
+SELECT @sql_command = '
+SELECT
+@output_data = @output_data + ''ID: '' + CAST(BusinessEntityID AS NVARCHAR) + '', Name: '' + FirstName + '' '' + LastName + '',''
+FROM Person.Person
+WHERE 1 = 1'
+IF @last_name IS NOT NULL
+SELECT @sql_command = @sql_command + '
+AND LastName LIKE ''%' + @last_name + '%''';
+IF @first_name IS NOT NULL
+SELECT @sql_command = @sql_command + '
+AND FirstName LIKE ''%' + @first_name + '%''';
+PRINT @sql_command;
+EXEC sp_executesql @sql_command, @parameter_list, @return_data OUTPUT;
+SELECT @return_data = LEFT(@return_data, LEN(@return_data) - 1);
+SELECT @return_data;
+END
+```
+
+清单 7-6。使用动态 SQL 构建列表时的 SQL 注入提醒
+
+这个存储过程结合了动态 SQL 和列表构建，以生成一个以逗号分隔的 ID 和姓名列表。它还成功地制造了几个明显的安全风险。让我们考虑一下这个过程的一些执行情况：
+
+```sql
+EXEC dbo.return_person_data @first_name = 'Edward';
+```
+
+这次执行的结果如你所料：
+
+```
+ID: 3731, Name: Edward Adams,ID: 13658, Name: Edward Alexander,ID: 4241, Name: Edward Anderson,ID: 3732, Name: Edward Baker,ID: 13631, Name: Edward Barnes,ID: 4229, Name: Edward Brown,ID: 13657, Name: Edward Bryant...
+```
+
+列表在第七个值后被截断，因为没有必要列出`AdventureWorks`中所有名为“Edward”的人的详尽列表。生成的字符串包含一个 ID 和一个姓名，这是每个人的名字、姓氏以及中间插入的一个空格的组合。字段之间用逗号分隔，最后的`LEFT`语句移除了末尾的逗号。
+
+当用户传入一个空值时会发生什么？
+
+```sql
+EXEC dbo.return_person_data @first_name = '';
+```
+
+在这种情况下，我的服务器运行了 2 分 58 秒才返回结果。`Person.Person`表中有 19,972 行，事实证明，渲染所有这些 ID 和姓名需要相当长的时间。虽然你通常习惯于内存比磁盘快得多，但它并不是无限快的。SQL Server 需要在查询完成时将数据临时缓存到磁盘。结果是以下 IO 统计数据：
+
+```
+Table 'Person'. Scan count 1, logical reads 109, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'Worktable'. Scan count 0, logical reads 758369, physical reads 0, read-ahead reads 0, lob logical reads 244941773, lob physical reads 0, lob read-ahead reads 3909272.
+```
+
+244,941,773 次读取是从哪里来的？这个令人难以置信的数字来自于返回的数据量与空搜索字符串相结合。SQL Server 无法在内存中动态管理此操作，被迫使用 TempDB，而后者速度要慢得多。对`Person.Person`的读取并不显著，但对`Worktable`的读取却非常、非常惊人！
+
+这是对质量保证部门的一个重要提醒：在任何应用程序中，测试都至关重要。如果一个搜索理论上可以返回数万行数据，请务必实现某种分页方法或限制数据集，以防止懒惰或粗心的用户用空搜索拖垮你的服务器。
+
+让我们回到那个让你在之前的章节中夜不能寐的恶意示例：
+
+```sql
+EXEC dbo.return_person_data @first_name = 'whatever''; SELECT * FROM Person.Password; SELECT ''';
+```
+
+在这里，你故意用任意文本（`whatever`）关闭了搜索字符串，并使用`SELECT * FROM Person.Password`开始了一个新的 SQL 语句。这种情况和之前一样危险，因为预期的查询返回了一个空的人集，而`Person.Password`表却被返回了。对于这个参数值，生成的命令字符串不幸如所示：
+
+```sql
+SELECT
+@output_data = @output_data + 'ID: ' + CAST(BusinessEntityID AS NVARCHAR) + ', Name: ' + FirstName + ' ' + LastName + ','
+FROM Person.Person
+WHERE 1 = 1
+AND FirstName LIKE '%whatever'; SELECT * FROM Person.Password; SELECT '%'
+```
+
+这个 TSQL 除了已经混乱的结果集之外，还抛出了一个错误：
+
+```
+Msg 537, Level 16, State 3, Procedure return_person_data, Line 204
+Invalid length parameter passed to the LEFT or SUBSTRING function.
+```
+
+因为`@output_data`是`NULL`，其长度也是`NULL`，这不是`LEFT`函数的有效输入。尽管如此，在错误消息生成之前，密码列表已经被返回了。根据应用程序和错误处理设置，输入此 TSQL 的黑客可能已经获得了他们想要的数据。
+
+每当输入来自外部源时，请务必对你的`sp_executesql`语句进行参数化，以确保没有危险的 TSQL 可以插入到你的命令字符串中。如清单 7-7 所示。
+
+```sql
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'return_person_data')
+BEGIN
+DROP PROCEDURE dbo.return_person_data;
+END
+GO
+CREATE PROCEDURE dbo.return_person_data
+@last_name NVARCHAR(MAX) = NULL, @first_name NVARCHAR(MAX) = NULL
+AS
+BEGIN
+SET NOCOUNT ON;
+SELECT @last_name = '%' + @last_name + '%';
+SELECT @first_name = '%' + @first_name + '%';
+DECLARE @return_data NVARCHAR(MAX) = '';
+DECLARE @sql_command NVARCHAR(MAX);
+DECLARE @parameter_list NVARCHAR(MAX);
+SELECT @parameter_list = '@output_data NVARCHAR(MAX) OUTPUT, @first_name NVARCHAR(MAX), @last_name NVARCHAR(MAX)';
+SELECT @sql_command = '
+SELECT
+@output_data = @output_data + ''ID: '' + CAST(BusinessEntityID AS NVARCHAR) + '', Name: '' + FirstName + '' '' + LastName + '',''
+FROM Person.Person
+WHERE 1 = 1'
+IF @last_name IS NOT NULL
+SELECT @sql_command = @sql_command + '
+AND LastName LIKE @last_name';
+IF @first_name IS NOT NULL
+SELECT @sql_command = @sql_command + '
+AND FirstName LIKE @first_name';
+PRINT @sql_command;
+EXEC sp_executesql @sql_command, @parameter_list, @return_data OUTPUT, @first_name, @last_name;
+SELECT @return_data = LEFT(@return_data, LEN(@return_data) - 1);
+SELECT @return_data;
+END
+```
+
+清单 7-7。使用参数作为输入的动态 SQL 列表生成
+
+这个更新后的存储过程包含了`@first_name`和`@last_name`的参数。当你再次执行这些示例时，会发生什么？
+
+```sql
+EXEC dbo.return_person_data @first_name = 'Edward';
+```
+
+这次执行的结果与之前相同。所有名字为“Edward”的人的数据都按预期返回。
+
+```sql
+EXEC dbo.return_person_data @first_name = '';
+```
+
+空搜索仍然需要三分钟才能运行，但至少它是安全地运行的！
+
+```sql
+EXEC dbo.return_person_data @first_name = 'Edward''; SELECT * FROM Person.Password; SELECT ''';
+```
+
+
+# 7. 动态列表构建
+
+尝试使用 SQL 注入来检索密码的操作仍然会导致错误，因为零值被作为输入长度传递给了 `LEFT` 函数。幸运的是，参数化移除了最终用户向任何参数注入他们自己的 TSQL 的能力，因此他们无法像之前那样访问 `Person.Password`。
+
+重要的是要勤勉并修复此示例中潜伏的错误。让 SQL 服务器在一个大型查询上运行几分钟可能与错误消息或 SQL 注入尝试一样对服务器具有破坏性。让我们修补清单 7-8 中的漏洞，并希望 QA 不会再发现更多问题。
+
+```sql
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'return_person_data')
+BEGIN
+DROP PROCEDURE dbo.return_person_data;
+END
+GO
+CREATE PROCEDURE dbo.return_person_data
+@last_name NVARCHAR(MAX) = NULL, @first_name NVARCHAR(MAX) = NULL
+AS
+BEGIN
+SET NOCOUNT ON;
+SELECT @last_name = '%' + @last_name + '%';
+SELECT @first_name = '%' + @first_name + '%';
+DECLARE @return_data NVARCHAR(MAX) = '';
+DECLARE @sql_command NVARCHAR(MAX);
+DECLARE @parameter_list NVARCHAR(MAX);
+SELECT @parameter_list = '@output_data NVARCHAR(MAX) OUTPUT, @first_name NVARCHAR(MAX), @last_name NVARCHAR(MAX)';
+SELECT @sql_command = '
+SELECT TOP 25
+@output_data = @output_data + ''ID: '' + CAST(BusinessEntityID AS NVARCHAR) + '', Name: '' + FirstName + '' '' + LastName + '',''
+FROM Person.Person
+WHERE 1 = 1'
+IF @last_name IS NOT NULL
+SELECT @sql_command = @sql_command + '
+AND LastName LIKE @last_name';
+IF @first_name IS NOT NULL
+SELECT @sql_command = @sql_command + '
+AND FirstName LIKE @first_name';
+PRINT @sql_command;
+EXEC sp_executesql @sql_command, @parameter_list, @return_data OUTPUT, @first_name, @last_name;
+IF LEN(@return_data) > 0 AND @return_data IS NOT NULL
+SELECT @return_data = LEFT(@return_data, LEN(@return_data) - 1);
+SELECT @return_data;
+END
+```
+
+清单 7-8.
+列表生成存储过程，用于修复长时间等待和错误消息
+
+这个存储过程的变体在列表构建的 `SELECT` 语句中引入了 `TOP 25`。这将结果集限制为 25 个人，防止了一个可能消耗巨大服务器资源的失控查询。此外，在存储过程末尾附近的 `LEFT` 函数上放置了一个检查，以检查 `@return_data` 的长度是否为 `NULL` 或 0。这确保了如果没有结果集，在尝试操作它时不会抛出错误。
+
+你在这里逐步经历的步骤是一个重要的提醒：安全是一个始终存在的关切点，而可能使服务器陷入困境的情况可能并不总是显而易见的。质量保证极其重要！确保你编写的任何软件都经过了所有可能值的彻底测试，无论它们是正常的用例还是古怪的边界情况。空搜索、空结果集和 SQL 注入尝试都是很容易处理的情况，但你必须识别这些威胁才能有效地应对它们。
+
+### 结论
+
+这里介绍的动态列表构建与本书迄今为止讨论的动态 SQL 不是同一种类型。虽然它通常更简单并且不需要单独执行来获取结果集，但它与之前构建的命令字符串之间存在许多共同点。
+
+在任何你接受用户输入来构建字符串的场景中，都可以立即在你之前处理的 SQL 注入威胁与当你想要列出姓名或 ID 号时可以类似识别的威胁之间找到相似之处。
+
+除了 SQL 注入，动态列表在语法、字符串操作、格式、安全性以及将它们与额外的动态 SQL 结合以创建更大灵活性的能力方面具有相似性。随着复杂性的增加，对仔细测试的需求也随之增加，既要测试意外输入，也要测试 SQL 注入尝试。虽然动态生成的列表可能并不总是带有与外部用户输入相关的威胁，但始终如一地关注参数化和质量保证方面的最佳实践，可以确保你的 TSQL 是最高质量和最安全的。
+
+# 8. 参数嗅探
+
+第 6 章介绍了一些用于性能优化的工具、方法和技巧。一个被简要讨论的关键组件是查询计划缓存。每当首次执行查询时，查询优化器会生成一个执行计划。这个过程开销很大，因此尽量减少由其执行的工作是有益的。执行计划在优化完成后被放入查询计划缓存中，它们将一直保留，直到执行、可用内存或底层数据发生足够变化将该计划推出缓存。
+
+保存执行计划的这个过程对于优化 SQL Server 性能至关重要。每当执行与缓存中查询匹配的查询时，将使用现有计划。这使得 SQL Server 可以绕过优化器并直接跳转到执行，从而节省时间和资源！如果没有这个功能，你将被迫为繁忙的服务器添加大量资源，以满足持续优化每个执行的查询所需的资源。
+
+### 什么是参数嗅探？
+
+执行计划根据查询生成时分配给它的查询哈希值放入缓存中。此哈希值基于查询的确切文本，如果查询的任何部分不同，哈希值也会不同。因此，参数化查询将允许你一遍又一遍地重用相同的计划，而不管参数的值如何。执行计划将根据查询首次执行期间传递的参数值创建。随后的每次执行都将重用相同的计划，而不管值如何。
+
+这就引出了一个准确性问题：在查询第一次执行期间选择的计划是否是所有未来可能值的最佳计划？如果传递给存储过程的参数相对一致，则最初创建的计划对于所有未来执行来说很可能足够好。在这种情况下，查询计划缓存工作得非常完美，因此没有理由考虑性能问题。但是，如果参数值是零散的并导致各种可能的结果呢？假以时日，将会生成一个对其他参数值来说并非最佳的执行计划。
+
+针对不同参数的执行计划重用就是参数嗅探的定义，它是 SQL Server 使用查询计划缓存的一个无意副作用。次优计划重用是这种行为可能导致性能问题的一种潜在方式。在开始之前，让我们介绍一个存储过程，该过程将根据查询文本的字符串搜索从查询计划缓存中读取一些数据。这将为你以后研究计划缓存的内容及其与以下示例查询性能的关系节省时间。清单 8-1 显示了本章中使用的存储过程。
+
+
+### 清单 8-1.
+#### 用于从查询计划缓存中读取优化和执行数据的存储过程
+
+```sql
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'read_query_plan_cache')
+BEGIN
+DROP PROCEDURE dbo.read_query_plan_cache;
+END
+GO
+CREATE PROCEDURE dbo.read_query_plan_cache
+@text_string NVARCHAR(MAX) = NULL
+AS
+BEGIN
+SELECT @text_string = '%' + @text_string + '%';
+DECLARE @sql_command NVARCHAR(MAX);
+DECLARE @parameter_list NVARCHAR(MAX) = '@text_string NVARCHAR(MAX)';
+IF @text_string IS NULL
+SELECT @sql_command = '
+SELECT TOP 25
+DB_NAME(execution_plan.dbid) AS database_name,
+cached_plans.objtype AS ObjectType,
+OBJECT_NAME(sql_text.objectid, sql_text.dbid) AS ObjectName,
+query_stats.creation_time,
+query_stats.last_execution_time,
+query_stats.last_worker_time AS cpu_last_execution,
+query_stats.last_logical_reads AS reads_last_execution,
+query_stats.last_elapsed_time AS duration_last_execution,
+query_stats.last_rows AS rows_last_execution,
+cached_plans.size_in_bytes,
+cached_plans.usecounts AS ExecutionCount,
+sql_text.TEXT AS QueryText,
+execution_plan.query_plan,
+cached_plans.plan_handle
+FROM sys.dm_exec_cached_plans cached_plans
+INNER JOIN sys.dm_exec_query_stats query_stats
+ON cached_plans.plan_handle = query_stats.plan_handle
+CROSS APPLY sys.dm_exec_sql_text(cached_plans.plan_handle) AS sql_text
+CROSS APPLY sys.dm_exec_query_plan(cached_plans.plan_handle) AS execution_plan';
+ELSE
+SELECT @sql_command = '
+SELECT TOP 25
+DB_NAME(execution_plan.dbid) AS database_name,
+cached_plans.objtype AS ObjectType,
+OBJECT_NAME(sql_text.objectid, sql_text.dbid) AS ObjectName,
+query_stats.creation_time,
+query_stats.last_execution_time,
+query_stats.last_worker_time AS cpu_last_execution,
+query_stats.last_logical_reads AS reads_last_execution,
+query_stats.last_elapsed_time AS duration_last_execution,
+query_stats.last_rows AS rows_last_execution,
+cached_plans.size_in_bytes,
+cached_plans.usecounts AS ExecutionCount,
+sql_text.TEXT AS QueryText,
+execution_plan.query_plan,
+cached_plans.plan_handle
+FROM sys.dm_exec_cached_plans cached_plans
+INNER JOIN sys.dm_exec_query_stats query_stats
+ON cached_plans.plan_handle = query_stats.plan_handle
+CROSS APPLY sys.dm_exec_sql_text(cached_plans.plan_handle) AS sql_text
+CROSS APPLY sys.dm_exec_query_plan(cached_plans.plan_handle) AS execution_plan
+WHERE sql_text.TEXT LIKE @text_string';
+EXEC sp_executesql @sql_command, @parameter_list, @text_string
+END
+GO
+```
+
+这个存储过程将极大地简化你的研究，因为你可以向它传递任何查询文本，它会返回关于缓存中的查询、其执行计划以及上次执行的性能指标的各种数据。你将在测试时使用它来收集查询信息，但它可以在任何你想在查询缓存中搜索特定信息的情况下被重用。`SELECT`语句中使用`TOP 25`是为了限制结果集。在繁忙的服务器上，否则可能返回非常大量的数据，这可能会对服务器或客户端性能产生不利影响。
+
+### 参数嗅探示例
+
+为了确保你获得干净的测试结果，你应该清除查询计划缓存。如本书前面所建议的，不要在生产环境或任何期望性能一致的地方运行此操作。清除查询计划缓存是通过强制查询在每次执行时创建新计划来调试查询的好方法，但由于优化器执行其工作需要大量资源，你应该只在隔离环境中这样做：
+
+```sql
+DBCC FREEPROCCACHE;
+```
+
+你也可以向此`DBCC`命令提供一个特定的计划句柄作为参数。这将允许你仅清除缓存中的单个选定计划，而不是全部。为简单起见，我们在这里将清除整个缓存，但清除单个查询的语法如下所示：
+
+```sql
+DBCC FREEPROCCACHE (0x06000700E8C6530730F36E6B0300000001000000000000000000000000000000000000000000000000000000);
+```
+
+计划句柄包含在查询计划缓存搜索查询中，以防需要用于进一步研究。现在，为了说明参数嗅探，你需要创建一个简单的存储过程，该过程基于`ProductModelID`搜索`Production.Product`，如清单 8-2 所示。
+
+```sql
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'get_products_by_model')
+BEGIN
+DROP PROCEDURE dbo.get_products_by_model;
+END
+GO
+CREATE PROCEDURE dbo.get_products_by_model (@firstProductModelID INT, @lastProductModelID INT)
+AS
+BEGIN
+SELECT
+PRODUCT.Name,
+PRODUCT.ProductID,
+PRODUCT.ProductModelID,
+PRODUCT.ProductNumber,
+MODEL.Name
+FROM Production.Product PRODUCT
+INNER JOIN Production.ProductModel MODEL
+ON MODEL.ProductModelID = PRODUCT.ProductModelID
+WHERE PRODUCT.ProductModelID BETWEEN @firstProductModelID AND @lastProductModelID;
+END
+```
+
+#### 清单 8-2.
+##### 用于测试参数嗅探的示例存储过程
+
+请注意，有两个参数被传递到存储过程中：`@firstProductModelID`和`@lastProductModelID`。如果你为一小部分产品 ID 执行此操作，如下所示：
+
+```sql
+EXEC get_products_by_model 120, 12
+```
+
+它返回六行数据，如图 8-1 所示。
+
+![A371168_1_En_8_Fig1_HTML.jpg](img/A371168_1_En_8_Fig1_HTML.jpg)
+
+##### 图 8-1.
+###### 限制性产品搜索的结果集，仅返回六行
+
+此执行的性能指标如下：
+
+![A371168_1_En_8_Fig2_HTML.jpg](img/A371168_1_En_8_Fig2_HTML.jpg)
+
+##### 图 8-2.
+###### 返回少量数据的产品搜索的性能
+
+```text
+Table 'ProductModel'. Scan count 0, logical reads 12, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'Product'. Scan count 1, logical reads 15, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+```
+
+此执行总共有 27 次逻辑读取，SQL Server 使用扫描和查找从`Product`和`ProductModel`中获取必要的数据以返回结果。为了确认你在这里看到的内容并添加一些额外的指标，你可以使用之前的查询计划缓存存储过程来了解更多关于此执行的信息：
+
+```sql
+EXEC dbo.read_query_plan_cache 'get_products_by_model';
+```
+
+这将返回关于此存储过程单次执行的各种有用信息，如图 8-3 所示。
+
+![A371168_1_En_8_Fig3_HTML.jpg](img/A371168_1_En_8_Fig3_HTML.jpg)
+
+##### 图 8-3.
+###### dbo.read_query_plan_cache 针对限制性搜索查询返回的指标
+
+为了便于阅读图 8-3，我将查询结果的图像包装成了多行，而不是试图将其挤在单个查询结果行中。从这些结果中可以得出以下信息：
+
+*   CPU: 936 微秒
+*   读取次数: 29
+*   持续时间: 26 毫秒 (26,329 微秒)
+*   返回行数: 6
+
+
+
+### 参数嗅探示例
+
+查询文本和执行计划在需要时也可在此处获取。现在，让我们清除计划缓存并执行相同的存储过程，但针对不同的 ID 范围：
+
+```
+DBCC FREEPROCCACHE;
+EXEC get_products_by_model 0, 10000;
+```
+
+此次执行返回了 295 条结果，而不是 6 条，如图 8-4 所示。
+
+![A371168_1_En_8_Fig4_HTML.jpg](img/A371168_1_En_8_Fig4_HTML.jpg)
+
+图 8-4. 限制性较小的搜索返回 295 行的产品结果
+
+性能差异并不显著，但选择了不同的执行计划，如图 8-5 所示。
+
+![A371168_1_En_8_Fig5_HTML.jpg](img/A371168_1_En_8_Fig5_HTML.jpg)
+
+图 8-5. 执行限制性较小的搜索查询时的性能
+
+```
+Table 'Workfile'. Scan count 0, logical reads 0, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'Worktable'. Scan count 0, logical reads 0, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'Product'. Scan count 1, logical reads 15, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'ProductModel'. Scan count 1, logical reads 2, physical reads 1, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+```
+
+由于你从表中选择了如此大量的行，查询优化器认为对 `ProductModel` 进行索引扫描会更高效。这通常是一个好的决策，因为当返回的行数接近表的很大一部分时，通过索引进行查找的成本会变得很高。确切的转折点通常取决于数据大小，但这是一个极好的例子，说明在某些情况下索引扫描比索引查找具有更优的性能。
+
+在读取计划缓存之前，再运行五次 `get_products_by_model`，这将向缓存中添加一些有用的数据以供审查：
+
+```
+EXEC get_products_by_model 0, 10000;
+EXEC get_products_by_model 0, 10000;
+EXEC get_products_by_model 0, 10000;
+EXEC get_products_by_model 0, 10000;
+EXEC get_products_by_model 0, 10000;
+```
+
+像之前一样，你可以运行存储过程从计划缓存中读取这次新的搜索过程执行的信息。得到的指标可以在图 8-6 中找到。
+
+![A371168_1_En_8_Fig6_HTML.jpg](img/A371168_1_En_8_Fig6_HTML.jpg)
+
+图 8-6. `dbo.read_query_plan_cache` 为限制性较小的搜索查询返回的指标
+
+```
+EXEC dbo.read_query_plan_cache 'get_products_by_model';
+```
+
+结果与你之前看到的一致：
+
+*   CPU: 1858 微秒
+*   读取次数: 19
+*   持续时间: 80ms (80,324 微秒)
+*   返回行数: 295
+
+请注意，这里的执行计数是 6。通过多次运行查询，我们可以在需要时说明计划重用。一旦找到一个计划，它将被保留并重用，直到最终从计划缓存中释放。尽管执行计数增加，但每次执行的结果几乎相同。
+
+到目前为止，没有意外情况发生。每次执行都返回了预期的数据，优化器在选择正确计划以最小化资源利用方面做得非常出色。让我们最后一次清除缓存，然后连续运行两次搜索过程，第一次针对一小段产品型号范围，第二次针对大范围：
+
+```
+DBCC FREEPROCCACHE;
+EXEC get_products_by_model 120, 125;
+EXEC get_products_by_model 0, 10000;
+```
+
+当你运行这段 T-SQL 时，第一次执行与之前完全一样。选择了一个在 `Product` 上进行索引扫描、在 `ProductModel` 上进行索引查找的计划。产生的执行计划和 IO 统计信息也完全相同。当你运行存储过程的第二次执行时，发生了一些不寻常的事情：性能非常差！第二次产品搜索的性能指标如图 8-7 所示，这是针对传入了大范围 ID 的场景：
+
+![A371168_1_En_8_Fig7_HTML.jpg](img/A371168_1_En_8_Fig7_HTML.jpg)
+
+图 8-7. 重用次优计划时的搜索性能
+
+```
+Table 'ProductModel'. Scan count 0, logical reads 590, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'Product'. Scan count 1, logical reads 15, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+```
+
+这一次，读取次数远高于你对该存储过程的预期。选择的执行计划是从之前用于窄范围 ID（在 `ProductModel` 上进行索引查找）的计划中重用的，而不是针对大结果集最优的计划（在 `ProductModel` 上进行索引扫描）。读取计划缓存有助于理解发生了什么：
+
+```
+EXEC dbo.read_query_plan_cache 'get_products_by_model';
+```
+
+图 8-8 中的结果显示，为窄范围 ID 创建的执行计划被重用于第二次运行，尽管提供的参数导致了非常不同的基数。
+
+![A371168_1_En_8_Fig8_HTML.jpg](img/A371168_1_En_8_Fig8_HTML.jpg)
+
+图 8-8. `dbo.read_query_plan_cache` 返回的指标说明了参数嗅探
+
+请注意 `ExecutionCount` 为 2。这证明初始的执行计划被重用于搜索过程的第二次执行。返回的其余指标证实了之前观察到的不良性能：
+
+*   CPU: 2474 微秒
+*   读取次数: 607
+*   持续时间: 90ms (90,353 微秒)
+*   返回行数: 295
+
+这是参数嗅探直接损害查询执行性能的一个例子。选择了次优的执行计划，导致读取次数、CPU 利用率和查询运行时间显著增加。
+
+在讨论解决参数嗅引导致的性能问题的方法之前，让我们看一个额外的例子，展示在使用动态 SQL 时参数嗅探可能如何产生干扰。这些例子将使用销售订单，并利用一个新的销售员来说明不良基数估计对执行计划的影响：
+
+```
+INSERT INTO Sales.SalesPerson
+(BusinessEntityID, TerritoryID, SalesQuota, Bonus, CommissionPct, SalesYTD, SalesLastYear, rowguid, ModifiedDate)
+VALUES
+(1, 1, 1000000, 289, 0.17, 0, 0, NEWID(), CURRENT_TIMESTAMP);
+UPDATE Sales.SalesOrderHeader
+SET SalesPersonID = 1
+WHERE SalesPersonID IS NULL;
+UPDATE STATISTICS Sales.SalesOrderHeader;
+GO
+```
+
+这些语句将创建一个新的销售员并将她分配给所有当前没有分配负责人的销售订单。此外，它会更新表上的统计信息，以确保优化器在做出优化决策时能感知到新数据。这将为你提供一个拥有 27,659 个已分配销售订单的销售员。现在，让我们引入一个新的存储过程，它将根据作为参数提供的 `SalesPersonID` 来搜索销售订单。此外，如果希望对结果进行分页，可以提供返回的行数和偏移量，如清单 8-3 所示。
+
+
+
+```
+IF EXISTS (SELECT * FROM `sys.procedures` WHERE `procedures.name` = 'get_sales_orders_by_sales_person')
+BEGIN
+    DROP PROCEDURE `dbo.get_sales_orders_by_sales_person`;
+END
+GO
+CREATE PROCEDURE `dbo.get_sales_orders_by_sales_person`
+    `@SalesPersonID` INT, `@RowCount` INT, `@Offset` INT
+AS
+BEGIN
+    DECLARE `@sql_command` NVARCHAR(MAX);
+    DECLARE `@parameter_list` NVARCHAR(MAX) = '@SalesPersonID INT, @RowCount INT, @Offset INT';
+    -- 将偏移量加 1 以获得正确的起始行
+    SELECT `@Offset` = `@Offset` + 1;
+    SELECT `@sql_command` = '
+        WITH CTE_PRODUCTS AS (
+            SELECT
+                ROW_NUMBER() OVER (ORDER BY OrderDate ASC) AS rownum,
+                SalesOrderHeader.SalesOrderID,
+                SalesOrderHeader.Status,
+                SalesOrderHeader.OrderDate,
+                SalesOrderHeader.ShipDate,
+                SalesOrderDetail.UnitPrice,
+                SalesOrderDetail.LineTotal
+            FROM Sales.SalesOrderHeader
+            INNER JOIN Sales.SalesOrderDetail
+                ON SalesOrderHeader.SalesOrderID = SalesOrderDetail.SalesOrderID
+            WHERE SalesOrderHeader.SalesPersonID = @SalesPersonID
+        )
+        SELECT
+            *
+        FROM CTE_PRODUCTS
+        WHERE rownum BETWEEN @Offset AND @Offset + @RowCount;';
+    EXEC `sp_executesql` `@sql_command`, `@parameter_list`, `@SalesPersonID`, `@RowCount`, `@Offset`;
+END
+```
+**代码清单 8-3.** 演示参数嗅探的搜索存储过程
+
+这个存储过程是完全参数化的，允许你在执行时更改输入，而无需调整动态 SQL。让我们首先查看涉及新销售人员的搜索性能：
+
+```
+`DBCC FREEPROCCACHE`;
+`EXEC dbo.get_sales_orders_by_sales_person 1, 1000, 0`;
+```
+
+首先清除查询计划缓存，以确保结果不受此服务器上执行的任何其他查询的影响。设置附加参数以从结果集（包含 27,659 行）返回 1,000 行，从第 1 行开始。此执行的性能指标见图 8-9。
+
+![A371168_1_En_8_Fig9_HTML.jpg](img/A371168_1_En_8_Fig9_HTML.jpg)
+**图 8-9.** 使用参数化分页的搜索的执行计划
+
+```
+Table 'SalesOrderDetail'. Scan count 1000, logical reads 3231, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'SalesOrderHeader'. Scan count 1, logical reads 689, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+```
+
+此外，计划缓存读取存储过程返回的执行指标见图 8-10：
+
+![A371168_1_En_8_Fig10_HTML.jpg](img/A371168_1_En_8_Fig10_HTML.jpg)
+**图 8-10.** `dbo.read_query_plan_cache` 针对带分页的参数化搜索返回的指标
+
+```
+`EXEC dbo.read_query_plan_cache 'CTE_PRODUCTS'`;
+```
+
+请注意，由于为动态 SQL 本地定义了一些参数，存储过程本身并未进入计划缓存——只有动态 SQL 语句被缓存。`QueryText` 的内容如代码清单 8-4 所示。
+
+```
+(@SalesPersonID INT, @RowCount INT, @Offset INT)
+WITH CTE_PRODUCTS AS (
+    SELECT
+        ROW_NUMBER() OVER (ORDER BY OrderDate ASC) AS rownum,
+        SalesOrderHeader.SalesOrderID,
+        SalesOrderHeader.Status,
+        SalesOrderHeader.OrderDate,
+        SalesOrderHeader.ShipDate,
+        SalesOrderDetail.UnitPrice,
+        SalesOrderDetail.LineTotal
+    FROM Sales.SalesOrderHeader
+    INNER JOIN Sales.SalesOrderDetail
+        ON SalesOrderHeader.SalesOrderID = SalesOrderDetail.SalesOrderID
+    WHERE SalesOrderHeader.SalesPersonID = @SalesPersonID
+)
+SELECT
+    *
+FROM CTE_PRODUCTS
+WHERE rownum BETWEEN @Offset AND @Offset + @RowCount;
+```
+**代码清单 8-4.** 在带分页的动态搜索中执行时产生的查询文本
+
+预期的效果仍然达成：你打算运行的查询是完全参数化的，并且无论何时执行存储过程，执行计划都会被重用。然而，要在缓存中搜索它，需要输入 `SELECT` 查询中的某些文本，而不是存储过程名称。
+
+
+所有结果都表明，优化器选择了对 `SalesOrderHeader` 进行聚集索引扫描，对 `SalesOrderDetail` 进行聚集索引查找。查询此大型数据集需要进行 3,926 次读取，查询指标结果如下：
+
+*   CPU：14 毫秒（13,726 微秒）
+*   读取次数：4062
+*   持续时间：115 毫秒（115,309 微秒）
+*   返回行数：1000
+
+你可以清空缓存，并为一位销售记录少得多销售人员重复此练习：
+
+```
+DBCC FREEPROCCACHE;
+EXEC dbo.get_sales_orders_by_sales_person 285, 1000, 0;
+```
+
+这次执行的结果集是 245 行，而不是 27,659 行。因此，将结果集限制为 1,000 行对 SQL Server 返回的内容没有影响。此次执行的性能指标如图 8-11 所示。
+
+![A371168_1_En_8_Fig11_HTML.jpg](img/A371168_1_En_8_Fig11_HTML.jpg)
+图 8-11. 结果集较小的参数化分页搜索的执行计划
+
+```
+Table 'SalesOrderDetail'. Scan count 16, logical reads 53, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'SalesOrderHeader'. Scan count 1, logical reads 50, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+```
+
+返回这个较小子数据集只需要 103 次读取，优化器选择对 `SalesOrderHeader` 使用索引查找，对 `SalesOrderDetail` 使用聚集索引查找。尽管键查找是一项开销昂贵的随机 I/O 操作，优化器仍然选择了它，而不是扫描整张表的替代方案。让我们回顾一下此次执行的附加查询统计数据，如图 8-12 所示。
+
+![A371168_1_En_8_Fig12_HTML.jpg](img/A371168_1_En_8_Fig12_HTML.jpg)
+图 8-12. dbo.read_query_plan_cache 返回的、针对带分页且结果集较小的参数化搜索的度量指标
+
+```
+EXEC dbo.read_query_plan_cache 'CTE_PRODUCTS';
+```
+
+这些数据与迄今为止审查的所有内容都一致。此次执行所需的读取次数显著减少，返回的行数也更少，并且速度比之前稍快一些。
+
+*   CPU：2127 微秒
+*   读取次数：103
+*   持续时间：95 毫秒（94,877 微秒）
+*   返回行数：245
+
+既然你已经为这个存储过程在大结果集与小结果集情况下的性能建立了基线，就可以针对与之前审查场景相反的情况来比较参数嗅探。你将最后一次清空查询计划缓存，并为那位被分配了极多订单的销售人员运行销售订单搜索：
+
+```
+DBCC FREEPROCCACHE;
+EXEC dbo.get_sales_orders_by_sales_person 1, 1000, 0;
+```
+
+快速回顾此次执行的性能指标证实，其执行方式与之前完全一样，如图 8-13 所示。
+
+![A371168_1_En_8_Fig13_HTML.jpg](img/A371168_1_En_8_Fig13_HTML.jpg)
+图 8-13. 之前具有大结果集的搜索的性能表现
+
+```
+Table 'SalesOrderDetail'. Scan count 1000, logical reads 3231, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'SalesOrderHeader'. Scan count 1, logical reads 689, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+```
+
+I/O 统计信息和执行计划都与之前的第一次执行相符。现在，让我们针对第二个用例执行相同的存储过程，即该销售人员的销售订单要少得多（不清除计划缓存）：
+
+```
+EXEC dbo.get_sales_orders_by_sales_person 285, 1000, 0;
+```
+
+虽然返回的结果与你之前运行此相同查询时相同，但性能却有显著差异。图 8-14 通过 I/O 统计信息和执行计划说明了这一点。
+
+![A371168_1_En_8_Fig14_HTML.jpg](img/A371168_1_En_8_Fig14_HTML.jpg)
+图 8-14. 当为大结果集生成的执行计划被重用于一个显著更小的结果集时的性能表现
+
+```
+Table 'SalesOrderDetail'. Scan count 16, logical reads 74, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'SalesOrderHeader'. Scan count 1, logical reads 689, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+```
+
+由于你没有清空查询计划缓存，上面的执行计划被复用于此次存储过程执行。该执行计划与上一次执行完全相同。优化器对 `SalesOrderHeader` 使用了聚集索引扫描，即使对于本示例中展示的较小基数而言，这并非从表中检索数据的最佳方式。因此，`SalesOrderHeader` 上的读取次数显著增加，而 `SalesOrderDetail` 上的读取次数增加了约 50%。为了证明发生了计划复用，最后一次运行 `read_query_plan_cache` 存储过程。你可以在图 8-15 中查看结果。
+
+![A371168_1_En_8_Fig15_HTML.jpg](img/A371168_1_En_8_Fig15_HTML.jpg)
+图 8-15. 当参数嗅探导致不期望的计划复用时，dbo.read_query_plan_cache 为带分页的参数化搜索返回的度量指标
+
+```
+EXEC dbo.read_query_plan_cache 'CTE_PRODUCTS';
+```
+
+总结这些数据，我们可以提取最相关的细节进行审查：
+
+*   执行次数：2
+*   CPU：3402 微秒
+*   读取次数：777
+*   持续时间：98 毫秒（97,993 微秒）
+*   返回行数：245
+
+执行次数证明执行计划确实被复用了。在此场景中，复用并无益处，并导致查询消耗了显著更多的资源来执行。在一个更大、更繁忙的生产数据库上，这类参数嗅探可能会严重降低性能。
+
+接下来合乎逻辑的问题是，如何应对这种现象以及如何正确补偿参数嗅探。为了提供最佳答案，在深入探讨各种解决方案之前，你将先了解一些额外的注意事项。
+
+
+#### 设计注意事项
+
+管理像参数嗅探这样的现象，首要规则是了解你的数据！由于这是 SQL Server 的一个特性而非错误，在尝试实施解决方案之前，你需要仔细评估它在哪些场景下会成为问题。
+
+回顾一下前面的两个例子：导致计划非预期重用的确切原因是什么？最终，是因为存储过程的多次执行导致对结果集的**基数估计**差异巨大。一个参数值返回了 245 行，而另一个返回的数据量是其 100 多倍。
+
+在解决参数嗅探问题时，你应该提出一系列问题，以准确评估其严重性、频率以及更改的影响：
+*   该查询执行的频率如何？
+*   执行通常返回的结果集数量级最常见的是什么？参数嗅探在大多数情况下是有帮助的，还是导致不良执行计划的频率超出了你的预期？
+*   随着时间的推移，数据量的增长将如何影响这些基数估计？
+*   是否还有其他因素参与其中，例如过时的统计信息、编写不良的 TSQL，或缺失/碎片化的索引？
+*   最可能传递给存储过程的常用参数值是什么？
+*   无论输入如何，你是否已经知道结果集的基数？例如，某个存储过程是否总是返回一行？
+*   能否将一个复杂查询拆分为多个更简单的查询？
+
+通常，满足业务需求的查询会符合一个常规的使用模式。确定该模式，然后找出明显偏离常规的情况，有助于判断你的 TSQL 是在适应常见的用例，还是在无意中为异常情况（而非常见情况）进行编码，从而导致了性能低下。
+
+为了正确回答这些问题，让我们更详细地逐一回顾。
+
+##### 查询执行详情
+
+一个查询总体执行频率如何？以及它以导致参数嗅探成为明显问题的方式执行的频率又如何？如果它持续不断地运行，那么你需要确保其效率，因为每分钟执行数千次的操作无法承受低效之重。你需要确定最常见的使用场景，并编写 TSQL 来适应它。如果存在多个持续运行的常见场景，你可以考虑为每个场景单独编写存储过程，在单个过程中使用多个代码路径，或者其他充分利用每种情况的方法。
+
+然而，如果一个查询执行频率很低，例如用于每日报告或不常进行的搜索，那么每次重新编译查询计划将是一个合理的解决方案，因为它能确保获得最佳计划，而不会重用旧的计划。由于运行不频繁，重新编译的成本不会显著到因优化器每次执行所需的额外工作而给服务器带来资源压力。在这些情况下，你可以自由采取更多样的行动来解决非预期的计划重用问题。但要核实，目前很少执行的查询在未来是否不会变得更加频繁使用。如果原本一天一次的查询变得流行起来，并开始在白天每五秒执行一次，那么重新编译将成为一项昂贵的操作，无法如此频繁地执行。
+
+可以使用查询提示 `OPTION (RECOMPILE)` 来强制每次执行时重新编译。语法如代码清单 8-5 所示。
+
+```sql
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'get_sales_orders_by_sales_person')
+BEGIN
+DROP PROCEDURE dbo.get_sales_orders_by_sales_person;
+END
+GO
+CREATE PROCEDURE dbo.get_sales_orders_by_sales_person
+@SalesPersonID INT, @RowCount INT, @Offset INT
+AS
+BEGIN
+DECLARE @sql_command NVARCHAR(MAX);
+DECLARE @parameter_list NVARCHAR(MAX) = '@SalesPersonID INT, @RowCount INT, @Offset INT';
+SELECT @sql_command = '
+WITH CTE_PRODUCTS AS (
+SELECT
+ROW_NUMBER() OVER (ORDER BY OrderDate ASC) AS rownum,
+SalesOrderHeader.SalesOrderID,
+SalesOrderHeader.Status,
+SalesOrderHeader.OrderDate,
+SalesOrderHeader.ShipDate,
+SalesOrderDetail.UnitPrice,
+SalesOrderDetail.LineTotal
+FROM Sales.SalesOrderHeader
+INNER JOIN Sales.SalesOrderDetail
+ON SalesOrderHeader.SalesOrderID = SalesOrderDetail.SalesOrderID
+WHERE SalesOrderHeader.SalesPersonID = @SalesPersonID
+)
+SELECT
+*
+FROM CTE_PRODUCTS
+WHERE rownum BETWEEN @Offset AND @Offset + @RowCount
+OPTION (RECOMPILE);';
+EXEC sp_executesql @sql_command, @parameter_list, @SalesPersonID, @RowCount, @Offset;
+END
+```
+
+代码清单 8-5. RECOMPILE 查询提示示例
+
+这个存储过程与你之前使用过的那个唯一的区别是在 `SELECT` 查询末尾添加了 `RECOMPILE` 提示。有了这个，你可以运行最后一个参数嗅探示例：
+
+```sql
+DBCC FREEPROCCACHE;
+EXEC dbo.get_sales_orders_by_sales_person 1, 1000, 0;
+EXEC dbo.get_sales_orders_by_sales_person 285, 1000, 0;
+EXEC dbo.read_query_plan_cache 'CTE_PRODUCTS';
+```
+
+上次你以这种方式执行存储过程时，查询执行计划被重用，导致了性能不佳。让我们在图 8-16 中回顾一下第二次执行（针对小结果集）的性能：
+
+![A371168_1_En_8_Fig16_HTML.jpg](img/A371168_1_En_8_Fig16_HTML.jpg)
+
+图 8-16. 在运行时重新编译执行计划，防止重用次优计划时的性能
+
+```
+Table 'SalesOrderDetail'. Scan count 16, logical reads 53, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'SalesOrderHeader'. Scan count 1, logical reads 50, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+```
+
+这次，SQL Server 执行了查询，并在运行时重新编译了查询计划，以获得针对每个参数集的最优计划，而不是使用之前为大结果集准备的那个计划。
+
+一如既往，应谨慎使用查询提示，且仅在必要时使用。优化器生成执行计划所需的资源并非微不足道，过于频繁地重新编译计划可能导致额外的 CPU 消耗和查询延迟增加。当你确信一个查询执行频率很低，或者其基数变化无常导致计划重用常常导致性能不佳时，这个工具最为适用。
+
+另一个需要考虑的是，要判断由计划重用导致的性能低下是普遍现象还是特例。因为偶尔出现的异常而给查询添加重新编译可能并无益处。如果一个查询在大多数时间都能以最优方式执行，那么容忍非预期的计划重用可能是最佳选择。同样值得研究的是，这个异常是否预示着更大的问题，例如数据验证错误或非法数据被传入了你的存储过程。
+
+重新编译执行计划的权衡是：（希望）以优化性能为代价来提高查询执行性能。在判断这个权衡是否值得时，要考虑未来：这个查询在未来是否会以类似方式执行？应用程序或查询源是否会改变，导致新的、意想不到的行为，从而使这个好决策变成坏决策？此外，你的研究是否足够详尽，确保涵盖了所有用例？如果你能自信地回答这些问题，那么就是否重新编译查询执行计划做出正确的决定应该是直接了当的。
+
+
+
+### 红鲱鱼
+
+有时，糟糕的执行计划可能源于其他因素。如果统计信息已过时，那么在参数嗅探发生之前，就可能选择了次优的查询执行计划。换句话说，计划重用本身没有问题，但优化器最初由于缺乏准确的统计信息而创建了一个坏计划，而这个坏计划随后被重用了。在这种情况下，即使没有发生计划重用，也很可能会生成一个坏计划。在执行计划中核实预估行数与实际行数是发现潜在统计信息不准确的好方法。有关查看、使用和更新统计信息的详细信息，请参见第 6 章。
+
+实际上，`TSQL` 编写不当的任何方式都可能导致人们错误地将不理想的计划重用归咎于参数嗅探。代码清单 8-6 中的简单示例展示了一个查询，其编写方式本质上就保证了次优性能。
+
+```
+SELECT DISTINCT
+PRODUCT.ProductID,
+PRODUCT.Name
+FROM Production.Product PRODUCT
+INNER JOIN Sales.SalesOrderDetail DETAIL
+ON PRODUCT.ProductID = DETAIL.ProductID
+OR PRODUCT.rowguid = DETAIL.rowguid
+```
+
+**代码清单 8-6.** 一个保证性能糟糕的 `AdventureWorks` 查询
+
+这个返回 266 行的查询，其性能指标如图 8-17 所示。
+
+![A371168_1_En_8_Fig18_HTML.jpg](img/A371168_1_En_8_Fig18_HTML.jpg)
+
+**图 8-18.** 代码清单 8-7 中重写和优化后的查询性能
+
+![A371168_1_En_8_Fig17_HTML.jpg](img/A371168_1_En_8_Fig17_HTML.jpg)
+
+**图 8-17.** 一个（故意）编写不当的查询的性能
+
+```
+Table 'Product'. Scan count 5, logical reads 40, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'SalesOrderDetail'. Scan count 4, logical reads 4984, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'Worktable'. Scan count 4, logical reads 1209220, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'Worktable'. Scan count 0, logical reads 0, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+```
+
+看看进入嵌套循环前的那个行数！高达 3450 万行！由于 `SalesOrderDetail` 表仅包含 121,317 行，显然这里存在一个需要解决的问题。事实证明，在连接中使用 `OR` 运算符可能导致灾难性的糟糕性能，因为查询优化器很难确定高效交集数据集的最佳方式。
+
+如果将来重用此查询计划，性能也会很差，但原因并非参数嗅探，而是查询本身设计不佳。如果重写查询以移除 `OR`，例如使用由 `UNION` 分隔的两个语句，就能实现显著更好的性能。代码清单 8-7 展示了改进后的 `TSQL`。
+
+```
+SELECT
+PRODUCT.ProductID,
+PRODUCT.Name
+FROM Production.Product PRODUCT
+INNER JOIN Sales.SalesOrderDetail DETAIL
+ON PRODUCT.ProductID = DETAIL.ProductID
+UNION
+SELECT
+PRODUCT.ProductID,
+PRODUCT.Name
+FROM Production.Product PRODUCT
+INNER JOIN Sales.SalesOrderDetail DETAIL
+ON PRODUCT.rowguid = DETAIL.rowguid
+```
+
+**代码清单 8-7.** 对代码清单 8-6 中慢速查询的优化版本
+
+尽管这个 `TSQL` 看起来更长更复杂，但查询优化器会更容易为其找到一个好的执行计划：
+
+```
+Table 'Product'. Scan count 2, logical reads 30, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'SalesOrderDetail'. Scan count 505, logical reads 1554, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+```
+
+虽然执行计划可能看起来更复杂，但 `TSQL` 语法允许优化器将一个复杂问题分解为两个更简单的问题，这些问题可以轻松解决、合并，并返回相同的结果集。读取次数减少了 75 倍以上，运行时间从 10 秒缩短到 100 毫秒。
+
+分而治之复杂查询通常是防止查询优化器无法找到最佳计划的绝佳方法。这个看似简单的查询对于优化器来说是一个性能炸弹。将其拆分为两部分是一种解决方案，使用临时表或表变量将数据存储在中间步骤中也是解决此性能问题的有效方案。
+
+如果查询变得庞大且难以处理，请考虑将其分解为更小、更简单的查询。随着每个表连接到查询中，查询优化器必须评估的可能执行计划数量呈指数级增长。根据查询风格，`n` 个表的连接顺序数量可能是 `n!`（`n` 的阶乘，适用于左深查询树）或 `(2n-2)!/(n-1)!`（如果查询树是浓密的，这个数字甚至更大）。试想一下，四个表以左深连接顺序排列的方式有多少种：
+
+```
+Table A JOIN Table B JOIN Table C JOIN Table D
+ABCD ABDC ACBD ACDB ADBC ADCB BACD BADC BCAD BCDA BDAC BDCA
+CABD CADB CBAD CBDA CDAB CDBA DABC DACB DBAC DBCA DCAB DCBA
+```
+
+结果是共有 24 种（`4! = 4 * 3 * 2 * 1`）可能的方式来排列此示例中涉及的四个表。左深树和浓密树是描述任何查询处理器构建的查询树的方式。图 8-19 展示了每种类型以树形图表示时的样子。
+
+![A371168_1_En_8_Fig19_HTML.jpg](img/A371168_1_En_8_Fig19_HTML.jpg)
+
+**图 8-19.** 左深查询树（左）和浓密查询树（右）示例
+
+左深树由一次连接一个表的序列组成，而浓密树则由单独连接的表组成，其结果在每组连接完成后再连接在一起。浓密树的排序方式要多得多，这就是为什么连接顺序排列组合的数学表达式远大于左深树的原因。
+
+在不深入讨论每种查询树类型的情况下，可以肯定地说，随着每个表添加到查询中，连接顺序的排列方式将显著增加。即使从复杂查询中移除一个表并单独收集其数据，也可能带来重大的性能提升。
+
+务必测试这些更改，并确保重构后的 `TSQL` 确实性能更优。同样重要的是，确保返回的数据与之前相同。高度事务性的数据可能在初始数据收集和最终查询之间发生变化，导致数据不一致。因此，要熟悉所查询的数据，不要在不确认最终查询输出将与原查询相同的情况下盲目进行优化。
+
+研究索引也值得一做。验证是否使用了正确的索引，以及这些索引是否过度碎片化。碎片化会减慢索引上的所有读取速度，并导致 `SQL Server` 在执行查询前需要将更多数据页读入内存。此外，确保您的查询能够利用正确的索引。您期望查询使用的索引是否启用？如果它是筛选索引，该筛选条件是否被正确应用？
+
+
+
+### 参数嗅探问题排查概述
+
+在将参数嗅探视为性能问题的罪魁祸首之前，务必先核实没有其他更严重的问题需要优先处理。除了统计信息、索引和 T-SQL 错误之外，SQL Server 配置设置也可能影响查询性能。并行度、跟踪标志以及内存/CPU 压力都可能导致意外的性能下降。
+
+尽管存在所有这些可能性，始终应从最简单的解决方案开始，然后在其被证伪后再探索更复杂的方案。与计划重用不当相关的性能问题，其更可能仅仅是经典的参数嗅探所致，而非其他神秘原因。如果不是，则应考虑统计信息、索引和查询结构的影响。只有在其他所有方法都失败时，才有必要深入探查 SQL Server 安装的内部以寻找更多线索。这种情况即使发生也会很少见，但做好准备并了解在何处寻找解决性能问题的方法，可以为将来节省大量时间。
+
+#### 参数值
+
+调查参数嗅探的一个好方法是检查参数本身以及通常传递给它们的值。某个值或一组值是否非常常见？这些值是否总是不同，表明一个从不重复的过程？参数通常接收的值是随机的，还是遵循某种明显的模式？
+
+这些知识有助于确定最佳行动方案。如果只有一小组值始终传递给存储过程，您可能能够对它们做出假设，并设计 T-SQL 以考虑这些人为的限制。一些有用的观察包括：
+
+*   参数是否始终是 `NOT NULL`？
+*   参数是否会始终设置为当前日期或某个重要指标的当前值？
+*   参数的取值范围是否非常有限？
+*   参数值是否看似随机？
+*   某个特定值是否极其常见，或者该值是否比其他值更重要或更相关？
+
+如前所述，考虑到变化的可能性很重要。如果应用程序更改可能影响参数值，则必须预见这些更改，不要编写会被未来这些更改损害的 T-SQL。如果可以验证这一点，则使用简化假设来重写存储过程，使其更短、更简单，并让优化器尽可能多地做出正确的决策。
+
+此外，了解结果集的基数会极大地影响您编写存储过程的方式。例如，如果某个存储过程始终返回单行，您可以确保其每个部分都针对该小型结果集进行了优化。类似地，如果您正在分页数据并且将始终返回 25 或 50 行，则可以利用此信息确保存储过程被编写为返回该行数，不多也不少。
+
+如第 3 章所示，当不太可能请求更多数据时，可以对分页数据集进行小型结果集的优化。如果您知道用户将一页一页地请求数据，您可以编写查询以返回更多数据，为下一次点击做准备。让您得出这些结论的应用程序知识也提供了编写符合您试图满足的业务逻辑的 T-SQL 所需的信息。
+
+#### 局部变量
+
+为了准备此示例，请向 `Production.Product` 添加一个索引，这将有助于支持您即将运行的查询：
+
+```sql
+CREATE NONCLUSTERED INDEX NCI_production_product_ProductModelID ON Production.Product (ProductModelID) INCLUDE (Name);
+```
+
+有时用来尝试消除参数嗅探的一种策略是，在局部重新声明所有变量，而不是使用传递给存储过程的参数。这样做的效果可能类似于使用 `RECOMPILE` 提示，但可能会存在一些细微差异，从长远来看可能导致更差的性能。为了演示这种效果，让我们创建本章开头的存储过程的新版本，并在其中将所有存储过程参数重新定义为局部变量，如清单 8-8 所示。
+
+```sql
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'get_products_by_model_local')
+BEGIN
+DROP PROCEDURE dbo.get_products_by_model_local;
+END
+GO
+CREATE PROCEDURE dbo.get_products_by_model_local (@firstProductModelID INT, @lastProductModelID INT)
+AS
+BEGIN
+DECLARE @ProductModelID1 INT = @firstProductModelID;
+DECLARE @ProductModelID2 INT = @lastProductModelID;
+SELECT
+PRODUCT.Name,
+PRODUCT.ProductID,
+PRODUCT.ProductModelID,
+PRODUCT.ProductNumber,
+MODEL.Name
+FROM Production.Product PRODUCT
+INNER JOIN Production.ProductModel MODEL
+ON MODEL.ProductModelID = PRODUCT.ProductModelID
+WHERE PRODUCT.ProductModelID BETWEEN @ProductModelID1 AND @ProductModelID2;
+END
+Listing 8-8.
+将参数重新声明为局部变量的存储过程
+```
+
+请注意，`@firstProductModelID` 和 `@secondProductModelID` 已分别分配给 `@ProductModelID1` 和 `@ProductModelID2`。这些新变量随后在存储过程末尾的最终 `SELECT` 语句中使用。使用这个新版本的存储过程，让我们使用本章前面的示例来测试性能：
+
+```sql
+DBCC FREEPROCCACHE;
+EXEC dbo.get_products_by_model_local 120, 125;
+EXEC dbo.get_products_by_model_local 0, 10000;
+```
+
+在这里，您为优化器认为的最佳产品搜索计划建立了一个基线。对于第一次执行（涵盖一小部分产品模型范围，因此结果集很小，只有六行），其性能与原始版本的存储过程不同。两者的新 IO 统计信息和执行计划见图 8-20，新的在上方，旧的在下方：
+
+![A371168_1_En_8_Fig20_HTML.jpg](img/A371168_1_En_8_Fig20_HTML.jpg)
+
+图 8-20.
+当声明变量并在本地重新分配存储过程参数时，小型结果集查询的性能
+
+```text
+Table 'Product'. Scan count 6, logical reads 24, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'ProductModel'. Scan count 1, logical reads 2, physical reads 0, read-ahead reads 0, lob logical reads 0, loc physical reads 0, lob read-ahead reads 0.
+```
+
+声明局部变量并在查询中使用它们导致了不同的执行计划以及不同的 IO 统计信息。现在让我们比较第二种情况（结果集大得多时）的新旧版本。图 8-21 显示了这些性能指标。
+
+![A371168_1_En_8_Fig21_HTML.jpg](img/A371168_1_En_8_Fig21_HTML.jpg)
+
+图 8-21.
+当声明变量并在本地重新分配存储过程参数时，大型结果集的性能指标
+
+```text
+Table 'Product'. Scan count 128, logical reads 849, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'ProductModel'. Scan count 1, logical reads 2, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+```
+
+
+### 参数嗅探与本地变量
+
+如上所述，存储过程的新版本被选择了一个不同（且更复杂）的执行计划。这个版本为了返回相同的数据需要进行更多的 IO 操作。事实上，查询优化器为两组参数选择了相同的执行计划。这在处理小结果集时始终能带来良好的性能，但在处理大结果集时性能却很差。参数嗅探似乎不再发生，因为对两组参数值都使用了相同的计划。但是，如果你连续执行几次存储过程，可以确认计划实际上正在被重用：
+
+```
+DBCC FREEPROCCACHE;
+EXEC dbo.get_products_by_model_local 120, 125;
+EXEC dbo.get_products_by_model_local 0, 10000;
+EXEC dbo.get_products_by_model_local 120, 125;
+EXEC dbo.get_products_by_model_local 0, 10000;
+```
+
+让我们查看此存储过程的查询计划缓存中的数据，如图 8-22 所示。
+
+![A371168_1_En_8_Fig22_HTML.jpg](img/A371168_1_En_8_Fig22_HTML.jpg)
+
+**图 8-22.**
+
+当参数被重新分配给本地变量时，`dbo.read_query_plan_cache` 针对产品搜索返回的度量值。
+
+```
+EXEC dbo.read_query_plan_cache 'get_products_by_model_local';
+```
+
+你可以看到唯一返回的计划被执行了四次，因此发生了计划重用。由于为每组参数选择的执行计划相同，所以重用发生与否并不重要。无论你执行存储过程多少次或以何种顺序执行，结果都是一样的。尽管在本地重新声明了变量，参数嗅探仍然发生了，由此产生的性能仍然不是最优的。
+
+这里发生了什么？为什么相同的执行计划被用于两组非常不同的数据？答案在于查询优化器如何使用统计信息。当查询执行时，优化器必须利用当时可用的任何统计信息来快速而明智地做出决定。任何在运行时才可用的信息对优化器来说也将是不可用的。如前所述，统计信息提供的三类信息是：
+
+*   摘要数据，提供行数、平均键长和统计信息对象的概述
+*   密度数据，提供关于所跟踪的每个对象唯一性的信息
+*   直方图数据，给出统计信息对象样本范围内不同值的行数
+
+为了让查询优化器做出最准确的决定，它需要所有这些信息。不幸的是，一些 TSQL 技术会强制参数数据在运行时之前变为不可用或无法使用。这导致了次优的执行计划，因为优化器被迫在无法利用直方图、密度数据或两者的情况下做出决策。
+
+在上面的示例中，你声明了本地变量并将参数重新赋值给它们，从而剥夺了优化器使用直方图的能力。之前，你执行存储过程时，参数被用来确定首次执行的执行计划。然后该计划在之后每次执行时被重用。而在本例中，你首次执行存储过程时，只有摘要和密度数据可供优化器用来创建执行计划。由于本地变量的值在运行时之前是未知的，因此无法检查直方图以获取基数数据，它因此从优化过程中被省略了。结果，生成并重用的执行计划不得不基于假设来创建。此外，选择的执行计划将对任何传入的参数值都相同，而不仅仅是你检查的那两个示例，因为这些值在运行时之前是不可用的。
+
+总之，这意味着无论何时在存储过程里使用本地变量，查询优化器都需要做出假设，而这最终可能导致较差的基数估计。在这种情况下，DBA 往往会发现被选中的执行计划碰巧性能更好，但这在很大程度上是运气使然，以及优化器偶然找到了一个对正在审查的用例有效的计划。
+
+为了充分说明发生了什么，让我们更仔细地查看存储过程每个版本的单次执行的执行计划，重点关注基数估计与每个 IO 步骤的实际行数。首先，原始存储过程（运行大结果集）如图 8-23 所示。
+
+![A371168_1_En_8_Fig23_HTML.jpg](img/A371168_1_En_8_Fig23_HTML.jpg)
+
+**图 8-23.**
+
+参数化存储过程的执行计划详情。
+
+```
+DBCC FREEPROCCACHE;
+EXEC dbo.get_products_by_model 0, 10000;
+```
+
+注意，对于两个 IO 操作，实际行数和估计行数是相同的。这表明优化器有足够的统计数据来正确估计每个步骤的行数，并选择了一个合适的执行计划。执行后，结果证实了优化器的工作。你可以为这项出色的工作给它一点鼓励。
+
+以下是当你声明本地变量并用它们代替存储过程参数时，IO 步骤的执行计划详情，如图 8-24 所示。
+
+![A371168_1_En_8_Fig24_HTML.jpg](img/A371168_1_En_8_Fig24_HTML.jpg)
+
+**图 8-24.**
+
+使用本地变量的存储过程的执行计划详情。
+
+```
+DBCC FREEPROCCACHE;
+EXEC dbo.get_products_by_model_local 0, 10000;
+```
+
+在这个例子中，虽然实际行数与之前所示相同，但估计值却相差甚远！对 `ProductModel` 的 IO 操作估计为 11.52 行，对 `Product` 的估计为 1 行。这就是你之前看到的次优执行计划的根源。在 `ProductModel` 表上，由于该操作是一个没有参数的不等式，优化器没有任何信息可以参考。对于 `Product` 表，优化器可以使用密度数据来尝试获得一个良好的估计，但如果没有直方图，它将无法做到。
+
+在评估执行计划的不同部分时，查询优化器可能做出糟糕的基数估计的原因有很多。虽然其中一些可能性是正常且符合设计的，但你肯定不想人为地限制其可用的信息，从而导致更糟糕的估计。声明本地变量可能看起来可以修复糟糕的执行计划或消除参数嗅探，但最终它会通过限制优化器访问有价值的信息而使情况恶化。除非对所涉及的数据和查询进行了大量研究，否则从长远来看，在存储过程中局部化变量很可能是一个冒险的决定，即使它现在看起来解决了业务需求。
+
+
+#### 强制向优化器指定基数
+
+你已经尝试过查询优化器，通过重新编译计划或修改变量作用域来试图改进查询性能。当你对自身数据有非常详尽的了解，并希望直接指示查询优化器处理基数时，还有一个额外的选项可用。在查询中，你可以使用 `OPTIMIZE FOR` 提示来直接指示优化器接受某个值作为参数的基数。
+
+让我们重新考虑之前关于产品型号搜索的示例，在那个例子中你声明了局部变量来尝试管理基数。当你使用局部变量时，你剥夺了查询优化器使用直方图数据的能力，从而迫使其使用基于剩余数据的不太准确的估算。如果你总是返回大型数据集并且知道这是事实，你可以考虑告诉查询优化器基于特定值来确定基数，如清单 8-9 所示。
+
+```sql
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'get_products_by_model_local')
+BEGIN
+DROP PROCEDURE dbo.get_products_by_model;
+END
+GO
+CREATE PROCEDURE dbo.get_products_by_model (@firstProductModelID INT, @lastProductModelID INT)
+AS
+BEGIN
+SELECT
+PRODUCT.Name,
+PRODUCT.ProductID,
+PRODUCT.ProductModelID,
+PRODUCT.ProductNumber,
+MODEL.Name
+FROM Production.Product PRODUCT
+INNER JOIN Production.ProductModel MODEL
+ON MODEL.ProductModelID = PRODUCT.ProductModelID
+WHERE PRODUCT.ProductModelID BETWEEN @firstProductModelID AND @lastProductModelID
+OPTION (OPTIMIZE FOR (@firstProductModelID = 0, @lastProductModelID = 10000));
+END
+```
+
+**清单 8-9.** 使用 `OPTIMIZE FOR` 查询提示的示例
+
+在此示例中，你强制优化器基于你提供的值进行所有分析，而不是求助于统计数据来决定最佳执行方式。当你这样做时，性能会恢复到之前使用最优计划时看到的情况，如图 8-25 所示。
+
+![A371168_1_En_8_Fig25_HTML.jpg](img/A371168_1_En_8_Fig25_HTML.jpg)
+
+**图 8-25.** 当你在查询中强制为每个参数指定基数时的执行计划
+
+```sql
+DBCC FREEPROCCACHE;
+EXEC dbo.get_products_by_model 0, 10000;
+Table 'Workfile'. Scan count 0, logical reads 0, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'Worktable'. Scan count 0, logical reads 0, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'Product'. Scan count 1, logical reads 16, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'ProductModel'. Scan count 1, logical reads 2, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+```
+
+结果是最优的执行计划且仅有 18 次读取。当你使用此提示时，无论传入什么值，它都会选择这个计划。`OPTIMIZE FOR` 适用于你对输入参数有广泛了解的用例。这种情况并不常见，但在存储过程或代码中可能存在，那里的输入和输出是非常可预测的。
+
+还有一种额外的方式可以使用 `OPTIMIZE FOR` 提示，那就是完全取消参数值，并指示优化器仅使用统计数据进行决策，而不考虑任何参数值。让我们在同一个存储过程中尝试这种方法，如清单 8-10 所示。
+
+```sql
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'get_products_by_model_local')
+BEGIN
+DROP PROCEDURE dbo.get_products_by_model;
+END
+GO
+CREATE PROCEDURE dbo.get_products_by_model (@firstProductModelID INT, @lastProductModelID INT)
+AS
+BEGIN
+SELECT
+PRODUCT.Name,
+PRODUCT.ProductID,
+PRODUCT.ProductModelID,
+PRODUCT.ProductNumber,
+MODEL.Name
+FROM Production.Product PRODUCT
+INNER JOIN Production.ProductModel MODEL
+ON MODEL.ProductModelID = PRODUCT.ProductModelID
+WHERE PRODUCT.ProductModelID BETWEEN @firstProductModelID AND @lastProductModelID
+OPTION (OPTIMIZE FOR (@firstProductModelID UNKNOWN, @lastProductModelID UNKNOWN));
+END
+```
+
+**清单 8-10.** 使用 `OPTIMIZE FOR UNKNOWN` 查询提示的示例
+
+在此示例中，你不是提供静态值，而是使用 `UNKNOWN`，它指示优化器不要基于任何特定的参数值进行分析，而应仅根据统计数据确定基数。让我们检查一下当你使用这个新提示时，此版本存储过程的性能，如图 8-26 所示。
+
+![A371168_1_En_8_Fig26_HTML.jpg](img/A371168_1_En_8_Fig26_HTML.jpg)
+
+**图 8-26.** 当你使用 `OPTIMIZE FOR UNKNOWN` 时的性能指标
+
+```sql
+DBCC FREEPROCCACHE;
+EXEC dbo.get_products_by_model 0, 10000;
+Table 'Product'. Scan count 128, logical reads 849, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+Table 'ProductModel'. Scan count 1, logical reads 2, physical reads 0, read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob read-ahead reads 0.
+```
+
+当你让优化器自行其是时，它会求助于统计数据以确定最佳执行计划。在这种情况下，结果与你之前得到的结果完全相同，即选择了糟糕的计划。通常，当优化器仅依赖统计数据而没有参数指导时，它通常会创建一个针对可能传入的最常见的参数值进行优化的执行计划。在此示例中，你返回了异常大量的数据，这是优化器没有准备好的。结果与使用局部变量绕过优化器的标准参数分析时非常相似。
+
+`OPTIMIZE FOR` 与所有提示一样，在应用于非常具体或特殊的情况下时可能非常有用。请谨慎使用它，因为它可能对特定的参数值集有性能帮助，但如果传入其他意外值，也可能严重损害性能。查询提示应始终保守地应用，并且仅在你确定完全了解涉及的查询、参数值以及对基数有良好掌握时才使用。
+
+### 结论
+
+查询执行计划重用是 SQL Server 中的一项重要功能，它可以节省内存和 CPU，同时允许常见查询快速高效地执行。当参数探测导致性能不佳时，应仔细诊断这种副作用，以确保它确实是根本原因，而不是另一个更大问题的征兆。
+
+当发现次优的参数探测时，应分析数据以确定描述参数、数据和使用模式的指标。这项研究将极大地有助于确定应采取的最佳行动方案（如果有的话）。针对所有用例测试潜在的解决方案，并尽可能确保未来的应用程序或查询更改不会使你的修改失效。
+
+查询调优和重构可能比查询提示更有用。考虑以不同方式编写查询，以实现更高效的执行。此外，寻找可以简化查询的假设，使其更简单、更容易被优化器理解。有时，这些努力会完全消除参数探测问题，从而无需进一步研究或诉诸查询提示或技巧来取得成功。
+
+
+### 清理
+
+以下 TSQL 代码（参见清单 8-11）将清理本章创建的任何对象（如果它们存在），但存储过程 `read_query_plan_cache` 除外，它可能在后续派上用场。
+
+```sql
+IF EXISTS (SELECT * FROM sys.indexes WHERE indexes.name = 'NCI_production_product_ProductModelID')
+BEGIN
+DROP INDEX NCI_production_product_ProductModelID ON Production.Product;
+END
+GO
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'get_products_by_model_local')
+BEGIN
+DROP PROCEDURE dbo.get_products_by_model;
+END
+GO
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'get_sales_orders_by_sales_person')
+BEGIN
+DROP PROCEDURE dbo.get_sales_orders_by_sales_person;
+END
+GO
+清单 8-11.
+清理本章所创建对象的脚本
+```
+
+## 9. 动态 PIVOT 与 UNPIVOT
+
+`PIVOT` 是一种极其高效的方法，用于更改结果集的结构，将单列值扩展为一组独立的列。`UNPIVOT` 则执行完全相反的操作，将一组列解析为单个输出列。这两种操作符在报表、分析或需要将现有数据格式化为应用程序所需的特定结构时非常有用。
+
+这两种操作符的一个显著限制是，在 TSQL 运行时之前，必须预先定义每种操作的列或名称列表。如果名称列表是静态的或足够可预测，以至于您不需要频繁修改代码即可使其正常工作，那么这是可以接受的。然而，如果此列表发生变化，您将被迫创建许多不同的存储过程或函数来处理众多的列表值，或者在代码中强制施加限制以避免这样做。
+
+有一个有趣的替代方案可以解决这两种问题，那就是使用动态 SQL 来动态生成名称列表。一旦为此操作符引入了动态性，您就可以编写 TSQL，将一列中的所有值、变量列表或用户输入提供的值都整合进来。如果不使用动态 SQL，要完成此类任务将非常困难且效率低下，除非编写更长或更复杂的 TSQL 才能达到类似的结果集。
+
+### PIVOT
+
+`PIVOT` 在分析中很常见，当您希望将事务数据解析为列式结构以用于报表或指标时。通过示例来介绍上述挑战最为简单。考虑清单 9-1 中的 TSQL，它返回一些数据量，以及库存中产品的颜色。
+
+![A371168_1_En_9_Fig1_HTML.jpg](img/A371168_1_En_9_Fig1_HTML.jpg)
+
+图 9-1.
+
+清单 9-1 中的查询足够简单，并将返回这些结果。
+
+```sql
+SELECT
+PRODUCT.Name AS product_name,
+PRODUCT.Color AS product_color,
+PRODUCT_INVENTORY.LocationID,
+PRODUCT.ReorderPoint,
+PRODUCT_INVENTORY.Quantity AS product_quantity
+FROM Production.Product PRODUCT
+LEFT JOIN Production.ProductInventory PRODUCT_INVENTORY
+ON PRODUCT.ProductID = PRODUCT_INVENTORY.ProductID;
+清单 9-1.
+从 AdventureWorks 返回特定产品数据的查询
+```
+
+请注意，单个产品可能在多个位置有数量。如果管理层希望跨所有这些位置，分析不同产品的受欢迎程度、库存与颜色之间的相关性呢？他们要求一份报表，其中不是每个产品（包含颜色）一行，而是每个产品名称一行，并为每种指定颜色增加额外的列。这将便于按产品和颜色进行分析。`PIVOT` 是完成此任务的最简单方法，如清单 9-2 所示。
+
+```sql
+SELECT
+*
+FROM
+(      SELECT
+PRODUCT.Name AS product_name,
+PRODUCT.Color AS product_color,
+PRODUCT.ReorderPoint,
+PRODUCT_INVENTORY.Quantity AS product_quantity
+FROM Production.Product PRODUCT
+LEFT JOIN Production.ProductInventory PRODUCT_INVENTORY
+ON PRODUCT.ProductID = PRODUCT_INVENTORY.ProductID
+) PRODUCT_DATA
+PIVOT
+(    SUM(product_quantity)
+FOR product_color IN ([Black], [Blue], [Grey], [Multi], [Red], [Silver], [Silver/Black], [White], [Yellow])
+) PIVOT_DATA;
+清单 9-2.
+使用 PIVOT 按颜色报告产品的常见用法
+```
+
+在此示例中，您将先前的查询移入 `FROM` 子句中，该子句将用于数据透视。`PIVOT` 的正确语法需要两个新组件：
+
+*   一个聚合函数，当存在多个值时将进行聚合。在返回产品数据的初始 `SELECT` 语句中，存在许多重复行。此示例在此情况下使用 `SUM`，如果存在多行具有相同的产品名称，则将产品数量相加。
+*   一个值列表，包含所有将从行数据更改为列标题的值。在本例中，列表是 `Product.Color` 中的颜色。
+
+该语句在图 9-2 中的输出说明了新列的创建。
+
+![A371168_1_En_9_Fig2_HTML.jpg](img/A371168_1_En_9_Fig2_HTML.jpg)
+
+图 9-2.
+清单 9-2 中 PIVOT 查询的输出
+
+结果显示了九个新列，它们与原始查询中定义的列相同。在原始查询的多行共享相同产品名称的情况下，数量被相加了。例如，对于产品 `Road-250 Black, 48`，原始查询返回了两行，黑色的数量分别为 116 和 49。在 `PIVOT` 生成的输出中，您可以看到这两行被合并为一行，相同颜色的数量为 165。如果存在多个产品名称相同但颜色不同的产品，那么在应用 `PIVOT` 后，单个产品将填充多个列的数量数据。
+
+这种方法存在一个唯一的弱点，那就是必须在运行时之前，在 `PIVOT` 语句中显式提供列列表。任何尝试重写 `PIVOT` 以在不使用动态 SQL 的情况下使用动态列表的操作都将失败，如清单 9-3 和 9-4 所示。
+
+
+### SQL PIVOT 操作与动态列列表
+
+以下代码示例展示了尝试将更灵活的输入融入 `PIVOT` 查询的不同方法。
+
+## 尝试使用子查询 (Listing 9-3)
+
+```sql
+SELECT
+*
+FROM
+(      SELECT
+PRODUCT.Name AS product_name,
+PRODUCT.Color AS product_color,
+PRODUCT.ReorderPoint,
+PRODUCT_INVENTORY.Quantity AS product_quantity
+FROM Production.Product PRODUCT
+LEFT JOIN Production.ProductInventory PRODUCT_INVENTORY
+ON PRODUCT.ProductID = PRODUCT_INVENTORY.ProductID
+) PRODUCT_DATA
+PIVOT
+(      SUM(product_quantity)
+FOR product_color IN (SELECT Color FROM Production.Product)
+) PIVOT_DATA;
+```
+*Listing 9-3. 尝试在 PIVOT 语句中使用子查询（未成功）*
+
+## 尝试使用表变量 (Listing 9-4)
+
+```sql
+DECLARE @colors TABLE
+(color_name VARCHAR(25));
+INSERT INTO @colors
+(color_name)
+VALUES ('Black'), ('Blue'), ('Grey'), ('Multi'), ('Red'), ('Silver'), ('Silver/Black'), ('White'), ('Yellow');
+SELECT
+*
+FROM
+(      SELECT
+PRODUCT.Name AS product_name,
+PRODUCT.Color AS product_color,
+PRODUCT.ReorderPoint,
+PRODUCT_INVENTORY.Quantity AS product_quantity
+FROM Production.Product PRODUCT
+LEFT JOIN Production.ProductInventory PRODUCT_INVENTORY
+ON PRODUCT.ProductID = PRODUCT_INVENTORY.ProductID
+) PRODUCT_DATA
+PIVOT
+(      SUM(product_quantity)
+FOR product_color IN (SELECT color_name FROM @colors)
+) PIVOT_DATA;
+```
+*Listing 9-4. 尝试在 PIVOT 语句中使用表变量（也未成功）*
+
+这两个例子都是试图将更可定制的输入融入查询的合理尝试。第一个例子尝试输入 `Production.Product` 中的所有颜色。如果此方法有效，您就可以总是对列中的所有值使用 `PIVOT`，而无需提前硬编码它们。第二个尝试使用表变量在执行 `PIVOT` 语句前存储一组颜色。如果此方法有效，您就可以通过应用程序或人员的输入在运行时之前自定义颜色列表。
+
+不幸的是，两种语法都不起作用，并会产生类似的错误消息：
+
+```
+Msg 156, Level 15, State 1, Line 50
+Incorrect syntax near the keyword 'SELECT'.
+Msg 102, Level 15, State 1, Line 50
+Incorrect syntax near ')'.
+```
+
+此消息不是特别有帮助，但暗示语法不正确。这个解决问题的巧妙尝试没有奏效，但有另一种方法可以绕过 `PIVOT` 语法中的这个限制：**动态 SQL**！列名列表必须在运行时之前就存在于 T-SQL 中，这可以通过构建一个命令字符串并在构建字符串时添加列列表详细信息来实现。这将允许您拥有来自您选择的任何源的动态列列表。
+
+Listing 9-5 展示了一个新版本的 `PIVOT`，它使用一个表变量存储颜色列表，并将其输入到动态 SQL 中，以便在运行时输出到您指定的列列表。
+
+## 使用动态 SQL 和表变量 (Listing 9-5)
+
+```sql
+DECLARE @colors TABLE
+(color_name VARCHAR(25));
+INSERT INTO @colors
+(color_name)
+VALUES ('Black'), ('Grey'), ('Silver/Black'), ('White');
+DECLARE @sql_command NVARCHAR(MAX);
+SELECT @sql_command = '
+SELECT
+*
+FROM
+(      SELECT
+PRODUCT.Name AS product_name,
+PRODUCT.Color AS product_color,
+PRODUCT.ReorderPoint,
+PRODUCT_INVENTORY.Quantity AS product_quantity
+FROM Production.Product PRODUCT
+LEFT JOIN Production.ProductInventory PRODUCT_INVENTORY
+ON PRODUCT.ProductID = PRODUCT_INVENTORY.ProductID
+) PRODUCT_DATA
+PIVOT
+(      SUM(product_quantity)
+FOR product_color IN (';
+SELECT @sql_command = @sql_command + '[' + color_name + '], '
+FROM @colors;
+SELECT @sql_command = SUBSTRING(@sql_command, 1, LEN(@sql_command) - 1);
+SELECT @sql_command = @sql_command + ' )) PIVOT_DATA
+';
+EXEC sp_executesql @sql_command;
+```
+*Listing 9-5. 使用动态 SQL 和表变量在运行时创建可变列列表*
+
+`PIVOT` T-SQL 与之前完全相同，但它包含了本书前面的一些动态 SQL 方法来实现其目标。首先，它生成一个动态颜色列表并将其添加到命令字符串中：
+
+```sql
+SELECT @sql_command = @sql_command + '[' + color_name + '], '
+FROM @colors;
+SELECT @sql_command = SUBSTRING(@sql_command, 1, LEN(@sql_command) - 1);
+```
+
+对于表变量中的任意数量的颜色，此代码会将它们附加到命令字符串中，用方括号括起来并用逗号分隔。额外的 `SELECT` 语句删除了列表生成后留下的尾随逗号。
+
+一旦颜色列表被附加，您就可以完成命令字符串并执行它以获取结果集，如图 9-3 所示。
+
+![A371168_1_En_9_Fig3_HTML.jpg](img/A371168_1_En_9_Fig3_HTML.jpg)
+*图 9-3. Listing 9-5 中动态 PIVOT 的结果*
+
+请注意，列只为您包含在表变量中的颜色存在。对于列标题中未给出的颜色的任何产品，由 `PIVOT` 操作添加的所有新列都将为 `NULL`。
+
+有了这个框架，您就可以处理以前不可能的场景。首先，让我们重写这个查询，使其包含所有颜色，无论底层数据中随时间推移添加或删除了哪些颜色。为了实现这一点，您只需将插入表变量的 `INSERT` 替换为使用对 `Production.Product` 的查询，而不是静态值列表，如 Listing 9-6 所示。
+
+## 使用所有颜色值的动态 PIVOT (Listing 9-6)
+
+```sql
+DECLARE @colors TABLE
+(color_name VARCHAR(25));
+INSERT INTO @colors
+(color_name)
+SELECT DISTINCT
+Product.Color
+FROM Production.Product
+WHERE Product.Color IS NOT NULL;
+DECLARE @sql_command NVARCHAR(MAX);
+SELECT @sql_command = '
+SELECT
+*
+FROM
+(      SELECT
+PRODUCT.Name AS product_name,
+PRODUCT.Color AS product_color,
+PRODUCT.ReorderPoint,
+PRODUCT_INVENTORY.Quantity AS product_quantity
+FROM Production.Product PRODUCT
+LEFT JOIN Production.ProductInventory PRODUCT_INVENTORY
+ON PRODUCT.ProductID = PRODUCT_INVENTORY.ProductID
+) PRODUCT_DATA
+PIVOT
+(      SUM(product_quantity)
+FOR product_color IN (';
+SELECT @sql_command = @sql_command + '[' + color_name + '], '
+FROM @colors;
+SELECT @sql_command = SUBSTRING(@sql_command, 1, LEN(@sql_command) - 1);
+SELECT @sql_command = @sql_command + ' )) PIVOT_DATA
+';
+PRINT @sql_command;
+EXEC sp_executesql @sql_command;
+```
+*Listing 9-6. 使用 Production.Product 中所有颜色值的动态 PIVOT*
+
+执行前的命令字符串文本显示，它与原始硬编码的 `PIVOT` 查询完全相同：
+
+```sql
+SELECT
+*
+FROM
+(      SELECT
+PRODUCT.Name AS product_name,
+PRODUCT.Color AS product_color,
+PRODUCT.ReorderPoint,
+PRODUCT_INVENTORY.Quantity AS product_quantity
+FROM Production.Product PRODUCT
+LEFT JOIN Production.ProductInventory PRODUCT_INVENTORY
+ON PRODUCT.ProductID = PRODUCT_INVENTORY.ProductID
+) PRODUCT_DATA
+PIVOT
+(      SUM(product_quantity)
+FOR product_color IN ([Black], [Blue], [Grey], [Multi], [Red], [Silver], [Silver/Black], [White], [Yellow])) PIVOT_DATA
+```
+
+最终测试是向 `Production.Product` 添加几种颜色，然后再次运行动态 `PIVOT`，看看命令字符串和输出会发生什么变化：
+
+```sql
+UPDATE Production.Product
+SET Product.Color = 'Fuschia'
+WHERE Product.ProductID = 325 -- Decal 1
+UPDATE Production.Product
+SET Product.Color = 'Aquamarine'
+WHERE Product.ProductID = 326 -- Decal 2
+```
+
+这将两个产品更新为使用 `AdventureWorks` 中最初不存在的新颜色：Fuschia 和 Aquamarine。添加这些颜色后，让我们运行动态 `PIVOT` 并查看新的命令字符串：
+
+```sql
+SELECT
+*
+FROM
+(      SELECT
+PRODUCT.Name AS product_name,
+PRODUCT.Color AS product_color,
+PRODUCT.ReorderPoint,
+PRODUCT_INVENTORY.Quantity AS product_quantity
+FROM Production.Product PRODUCT
+LEFT JOIN Production.ProductInventory PRODUCT_INVENTORY
+ON PRODUCT.ProductID = PRODUCT_INVENTORY.ProductID
+) PRODUCT_DATA
+PIVOT
+(      SUM(product_quantity)
+FOR product_color IN ([Aquamarine], [Black], [Blue], [Fuschia], [Grey], [Multi], [Red], [Silver], [Silver/Black], [White], [Yellow]   )) PIVOT_DATA
+```
+
+
+
+请注意，新的颜色现在已出现在 `PIVOT` 语法中。查看图 9-4 中的输出，你可以确认这些列已存在于结果集中，并且根据你所做的更改被正确地填充。
+
+![A371168_1_En_9_Fig4_HTML.jpg](img/A371168_1_En_9_Fig4_HTML.jpg)
+
+图 9-4. 包含两种新颜色的动态 PIVOT
+
+通过这种语法，你可以让任何 `PIVOT` 变为动态的，并从用户输入、T-SQL 查询或 SQL Server 中任何可查询数据的地方提供一个值列表。这减少了将特定列标题硬编码到存储过程中的需要，从而降低了长期的维护成本。你最不想担心的就是每当产品库存中添加了新颜色的自行车时，都要调整 T-SQL 或应用程序代码！
+
+以下的 T-SQL 语句将清除所做的更改，并移除新颜色，将它们恢复为原来的 `NULL`：
+
+```sql
+UPDATE Production.Product
+SET Product.Color = NULL
+WHERE Product.ProductID = 325 -- Decal 1
+UPDATE Production.Product
+SET Product.Color = NULL
+WHERE Product.ProductID = 326 -- Decal 2
+```
+
+### UNPIVOT
+
+`PIVOT` 有一个对应的操作，称为 `UNPIVOT`，它接收一个带列列表的查询，并将其重构为行数据。为了使用熟悉的数据来演示这一点，你将使用清单 9-7 中的 T-SQL 将上一个示例的结果输出到一个表中，供本节使用。
+
+```sql
+SELECT @sql_command = '
+SELECT
+    *
+INTO dbo.Products_By_Color
+FROM
+    (      SELECT
+            PRODUCT.Name AS product_name,
+            PRODUCT.Color AS product_color,
+            PRODUCT.ReorderPoint,
+            PRODUCT_INVENTORY.Quantity AS product_quantity
+        FROM Production.Product PRODUCT
+        LEFT JOIN Production.ProductInventory PRODUCT_INVENTORY
+            ON PRODUCT.ProductID = PRODUCT_INVENTORY.ProductID
+    ) PRODUCT_DATA
+    PIVOT
+    (      SUM(product_quantity)
+        FOR product_color IN (';
+```
+
+清单 9-7. 用于存储数据以进行动态 UNPIVOT 演示的查询
+
+通过在 `SELECT` 语句中添加 `INTO`，上面审查的输出将被存储到表 `dbo.Products_By_Color` 中，该表将用于 `UNPIVOT` 测试。
+
+`UNPIVOT` 的语法与 `PIVOT` 类似，涉及使用类似的列列表，不同之处在于数据将被还原为行，并移除所有列出的附加列。这可以在清单 9-8 中看到。
+
+```sql
+SELECT
+    *
+FROM
+    (SELECT
+        *
+    FROM dbo.Products_By_Color) AS PRODUCTS_BY_COLOR
+UNPIVOT
+    (product_quantity FOR Color IN
+        ([Black], [Blue], [Grey], [Multi], [Red], [Silver], [Silver/Black], [White], [Yellow])
+    ) AS UNPIVOT_DATA;
+```
+
+清单 9-8. 使用 UNPIVOT 将列标题还原为行数据
+
+图 9-5 显示了此语句输出的一个子集。
+
+![A371168_1_En_9_Fig5_HTML.jpg](img/A371168_1_En_9_Fig5_HTML.jpg)
+
+图 9-5. 清单 9-8 中 UNPIVOT 语句的输出
+
+上一节引入的所有新列都已被移除，它们对应的名称被插入到新的 `Color` 列中。`UNPIVOT` 的语法涉及三个额外的语法点，值得详细描述：
+
+*   一个用于存放反透视的数量数据的新列。在本例中，我们将新列命名为 `product_quantity`，但可以使用任何名称。使用 `UNPIVOT` 时，无需提供聚合函数，因为任何重复值都将成为结果集中的不同行。
+*   必须提供将包含列名的新列。在此示例中，我们将其命名为 `Color`。
+*   必须提供一个列列表，类似于编写 `PIVOT` 语句时。此列表中的每个列都将包含在结果集的行中。任何省略的列名都不会出现在结果集中。
+
+此查询的结果与原始数据不同。必须强调的是，`UNPIVOT` 并不简单地是 `PIVOT` 的逆操作，先后应用两者很少会产生完全相同的数据集。在前面的示例中，这些数据与你在本章开始时拥有的数据有两个重要区别。
+
+首先，`NULL` 值已被消除。任何未定义颜色的产品都从结果集中被剔除。结果显示了所有颜色在列表中存在且数量已定义的产品-颜色组合。第二个区别涉及数量本身。当你对一组数据应用 `PIVOT` 时，你提供了一个聚合来处理具有相同值的多行。一旦数量被求和，就无法“取消求和”。`UNPIVOT` 的结果包含产品数量总计，这些总计代表了 `production.Product` 原始数据中的多个产品。既然你已经理解了 `PIVOT` 和 `UNPIVOT` 之间的重要区别，并了解了每种操作处理数据的方式，你就可以着手让 `UNPIVOT` 变得更加灵活。
+
+
+
+### SQL PIVOT 和 UNPIVOT 高级用法
+
+#### 动态 UNPIVOT
+
+和之前一样，你希望能够从动态的列名列表应用 `UNPIVOT`，而不是被迫在代码中提前提供值。这使你可以随意进行数据或架构更改，而无需每次都为此处进行更改。第一个挑战是根据表中的列组（而非行数据）生成颜色列表。要获取所有列，有几个可用选项。第一种是回到 `Production.Product` 并使用该表中的颜色为此查询提供数据，如清单 9-9 所示。
+
+```sql
+DECLARE @colors TABLE
+(color_name VARCHAR(25));
+INSERT INTO @colors
+(color_name)
+SELECT DISTINCT
+Product.Color
+FROM Production.Product
+WHERE Product.Color IS NOT NULL;
+DECLARE @sql_command NVARCHAR(MAX);
+SELECT @sql_command = '
+SELECT
+*
+FROM
+(SELECT
+*
+FROM dbo.Products_By_Color) AS PRODUCTS_BY_COLOR
+UNPIVOT
+(product_quantity FOR Color IN
+(';
+SELECT @sql_command = @sql_command + '[' + color_name + '], '
+FROM @colors;
+SELECT @sql_command = SUBSTRING(@sql_command, 1, LEN(@sql_command) - 1);
+SELECT @sql_command = @sql_command + ' )) AS UNPIVOT_DATA;
+';
+EXEC sp_executesql @sql_command;
+```
+
+清单 9-9.
+使用原始行数据提供颜色名称的动态 UNPIVOT
+
+这种方法有效，并将提供与之前相同的输出，但有一个明显的限制，即之前的颜色列表可能不适用于这里。如果确实不适用，那么你需要从表架构本身收集列名数据，并用它来驱动 `UNPIVOT`。这可以通过查询系统视图 `sys.tables` 和 `sys.columns` 来实现，它们提供了有关表和列的结构与名称的信息。还有其他系统对象可以提供类似数据，例如 `INFORMATION_SCHEMA.COLUMNS`，但对于此处的示例，我们将坚持使用前述的两个视图，它们引用了 `sys.objects` 中的数据。这可以在清单 9-10 中看到。
+
+```sql
+DECLARE @colors TABLE
+(color_name VARCHAR(25));
+INSERT INTO @colors
+(color_name)
+SELECT
+columns.name
+FROM sys.tables
+INNER JOIN sys.columns
+ON columns.object_id = tables.object_id
+WHERE tables.name = 'Products_By_Color'
+AND columns.name NOT IN ('product_name', 'ReorderPoint');
+DECLARE @sql_command NVARCHAR(MAX);
+SELECT @sql_command = '
+SELECT
+*
+FROM
+(SELECT
+*
+FROM dbo.Products_By_Color) AS PRODUCTS_BY_COLOR
+UNPIVOT
+(product_quantity FOR Color IN
+(';
+SELECT @sql_command = @sql_command + '[' + color_name + '], '
+FROM @colors;
+SELECT @sql_command = SUBSTRING(@sql_command, 1, LEN(@sql_command) - 1);
+SELECT @sql_command = @sql_command + ' )) AS UNPIVOT_DATA;
+';
+EXEC sp_executesql @sql_command;
+```
+
+清单 9-10.
+使用架构元数据提供颜色名称的动态 UNPIVOT
+
+此示例中的一切都与上一个相同，唯一的区别在于颜色数据的收集，它使用了由 `sys.columns` 提供的表 `dbo.Products_By_Color` 的列名。请注意，你需要在此处提供一个例外列表，其中包含你不想 `UNPIVOT` 的任何列。在此示例中，有两个额外的列不是颜色，并且你不想将它们转换为行数据：`product_name` 和 `ReorderPoint`。如果忘记这些例外，你可能会收到意外的输出或类似以下的错误消息：
+
+```
+Msg 8167, Level 16, State 1, Line 329
+The type of column "ReorderPoint" conflicts with the type of other columns specified in the UNPIVOT list.
+```
+
+在这种情况下，我们将不同数据类型的列包含在了 `UNPIVOT` 中。虽然颜色下列出的数量都是 `INT` 类型，但 `ReorderPoint` 是 `SMALLINT`，而 `product_name` 是 `NVARCHAR(50)`。例外可以像上面那样硬编码，也可以作为变量传递到运行 `UNPIVOT` TSQL 的任何地方。
+
+#### 动态 PIVOT
+
+##### 按季度分组
+
+到目前为止演示的功能非常适合教授 `PIVOT` 和 `UNPIVOT` 的基础知识，以及将动态 SQL 集成到它们的用法中。这些操作符在现实世界中一个非常常见的用途是生成按月、季度或年分布在列标题中的会计数据。例如，如果你希望返回按季度分列标题的销售数据该怎么办？你可以将 `PIVOT` 集成到公共表表达式中，这允许你设置财务数据，然后你可以将其转换为列式数据以用于报告或进一步分析。此示例可以在清单 9-11 中看到。
+
+```sql
+WITH CTE_SALES AS (
+SELECT
+DATEPART(QUARTER, OrderDate) AS order_quarter,
+DATEPART(YEAR, OrderDate) AS order_year,
+TotalDue
+FROM Sales.SalesOrderHeader)
+SELECT
+*
+FROM
+(      SELECT
+*
+FROM CTE_SALES
+) PRODUCT_DATA
+PIVOT
+(      SUM(TotalDue)
+FOR order_quarter IN ([1], [2], [3], [4])
+) PIVOT_DATA
+ORDER BY order_year ASC;
+```
+
+清单 9-11.
+使用 PIVOT 按季度对销售数据进行分组
+
+清单 9-11 中查询的结果可以在图 9-6 中的小结果集中看到。
+
+![A371168_1_En_9_Fig6_HTML.jpg](img/A371168_1_En_9_Fig6_HTML.jpg)
+
+图 9-6.
+使用 PIVOT 获取按季度划分的销售额
+
+每个季度都有自己的列，销售总额聚合在下面的每一行中。`NULL` 的实例表示那些特定时间段内没有数据的情况。你也可以编写 `PIVOT` 来返回包括年份在内的所有季度作为列标题，如清单 9-12 所示。
+
+##### 按季度和年份分组
+
+```sql
+WITH CTE_SALES AS (
+SELECT
+'Totals' AS Totals,
+'Q' + CAST(DATEPART(QUARTER, OrderDate) AS VARCHAR(1)) + '-' +
+CAST(DATEPART(YEAR, OrderDate) AS VARCHAR(4)) AS quarter_and_year,
+TotalDue
+FROM Sales.SalesOrderHeader)
+SELECT
+*
+FROM
+(      SELECT
+*
+FROM CTE_SALES
+) PRODUCT_DATA
+PIVOT
+(      SUM(TotalDue)
+FOR quarter_and_year IN ([Q2-2011], [Q3-2011], [Q4-2011], [Q1-2012],[Q2-2012], [Q3-2012], [Q4-2012],
+[Q1-2013],[Q2-2013], [Q3-2013], [Q4-2013], [Q1-2014], [Q2-2014])
+) PIVOT_DATA
+```
+
+清单 9-12.
+使用 PIVOT 在单个结果行中按季度和年份对销售数据进行分组
+
+通过将季度和年份组合成一个字符串，你可以将数据压缩为单行，每季度一列，包括年份。包含 `Totals` 列是为了让你有某种行标题，但对于成功检索结果集来说并非必需。
+
+此语法引入了你之前遇到的相同问题，即你被迫将季度列表硬编码到 TSQL 中。如果添加新数据，则查询将不再有效。动态 SQL 可以再次拯救你，它允许你提前声明一个季度列表，然后将其集成到命令字符串中，该字符串将使用 `PIVOT` 来适当地处理源数据，而不管日期如何。这在清单 9-13 中展示。
+
+##### 动态季度列表
+
+```sql
+DECLARE @quarters TABLE
+(quarter_and_year NVARCHAR(7));
+INSERT INTO @quarters
+(quarter_and_year)
+SELECT DISTINCT
+'Q' + CAST(DATEPART(QUARTER, OrderDate) AS VARCHAR(1)) + '-' +
+CAST(DATEPART(YEAR, OrderDate) AS VARCHAR(4))
+FROM Sales.SalesOrderHeader
+DECLARE @sql_command NVARCHAR(MAX);
+SELECT @sql_command = '
+WITH CTE_SALES AS (
+SELECT
+''Totals'' AS Totals,
+''Q'' + CAST(DATEPART(QUARTER, OrderDate) AS VARCHAR(1)) + ''-'' +
+CAST(DATEPART(YEAR, OrderDate) AS VARCHAR(4)) AS quarter_and_year,
+TotalDue
+FROM Sales.SalesOrderHeader)
+SELECT
+*
+FROM
+(      SELECT
+*
+FROM CTE_SALES
+) PRODUCT_DATA
+PIVOT
+(      SUM(TotalDue)
+FOR quarter_and_year IN ('
+SELECT @sql_command = @sql_command + '[' + quarter_and_year + '], '
+FROM @quarters;
+SELECT @sql_command = SUBSTRING(@sql_command, 1, LEN(@sql_command) - 1);
+SELECT @sql_command = @sql_command + ' )) PIVOT_DATA
+';
+PRINT @sql_command;
+EXEC sp_executesql @sql_command;
+```
+
+清单 9-13.
+用于返回任意季度数财务数据的动态 PIVOT
+
+
+#### 多个 PIVOT 操作符
+
+下一个示例展示了 `PIVOT` 更高级的用法。之前你只对单列（产品颜色或销售季度）使用 `PIVOT`，但实际上可以将此操作符应用于具有不同值的多个列。假设你想按颜色和安全库存级别对产品数据进行汇总分析？这可以通过单个查询完成，如代码清单 9-14 所示。
+
+```sql
+SELECT
+    *
+FROM
+    (
+        SELECT
+            PRODUCT.Name AS product_name,
+            PRODUCT.Color AS product_color,
+            PRODUCT.ReorderPoint,
+            PRODUCT_INVENTORY.Quantity AS product_quantity,
+            PRODUCT.SafetyStockLevel
+        FROM Production.Product PRODUCT
+        LEFT JOIN Production.ProductInventory PRODUCT_INVENTORY
+            ON PRODUCT.ProductID = PRODUCT_INVENTORY.ProductID
+    ) PRODUCT_DATA
+PIVOT
+    (
+        SUM(product_quantity)
+        FOR product_color IN ([Black], [Blue], [Grey], [Multi], [Red], [Silver], [Silver/Black], [White], [Yellow])
+    ) PIVOT_DATA_COLOR
+PIVOT
+    (
+        COUNT(SafetyStockLevel)
+        FOR SafetyStockLevel IN ([4], [60], [100], [500], [800], [1000])
+    ) PIVOT_DATA_LEVEL
+```
+
+代码清单 9-14. 在单条 T-SQL 语句中使用多个 PIVOT 操作符
+
+代码清单 9-14 中的查询将返回如图 9-7 所示的结果。
+
+![A371168_1_En_9_Fig7_HTML.jpg](img/A371168_1_En_9_Fig7_HTML.jpg)
+
+图 9-7. 使用两个 PIVOT 操作符进行数据聚合的查询结果
+
+结果集中添加了一组新的列，表示特定的 `SafetyStockLevel` 值与列表中提供的值匹配的次数。如果你想在单个查询中并排报告多个指标，而不是连接多个结果集，这会是一个非常方便的技巧。
+
+##### 结合动态 SQL 使用多个 PIVOT
+
+你可以像之前一样实现动态 SQL，以确保两个指标的所有列表值都被正确计算。这样做时，除了 `Color` 的表变量外，你还需要为 `SafetyStockLevel` 值包含一个单独的表变量，如代码清单 9-15 所示。
+
+```sql
+DECLARE @colors TABLE
+    (color_name VARCHAR(25));
+INSERT INTO @colors
+    (color_name)
+SELECT DISTINCT
+    Product.Color
+FROM Production.Product
+WHERE Product.Color IS NOT NULL;
+
+DECLARE @stock_levels TABLE
+    (safety_stock_level SMALLINT);
+INSERT INTO @stock_levels
+SELECT DISTINCT
+    Product.SafetyStockLevel
+FROM Production.Product;
+
+DECLARE @sql_command NVARCHAR(MAX);
+SELECT @sql_command = '
+SELECT
+    *
+FROM
+    (
+        SELECT
+            PRODUCT.Name AS product_name,
+            PRODUCT.Color AS product_color,
+            PRODUCT.ReorderPoint,
+            PRODUCT_INVENTORY.Quantity AS product_quantity,
+            PRODUCT.SafetyStockLevel
+        FROM Production.Product PRODUCT
+        LEFT JOIN Production.ProductInventory PRODUCT_INVENTORY
+            ON PRODUCT.ProductID = PRODUCT_INVENTORY.ProductID
+    ) PRODUCT_DATA
+PIVOT
+    (
+        SUM(product_quantity)
+        FOR product_color IN (';
+
+SELECT @sql_command = @sql_command + '[' + color_name + '], '
+FROM @colors;
+
+SELECT @sql_command = SUBSTRING(@sql_command, 1, LEN(@sql_command) - 1);
+
+SELECT @sql_command = @sql_command + ' )) PIVOT_DATA_COLOR
+PIVOT
+    (
+        COUNT(SafetyStockLevel)
+        FOR SafetyStockLevel IN (';
+
+SELECT @sql_command = @sql_command + '[' + CAST(safety_stock_level AS NVARCHAR) + '], '
+FROM @stock_levels;
+
+SELECT @sql_command = SUBSTRING(@sql_command, 1, LEN(@sql_command) - 1);
+
+SELECT @sql_command = @sql_command + ' )) PIVOT_DATA_LEVEL
+';
+
+PRINT @sql_command;
+EXEC sp_executesql @sql_command;
+```
+
+代码清单 9-15. 使用动态 SQL 结合多个 PIVOT 操作符
+
+结果集与之前完全一致。你可以通过查看命令字符串文本来验证是否出错：
+
+```sql
+SELECT
+    *
+FROM
+    (
+        SELECT
+            PRODUCT.Name AS product_name,
+            PRODUCT.Color AS product_color,
+            PRODUCT.ReorderPoint,
+            PRODUCT_INVENTORY.Quantity AS product_quantity,
+            PRODUCT.SafetyStockLevel
+        FROM Production.Product PRODUCT
+        LEFT JOIN Production.ProductInventory PRODUCT_INVENTORY
+            ON PRODUCT.ProductID = PRODUCT_INVENTORY.ProductID
+    ) PRODUCT_DATA
+PIVOT
+    (
+        SUM(product_quantity)
+        FOR product_color IN ([Black], [Blue], [Grey], [Multi], [Red], [Silver], [Silver/Black], [White], [Yellow])
+    ) PIVOT_DATA_COLOR
+PIVOT
+    (
+        COUNT(SafetyStockLevel)
+        FOR SafetyStockLevel IN ([4], [60], [100], [500], [800], [1000])
+    ) PIVOT_DATA_LEVEL
+```
+
+将多个 `PIVOT` 操作符与动态 SQL 结合使用，在根据多列内容生成列式数据时提供了极大的灵活性。通过在单个查询中生成结果集，你能确保关系的完整性，并避免在将数据输出到中间位置时出错。其语法与单个 `PIVOT` 完全相同，并且随着你添加更多实例，复杂度并不会显著增加。
+
+### 多个 UNPIVOT 操作符
+
+作为本章的最后一个示例，你将基于目前的工作，对结果集执行 `UNPIVOT`。这将通过使用多个 `UNPIVOT` 操作符来完成。请记住，此操作的结果集不会与上一个示例开始时的原始输入数据相同。虽然 `UNPIVOT` 的结果将是有意义的，但重要的是要记住，对数据集应用 `PIVOT` 和 `UNPIVOT` 不太可能返回与该数据等价的结果。粒度信息常常会丢失且无法复原，无论你的 TSQL 技巧多么高超！
+
+第一步是将上一个示例中的数据存储到一个表中，以便在 `UNPIVOT` 中重用：
+
+```
+SELECT @sql_command = '
+SELECT
+*
+INTO dbo.Products_By_Color_and_Stock_Level
+FROM
+(      SELECT
+```
+
+创建了表 `Products_By_Color_and_Stock_Level` 用于存储透视后的输出，在本章的剩余部分你都将使用它。首次尝试 `UNPIVOT` 如代码清单 9-16 所示。
+
+```
+SELECT
+*
+FROM
+(SELECT
+*
+FROM dbo.Products_By_Color_and_Stock_Level) AS PRODUCTS_BY_COLOR_AND_STOCK_LEVEL
+UNPIVOT
+(product_quantity FOR Color IN
+([Black], [Blue], [Grey], [Multi], [Red], [Silver], [Silver/Black], [White], [Yellow])
+) AS UNPIVOT_DATA_COLOR
+UNPIVOT
+(safety_stock_level FOR SafetyStockLevel IN
+([4], [60], [100], [500], [800], [1000])
+) AS UNPIVOT_DATA_STOCK_LEVEL;
+```
+
+代码清单 9-16. 首次尝试在单个语句中使用两个 UNPIVOT 操作符
+
+代码清单 9-16 中的查询返回了结果，但这些结果有点可疑，如图 9-8 中的结果集所示。
+
+![A371168_1_En_9_Fig8_HTML.jpg](img/A371168_1_En_9_Fig8_HTML.jpg)
+
+图 9-8. 使用两个 UNPIVOT 操作符但构造不当的查询结果
+
+请注意，每个产品返回了六行。由于安全库存水平被定义为非 `NULL` 的计数，`UNPIVOT` 操作将所有值视为有效值，并为每个值返回行。理想情况下，你希望将颜色和库存水平的列名都透视为行值，但假设所有库存水平的零值都被省略。有多种方法可以解决这个问题，你将使用额外的 `WHERE` 子句完全移除零值，如代码清单 9-17 所示。
+
+```
+SELECT
+product_name,
+ReorderPoint,
+product_quantity,
+Color,
+SafetyStockLevel
+FROM
+(SELECT
+*
+FROM dbo.Products_By_Color_and_Stock_Level) AS PRODUCTS_BY_COLOR_AND_STOCK_LEVEL
+UNPIVOT
+(product_quantity FOR Color IN
+([Black], [Blue], [Grey], [Multi], [Red], [Silver], [Silver/Black], [White], [Yellow])
+) AS UNPIVOT_DATA_COLOR
+UNPIVOT
+(safety_stock_level FOR SafetyStockLevel IN
+([4], [60], [100], [500], [800], [1000])
+) AS UNPIVOT_DATA_STOCK_LEVEL
+WHERE safety_stock_level <> 0;
+```
+
+代码清单 9-17. 移除了零值的 UNPIVOT 示例
+
+通过过滤 `safety_stock_level <> 0`，你移除了零值。此外，你显式地为输出集选择了列，使得 `safety_stock_level` 不被包含在内，因为它对结果集不再重要（结果将只包含一）。现在结果看起来更干净，更接近你最初预期的样子，如图 9-9 所示。
+
+![A371168_1_En_9_Fig9_HTML.jpg](img/A371168_1_En_9_Fig9_HTML.jpg)
+
+图 9-9. 代码清单 9-17 中修正后的 UNPIVOT 查询结果
+
+现在每一列都填充了有意义的值，零值和额外的占位符 `safety_stock_level` 列已被移除。
+
+现在你已经有了一个使用多个 `UNPIVOT` 操作符的有效查询，你可以对其应用动态 SQL，以便返回在 `Products_By_Color_and_Stock_Level` 表中找到的任何 `Color` 或 `SafetyStockLevel` 值的结果。这个有趣的查询可以在代码清单 9-18 中找到。
+
+```
+DECLARE @colors TABLE
+(color_name VARCHAR(25));
+INSERT INTO @colors
+(color_name)
+SELECT
+columns.name
+FROM sys.tables
+INNER JOIN sys.columns
+ON columns.object_id = tables.object_id
+WHERE tables.name = 'Products_By_Color_and_Stock_Level'
+AND columns.name NOT IN ('product_name', 'ReorderPoint')
+AND ISNUMERIC(columns.name) = 0;
+DECLARE @stock_levels TABLE
+(safety_stock_level SMALLINT);
+INSERT INTO @stock_levels
+SELECT
+columns.name
+FROM sys.tables
+INNER JOIN sys.columns
+ON columns.object_id = tables.object_id
+WHERE tables.name = 'Products_By_Color_and_Stock_Level'
+AND columns.name NOT IN ('product_name', 'ReorderPoint')
+AND ISNUMERIC(columns.name) = 1;
+DECLARE @sql_command NVARCHAR(MAX);
+SELECT @sql_command = '
+SELECT
+product_name,
+ReorderPoint,
+product_quantity,
+Color,
+SafetyStockLevel
+FROM
+(SELECT
+*
+FROM dbo.Products_By_Color_and_Stock_Level) AS PRODUCTS_BY_COLOR_AND_STOCK_LEVEL
+UNPIVOT
+(product_quantity FOR Color IN
+(';
+SELECT @sql_command = @sql_command + '[' + color_name + '], '
+FROM @colors;
+SELECT @sql_command = SUBSTRING(@sql_command, 1, LEN(@sql_command) - 1);
+SELECT @sql_command = @sql_command + ' )) AS UNPIVOT_DATA_COLOR
+UNPIVOT
+(safety_stock_level FOR SafetyStockLevel IN
+('
+SELECT @sql_command = @sql_command + '[' + CAST(safety_stock_level AS NVARCHAR) + '], '
+FROM @stock_levels;
+SELECT @sql_command = SUBSTRING(@sql_command, 1, LEN(@sql_command) - 1);
+SELECT @sql_command = @sql_command + ' )) AS UNPIVOT_DATA_STOCK_LEVEL
+WHERE safety_stock_level <> 0;';
+PRINT @sql_command;
+EXEC sp_executesql @sql_command;
+```
+
+代码清单 9-18. 与多个 UNPIVOT 操作符结合使用的动态 SQL
+
+这里的第一个挑战是将列名解析到每个表变量中以供后续使用。在这种情况下，你很幸运，因为颜色都是字符串数据，而库存水平都是数字。通过检查列名是否为数字，你可以将列名拆分为两个有意义的列表。如果列名不易分离，你可以将初始数据分离到多个临时表中，而不是全部放入 `Products_By_Color_and_Stock_Level`。
+
+为了避免增加更多复杂性，划分列的一个可能更好的方法是为每列标记一个有意义的名称。对于此示例，颜色可以用 `Color:` 作为前缀，库存水平用 `StockLevel:` 作为前缀。当你为每个表变量的可能值筛选列名时，可以轻松检查这些前缀。由于你确定了这些前缀的结构，因此可以确保它们是唯一、有意义的，并允许你将数据维护在单个临时表中。
+
+这样的 `UNPIVOT` 操作的命令字符串将如下所示：
+
+```
+SELECT
+product_name,
+ReorderPoint,
+product_quantity,
+Color,
+SafetyStockLevel
+FROM
+(SELECT
+*
+FROM dbo.Products_By_Color_and_Stock_Level) AS PRODUCTS_BY_COLOR_AND_STOCK_LEVEL
+UNPIVOT
+(product_quantity FOR Color IN
+([Black], [Blue], [Grey], [Multi], [Red], [Silver], [Silver/Black],
+[White], [Yellow])) AS UNPIVOT_DATA_COLOR
+UNPIVOT
+(safety_stock_level FOR SafetyStockLevel IN
+([4], [60], [100], [500], [800], [1000])) AS UNPIVOT_DATA_STOCK_LEVEL
+WHERE safety_stock_level <> 0;
+```
+
+这段 TSQL（除了细微的格式差异）与你未使用动态 SQL 时测试的语句完全相同。结果集也与之前返回的完全相同。请注意生成结果的行数，如图 9-10 所示。
+
+![A371168_1_En_9_Fig10_HTML.jpg](img/A371168_1_En_9_Fig10_HTML.jpg)
+
+图 9-10. 代码清单 9-18 中 UNPIVOT 查询的行数
+
+
+总共返回了 184 行数据，这远小于你最初处理的数据集大小。原始数据集取自 `Production.Product` 和 `Production.ProductInventory` 表，包含 1,141 行数据。`PIVOT` 操作的结果将其减少到 504 行。随着每次操作，由于对结果进行了聚合，数据集的粒度会降低。因此，需要记住的是，即使 `PIVOT` 和 `UNPIVOT` 交替使用，通常也无法将数据集恢复为其原始形式。因此，请将这些转换操作视为高效获取报表数据的方法，而非用于重构或验证数据。虽然有可能构建一系列 `PIVOT` 和 `UNPIVOT` 操作，将数据逆向转换为其原始结构和内容，但这不太可能是一个有用的练习。
+
+利用多个 `UNPIVOT` 操作，可以将复杂的报表数据集回退为汇总数据，以便用于进一步的报表，或者作为一种将列式数据输入事务系统而非行数据的方式。使用动态 SQL 可以高效地考虑所有可能的列值，即使这些列的集合会随时间而变化！
+
+### 结论
+
+`PIVOT` 和 `UNPIVOT` 操作符常被 DBA 和开发者视为高级或难用的操作符，应尽可能避免使用。然而，针对所提出的用例，它们能够以原子化和基于集合的方式快速提供大量数据。作为性能上的额外好处，无需实现循环、游标或其他迭代解决方案，这些方案在处理较大数据量时可能运行缓慢或耗费资源。
+
+这些操作符面临的最大挑战是，必须在运行时之前明确提供列列表。硬编码这些值会大大增加相关的技术债务，因为每当相关应用程序或数据库发生更改时，你都需要跟踪并更新这些值。这种维护成本很高，并且为软件 Bug 的显现提供了机会，而这些 Bug 很难避免且难以诊断。
+
+将动态 SQL 与 `PIVOT` 或 `UNPIVOT` 结合使用，允许开发者根据选择的任何标准在运行时生成列列表。只要此逻辑是相关的，当添加新值或删除旧值时，就无需调整存储过程或代码。
+
+# 10. 解决常见问题
+
+动态 SQL 提供了一个独特的机会，可以快速解决常见的数据库问题或限制。通常，你会遇到令人沮丧的情况，即你管理着不同的数据库、架构或设置，却没有简单的方法对混合的对象集合进行更改。本章试图向你展示如何使用动态 SQL 来解决此类复杂情况。此外，本章还提供了适用于任何类似数据库问题的一般准则和技术。
+
+### 排序规则冲突
+
+#### 问题描述
+
+数据库排序规则通常被用作在 SQL Server 中管理多种语言或字符集的一种有意义的方式。西班牙语中的字符排序顺序与英语或日语不同，对其中任何一种语言使用英语排序规则都可能导致字符串排序不正确。实际上，SQL Server 会阻止对具有不同排序规则的字符串数据进行直接赋值或比较。如果你正在处理多种排序规则的数据，则必须考虑这些差异，以确保根据正确的业务逻辑对其进行操作。
+
+为了测试排序规则，你将创建一个新的数据库和表，并使用来自 `AdventureWorks` 的数据进行填充，如代码清单 10-1 所示。
+
+```sql
+IF EXISTS (SELECT * FROM sys.databases WHERE name = 'Collation_Test')
+BEGIN
+DROP DATABASE Collation_Test;
+END
+GO
+CREATE DATABASE Collation_Test COLLATE Traditional_Spanish_CI_AS;
+GO
+USE Collation_Test;
+GO
+CREATE TABLE dbo.Spanish_Employees
+(       BusinessEntityID INT NOT NULL,
+NationalIDNumber NVARCHAR(15) NOT NULL,
+LoginID NVARCHAR(256) NOT NULL,
+OrganizationNode HIERARCHYID NULL,
+OrganizationLevel SMALLINT NULL,
+JobTitle NVARCHAR(50) NOT NULL,
+BirthDate DATE NOT NULL,
+MaritalStatus NCHAR(1) NOT NULL,
+Gender NCHAR(1) NOT NULL,
+HireDate DATE NOT NULL,
+SalariedFlag BIT NOT NULL,
+VacationHours SMALLINT NOT NULL,
+SickLeaveHours SMALLINT NOT NULL,
+CurrentFlag BIT NOT NULL,
+rowguid UNIQUEIDENTIFIER ROWGUIDCOL  NOT NULL,
+ModifiedDate DATETIME NOT NULL,);
+GO
+INSERT INTO Collation_Test.dbo.Spanish_Employees
+SELECT
+*
+FROM AdventureWorks2014.HumanResources.Employee;
+```
+代码清单 10-1. 为排序规则测试构建测试数据库
+
+注意，当创建数据库 `Collation_Test` 时，它被显式指定了排序规则 `Traditional_Spanish_CI_AS`。默认情况下，该数据库中的所有字符串都将以此新的排序规则存储和排序，而不是使用实例默认值或其他数据库上的设置。在我的 SQL Server 上，默认排序规则是 `SQL_Latin1_General_CP1_CI_AS`。这可以在 GUI 的服务器属性中验证，如图 10-1 所示。
+
+![A371168_1_En_10_Fig1_HTML.jpg](img/A371168_1_En_10_Fig1_HTML.jpg)
+图 10-1. SQL Server 属性窗口中显示的默认服务器排序规则
+
+在“服务器排序规则”选项下，你可以找到服务器的默认值。这是在任何未提供其他排序规则的新创建数据库上将使用的排序规则。这也可以使用 TSQL 进行验证：
+
+```sql
+SELECT SERVERPROPERTY('Collation') AS ServerDefaultCollation;
+```
+
+得到的排序规则与 GUI 中显示的相同，可以在图 10-2 中验证。
+
+![A371168_1_En_10_Fig2_HTML.jpg](img/A371168_1_En_10_Fig2_HTML.jpg)
+图 10-2. 我测试服务器上的默认排序规则
+
+为了说明不同排序规则之间的差异之一，我们将查看 `HumanResources.Employee` 表，重点关注原始表和使用传统西班牙语排序规则新创建表中的 `JobTitle` 列。代码清单 10-2 显示了这两个查询。
+
+```sql
+SELECT
+*
+FROM AdventureWorks2014.HumanResources.Employee
+WHERE JobTitle LIKE 'C%'
+ORDER BY JobTitle;
+SELECT
+*
+FROM Collation_Test.dbo.Spanish_Employees
+WHERE JobTitle LIKE 'C%'
+ORDER BY JobTitle;
+```
+代码清单 10-2. 展示两种不同排序规则差异的两个测试查询
+
+查询结果有点不寻常，表明每种排序规则之间存在显著差异，如图 10-3 所示。
+
+![A371168_1_En_10_Fig3_HTML.jpg](img/A371168_1_En_10_Fig3_HTML.jpg)
+图 10-3. 不同的排序规则导致相同的查询给出不同的结果
+
+
+
+### 排序规则与动态 SQL 解决方案
+
+第二个结果集只返回了两行数据，而原始的 `AdventureWorks` 表中还包含了另外两名高管。为什么结果会不同？事实证明，在传统西班牙语排序规则中，字母“CH”被视为一个独立的字母。你可以像这样查看那些职位名称以这些字符开头的数据行：
+
+```sql
+SELECT
+*
+FROM Collation_Test.dbo.Spanish_Employees
+WHERE JobTitle LIKE 'CH%'
+ORDER BY JobTitle;
+```
+
+此查询返回的结果如图 10-4 所示。
+
+![A371168_1_En_10_Fig4_HTML.jpg](img/A371168_1_En_10_Fig4_HTML.jpg)
+
+图 10-4.
+西班牙语排序规则中“C”和“CH”的区别说明
+
+由于语言差异，筛选条件 `C%` 不会包含由筛选条件 `CH%` 返回的结果。此外，这些字母的排序方式也与拉丁语排序规则下的通常情况不同：
+
+```sql
+SELECT
+*
+FROM Collation_Test.dbo.Spanish_Employees
+WHERE JobTitle BETWEEN 'C' AND 'D'
+ORDER BY JobTitle;
+```
+
+此查询返回了所有四个结果，如图 10-5 所示。
+
+![A371168_1_En_10_Fig5_HTML.jpg](img/A371168_1_En_10_Fig5_HTML.jpg)
+
+图 10-5.
+传统西班牙语排序规则中的排序差异
+
+在这种排序规则下，“C”在字母表中排在“CH”之前。这看起来可能是个微小的差异，但对于进行网络搜索的用户来说，这些结果很容易导致错误的假设。例如，假设用户如上所示进行搜索，返回了两个结果，但她可能从未意识到表中还有另外两名员工可能是她要找的。
+
+可以如清单 10-3 所示，在任何结果集上强制应用排序规则。
+
+```sql
+SELECT
+*
+FROM Collation_Test.dbo.Spanish_Employees
+WHERE JobTitle COLLATE SQL_Latin1_General_CP1_CI_AS LIKE 'C%'
+ORDER BY JobTitle COLLATE SQL_Latin1_General_CP1_CI_AS;
+SELECT
+*
+FROM Collation_Test.dbo.Spanish_Employees
+WHERE JobTitle COLLATE SQL_Latin1_General_CP1_CI_AS BETWEEN 'C' AND 'D'
+ORDER BY JobTitle COLLATE SQL_Latin1_General_CP1_CI_AS;
+```
+清单 10-3.
+在筛选和排序中对结果集强制应用特定排序规则
+
+这些查询的结果返回了通常期望的数据，如图 10-6 所示。
+
+![A371168_1_En_10_Fig6_HTML.jpg](img/A371168_1_En_10_Fig6_HTML.jpg)
+
+图 10-6.
+强制应用排序规则以返回所需结果
+
+最后一个排序规则冲突的例子发生在你尝试直接比较来自任何一种排序规则与另一种排序规则的列时：
+
+```sql
+SELECT
+*
+FROM Collation_Test.dbo.Spanish_Employees
+INNER JOIN AdventureWorks2014.HumanResources.Employee
+ON Spanish_Employees.LoginID = Employee.LoginID;
+```
+
+此查询将导致错误：
+
+```
+Msg 468, Level 16, State 9, Line 94
+Cannot resolve the collation conflict between "SQL_Latin1_General_CP1_CI_AS" and "Traditional_Spanish_CI_AS" in the equal to operation.
+```
+
+为了使此查询生效，你必须强制将一个联接列的排序规则转换为与另一个相匹配。转换哪种排序规则取决于具体的用例场景，但如果不进行更改，你将无法对来自任一数据集的结果进行联接、筛选或比较：
+
+```sql
+SELECT
+*
+FROM Collation_Test.dbo.Spanish_Employees
+INNER JOIN AdventureWorks2014.HumanResources.Employee
+ON Spanish_Employees.LoginID = Employee.LoginID COLLATE Traditional_Spanish_CI_AS
+```
+
+通过强制在联接谓词上应用排序规则，你可以确保每一列都能与另一列进行比较，并且结果能够正确返回。这是针对特定场景的具体解决方案，但我们可以通过使用动态 SQL 来解决此类问题的所有变体，从而做得更好！
+
+#### 解决方案
+
+当确切知道运行查询时会遇到什么排序规则时，强制应用特定排序规则是有效的。如果你正在处理许多不同的排序规则，并且直到运行时才知道要按哪种排序规则排序，该怎么办？如果你管理着许多服务器和数据库，每个都有不同的默认排序规则，那么在运行时转换排序规则时就无法做出假设。此外，将所有列强制转换为特定排序规则可能会以用户或应用程序无法接受的方式影响输出。
+
+动态 SQL 可以帮助你将一个六页长的问题变成一个一页长的解决方案！通过像上面那样返回服务器或数据库的默认排序规则，你总是能够以正确的排序规则返回或比较数据。清单 10-4 中的脚本将导致排序规则冲突错误。
+
+```sql
+USE AdventureWorks2014
+GO
+DECLARE @temp_employees TABLE
+(       id INT NOT NULL IDENTITY(1,1),
+LoginID NVARCHAR(256) NOT NULL        );
+INSERT INTO @temp_employees
+(LoginID)
+SELECT TOP 50
+LoginID
+FROM AdventureWorks2014.HumanResources.Employee
+ORDER BY Employee.JobTitle;
+SELECT
+Spanish_Employees.NationalIDNumber,
+Spanish_Employees.LoginID,
+Spanish_Employees.JobTitle,
+Spanish_Employees.BirthDate,
+Spanish_Employees.HireDate
+FROM Collation_Test.dbo.Spanish_Employees
+WHERE Spanish_Employees.LoginID IN
+(SELECT LoginID FROM @temp_employees);
+```
+清单 10-4.
+使用表变量导致的排序规则冲突示例
+
+临时表和表变量是使用 `TempDB` 数据库的排序规则创建的，这通常与服务器的默认排序规则相匹配。在本例中，表变量是使用拉丁语排序规则创建的，而你要检查的 `LoginID` 则是西班牙语排序规则。这可以使用清单 10-5 中所示的动态 SQL 进行永久修正。
+
+```sql
+USE AdventureWorks2014
+GO
+DECLARE @sql_command NVARCHAR(MAX);
+DECLARE @server_collation NVARCHAR(50);
+SELECT @server_collation = CAST(SERVERPROPERTY('Collation') AS NVARCHAR(50));
+SELECT @sql_command = '
+DECLARE @temp_employees TABLE
+(       id INT NOT NULL IDENTITY(1,1),
+LoginID NVARCHAR(256) NOT NULL        );
+INSERT INTO @temp_employees
+(LoginID)
+SELECT TOP 50
+LoginID
+FROM AdventureWorks2014.HumanResources.Employee
+ORDER BY Employee.JobTitle;
+SELECT
+Spanish_Employees.NationalIDNumber,
+Spanish_Employees.LoginID,
+Spanish_Employees.JobTitle,
+Spanish_Employees.BirthDate,
+Spanish_Employees.HireDate
+FROM Collation_Test.dbo.Spanish_Employees
+WHERE Spanish_Employees.LoginID IN
+(SELECT LoginID COLLATE ' + @server_collation + ' FROM @temp_employees);'
+EXEC sp_executesql @sql_command;
+```
+清单 10-5.
+使用动态 SQL 解决排序规则冲突
+
+清单 10-5 中的方法可以反过来使用，以处理具有特定数据库排序规则的数据。清单 10-6 中的脚本将使用测试数据库的默认排序规则（而不是服务器排序规则）返回数据。
+
+```sql
+USE master
+GO
+DECLARE @sql_command NVARCHAR(MAX);
+DECLARE @database_name NVARCHAR(128) = 'Collation_Test';
+DECLARE @collation_name NVARCHAR(50);
+SELECT @collation_name = collation_name
+FROM sys.databases WHERE databases.name = @database_name;
+SELECT @sql_command = '
+SELECT
+Spanish_Employees.NationalIDNumber,
+Spanish_Employees.LoginID,
+Spanish_Employees.JobTitle,
+Spanish_Employees.BirthDate,
+Spanish_Employees.HireDate
+FROM Collation_Test.dbo.Spanish_Employees
+WHERE Spanish_Employees.LoginID IN
+(SELECT TOP 50 LoginID COLLATE ' + @collation_name + '
+FROM AdventureWorks2014.HumanResources.Employee ORDER BY LoginID COLLATE ' + @collation_name + ')';
+EXEC sp_executesql @sql_command;
+```
+清单 10-6.
+使用动态 SQL 将数据整理到特定数据库的默认排序规则中
+
+此示例展示了如何从 `sys.databases` 返回数据库的默认排序规则，并使用该数据快速解决原本会是排序规则冲突的问题。
+
+
+#### 问题
+
+在处理数据的归档或迁移时，你可能希望根据日期、时间或应用程序，为表、数据库或架构等对象赋予自定义名称。若使用标准 TSQL，这将非常困难，除非编写复杂的应用程序代码来管理整个过程。
+
+假设你有一个增长非常迅速的日志表，但你永远不需要超过一周前的数据。将当前周的数据隔离到单个分区是一种解决方案，但这仅在企业版中可用。此外，你可能希望将旧数据移动到不同的服务器或存储环境。如果涉及这种情况或任何类似情况，那么自行管理流程可能是一个更简单且可移植性更强的解决方案。
+
+此示例使用基于日期和时间的各种数据填充一个表，如清单 10-7 所示。
+
+```sql
+CREATE TABLE dbo.Database_Log
+(log_id INT NOT NULL IDENTITY(1,1) CONSTRAINT PK_Database_Log PRIMARY KEY CLUSTERED,
+Log_Time DATETIME,
+Log_Data NVARCHAR(1000));
+DECLARE @datetime DATETIME = CURRENT_TIMESTAMP;
+DECLARE @datediff TABLE
+(previous_hour SMALLINT);
+DECLARE @count SMALLINT = 0;
+WHILE @count <= 360
+BEGIN
+INSERT INTO @datediff
+(previous_hour)
+SELECT @count;
+SELECT @count = @count + 1
+END
+SELECT @count = 0;
+WHILE @count <= 1000
+BEGIN
+INSERT INTO Database_Log
+(Log_Time, Log_Data)
+SELECT
+DATEADD(HOUR, -1 * previous_hour, CURRENT_TIMESTAMP),
+CAST(DATEADD(HOUR, -1 * previous_hour, CURRENT_TIMESTAMP) AS NVARCHAR)
+FROM @datediff;
+SELECT @count = @count + 1;
+END
+```
+清单 10-7. 为归档演示创建数据库日志数据
+
+此脚本创建了一个名为 `Database_Log` 的表，并用 361,361 行数据填充它，这些数据包含各种日志时间以及这些时间的字符串转换。数据如图 10-7 所示。
+
+![A371168_1_En_10_Fig7_HTML.jpg](img/A371168_1_En_10_Fig7_HTML.jpg)
+图 10-7. 清单 10-7 中创建的数据库日志数据样本
+
+假设你想每周将数据归档到一个包含一周数据的新表中。这通常需要大量人工劳动才能正确管理表名。如果你还想按年份将数据分离到不同的数据库中，使得每个日历年都有其自己唯一的数据库呢？这可能看起来像是一个不寻常的用例，但围绕时间切片移动大量数据的需求非常普遍。动态 SQL 技术可以应用于任何类似的问题，而不管具体的对象或业务规则如何。
+
+为了提供一些将归档到其他数据库的旧数据，让我们再运行一个数据填充脚本来进一步增加数据量，如清单 10-8 所示。
+
+```sql
+DECLARE @year_offset TINYINT = 5;
+WHILE @year_offset > 0
+BEGIN
+INSERT INTO dbo.Database_Log
+(Log_Time, Log_Data)
+SELECT TOP 10000
+DATEADD(YEAR, -1 * @year_offset, Log_Time),
+CAST(DATEADD(YEAR, -1 * @year_offset, Log_Time) AS NVARCHAR)
+FROM Database_Log
+SELECT @year_offset = @year_offset - 1;
+END
+```
+清单 10-8. 用于增加 Database_Log 表中数据大小的脚本
+
+现在，你又有了来自多达五年前的额外 50,000 行数据，这可以轻松地演示该问题。利用这些数据，我们可以更好地理解归档数据以及根据特定业务需求定制目标的方法。
+
+#### 解决方案
+
+为了正确处理这些数据，你需要执行以下任务：
+1.  按时间段从日志表中读取数据。
+2.  创建新的数据库或表对象（如果它们尚不存在）。
+3.  将数据插入这些对象中。
+4.  从日志表中删除已归档的数据。
+
+清单 10-9 中的脚本将完成前述任务。
+
+```sql
+DECLARE @sql_command NVARCHAR(MAX);
+DECLARE @parameter_list NVARCHAR(MAX) = '@start_of_week DATETIME, @end_of_week DATETIME';
+DECLARE @min_datetime DATETIME;
+SELECT @min_datetime = MIN(Log_Time) FROM Database_Log;
+DECLARE @previous_min_time DATETIME = '1/1/1900';
+DECLARE @start_of_week DATETIME = CAST(DATEADD(dd, -1 * (DATEPART(dw, @min_datetime) - 1), @min_datetime) AS DATE);
+DECLARE @end_of_week DATETIME = DATEADD(WEEK, 1, @start_of_week);
+DECLARE @current_year SMALLINT;
+DECLARE @current_week TINYINT;
+DECLARE @database_name NVARCHAR(128);
+DECLARE @table_name NVARCHAR(128);
+WHILE (@previous_min_time < @min_datetime)
+BEGIN
+SELECT @current_year = DATEPART(YEAR, @start_of_week);
+SELECT @current_week = DATEPART(WEEK, @start_of_week);
+SELECT @database_name = 'Database_Log_' + CAST(@current_year AS NVARCHAR);
+SELECT @table_name = 'Database_Log_' + CAST(@current_year AS NVARCHAR) + '_' + CAST(@current_week AS NVARCHAR)
+-- Create the yearly database if it does not already exist
+IF NOT EXISTS (SELECT * FROM sys.databases WHERE databases.name = @database_name)
+BEGIN
+SELECT @sql_command = 'CREATE DATABASE [' + @database_name + ']';
+EXEC sp_executesql @sql_command;
+END
+-- Create the weekly table if it does not already exist
+SELECT @sql_command = '
+USE [' + @database_name + '];
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE tables.name = ''' + @table_name + ''')
+BEGIN
+CREATE TABLE [dbo].[' + @table_name + ']
+(Log_Id INT NOT NULL CONSTRAINT PK_Database_Log_' + CAST(@current_year AS NVARCHAR) + '_' + CAST(@current_week AS NVARCHAR) + ' PRIMARY KEY CLUSTERED,
+Log_Time DATETIME,
+Log_Data NVARCHAR(1000));
+END'
+EXEC sp_executesql @sql_command;
+SELECT @sql_command = '
+INSERT INTO [' + @database_name + '].[dbo].[' + @table_name + ']
+(Log_Id, Log_Time, Log_Data)
+SELECT
+Log_Id,
+Log_Time,
+Log_Data
+FROM AdventureWorks2014.dbo.Database_Log
+WHERE Log_Time >= @start_of_week
+AND Log_Time < @end_of_week
+AND Log_Time < DATEADD(WEEK, -1, CURRENT_TIMESTAMP);'
+EXEC sp_executesql @sql_command, @parameter_list, @start_of_week, @end_of_week
+SELECT @previous_min_time = @min_datetime;
+SELECT @min_datetime = MIN(Log_Time) FROM Database_Log;
+SELECT @start_of_week = CAST(DATEADD(dd, -1 * (DATEPART(dw, @min_datetime) - 1), @min_datetime) AS DATE);
+SELECT @end_of_week = DATEADD(WEEK, 1, @start_of_week);
+END
+```
+清单 10-9. 使用动态 SQL 将数据归档到动态命名的表中
+
+当脚本运行完成后，你将能在服务器上看到一些新的数据库，如图 10-8 所示。
+
+![A371168_1_En_10_Fig8_HTML.jpg](img/A371168_1_En_10_Fig8_HTML.jpg)
+图 10-8. 执行清单 10-9 中的脚本时创建的新数据库
+
+对于 `Database_Log` 中 `Log_Time` 所代表的每一年，都创建了一个新数据库。此外，还在这些数据库中为数据所代表的每一周创建了表，如图 10-9 所示。
+
+![A371168_1_En_10_Fig9_HTML.jpg](img/A371168_1_En_10_Fig9_HTML.jpg)
+图 10-9. 执行清单 10-9 中的脚本时创建的新表
+
+
+上述逻辑的核心在于根据 `Log_Time` 提供的日期和时间动态创建数据库和表。一旦这些对象被创建，数据就会被插入其中，然后从源表中删除。你可以查看单个表中的数据，以验证此脚本是否完全按照你的意图执行，如图 10-10 所示。
+
+![A371168_1_En_10_Fig10_HTML.jpg](img/A371168_1_En_10_Fig10_HTML.jpg)
+
+图 10-10.
+每周日志表示例数据
+
+```sql
+SELECT
+    *
+FROM Database_Log_2011.dbo.Database_Log_2011_48
+```
+
+这张新表内的所有数据都与原始的 `Database_Log` 表完全相同，包括 `Log_Id`。唯一的区别是数据现在位于新的数据库和表中。
+
+当参考点随时间变化时，重组数据可能是一项复杂的任务。动态 SQL 允许以相对简单的逻辑来组织和移动数据，并创建新的对象。在不到 100 行的 TSQL 代码中，你就能够将日志表中的所有旧数据移动到任意数量的新数据库对象中，这些对象是在运行时根据数据的“年龄”动态创建的。
+
+重组、归档或移动数据的每种用例都会有所不同，但当你希望最小化重要归档过程的复杂性和规模时，这种通用技术可能非常有用。在构建新流程之前，务必考虑归档数据将如何被使用。无论数据是被移动到单独的数据库、表还是分区，你现在都可以根据其新用途对其进行独特的索引。通过将其视为归档存储库而非事务性数据，你获得了根据其新用途进行优化的灵活性。
+
+动态 SQL 可用于管理额外的索引、约束、键、视图和存储过程，这些都能让新数据被高效且方便地访问。创建这些对象将与添加主键的方式一样简单，只需在命令字符串中进行添加即可。
+
+### 自定义数据库对象
+
+除非实现了某种动态代码或 TSQL，否则创建高度灵活的自定义对象并非易事。你在这方面的需求可能非常具体，但可以使用通用技术来精确地获得你想要的结果。
+
+#### 问题
+
+有时，你需要创建具有特定用例的对象，但所涉及的表或列可能并不总是相同的。根据这些变量生成存储过程、函数或视图通常是一个手动密集型的过程。你可以实施动态 SQL，以可扩展且可靠的方式创建或修改现有对象。
+
+第 9 章介绍了当列列表直到运行时才知道时，如何使用动态 SQL 来 `PIVOT`（旋转）或 `UNPIVOT`（逆旋转）数据。如果你希望将这些过程的表数据输出汇总到一个视图中，为应用程序提供一个方便的数据源，该怎么办呢？一旦创建了视图，你就可以考虑其他选项，例如使用架构绑定来提高架构完整性。
+
+考虑这样一个场景：你想根据职位提供员工入职日期的洞察。对于一家特定公司，这是一个经常被请求的数据，因此有人要求基于它创建一个更永久的数据结构。有多种方法可以解决这个问题，包括自定义表、视图或基于这些需求管理报表数据的 ETL 过程。这些流程可以通过触发器、存储过程或其他各种方法来管理。
+
+#### 解决方案
+
+对于前面概述的场景，尽管如果报表或数据需求不同也可以使用其他方法，但我们将提供一个使用架构绑定视图的示例解决方案。清单 10-10 中的 TSQL 将返回你正在查找的原始数据。
+
+```sql
+DECLARE @hire_date_years TABLE
+    (hire_date_year NVARCHAR(50));
+INSERT INTO @hire_date_years
+    (hire_date_year)
+SELECT DISTINCT
+    DATEPART(YEAR, Employee.HireDate)
+FROM HumanResources.Employee;
+DECLARE @sql_command NVARCHAR(MAX);
+SELECT @sql_command = '
+SELECT
+    *
+FROM
+    (   SELECT
+            Employee.BusinessEntityID,
+            Employee.JobTitle,
+            DATEPART(YEAR, Employee.HireDate) AS HireDate_Year
+        FROM HumanResources.Employee
+    ) EMPLOYEE_DATA
+PIVOT
+    (   COUNT(BusinessEntityID)
+        FOR HireDate_Year IN (';
+SELECT @sql_command = @sql_command + '[' + hire_date_year + '], '
+FROM @hire_date_years;
+SELECT @sql_command = SUBSTRING(@sql_command, 1, LEN(@sql_command) - 1);
+SELECT @sql_command = @sql_command + ' )) PIVOT_DATA';
+PRINT @sql_command;
+EXEC sp_executesql @sql_command;
+```
+
+清单 10-10.
+按职位返回入职年份计数的动态 PIVOT 查询
+
+此查询的输出返回一个类似于图 10-11 中的数据集。
+
+![A371168_1_En_10_Fig11_HTML.jpg](img/A371168_1_En_10_Fig11_HTML.jpg)
+
+图 10-11.
+清单 10-10 中的动态 PIVOT 查询返回的入职数据
+
+每个职位都列为第一列，其后是 `Employee` 表中存在的每个入职年份的列列表。如果基础表中添加或删除了员工，随着入职日期的添加或删除，此数据集中的列也可能被添加或删除。
+
+现在你有了一个查询，它能以你想要的列式格式返回你想要的结果，你可以将这些数据移入一个自定义视图中。你需要克服的一个技术细节是：当创建架构绑定视图时，你不能在列列表中包含 `*`。如果你使用 TSQL 并添加 `CREATE VIEW…WITH SCHEMABINDING` 到查询中，你将得到以下错误：
+
+```
+Msg 1054, Level 15, State 6, Procedure v_job_title_year_summary, Line 6
+Syntax '*' is not allowed in schema-bound objects.
+Msg 102, Level 15, State 1, Procedure v_job_title_year_summary, Line 13
+Incorrect syntax near 'EMPLOYEE_DATA'.
+```
+
+为了使此语法生效，除了 `PIVOT` 详情外，你还需要使列列表动态化。清单 10-11 中的 TSQL 是包含了此修改的视图创建脚本。
+
+```sql
+IF EXISTS (SELECT * FROM sys.views WHERE views.name = 'v_job_title_year_summary')
+BEGIN
+    DROP VIEW v_job_title_year_summary
+END
+GO
+DECLARE @hire_date_years TABLE
+    (hire_date_year NVARCHAR(50));
+INSERT INTO @hire_date_years
+    (hire_date_year)
+SELECT DISTINCT
+    DATEPART(YEAR, Employee.HireDate)
+FROM HumanResources.Employee;
+DECLARE @sql_command NVARCHAR(MAX);
+SELECT @sql_command = '
+CREATE VIEW dbo.v_job_title_year_summary
+WITH SCHEMABINDING
+AS
+SELECT
+    JobTitle,'
+SELECT @sql_command = @sql_command + '
+    [' + hire_date_year + '], '
+FROM @hire_date_years;
+SELECT @sql_command = SUBSTRING(@sql_command, 1, LEN(@sql_command) - 1);
+SELECT @sql_command = @sql_command + '
+FROM
+    (   SELECT
+            Employee.BusinessEntityID,
+            Employee.JobTitle,
+            DATEPART(YEAR, Employee.HireDate) AS HireDate_Year
+        FROM HumanResources.Employee
+    ) EMPLOYEE_DATA
+PIVOT
+    (   COUNT(BusinessEntityID)
+        FOR HireDate_Year IN (';
+SELECT @sql_command = @sql_command + '[' + hire_date_year + '], '
+FROM @hire_date_years;
+SELECT @sql_command = SUBSTRING(@sql_command, 1, LEN(@sql_command) - 1);
+SELECT @sql_command = @sql_command + '        )) PIVOT_DATA';
+PRINT @sql_command;
+EXEC sp_executesql @sql_command;
+```
+
+清单 10-11.
+用于创建具有可变列列表的自定义视图的动态 SQL
+
+
+
+一旦运行此脚本，您就可以查看视图列表，快速验证新视图是否已创建，并且是否包含正确的列，如图 10-12 所示。
+
+![A371168_1_En_10_Fig12_HTML.jpg](img/A371168_1_En_10_Fig12_HTML.jpg)
+图 10-12. 清单 10-11 中创建的视图所包含的列
+
+视图定义不会随数据更新而自动更新，但由于基础数据不太可能不断变化，您可以每天（或以任何认为必要的间隔）管理此更新。假设您将一些雇佣日期更新为当前基础员工数据中未包含的年份：
+
+```sql
+UPDATE HumanResources.Employee
+SET HireDate = '1/1/2015'
+WHERE BusinessEntityID = 282
+UPDATE HumanResources.Employee
+SET HireDate = '1/1/2014'
+WHERE BusinessEntityID IN (260, 285)
+```
+
+现在，如果您从视图中选择数据，您会注意到 2014 和 2015 年尚未添加到其中，如图 10-13 所示。
+
+![A371168_1_En_10_Fig13_HTML.jpg](img/A371168_1_En_10_Fig13_HTML.jpg)
+图 10-13. 如果不刷新视图，将不会返回 2014 和 2015 年列
+
+```sql
+SELECT
+*
+FROM dbo.v_job_title_year_summary
+```
+
+为了将额外的列添加到视图中，必须刷新或重新创建它。为了便于重新创建，您可以将之前创建视图的 TSQL 封装到存储过程中，如清单 10-12 所示。
+
+```sql
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'create_v_job_title_year_summary')
+BEGIN
+DROP PROCEDURE dbo.create_v_job_title_year_summary;
+END
+GO
+CREATE PROCEDURE dbo.create_v_job_title_year_summary
+AS
+BEGIN
+IF EXISTS (SELECT * FROM sys.views WHERE views.name = 'v_job_title_year_summary')
+BEGIN
+DROP VIEW v_job_title_year_summary;
+END
+DECLARE @hire_date_years TABLE
+(hire_date_year NVARCHAR(50));
+INSERT INTO @hire_date_years
+(hire_date_year)
+SELECT DISTINCT
+DATEPART(YEAR, Employee.HireDate)
+FROM HumanResources.Employee;
+DECLARE @sql_command NVARCHAR(MAX);
+SELECT @sql_command = '
+CREATE VIEW dbo.v_job_title_year_summary
+WITH SCHEMABINDING
+AS
+SELECT
+JobTitle,'
+SELECT @sql_command = @sql_command + '
+[' + hire_date_year + '], '
+FROM @hire_date_years;
+SELECT @sql_command = SUBSTRING(@sql_command, 1, LEN(@sql_command) - 1);
+SELECT @sql_command = @sql_command + '
+FROM
+(        SELECT
+Employee.BusinessEntityID,
+Employee.JobTitle,
+DATEPART(YEAR, Employee.HireDate) AS HireDate_Year
+FROM HumanResources.Employee
+) EMPLOYEE_DATA
+PIVOT
+(        COUNT(BusinessEntityID)
+FOR HireDate_Year IN (';
+SELECT @sql_command = @sql_command + '[' + hire_date_year + '], '
+FROM @hire_date_years;
+SELECT @sql_command = SUBSTRING(@sql_command, 1, LEN(@sql_command) - 1);
+SELECT @sql_command = @sql_command + '        )) PIVOT_DATA';
+PRINT @sql_command;
+EXEC sp_executesql @sql_command;
+END
+```
+清单 10-12. 用于创建动态生成视图的存储过程
+
+通过此存储过程，您现在可以轻松地重新创建动态视图：
+
+```sql
+EXEC dbo.create_v_job_title_year_summary;
+```
+
+当您检查视图内容时，可以验证其已正确更新，如图 10-14 所示。
+
+![A371168_1_En_10_Fig14_HTML.jpg](img/A371168_1_En_10_Fig14_HTML.jpg)
+图 10-14. 一旦刷新，2014 和 2015 年的新数据就已包含在视图中
+
+```sql
+SELECT
+*
+FROM dbo.v_job_title_year_summary
+```
+
+已为 2014 和 2015 年数据添加了列，并且会根据自上次创建视图以来添加或删除的任何其他年份进行相应添加。请注意，基于 `PIVOT` 的视图无法创建索引，但动态生成的视图只要不包含 `PIVOT` 或 `UNPIVOT` 并且是绑定到架构的，就可以正常创建索引。
+
+使用动态 SQL 生成架构是一种非常方便的方法，可以在运行时才可能获得完整架构知识时创建对象。它还允许使用相对简单的 TSQL 语法将复杂的业务逻辑汇总到数据库对象中。能够极大地简化应用程序或报表代码，有时比创建新数据库对象的负担更为重要。
+
+与创建任何新对象一样，请始终确保它们是必需的，并且没有更高效的方法可用。通常，新的 SQL Server 版本、应用程序版本或业务变更可以允许实现新的方法来高效检索数据。
+
+### 结论
+
+本章回顾了一些动态 SQL 的应用，它们使您能够为通常不支持在运行时更改的流程增加灵活性。还存在更多的应用，唯一的限制是您的想象力。
+
+在创建任何新架构（无论是动态生成与否）时，始终考虑其影响和效率。所有数据库对象都必须维护，在考虑新对象时必须考虑这种累积的维护成本。使用动态 SQL 的目标，要么是实现原本不太可能实现的流程，要么是降低那些可能需要手动或资源密集型组件的流程的复杂性。
+
+出于这些目的使用动态 SQL 将由您自己的业务逻辑、数据库服务器版本以及开发团队使用的规则和策略决定。虽然一些解决方案对广大受众有用，但另一些可能被证明是百万个特定开发环境中的救星。无论解决方案多么通用，牢记这一工具将使您能够以创造性的方式解决困难的数据库挑战，否则这些挑战可能既耗时又昂贵。
+
+# 11. 其他应用
+
+这最后一章探讨一些更有趣的动态 SQL 应用。目的是为您提供各种实用的脚本，这些脚本可以引入任何数据库环境，并根据独特用途进行定制。对于许多现实世界的挑战，动态 SQL 是一种高效的解决方案，您可以使用紧凑、可重用的代码完成大量工作。
+
+### 数据库维护
+
+对于 DBA 和数据库开发人员来说，最具挑战性的领域之一是为其服务器、数据库和相关软件提供定期的维护。常见的任务，如索引碎片整理、维护统计信息和管理数据库备份，对任何应用程序都至关重要。由于每个数据库环境都不同，管理这些任务的脚本可以且应该在每个环境中有所不同。以下部分概述了一些常见的维护任务，以及如何使用动态 SQL 为每个任务构建一个框架。一旦构建完成，这些脚本可以进行扩展和定制，以满足您自己的数据库服务器的需求。
+
+
+#### 索引碎片整理
+
+索引是优化查询性能的关键。审查性能不佳的查询时，你应该立即提出的问题之一是：正确的索引是否到位且充足。另一个不应被忽略的问题是：这些索引是否得到了妥善维护。随着时间的推移，索引因插入、更新和删除操作，其构建所依赖的 B 树会变得碎片化。时间越久，情况越糟，有效遍历 B 树并返回查询所需数据的时间就越长。
+
+定期运行检查索引碎片并采取必要措施的作业，将确保这种情况永远不会对应用程序性能造成损害。实现此目标的首要任务是识别索引的碎片程度，并且要能在服务器上的任何数据库集上执行此操作。
+
+此信息可以在 `sys.dm_db_index_physical_stats` 动态管理视图中找到。清单 11-1 中的查询将此视图中的数据与几个系统视图连接，以包含涉及的数据库、表和索引的名称。
+
+```sql
+USE AdventureWorks2014
+DECLARE @database_name VARCHAR(100) = 'AdventureWorks2014';
+SELECT
+SD.name AS database_name,
+SO.name AS object_name,
+SI.name AS index_name,
+IPS.index_type_desc,
+IPS.page_count,
+IPS.avg_fragmentation_in_percent -- Be sure to filter as much as possible...this can return a lot of data if you don't filter by database and table.
+FROM sys.dm_db_index_physical_stats(NULL, NULL, NULL, NULL , NULL) IPS
+INNER JOIN sys.databases SD
+ON SD.database_id = IPS.database_id
+INNER JOIN sys.indexes SI
+ON SI.index_id = IPS.index_id
+INNER JOIN sys.objects SO
+ON SO.object_id = SI.object_id
+AND IPS.object_id = SO.object_id
+WHERE alloc_unit_type_desc = 'IN_ROW_DATA'
+AND index_level = 0
+AND SD.name = @database_name
+ORDER BY IPS.avg_fragmentation_in_percent DESC;
+```
+清单 11-1. 用于确定给定数据库中所有索引碎片情况的查询
+
+此查询在过滤器中专门针对一个数据库（基于顶部声明的参数），但可以调整为检查服务器上的任何或所有用户数据库。图 11-1 中的结果显示了每个索引，按碎片程度排序，并附带一些其他有用的信息。
+
+![A371168_1_En_11_Fig1_HTML.jpg](img/A371168_1_En_11_Fig1_HTML.jpg)
+图 11-1. 清单 11-1 中查询产生的索引碎片结果
+
+现在你已经识别出碎片最严重的表，你需要找出修复它们的最佳方法。接下来讨论两种选择。
+
+##### 索引重建
+
+重建索引时，它会被一个全新的索引副本完全替换，如同刚刚新建一样。在 SQL Server 标准版中，这是一个离线操作，意味着运行时可能会导致资源争用。在标准版中重建索引时，请谨慎安排在中断可容忍的时间进行。在企业版中，重建可以在线运行，允许在其他事务同时发生时进行操作。无论是什么版本，重建索引都是资源密集型操作，应在服务器有额外资源可用的非高峰时段进行。
+
+如果取消索引重建，整个操作将需要回滚，这也可能耗时且消耗资源。
+
+##### 索引重新组织
+
+重新组织索引会在叶级进行清理、重新排序页面并根据需要重新应用填充因子。无论你运行的是哪个版本的 SQL Server，此操作始终在线，并且可以随时中断而不会产生不良影响。
+
+尽管过程相对简单，但对于非常宽的索引，索引重新组织可能花费与重建一样长的时间。跟踪这些时间可以让你定期审查索引维护任务，并确保它们运行得足够快。
+
+##### 创建索引维护解决方案
+
+既然你已经知道问题所在以及可用的解决工具，就可以逐步构建一个示例解决方案。动态 SQL 的需求是立即存在的：你有多个数据库、表、索引和潜在的操作。在这种情况下，动态 T-SQL 会比冗长的、过程化的解决方案更简单且更易于实现。
+
+让我们从一个存储过程开始，它会检查碎片级别，并根据用户输入选择重新组织还是重建。此示例使用 10% 作为重新组织的阈值，35% 作为重建的阈值，同时这些数字也作为默认参数值。它将有一个 `@print_only` 标志，用于决定是打印结果供审查还是执行它们。该过程将包含实例上的所有数据库，除了 `model`、`master`、`msdb` 和 `tempdb`。不过，这可以轻松自定义以作用于任何数据库集。最后的补充是包含了架构名称，添加它是为了支持除 `dbo` 之外的多个架构的数据库。此新脚本的完整内容可以在清单 11-2 中查看。
+
+
+### 清单 11-2：使用动态 SQL 的简单索引维护解决方案
+
+```sql
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'index_maintenance_demo')
+BEGIN
+    DROP PROCEDURE dbo.index_maintenance_demo;
+END
+GO
+CREATE PROCEDURE dbo.index_maintenance_demo
+    @reorganization_percentage TINYINT = 10,
+    @rebuild_percentage TINYINT = 35,
+    @print_results_only BIT = 1
+AS
+BEGIN
+    DECLARE @sql_command NVARCHAR(MAX) = '';
+    DECLARE @parameter_list NVARCHAR(MAX) = '@reorganization_percentage TINYINT, @rebuild_percentage TINYINT'
+    DECLARE @database_name NVARCHAR(MAX);
+    DECLARE @database_list TABLE
+        (database_name NVARCHAR(MAX) NOT NULL);
+    INSERT INTO @database_list
+        (database_name)
+    SELECT
+        name
+    FROM sys.databases
+    WHERE databases.name NOT IN ('msdb', 'master', 'TempDB', 'model');
+
+    CREATE TABLE #index_maintenance
+    (       database_name NVARCHAR(MAX),
+            schema_name NVARCHAR(MAX),
+            object_name NVARCHAR(MAX),
+            index_name NVARCHAR(MAX),
+            index_type_desc NVARCHAR(MAX),
+            page_count BIGINT,
+            avg_fragmentation_in_percent FLOAT,
+            index_operation NVARCHAR(MAX));
+
+    SELECT @sql_command = @sql_command + '
+        USE [' + database_name + ']
+        INSERT INTO #index_maintenance
+        (database_name, schema_name, object_name, index_name, index_type_desc, page_count, avg_fragmentation_in_percent, index_operation)
+        SELECT
+            CAST(SD.name AS NVARCHAR(MAX)) AS database_name,
+            CAST(SS.name AS NVARCHAR(MAX)) AS schema_name,
+            CAST(SO.name AS NVARCHAR(MAX)) AS object_name,
+            CAST(SI.name AS NVARCHAR(MAX)) AS index_name,
+            IPS.index_type_desc,
+            IPS.page_count,
+            IPS.avg_fragmentation_in_percent, -- Be sure to filter as much as possible...this can return a lot of data if you dont filter by database and table.
+            CAST(CASE
+                WHEN IPS.avg_fragmentation_in_percent >= @rebuild_percentage THEN ''REBUILD''
+                WHEN IPS.avg_fragmentation_in_percent >= @reorganization_percentage THEN ''REORGANIZE''
+            END AS NVARCHAR(MAX)) AS index_operation
+        FROM sys.dm_db_index_physical_stats(NULL, NULL, NULL, NULL , NULL) IPS
+        INNER JOIN sys.databases SD
+            ON SD.database_id = IPS.database_id
+        INNER JOIN sys.indexes SI
+            ON SI.index_id = IPS.index_id
+        INNER JOIN sys.objects SO
+            ON SO.object_id = SI.object_id
+            AND IPS.object_id = SO.object_id
+        INNER JOIN sys.schemas SS
+            ON SS.schema_id = SO.schema_id
+        WHERE alloc_unit_type_desc = ''IN_ROW_DATA''
+            AND index_level = 0
+            AND SD.name = ''' + database_name + '''
+            AND IPS.avg_fragmentation_in_percent >= @reorganization_percentage
+            AND SI.name IS NOT NULL -- Only review index, not heap data.
+            AND SO.is_ms_shipped = 0 -- Do not perform maintenance on system objects
+        ORDER BY SD.name ASC;'
+    FROM @database_list
+    WHERE database_name IN (SELECT name FROM sys.databases);
+
+    EXEC sp_executesql @sql_command, @parameter_list, @reorganization_percentage, @rebuild_percentage;
+
+    SELECT @sql_command = '';
+    SELECT @sql_command = @sql_command +
+        '        USE [' + database_name + ']
+        ALTER INDEX [' + index_name + '] ON [' + schema_name + '].[' + object_name + ']
+        ' + index_operation + ';
+        '
+    FROM #index_maintenance;
+
+    SELECT * FROM #index_maintenance
+    ORDER BY avg_fragmentation_in_percent DESC;
+
+    IF @print_results_only = 1
+        PRINT @sql_command;
+    ELSE
+        EXEC sp_executesql @sql_command;
+
+    DROP TABLE #index_maintenance;
+END
+GO
+```
+
+此脚本从一系列索引重建或重组操作中构建一个长命令字符串。请注意，每组动态 SQL 操作在执行前都使用动态生成的列表来构建字符串。这避免了循环或游标的需求，并能非常快速高效地完成任务。让我们使用默认参数来执行它：
+
+```sql
+EXEC dbo.index_maintenance_demo @reorganization_percentage = 10, @rebuild_percentage = 35, @print_results_only = 1;
+```
+
+由于 `@print_results_only` 设置为 1，因此不会执行任何索引操作。命令字符串将在存储过程结束时、删除临时表之前打印出来。以下是在我的服务器上打印出的结果的一部分：
+
+```sql
+USE [AdventureWorks2014]
+ALTER INDEX [IX_vProductAndDescription] ON [Production].[vProductAndDescription]
+REORGANIZE;
+USE [AdventureWorks2014]
+ALTER INDEX [IX_vStateProvinceCountryRegion] ON [Person].[vStateProvinceCountryRegion]
+REBUILD;
+USE [AdventureWorks2012]
+ALTER INDEX [PK_ProductCostHistory_ProductID_StartDate] ON [Production].[ProductCostHistory]
+REBUILD;
+USE [AdventureWorks2012]
+ALTER INDEX [AK_ProductDescription_rowguid] ON [Production].[ProductDescription]
+REBUILD;
+USE [AdventureWorks2012]
+ALTER INDEX [PK_DatabaseLog_DatabaseLogID] ON [dbo].[DatabaseLog]
+REBUILD;
+USE [AdventureWorks2012]
+ALTER INDEX [PK_ProductInventory_ProductID_LocationID] ON [Production].[ProductInventory]
+REORGANIZE;
+```
+
+当处理长命令字符串时，要小心截断，无论是字符串本身被截断，还是 Management Studio 的结果窗格在打印示例输出时截断。作为预防措施，我将临时表中的所有字符串都强制转换为 `NVARCHAR(MAX)`，以确保命令字符串不会被转换为任何较小的字符串数据类型。
+
+同样重要的是要注意，使用动态 SQL 来收集索引碎片数据，是因为某些视图，如 `sys.tables` 和 `dm_db_index_physical_stats`，是数据库特定的。为了收集每个数据库的所有数据，需要先 `USE` 每个数据库，然后独立地检查它们内部的视图。类似地，要执行索引维护，也需要先 `USE` 相应的数据库，然后再运行重建或重组语句。
+
+临时表的内容也会输出，以便您可以进一步查看返回的数据，如图 11-2 所示。
+
+![A371168_1_En_11_Fig2_HTML.jpg](img/A371168_1_En_11_Fig2_HTML.jpg)
+
+### 图 11-2
+
+从清单 11-2 的查询返回的完整碎片结果。
+
+在这里，您可以查看每个索引、其碎片级别以及根据输入选择的操作。如果您确信此存储过程完全符合您的要求，您可以允许它执行整个命令字符串，并清理这些数据库中的所有索引：
+
+```sql
+EXEC dbo.index_maintenance_demo @reorganization_percentage = 10, @rebuild_percentage = 35, @print_results_only = 0;
+```
+
+等待大约 30 秒后，脚本成功完成，您的索引维护就完成了！您可以随心所欲地添加选项并继续自定义此脚本。一些值得考虑添加的功能：
+
+*   向重建操作添加 `WITH (ONLINE = ON)`，以便它们可以在线运行（仅限企业版）。
+*   向重建操作添加 `WITH (SORT_IN_TEMP = ON)`，以便它们可以在 TempDB 中排序中间重建结果，这可以加快操作速度。请记住，TempDB 中必须有足够的空间才能使其工作。
+*   如果需要除默认值以外的填充因子，则调整索引的填充因子。
+*   检查索引的大小，并根据该信息采取不同的操作。
+*   添加日志记录，以便您可以查看执行的命令以及完成它们所需的时间。
+
+将此脚本作为起点，并根据您环境的需求进行定制，无论它们与这里呈现的可能有多大差异。定制和改进这个概念的方法有无数种，您的想象力是您与完美的索引解决方案之间的唯一障碍！
+
+
+
+#### 数据库备份
+
+另一项必要的数据库维护任务是确保所有重要数据都能定期备份。维护计划常被用于此任务，但它们缺乏灵活性，若想针对各种用例进行定制，可能会变得异常复杂。如果你管理着许多数据库服务器，而每台服务器的备份需求各不相同，结果可能会产生数十个（甚至更多）不同的维护计划。每个计划都需要同等程度的关注和维护，因此为了确保系统长期正常运行，也会累积同等量级的技术负债。
+
+通常更可取的方法是创建一个可根据环境定制的备份脚本，该脚本能够随着时间的推移进行扩展、定制和调整。本节涵盖了备份方案的三种常见需求：**完整备份**、*差异备份*和事务日志备份。一种常见的配置是每周运行一次完整备份，每隔一天运行一次差异备份，并在一天中间歇性地运行事务日志备份。与索引碎片整理的情况一样，较大的备份（完整备份和差异备份）应在系统使用较少的非高峰时段运行，因为备份操作可能需要大量的 I/O 来处理。
+
+这个存储过程将按照你希望运行事务日志备份的频率执行。当它在与 `@differential_and_full_backup_time` 对应的时间运行时，将改为运行其中一种备份。`@full_backup_day` 指示应在哪一天进行完整备份。`@backup_location` 提供备份应保存到的磁盘位置。最后，`@print_output_only` 决定是实际进行备份，还是只打印出命令字符串。此存储过程参见清单 11-3。
+
+```
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'backup_plan')
+BEGIN
+    DROP PROCEDURE dbo.backup_plan;
+END
+GO
+CREATE PROCEDURE dbo.backup_plan
+    @differential_and_full_backup_time TIME = '00:00:00', -- 默认午夜
+    @full_backup_day TINYINT = 1, -- 默认为周日
+    @backup_location NVARCHAR(MAX) = 'E:\SQLBackups\', -- 默认备份文件夹
+    @print_output_only BIT = 1
+AS
+BEGIN
+    SET NOCOUNT ON;
+    DECLARE @current_time TIME = CAST(CURRENT_TIMESTAMP AS TIME);
+    DECLARE @current_day TINYINT = DATEPART(DW, CURRENT_TIMESTAMP);
+    DECLARE @datetime_string NVARCHAR(MAX) = FORMAT(CURRENT_TIMESTAMP , 'MMddyyyyHHmmss');
+    DECLARE @sql_command NVARCHAR(MAX) = '';
+    DECLARE @database_list TABLE
+        (database_name NVARCHAR(MAX) NOT NULL, recovery_model_desc NVARCHAR(MAX));
+    INSERT INTO @database_list
+        (database_name, recovery_model_desc)
+    SELECT
+        name,
+        recovery_model_desc
+    FROM sys.databases
+    WHERE databases.name NOT IN ('msdb', 'master', 'TempDB', 'model');
+    -- 检查是否应执行完整备份
+    IF (@current_day = @full_backup_day) AND (@current_time BETWEEN @differential_and_full_backup_time AND DATEADD(MINUTE, 10, @differential_and_full_backup_time))
+    BEGIN
+        SELECT @sql_command = @sql_command +
+        '
+        BACKUP DATABASE [' + database_name + ']
+        TO DISK = ''' + @backup_location + database_name + '_' + @datetime_string + '.bak'';
+        '
+        FROM @database_list;
+        IF @print_output_only = 1
+            PRINT @sql_command;
+        ELSE
+            EXEC sp_executesql @sql_command;
+    END
+    ELSE -- 检查是否应执行差异备份
+        IF (@current_day <> @full_backup_day) AND (@current_time BETWEEN @differential_and_full_backup_time AND DATEADD(MINUTE, 10, @differential_and_full_backup_time))
+        BEGIN
+            SELECT @sql_command = '';
+            SELECT @sql_command = @sql_command +
+            '
+            BACKUP DATABASE [' + database_name + ']
+            TO DISK = ''' + @backup_location + database_name + '_' + @datetime_string + '.dif''
+            WITH DIFFERENTIAL;
+            '
+            FROM @database_list;
+            IF @print_output_only = 1
+                PRINT @sql_command;
+            ELSE
+                EXEC sp_executesql @sql_command;
+        END
+        ELSE -- 如果既非完整也非差异备份，则执行事务日志备份
+        BEGIN
+            SELECT @sql_command = '';
+            SELECT @sql_command = @sql_command +
+            '
+            BACKUP LOG [' + database_name + ']
+            TO DISK = ''' + @backup_location + database_name + '_' + @datetime_string + '.trn''
+            '
+            FROM @database_list
+            WHERE recovery_model_desc = 'FULL';
+            IF @print_output_only = 1
+                PRINT @sql_command;
+            ELSE
+                EXEC sp_executesql @sql_command;
+        END
+END
+清单 11-3.
+使用动态 SQL 的数据库备份存储过程
+```
+
+请注意，与索引维护脚本一样，这将对除 `msdb`、`tempdb`、`master` 和 `model` 之外的所有数据库执行备份。与之前的所有脚本一样，数据库列表可以轻松调整以满足任何自定义需求。此脚本可以按任何计划执行，并且将执行数据库的事务日志备份，除非在为其分配的时间和日期进行差异备份或完整备份。假设当前时间是星期二晚上 7:53，你可以针对每种备份用例测试该脚本：
+
+```
+EXEC dbo.backup_plan @differential_and_full_backup_time = '19:50:00', @full_backup_day = 3, @backup_location = 'E:\SQLBackups\', @print_output_only = 1;
+```
+
+这将执行完整备份，因为当前时间在指定的完整备份时间的 10 分钟范围内，完整备份日已设置为星期二 (3)，并且备份语句将被打印而不是执行。命令字符串输出如下：
+
+```
+BACKUP DATABASE [AdventureWorks2012]
+TO DISK = 'E:\SQLBackups\AdventureWorks2012_12012015195529.bak';
+BACKUP DATABASE [AdventureWorks2014]
+TO DISK = 'E:\SQLBackups\AdventureWorks2014_12012015195529.bak';
+BACKUP DATABASE [AdventureWorksDW2012]
+TO DISK = 'E:\SQLBackups\AdventureWorksDW2012_12012015195529.bak';
+BACKUP DATABASE [AdventureWorksDW2014]
+TO DISK = 'E:\SQLBackups\AdventureWorksDW2014_12012015195529.bak';
+```
+
+
+
+如果你将 `@print_output_only` 改为零并再次执行该存储过程，你可以验证目录中的备份文件已如图 11-3 所示输出。
+
+![A371168_1_En_11_Fig3_HTML.jpg](img/A371168_1_En_11_Fig3_HTML.jpg)
+
+图 11-3.
+
+清单 11-3 中的动态备份脚本所创建的完整备份文件
+
+所有四个完整备份都在那里，名称正是你分配的。现在，让我们执行针对差异备份情况的存储过程：
+
+```sql
+EXEC dbo.backup_plan @differential_and_full_backup_time = '19:50:00', @full_backup_day = 3, @backup_location = 'E:\SQLBackups\', @print_output_only = 1;
+```
+
+生成的命令字符串如下：
+
+```sql
+BACKUP DATABASE [AdventureWorks2012]
+TO DISK = 'E:\SQLBackups\AdventureWorks2012_12012015200242.dif'
+WITH DIFFERENTIAL;
+BACKUP DATABASE [AdventureWorks2014]
+TO DISK = 'E:\SQLBackups\AdventureWorks2014_12012015200242.dif'
+WITH DIFFERENTIAL;
+BACKUP DATABASE [AdventureWorksDW2012]
+TO DISK = 'E:\SQLBackups\AdventureWorksDW2012_12012015200242.dif'
+WITH DIFFERENTIAL;
+BACKUP DATABASE [AdventureWorksDW2014]
+TO DISK = 'E:\SQLBackups\AdventureWorksDW2014_12012015200242.dif'
+WITH DIFFERENTIAL;
+```
+
+在此情况下，今天不是进行完整备份的正确日期，但却是进行差异备份的时间。如果你将 `@print_output_only` 设为零并执行此命令，可以验证备份文件已在图 11-4 所示的位置正确生成。
+
+![A371168_1_En_11_Fig4_HTML.jpg](img/A371168_1_En_11_Fig4_HTML.jpg)
+
+图 11-4.
+
+清单 11-3 中的动态备份脚本所创建的差异备份文件
+
+除了之前创建的四个完整备份外，你现在可以确认在同一文件夹中又创建了四个差异备份。最后，让我们运行一个将触发事务日志备份的命令：
+
+```sql
+EXEC dbo.backup_plan @differential_and_full_backup_time = '00:00:00', @full_backup_day = 1, @backup_location = 'E:\SQLBackups\', @print_output_only = 1;
+```
+
+这里，完整备份日是星期日，完整/差异备份时间是午夜。由于当前时间均不符合，因此改为执行事务日志备份。生成的命令字符串如下：
+
+```sql
+BACKUP LOG [AdventureWorks2014]
+TO DISK = 'E:\SQLBackups\AdventureWorks2014_12012015200631.trn'
+```
+
+注意，只有一个数据库得到了备份。这乍一看可能像是个错误，因为你明确告诉这个存储过程要对四个数据库执行备份，但实际上这是正确的。你不能对处于简单恢复模式的任何数据库运行事务日志备份。在我的服务器上，此备份计划中包含的四个数据库中有三个处于简单恢复模式，因此在该步骤中被明确排除。你可以通过以下查询进行验证：
+
+```sql
+SELECT
+name,
+recovery_model_desc
+from sys.databases
+WHERE name IN ('AdventureWorks2012', 'AdventureWorks2014', 'AdventureWorksDW2012', 'AdventureWorksDW2014');
+```
+
+此查询的结果证实了这一发现，如图 11-5 所示。
+
+![A371168_1_En_11_Fig5_HTML.jpg](img/A371168_1_En_11_Fig5_HTML.jpg)
+
+图 11-5.
+
+验证特定数据库集合的恢复模式
+**注意**
+
+生产数据库应设置为完整恢复模式或给予特殊处理，以确保重要数据能按需频繁备份！
+
+当你将 `@print_output_only` 设为零来执行该存储过程时，可以检查输出文件夹并在图 11-6 中验证相应的结果。
+
+![A371168_1_En_11_Fig6_HTML.jpg](img/A371168_1_En_11_Fig6_HTML.jpg)
+
+图 11-6.
+
+使用清单 11-3 中的脚本执行的额外事务日志备份
+
+添加了一个新文件：恰好处于 `FULL` 恢复模式的 `AdventureWorks2014` 的事务日志备份，如图所示。
+
+这个存储过程展示了一个构建你自己的定制备份计划的基本框架，让你能完全控制所有细节。额外的好处是，你可以使用单个作业和存储过程来完成任务，而不是潜在地使用多个维护计划和/或维护计划任务。
+
+一些可考虑的扩展功能包括：
+
+*   记录每次操作的备份时间和持续时间。
+*   清理 MSDB 中的旧备份记录。
+*   从输出位置清理旧的备份文件。
+*   如果备份失败或耗时超过特定时限，则发出定制警报。
+*   使用 try/catch 块来管理存储过程中的任何错误。
+
+当然，还有许多其他选项可供你考虑。在此示例中，所有数据库（除了少数几个系统数据库）都进行了备份，但你同样可以省略 `WHERE` 子句或调整它，以便备份服务器上的特定数据库集。此外，如果系统数据库遵循一套独特的规则，也可以单独管理它们。
+
+此存储过程的备份时间由作业运行时间确定，但也可以内置为存储过程参数。两种场景都可行，使用哪种取决于你更倾向于如何管理这些数据。与参数配合良好的一个额外选项是将元数据存储在永久控制表中。这将提供有关要备份的数据库、频率和类型的信息，并且可以轻松定制以适应你的环境需求。
+
+如果在 SQL Server 中运行存储过程对你考虑的操作来说似乎有局限，那么你可以使用 PowerShell 或 SSIS 来提供对文件系统和 Windows 功能的更好访问。与索引维护示例一样，你在此模型中取得成功的主要限制因素是时间和创造力。
+
+### 保存生成的脚本
+
+动态 SQL 可以作为存储过程的一部分编写，以便按应用程序需要执行，但它也可以保存起来供以后使用。动态 SQL 可用于生成一个命令字符串，然后将其保存到文件或新的存储过程中，以便在将来或作为另一个应用程序的一部分执行。
+
+当某个流程包含许多步骤，而其中某些步骤必须在严格的时间表上执行时，这种灵活性会非常方便。例如，你可能希望在午夜基于数据库中的架构生成一个脚本，但直到凌晨 4 点数据加载完成才返回数据本身。或者，你可能希望在执行 SQL 文件之前或之外，对其进行审核或将其保存到其他地方以供后用。另一种实现此目的并避免将数据移入操作系统的方法是将其存储在表中。
+
+#### 将脚本保存到表中
+
+保存命令字符串的最简单方法是将其插入表中。这提供了额外的灵活性，例如可以为命令添加时间戳或保存旧命令。为了便于此过程，你将创建一个表来存储命令数据，如清单 11-4 所示。
+
+```sql
+CREATE TABLE dbo.sql_command
+(       command_id INT NOT NULL IDENTITY(1,1) CONSTRAINT PK_sql_commands PRIMARY KEY CLUSTERED,
+sql_command NVARCHAR(MAX) NOT NULL,
+time_stamp DATETIME NOT NULL CONSTRAINT DF_sql_commands_time_stamp DEFAULT (CURRENT_TIMESTAMP)    );
+```
+
+清单 11-4.
+用于存储动态 SQL 输出的表
+
+注意，有一个额外的列存储默认时间戳。这确保了任何保存的 TSQL 都可以轻松地与生成时间相关联。为了演示如何使用此表，让我们修改之前的索引碎片整理存储过程，改为向该表插入数据，而不是打印到 GUI，如清单 11-5 所示。
+
+
+
+### 存储过程：输出结果到表
+
+```sql
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'index_maintenance_demo_output')
+BEGIN
+DROP PROCEDURE dbo.index_maintenance_demo_output;
+END
+GO
+CREATE PROCEDURE dbo.index_maintenance_demo_output
+@reorganization_percentage TINYINT = 10,
+@rebuild_percentage TINYINT = 35,
+@print_results_to_file_only BIT = 1
+AS
+BEGIN
+DECLARE @sql_command NVARCHAR(MAX) = '';
+DECLARE @parameter_list NVARCHAR(MAX) = '@reorganization_percentage TINYINT, @rebuild_percentage TINYINT'
+DECLARE @database_name NVARCHAR(MAX);
+DECLARE @database_list TABLE
+(database_name NVARCHAR(MAX) NOT NULL);
+INSERT INTO @database_list
+(database_name)
+VALUES
+('AdventureWorks2012'),
+('AdventureWorks2014'),
+('AdventureWorksDW2012'),
+('AdventureWorksDW2014');
+CREATE TABLE #index_maintenance
+(       database_name NVARCHAR(MAX),
+schema_name NVARCHAR(MAX),
+object_name NVARCHAR(MAX),
+index_name NVARCHAR(MAX),
+index_type_desc NVARCHAR(MAX),
+page_count BIGINT,
+avg_fragmentation_in_percent FLOAT,
+index_operation NVARCHAR(MAX));
+SELECT @sql_command = @sql_command + '
+USE [' + database_name + ']
+INSERT INTO #index_maintenance
+(database_name, schema_name, object_name, index_name, index_type_desc, page_count, avg_fragmentation_in_percent, index_operation)
+SELECT
+CAST(SD.name AS NVARCHAR(MAX)) AS database_name,
+CAST(SS.name AS NVARCHAR(MAX)) AS schema_name,
+CAST(SO.name AS NVARCHAR(MAX)) AS object_name,
+CAST(SI.name AS NVARCHAR(MAX)) AS index_name,
+IPS.index_type_desc,
+IPS.page_count,
+IPS.avg_fragmentation_in_percent, -- 务必尽可能多地进行筛选...如果不按数据库和表筛选，这可能会返回大量数据。
+CAST(CASE
+WHEN IPS.avg_fragmentation_in_percent >= @rebuild_percentage THEN ''REBUILD''
+WHEN IPS.avg_fragmentation_in_percent >= @reorganization_percentage THEN ''REORGANIZE''
+END AS NVARCHAR(MAX)) AS index_operation
+FROM sys.dm_db_index_physical_stats(NULL, NULL, NULL, NULL , NULL) IPS
+INNER JOIN sys.databases SD
+ON SD.database_id = IPS.database_id
+INNER JOIN sys.indexes SI
+ON SI.index_id = IPS.index_id
+INNER JOIN sys.objects SO
+ON SO.object_id = SI.object_id
+AND IPS.object_id = SO.object_id
+INNER JOIN sys.schemas SS
+ON SS.schema_id = SO.schema_id
+WHERE alloc_unit_type_desc = ''IN_ROW_DATA''
+AND index_level = 0
+AND SD.name = ''' + database_name + '''
+AND IPS.avg_fragmentation_in_percent >= @reorganization_percentage
+AND SI.name IS NOT NULL -- 仅检查索引，而非堆数据。
+AND SO.is_ms_shipped = 0 -- 不对系统对象执行维护
+ORDER BY SD.name ASC;'
+FROM @database_list
+WHERE database_name IN (SELECT name FROM sys.databases);
+EXEC sp_executesql @sql_command, @parameter_list, @reorganization_percentage, @rebuild_percentage;
+SELECT @sql_command = '';
+SELECT @sql_command = @sql_command +
+'        USE [' + database_name + ']
+ALTER INDEX [' + index_name + '] ON [' + schema_name + '].[' + object_name + ']
+' + index_operation + ';
+'
+FROM #index_maintenance;
+IF @print_results_to_file_only = 1
+INSERT INTO dbo.sql_command
+(sql_command)
+SELECT
+@sql_command
+ELSE
+EXEC sp_executesql @sql_command;
+DROP TABLE #index_maintenance;
+END
+```
+
+### 列表 11-5. 带有输出到表选项的索引维护存储过程
+
+请注意，除了重命名几个变量外，唯一的区别是执行 `INSERT` 到 `dbo.sql_command` 而不是打印输出。让我们执行几次存储过程，然后查看表的内容：
+
+```sql
+EXEC dbo.index_maintenance_demo_output @reorganization_percentage = 10, @rebuild_percentage = 35, @print_results_to_file_only = 1;
+EXEC dbo.index_maintenance_demo_output @reorganization_percentage = 20, @rebuild_percentage = 50, @print_results_to_file_only = 1;
+EXEC dbo.index_maintenance_demo_output @reorganization_percentage = 30, @rebuild_percentage = 75, @print_results_to_file_only = 1;
+EXEC dbo.index_maintenance_demo_output @reorganization_percentage = 5, @rebuild_percentage = 10, @print_results_to_file_only = 1;
+```
+
+这些都传递了不同的参数值，但其他方面是相同的。查看新表可以发现，命令字符串已按预期保存，并附有时间戳，如图 11-7 所示。
+
+![A371168_1_En_11_Fig7_HTML.jpg](img/A371168_1_En_11_Fig7_HTML.jpg)
+
+##### 图 11-7.
+由列表 11-5 中的脚本创建的 `ALTER INDEX` 语句
+
+一旦保存在这里，它们可以在将来任何时候执行，或者由 DBA 或开发人员审查，以确保命令字符串的生成是正确的。除了延迟执行之外，此策略对于调试有问题的动态 SQL，或者仅仅允许在执行前记录命令字符串都非常有用。列表 11-6 中的脚本是早前备份脚本的改编，它会将生成的命令字符串写入物理 SQL 文件。
+
+
+### 备份维护脚本：将命令字符串输出到文件
+
+下面的存储过程展示了另一种思路：不直接执行备份，而是将生成的命令字符串输出到文件。由于 BCP 工具默认会覆盖目标文件，因此每个新命令字符串都需要先插入到一个中间文件 `TempOutput.sql` 中，然后再追加到最终文件 `QueryOutput.sql`。文件路径和服务器名称都已参数化，这使得此存储过程更加通用。让我们运行一些前面的例子：
+
+```sql
+EXEC dbo.backup_plan_output @differential_and_full_backup_time = '13:55:00', @full_backup_day = 3, @backup_location = 'E:\SQLBackups\',
+@sql_data_location = 'E:\SQLData\', @sql_server_name = 'SSANDILE\EDSQLSERVER14', @print_output_to_file_only = 1;
+EXEC dbo.backup_plan_output @differential_and_full_backup_time = '13:55:00', @full_backup_day = 1, @backup_location = 'E:\SQLBackups\',
+@sql_data_location = 'E:\SQLData\', @sql_server_name = 'SSANDILE\EDSQLSERVER14', @print_output_to_file_only = 1;
+EXEC dbo.backup_plan_output @differential_and_full_backup_time = '10:00:00', @full_backup_day = 1, @backup_location = 'E:\SQLBackups\',
+@sql_data_location = 'E:\SQLData\', @sql_server_name = 'SSANDILE\EDSQLSERVER14', @print_output_to_file_only = 1;
+```
+
+运行后，并不执行实际的备份操作。命令字符串会被发送到指定的文本文件。以下是 `QueryOutput.sql` 文件的内容：
+
+```sql
+BACKUP DATABASE [AdventureWorks2012] TO DISK = 'e:\SQLBackups\AdventureWorks2012_12062015140236.dif' WITH DIFFERENTIAL;BACKUP DATABASE [AdventureWorks2014] TO DISK = 'e:\SQLBackups\AdventureWorks2014_12062015140236.dif' WITH DIFFERENTIAL;BACKUP DATABASE [AdventureWorksDW2012] TO DISK = 'e:\SQLBackups\AdventureWorksDW2012_12062015140236.dif' WITH DIFFERENTIAL;BACKUP DATABASE [AdventureWorksDW2014] TO DISK = 'e:\SQLBackups\AdventureWorksDW2014_12062015140236.dif' WITH DIFFERENTIAL;
+BACKUP DATABASE [AdventureWorks2012] TO DISK = 'e:\SQLBackups\AdventureWorks2012_12062015140236.bak';BACKUP DATABASE [AdventureWorks2014] TO DISK = 'e:\SQLBackups\AdventureWorks2014_12062015140236.bak';BACKUP DATABASE [AdventureWorksDW2012] TO DISK = 'e:\SQLBackups\AdventureWorksDW2012_12062015140236.bak';BACKUP DATABASE [AdventureWorksDW2014] TO DISK = 'e:\SQLBackups\AdventureWorksDW2014_12062015140236.bak';
+BACKUP LOG [AdventureWorks2014] TO DISK = 'e:\SQLBackups\AdventureWorks2014_12062015140236.trn'
+```
+
+输出文件缺少空格和换行，这是因为 BCP 最适合处理单行的 T-SQL 查询。如果想改善格式，可以轻松地在 BCP 命令中插入中间步骤，以便在文件中添加换行符。无论如何，输出在功能上是正确的，将按要求执行备份到指定的输出文件夹。
+
+请注意存储过程中对 `xp_cmdshell` 的使用。当需要从 SQL Server 内部运行文件操作或操作系统命令时，通常会使用此功能。通常，这只在受限制或私有环境中使用，因为它在公共服务器上启用时可能构成安全威胁。在实施前请仔细考虑您的用例，如果您的服务器处于公共环境中，请改用 SSIS、PowerShell 或其他工具。
+
+默认情况下，`xp_cmdshell` 是禁用的，但你可以使用以下 T-SQL 启用它：
+
+```sql
+EXEC sp_configure 'show advanced options', 1
+GO
+RECONFIGURE
+GO
+EXEC sp_configure 'xp_cmdshell', 1
+GO
+RECONFIGURE
+GO
+```
+
+关于 `xp_cmdshell` 的利弊，更多信息请参阅第 2 章（涵盖 SQL 注入）和第 4 章（涵盖安全性）。或者，可以使用 PowerShell 来控制操作系统操作，以避免使用它。
+
+### 在其他服务器上执行 TSQL
+
+在管理多台服务器时，经常会遇到需要从当前服务器执行 TSQL 以远程运行到另一台 SQL Server 上的情况。虽然这些 TSQL 语句不是用动态 SQL 执行的，但其语句的创建和执行过程非常相似，值得进行一个简短的演示。
+
+考虑这样一个场景：你有一个中心报告服务器，并希望从本地服务器以及其他现场服务器中提取数据。你可能需要遍历每个服务器，从每个服务器提取数据并将其返回到本地的目标数据存储。首先，让我们为下一个示例创建一个简单的日志表：
+
+```sql
+CREATE TABLE dbo.recent_product_counts
+(       count_id INT NOT NULL IDENTITY(1,1) CONSTRAINT PK_recent_product_counts PRIMARY KEY CLUSTERED,
+product_count INT NOT NULL,
+server_name NVARCHAR(128),
+sample_time DATETIME NOT NULL CONSTRAINT DF_recent_product_counts DEFAULT (CURRENT_TIMESTAMP));
+```
+
+有了存储结果的地方后，你将创建一个存储过程来说明如何使用 `OPENQUERY` 从远程服务器返回特定的行数，并将结果存储在此表中。这可以在清单 11-8 中看到。
+
+```sql
+IF EXISTS (SELECT * FROM sys.procedures WHERE procedures.name = 'get_product_count_all_servers')
+BEGIN
+DROP PROCEDURE dbo.get_product_count_all_servers;
+END
+GO
+CREATE PROCEDURE dbo.get_product_count_all_servers
+AS
+BEGIN
+SET NOCOUNT ON;
+DECLARE @sql_command NVARCHAR(MAX) = '';
+SELECT
+name AS server_name
+INTO #servers
+FROM sys.servers;
+SELECT @sql_command = @sql_command + '
+INSERT INTO AdventureWorks2014.dbo.recent_product_counts
+(product_count, server_name)
+SELECT
+product_count,
+''' + server_name + '''
+FROM OPENQUERY([' + server_name + '], ''SELECT COUNT(*) AS product_count FROM AdventureWorks2014.Production.Product WHERE ModifiedDate >= ''''2/8/2014'''''');'
+FROM #servers
+WHERE server_name  @@SERVERNAME;
+SELECT @sql_command = @sql_command + '
+INSERT INTO AdventureWorks2014.dbo.recent_product_counts
+(product_count, server_name)
+SELECT
+COUNT(*),
+@@SERVERNAME
+FROM AdventureWorks2014.Production.Product WHERE ModifiedDate >= ''2/8/2014''';
+EXEC sp_executesql @sql_command;
+DROP TABLE #servers;
+END
+```
+清单 11-8.
+使用动态 SQL 和 OPENQUERY 从远程服务器检索数据
+
+此存储过程分为两个部分：第一部分将生成 TSQL 来访问 `sys.servers` 中所有不是本地服务器的服务器。第二部分仅管理本地服务器，因为访问它不需要 `OPENQUERY` 语法。运行此查询两次后，`recent_product_counts` 的内容如图 11-8 所示。
+
+![A371168_1_En_11_Fig8_HTML.jpg](img/A371168_1_En_11_Fig8_HTML.jpg)
+
+图 11-8.
+使用清单 11-8 中的存储过程从多个服务器收集的产品计数
+
+在我的计算机案例中，只有另一台服务器可供查询，但如果有更多，每一台都会包含在结果集中。存储过程中使用的 `ModifiedDate` 通常是基于当前日期和时间的当前日、周或月，但由于 `AdventureWorks` 中的数据是静态的，你需要往回看更久一点才能收集到有意义的计数。
+
+也没有必要查询 `sys.servers` 中的所有 SQL Server。可以创建一个自定义列表，或者创建并访问一个服务器表来管理任意数量的本地或远程服务器。还要注意命令字符串文本中大量使用了撇号。由于 `OPENQUERY` 要求一个用撇号分隔的字符串，`sp_executesql` 也是如此，因此你需要将使用的撇号数量加倍。这确保在最终查询传递给每个 SQL Server 执行时，字符串分隔符的数量是正确的。
+
+在以这种方式嵌套字符串时，经常进行调试以确保撇号数量正确。在执行前打印命令字符串有助于确保输出符合预期。如有疑问，请从头开始，一次构建一级语句，直到完成。在此示例中，由于整个 TSQL 语句嵌套在另一个字符串中，撇号的数量加倍了，但动态 SQL 的不同应用可能会导致略有不同的结果。
+
+仔细编写这类动态 SQL 所获得的回报将超过嵌套字符串的复杂性。在寻找此类数据访问需求的简单解决方案时，能够高效地从其他服务器检索重要数据，而无需使用循环、维护计划或 SSIS 包，可能是有益的。
+
+### 结论
+
+本章介绍了多种应用，它们运用了本书中介绍的许多技术。其中许多脚本都非常开放，在构建和实现时允许进行大量定制。列表生成允许在构建命令字符串时避免使用游标和循环，从而使执行非常高效。
+
+随着时间的推移，会出现无数其他任务，动态 SQL 或其许多相关主题对于解决这些任务将具有不可估量的价值。即使你不是在开发新应用程序，了解这些工具也能让你在审查他人工作或排查性能或应用程序问题时保持警惕。
+
+要有创造力并愿意编写新东西，即使只有很少的内容可以让你开始。许多伟大的工具都是由于“为什么还没有人做这个呢？！”这个问题而构建的。本书提供了一个起点，但随着 SQL Server 和其他数据库工具新版本的发布，以及软件应用程序复杂性随时间的增加，新颖解决方案的机会也在增加。
+
+即使你认为一个想法是死胡同，也要探索它，特别是如果别人声称它是死胡同的话。我敢打赌，我想出的“绝妙解决方案”中，超过一半最终毫无用处。剩下的那些让我在整个职业生涯中对数据库开发和优化保持乐观。
+
+## 索引
+
+### A, B, C
+*   盲注 SQL 注入
+*   D, E
+
+### Database_Log
+*   动态列表游标方法错误消息
+*   执行计划 ID 与名称
+*   IO 统计信息
+*   搜索字符串
+*   SQL 注入字符串 ID
+*   字面量结构
+*   使用 ISNULL
+*   使用参数
+*   XML 创建
+
+### Dynamic PIVOT
+*   添加颜色，`Production.Product` 列表
+*   列创建命令字符串
+*   组件
+*   财务数据
+*   多个运算符
+*   产品颜色查询，`Production.Product` 查询返回销售数据，季度
+*   Sub-SELECT 语句
+*   变量声明
+
+### Dynamic SQL
+*   优点
+*   排序规则冲突错误
+*   `Collation_Test`
+*   条件分页注意事项
+*   自定义对象列
+*   `hire_date_years`
+*   创建新数据脚本
+*   创建 TSQL 视图
+
+### DynamicSQL
+*   参见. 动态列表
+
+### Dynamic UNPIVOT
+*   添加颜色名运算符命令字符串
+*   连接查询结果行数
+*   单语句 WHERE 子句还原
+*   列标题架构元数据
+*   存储数据语法
+*   `sys.columns`
+*   `sys.tables`
+
+### F, G
+*   `@firstProductModelID`
+
+### H
+*   健康保险流通与责任法案 (HIPAA)
+*   `HOST_NAME()` 函数
+
+### I, J
+*   索引碎片整理功能
+*   索引重建
+*   索引重组
+*   查询结果存储过程
+*   `sys.dm_db_index_physical_stats`
+*   `sys.tables`
+
+### K
+*   `KILL` 函数
+
+### L, M, N
+*   `@lastProductModelID`
+*   左深树
+
+### O
+*   `OPENQUERY()` 函数
+*   `OPENROWSET()` 函数
+
+### P
+*   参数嗅探
+*   `DBCC` 命令
+*   `dbo.read_query_plan_cache`
+*   设计大型结果集
+*   局部变量
+*   优化器，使用基数参数值
+*   查询执行查询优化器干扰项
+*   行数少的结果集
+*   存储过程参数化分页
+*   `ProductModelID` 产品结果
+*   产品搜索查询计划缓存
+*   `read_query_plan_cache` 销售记录
+*   搜索过程搜索查询执行
+*   存储过程次优计划使用销售订单
+
+### Performanceoptimization
+*   参见. 查询执行
+
+### Q, R
+*   查询执行绑定动态 SQL vs . 标准 SQL
+*   执行计划缓存查询简化
+*   查询解析与绑定执行
+*   筛选索引
+*   逻辑读取
+*   `NOLOCK` 查询对象
+*   优化工具执行计划
+*   `STATISTICS IO` 分页执行计划
+*   `OFFSET` 行数计算
+*   行号搜索查询性能
+*   总结果数窗口函数解析
+*   `RECOMPILE`
+*   扫描计数统计信息
+*   `auto_create_stats_on`
+*   `auto_update_statistics`
+*   `auto_update_stats_async_on`
+*   `auto_update_stats_on`
+*   `dbcc show_statistics`
+*   `Production.Product` 查询优化器
+*   `sp_updatestats`
+*   SQL Server Management Studio 跟踪标志-2371
+*   `STATISTICS TIME`
+
+### S
+*   作用域管理
+*   `dbo.get_people` 动态 SQL
+*   `OUTPUT` 参数
+*   参数更新
+*   TSQL 变量区分
+*   全局临时表
+
+### 输入和输出参数
+*   `INSERT…EXEC` 语法
+*   永久临时表
+*   表变量
+*   临时表
+*   TSQL 语句
+
+### `SHUTDOWN` 函数
+*   `sp_addextendedproc`
+
+### SQL 注入
+*   净化输入方法
+*   参数化 `QUOTENAME`
+*   搜索过程定义
+*   检测与预防
+*   应用流量扫描
+*   代码审查
+*   动态数据屏蔽
+*   日志审查
+*   安全测试
+*   软件补丁
+*   URL 长度限制
+*   有效空格输入值
+*   密码数据架构名与方括号
+*   `UNION ALL`
+*   用户名/密码组合
+*   用户名/密码验证语句
+
+### T, U, V, W
+*   TSQL 服务器
+
+### X, Y, Z
+*   `xp_cmdshell`
+*   `xp_loginconfig`
+*   `xp_regread`
+*   `xp_regwrite`
+*   `xp_servicecontrol`
