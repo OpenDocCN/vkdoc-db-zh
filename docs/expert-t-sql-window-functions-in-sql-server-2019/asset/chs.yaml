@@ -1,0 +1,5108 @@
+- '![](img/978-1-4842-5197-3_CoverFigure.jpg)
+
+
+  ISBN 978-1-4842-5196-6 e-ISBN 978-1-4842-5197-3 [`doi.org/10.1007/978-1-4842-5197-3`](https://doi.org/10.1007/978-1-4842-5197-3)
+  © Kathi Kellenberger, Clayton Groom, and Ed Pollack 2019。本作品受版权保护。出版者保留所有权利，无论涉及材料的全部或部分，特别是翻译、转载、插图重用、朗诵、广播、缩微胶片或其他任何物理方式的复制，以及信息存储与检索、电子改编、计算机软件，或任何现在已知或未来开发的类似或不同方法的传播权。书中可能出现商标名称、标识和图像。我们仅以编辑方式并为了商标所有者的利益使用这些名称、标识和图像，无意侵犯商标权。在本出版物中使用商品名称、商标、服务标识及类似术语，即使未特别标识，也不应被视为表达意见，认为它们是否不受专有权约束。虽然本书中的建议和信息在出版时被认为是真实准确的，但作者、编辑或出版商均不对可能出现的任何错误或遗漏承担任何法律责任。出版商对本出版物所含材料不作任何明示或暗示的保证。本书在全球图书贸易中由
+  Springer Science+Business Media New York 分销，地址：233 Spring Street, 6th Floor, New
+  York, NY 10013。电话：1-800-SPRINGER，传真：(201) 348-4505，电子邮件：orders-ny@springer-sbm.com，或访问网站：www.springeronline.com。Apress
+  Media, LLC 是加利福尼亚州的一家有限责任公司，其唯一成员（所有者）是 Springer Science + Business Media Finance
+  Inc（SSBM Finance Inc）。SSBM Finance Inc 是特拉华州的一家公司。
+
+
+  *本书谨以纪念 Larry Toothman。*
+
+
+  ![../images/335106_2_En_BookFrontmatter_Figb_HTML.jpg](img/335106_2_En_BookFrontmatter_Figb_HTML.jpg)
+
+
+  '
+- '# 前言
+
+
+  `SQL` 开发于 20 世纪 70 年代，并自 1986 年起通过 `ANSI` 批准的委员会成为正式标准。时至 2019 年，`SQL` 已成为应用最广泛的声明性语言。在此过程中，窗口函数已成为该标准的重要组成部分。`ANSI`
+  并不制定标准，但在记录和维护标准方面扮演着重要角色。各个软件供应商自愿决定遵守标准，而像本书作者这样的工作者则致力于以实用的方式阐释 `SQL` 的使用。
+
+
+  在我自身的数据科学和高级分析职业生涯中，窗口函数在过去几年里一直是多个关键项目的重要组成部分。几年前，我曾基于本书的早期版本为用户小组制作过一个 YouTube
+  视频。自那时起，作为微软的职业架构师，我一直在为数据科学应用提供建议。在一个项目中，大约 20 个特征的输入并未产生足够的结果：通过使用窗口函数，我领导的一个团队（没错，直接编码）迅速将特征数量增加到了
+  1000 多个。不仅是数量的增长，准确率也得到了提高，从业务角度而言，该组织每年因此为其问题节省了数百万美元。在上个月，我遇到了一个无关的新项目，情况类似：一个时间序列类型的数据集，有机会从不到
+  20 个特征增长到更大的数量。
+
+
+  人们可能会想，自动化机器学习技术是否会自行完成此类组合，而我对此持怀疑态度。仅从窗口函数创建一个稳健的特征集不仅需要时间序列方面的考量，还需要基于对数据领域了解的聚类知识。即使自动化技术在此主题上取得巨大进展，我预计任何数据科学家在更典型的数据科学调查中（仅有少数特征和少量观测值时）仍需要掌握这些函数的基本知识。
+
+
+  `SQL` 是本地和云数据库技术的核心——而在数据科学领域，许多人使用 `Apache Spark`（`SQL Server 2019` 以及许多其他数据技术）。其在高级分析中的延伸应用，是窗口函数成为
+  `SQL` 语言专家级主题的又一个原因。主流应用范围从任何业务分析 `SQL` 查询，一直延伸到支持高级分析和机器学习算法。
+
+
+  多年来，能分别认识 Kathi Kellenberger 和 Clayton Groom 这两位备受尊敬的同行和专业人士，并见证他们如何通过多次演讲（他们通常自愿奉献自己的时间）以及本书的创建和现在的修订，各自成为技术用户社区的重要领导者，是我莫大的荣幸。在这次修订中，Ed
+  Pollack 添加了关于棒球统计的材料，说明了并非所有时间序列都与金钱相关。仅拥有标准是不够的，还需要有专业的教练来解释这些函数如何描述业务分析的方法。本书提供了丰富的示例，共同为读者清晰地指引了一条通往
+  `SQL` 语言中数学最复杂但实际最有用的方面之一的路径。
+
+
+  > Mark Tabladillo 博士
+
+  >
+
+  > 云解决方案架构师，微软
+
+
+  '
+- '# 引言
+
+
+  几年前，我会为每个新版本的 `SQL Server` 制作用户组演示，介绍新的 `T-SQL` 功能。2012 年有太多内容可讲，我决定专门就那年引入的窗口函数做一个演示。最终，我积累了如此多的材料，以至于它变成了两次会议。多年来，我可能在美国和英国各地的活动中至少演示过
+  50 次这些信息。尽管如此，大多数人仍然没有使用窗口函数，因为他们没有听说过，或者没有意识到其好处。
+
+
+  ## 本书内容
+
+
+  本书涵盖了每种类型的窗口函数，从 `SQL Server 2005` 引入的排名函数开始，一直到 2012 年引入的统计函数。每章都解释了如何使用这些函数及其选项，并提供了几个如何使用的简单示例。遗憾的是，微软上一次添加任何新的窗口函数是在
+  2012 年，不过最近有一些性能改进。其中一章专门讨论窗口函数的性能。
+
+
+  最后，本书的最后两章涵盖了一些实际案例。在 `第 9 章`，你将学习如何分析一个大型数据集——超过 100 年的棒球统计数据。`第 10 章` 和 `第 11
+  章` 展示了如何在数据仓库计算中使用窗口函数，而不是构建多维数据集。
+
+
+  ## 目标读者
+
+
+  本书适合已经具备良好 `T-SQL` 技能的人员。他们知道如何连接表、使用子查询和 `CTEs`，以及编写聚合查询。尽管具备这些技能，他们偶尔会遇到一些不易用基于集合的方式解决的问题。如果没有窗口函数，其中一些问题只能使用游标或昂贵的三角连接来解决。通过运用本书中传授的概念，你的
+  `T-SQL` 技能将提升到一个新的水平。一旦你开始使用窗口函数，你会发现更多学习它们的理由。
+
+
+
+  ## 联系作者
+
+
+  我们已尽力确保书中信息准确无误，但有时读者可能会提出更好的查询方法或发现错误。如有任何意见或疑问，您可以通过 `kathi.kellenberger@outlook.com`
+  与我联系。
+
+
+  ## 致谢
+
+
+  若非数据平台社区的一位朋友，拉里·图斯曼（Larry Toothman）的建议，本书的第一版可能就不会问世。令人悲伤的是，拉里在本书出版后不久便去世了，我还没来得及送他一本。在他生命的最后几年里，拉里才刚刚开始在各种活动上演讲，并更多地参与社区活动。倘若世事不同，谁知道他能取得怎样的成就。感谢拉里的启发，全世界的人们将因此了解窗口函数。
+
+
+  人们常说，养育一个孩子需要一个村庄，一本书的诞生或许也是如此。我要感谢乔纳森·詹尼克（Jonathan Gennick）和吉尔·巴尔扎诺（Jill Balzano）给予的帮助和指导。可能还有许多
+  Apress 的同仁参与了这个项目，而我将永远无法与他们见面，在此也向他们一并致谢。
+
+
+  克莱顿·格鲁姆（Clayton Groom）和埃德·波拉克（Ed Pollack）各自分享了他们使用窗口函数的真实世界经验。他们的章节构思都源于我在用户组会议上与他们不期而遇，聊起了我的项目。他们的贡献无疑使这本书对您而言变得更好、更令人愉悦。
+
+
+  感谢罗德尼·兰德鲁姆（Rodney Landrum）出色的完成了技术审校工作，以及马克·塔拉迪洛（Mark Tabladillo）撰写了精彩的前言。
+
+
+  感谢我的家人，尤其是我的丈夫丹尼斯（Dennis），他几乎包揽了家里的一切事务。当我承担像写书这样的大项目时，他让我的生活轻松了许多。
+
+
+  最后，感谢亲爱的读者通过本书学习窗口函数。希望您能喜欢这本书，并能立即应用所学。我很乐意在各类活动上收到您的反馈，请不要犹豫！
+
+
+  ### 关于作者与关于技术审校者
+
+
+  #### 关于作者
+
+
+  #### 关于技术审校者
+
+
+  脚注 1
+
+
+  '
+- '# 1. 初识窗口
+
+
+  SQL Server 是一个强大的数据库平台，拥有一个名为 T-SQL 的多功能查询语言。在我看来，多年来 T-SQL 最令人兴奋的增强就是**窗口函数**。窗口函数使您能够以新的、更简单的方式解决查询问题，并且在大多数情况下，其性能优于传统技术。它们是进行数据分析的绝佳工具。您可能还会听到它们被称为“windowing”或“windowed”函数。在讨论此功能时，这三个术语是同义词。
+
+
+  在 SQL Server 2000 发布之后，SQL Server 爱好者们苦苦等待了漫长的 5 年，才迎来下一个版本。微软带来了全新的产品——SQL Server
+  2005。此版本引入了 SQL Server Management Studio、SQL Server Integration Services、快照隔离和数据库镜像。微软还用许多强大的功能增强了
+  T-SQL，例如公用表表达式（CTEs）。而在 2005 版本中，所有 T-SQL 增强中最激动人心的，莫过于引入了窗口函数。
+
+
+  而这仅仅是个开始。窗口函数从 ANSI SQL2003 开始成为标准 ANSI SQL 规范的一部分。SQL Server 2012 版本根据标准发布了更多功能。2019
+  年，微软通过批处理模式处理（一种曾专属于列存储索引的功能）为部分窗口函数提供了性能提升。您将在第 8 章了解该性能特性的工作原理。即便如此，目前的功能仍未涵盖整个规范，因此未来还有更多值得期待的内容。
+
+
+  本章将初步介绍两个 T-SQL 窗口函数：`LAG` 和 `ROW_NUMBER`。您将了解什么是窗口，以及如何用 `OVER` 子句来定义它。您还将学习如何将窗口划分为更小的部分，称为分区。
+
+
+  ## 探索窗口函数
+
+
+  窗口函数并没有让您能做以前无法完成的事情，它们也与 Microsoft Windows API 毫无关系。使用以前可用的方法，例如自联接、相关子查询和游标，只要您投入足够的时间和精力，几乎可以解决任何
+  T-SQL 问题。窗口函数的主要好处在于，您可以轻松地解决这些棘手的查询。大多数情况下，相较于旧方法，您还能获得巨大的性能提升。您通常可以使用窗口函数将涉及多条语句或子查询的解决方案，转变为更简单的单条语句。
+
+
+  我喜欢将窗口函数分为几类，这些分类与微软的定义并不完全一致：排名函数、窗口聚合函数、累积窗口聚合函数、偏移函数和统计函数。（微软将四种偏移函数和四种统计函数统称为“分析”函数。）您可以使用这些函数为每一行分配排名、在不分组的情况下计算汇总值、计算运行总计、在结果中包含来自不同行的列，以及计算组内百分比。随着您阅读本书，您将逐步了解这些函数。
+
+
+  我最喜欢的 T-SQL 函数恰好也是一个窗口函数，名为 `LAG`。它是偏移函数之一，您将在第 6 章学习到。`LAG` 允许您在结果中包含来自不同行的列。与实现相同功能的旧方法相比，使用
+  `LAG` 更简单，性能也更好。
+
+
+  在同一年内（仅相隔几个月），有两个人分别向我寻求帮助，解决的几乎是同一个问题：如何利用股市数据，将某只股票一天的收盘价与下一天进行比较？传统的解决方案需要将数据的每一行与前一行进行联接，以获取前一天的收盘价。而使用
+  `LAG` 函数，解决方案不仅编写起来更简单，而且性能也大大提升。
+
+
+
+  ### 注意
+
+
+  如果您想跟随本示例操作，可以创建 `StockAnalysisDemo` 数据库并生成股票市场数据的示例脚本，该脚本与本章代码一同可在 Apress 网站上找到。
+
+
+  若想快速了解如何先使用一种传统方法，再使用 `LAG` 函数来解决此问题，请审阅并运行代码清单 1-1。
+
+
+  ```sql
+
+  USE StockAnalysisDemo;
+
+  GO
+
+  --1-1.1 使用子查询
+
+  SELECT TickerSymbol, TradeDate, ClosePrice,
+
+  (SELECT TOP(1) ClosePrice
+
+  FROM StockHistory AS SQ
+
+  WHERE SQ.TickerSymbol  = OQ.TickerSymbol
+
+  AND SQ.TradeDate < OQ.TradeDate
+
+  ORDER BY TradeDate DESC) AS PrevClosePrice
+
+  FROM StockHistory AS OQ
+
+  ORDER BY TickerSymbol, TradeDate;
+
+  --1-1.2 使用 LAG
+
+  SELECT TickerSymbol, TradeDate, ClosePrice,
+
+  LAG(ClosePrice) OVER(PARTITION BY TickerSymbol
+
+  ORDER BY TradeDate) AS PrevClosePrice
+
+  FROM StockHistory
+
+  ORDER BY TickerSymbol, TradeDate;
+
+  ```
+
+  **代码清单 1-1**
+
+  两种解决股票市场问题的方法
+
+
+  部分结果显示在图 1-1 中。由于数据是随机生成的，图中的 `ClosePrice` 和 `PrevClosePrice` 值与您的值不会匹配。查询 1 使用关联子查询（旧方法）为每一外部行选择一个
+  `ClosePrice`。通过将内部查询的 `TickerSymbol` 与外部查询连接，您可以确保不会比较两只不同的股票。内部查询和外部查询也通过 `TradeDate`
+  进行连接，但内部查询的 `TradeDate` 必须小于外部查询的 `TradeDate`，以确保您获取的是前一天的数据。内部查询还必须排序，以获取日期小于当前日期但最新的数据行。在我的笔记本电脑（16GB
+  RAM，使用 SSD 存储）上运行此查询耗时超过一分钟。返回了近 700,000 行数据。
+
+
+  ![../images/335106_2_En_1_Chapter/335106_2_En_1_Fig1_HTML.jpg](img/335106_2_En_1_Fig1_HTML.jpg)
+
+  **图 1-1**
+
+  股票市场问题的部分结果
+
+
+  查询 2 使用窗口函数 `LAG` 解决相同的问题，并产生相同的结果。暂时不必担心语法；读完本书时您将成为专家。在我的笔记本电脑上，使用 `LAG` 的查询仅用了
+  13 秒运行。
+
+
+  仅通过查看代码清单 1-1 中的代码，您就可以看到使用 `LAG` 的查询 2 编写起来要简单得多，即使您可能还不理解其语法。它的运行速度也快得多，因为它只读取表一次，而不像查询
+  1 那样每行读取一次。当您继续阅读本书并运行示例时，您将了解到像 `LAG` 这样的窗口函数如何让您的工作更轻松，让您的客户更满意！
+
+
+  ## 理解窗口
+
+
+  窗口函数不同于常规函数，因为它们在一组行（也称为 *窗口*）上操作。这可能听起来类似于聚合函数的工作方式。聚合函数（例如 `SUM` 和 `AVG`）在行组上操作并提供汇总值。当您编写聚合查询时，除了
+  `GROUP BY` 子句中的列之外，您会丢失详细信息列。
+
+
+  当添加 `GROUP BY` 子句时，您将看到的不是返回所有行的摘要，而是每个 `GROUP BY` 列唯一集合的一行摘要行。例如，要使用聚合查询获取所有行的计数，您必须省略其他列。一旦将列添加到
+  `SELECT` 和 `GROUP BY` 中，您将获得每个唯一分组的计数，而不是整个结果集的计数。
+
+
+  带有窗口函数的查询与传统聚合查询大不相同。`SELECT` 列表中出现的列没有限制，也不需要 `GROUP BY` 子句。您还可以将窗口函数添加到聚合查询中，这将在第
+  3 章讨论。返回的不是摘要行，而是所有详细信息，并且包含窗口函数的表达式的结果仅作为另一列包含在内。实际上，通过使用窗口函数获取行的总计数，您仍然可以包含表中的所有列。
+
+
+  想象一下，在查询运行时，透过一扇窗户查看一组特定的行。您还有最后一次机会执行操作，例如从另一行中获取其中一个列。操作的结果将作为附加列添加。随着您阅读本书，您将了解窗口函数的实际工作原理，但“透过窗户查看”的概念帮助我理解并在许多
+  SQL Server 活动中向听众解释了窗口函数。图 1-2 说明了这一概念。
+
+
+  ![../images/335106_2_En_1_Chapter/335106_2_En_1_Fig2_HTML.jpg](img/335106_2_En_1_Fig2_HTML.jpg)
+
+  **图 1-2**
+
+  透过窗户对一组行执行操作
+
+
+  窗口并不局限于查询的 `SELECT` 列表中的列。例如，如果您查看 `StockHistory` 表，您会看到还有一个 `OpenPrice` 列。某一天的
+  `OpenPrice` 与前一天的 `ClosePrice` 是不同的。如果您愿意，您可以使用 `LAG` 将之前的 `OpenPrice` 包含在结果中，即使它最初不在
+  `SELECT` 列表中。
+
+
+  在使用 `LAG` 的股票历史示例中，每一行都有自己的窗口，在其中查找前一个收盘价。当对数据的第三行执行计算时，窗口由第二行和第三行组成。当对第四行执行计算时，窗口由第三行和第四行组成。
+
+
+  如果通过 `WHERE` 子句从查询中移除了 `2017-12-02` 的行，会发生什么？窗口是否包含被过滤掉的行？答案是“否”，这引出了使用窗口函数时需要理解的两个非常重要的概念：窗口函数可以在查询中使用的位置，以及操作的逻辑顺序。
+
+
+  窗口函数只能用于 `SELECT` 列表和 `ORDER BY` 子句中。您不能基于窗口函数进行筛选或分组。在必须基于窗口函数的结果进行筛选或分组的情况下，解决方案是分离逻辑。您可以使用临时表、派生表子查询或
+  CTE，然后在外部查询中进行筛选或分组。
+
+
+  窗口函数在 `FROM`、`WHERE`、`GROUP BY` 和 `HAVING` 子句之后操作。它们在计算 `TOP` 和 `DISTINCT` 子句之前操作。您将在本章后面的“揭开特殊情况窗口”一节中了解更多关于
+  `DISTINCT` 和 `TOP` 如何影响带有窗口函数的查询。
+
+
+  窗口由 `OVER` 子句定义。请注意，在代码清单 1-1 的查询 2 中，`LAG` 函数后跟一个 `OVER` 子句。每种类型的窗口函数对 `OVER` 子句都有特定的要求。`LAG`
+  函数必须有一个 `ORDER BY` 表达式，并且可以有一个 `PARTITION BY` 表达式。
+
+
+  ## 理解 OVER 子句
+
+
+  窗口函数的一个独特之处是 `OVER` 子句，它定义了窗口或集合。除了我将在第 7 章解释的一个特例外，窗口函数都将有一个 `OVER` 子句，学习如何使用 `OVER`
+  子句是理解窗口函数的必要条件。在某些情况下，`OVER` 子句可能是空的。在第 3 章处理窗口聚合函数时，您将看到空的 `OVER` 子句。
+
+
+  ### 注意
+
+
+  在一种情况下，你会看到查询中 `OVER` 关键字没有跟在窗口函数后面，那就是与序列对象一起使用。序列对象是 SQL Server 2008 引入的，它是一个包含递增数字的容器，通常用作标识列的替代方案。
+
+
+  对于查询 `SELECT` 列表中的任何类型的表达式，都会对结果集中的每一行执行一次计算。例如，如果你有一个包含表达式 `Col1 + Col2` 的查询，那么对于返回的每一行，这两个列都会被相加一次。对第
+  1 行、第 2 行、第 3 行等等都会执行计算。包含窗口函数的表达式也必须为每一行计算一次。然而，在这种情况下，表达式是在一组行上操作的，而这组行对于执行计算的每一行可能都是不同的。
+
+
+  `OVER` 子句决定了哪些行组成了窗口。`OVER` 子句有三个可能的组成部分：`PARTITION BY`、`ORDER BY` 和窗口框架。`PARTITION
+  BY` 表达式用于划分行，根据你要完成的任务，它是可选的。`ORDER BY` 表达式对于某些类型的窗口函数是必需的。在使用时，它决定了窗口函数的执行顺序。最后，窗口框架用于某些特定类型的窗口函数，以提供更细的粒度。你将在第
+  5 章学习有关框架的内容。
+
+
+  许多 T-SQL 开发人员和数据库专业人士都使用过 `ROW_NUMBER` 函数。他们甚至可能没有意识到这是窗口函数之一。在许多情况下，为查询添加行号是解决复杂查询问题的一个步骤。
+
+
+  `ROW_NUMBER` 为每一行提供一个从 1 开始的递增数字。数字的分配顺序由 `ORDER BY` 表达式中指定的列决定，这独立于查询本身中的 `ORDER
+  BY` 子句。运行清单 1-2 中的查询以了解其工作原理。
+
+
+  ```
+
+  USE AdventureWorks;
+
+  GO
+
+  --1-2.1 按 CustomerID 分配行号
+
+  SELECT CustomerID, SalesOrderID,
+
+  ROW_NUMBER() OVER(ORDER BY CustomerID) AS RowNumber
+
+  FROM Sales.SalesOrderHeader;
+
+  --1-2.2 按 SalesOrderID 分配行号
+
+  SELECT CustomerID, SalesOrderID,
+
+  ROW_NUMBER() OVER(ORDER BY SalesOrderID) AS RowNumber
+
+  FROM Sales.SalesOrderHeader;
+
+  清单 1-2
+
+  将行号应用于不同列
+
+  ```
+
+
+  ### 注意
+
+
+  本书中的许多示例都使用了 `AdventureWorks` 和 `AdventureWorksDW` 数据库。你可以使用 2014 或更高版本的任何版本来跟随操作，本书撰写时最新的版本是
+  2017 版。只需确保在包含 `USE` 语句时，根据你的数据库版本进行调整。
+
+
+  `OVER` 子句跟在 `ROW_NUMBER` 函数后面。在 `OVER` 子句内部，你会看到 `ORDER BY` 后面跟着一个或多个列。查询 1 和 2
+  之间的区别仅在于 `OVER` 子句中的 `ORDER BY` 表达式。请注意图 1-3 所示的部分结果，行号最终按照 `OVER` 子句中 `ORDER BY`
+  表达式所指定列的顺序应用，这也是数据返回的顺序。由于必须对数据进行排序才能应用行号，因此数据很容易保持该顺序，但这并不能保证。真正保证结果顺序的唯一方法是在查询中添加一个
+  `ORDER BY`。
+
+
+  ![../images/335106_2_En_1_Chapter/335106_2_En_1_Fig3_HTML.jpg](img/335106_2_En_1_Fig3_HTML.jpg)
+
+
+  图 1-3
+
+
+  对不同的 `OVER` 子句使用 `ROW_NUMBER` 的部分结果
+
+
+  如果查询本身有一个 `ORDER BY` 子句，它可以与 `OVER` 中的 `ORDER BY` 不同。清单 1-3 演示了这一点。
+
+
+  ```
+
+  --1-3.1 使用不同 ORDER BY 的行号
+
+  SELECT CustomerID, SalesOrderID,
+
+  ROW_NUMBER() OVER(ORDER BY CustomerID) AS RowNumber
+
+  FROM Sales.SalesOrderHeader
+
+  ORDER BY SalesOrderID;
+
+  清单 1-3
+
+  在 OVER 子句中使用与查询 ORDER BY 不同的 ROW_NUMBER
+
+  ```
+
+
+  在这种情况下，行号是按 `CustomerID` 的顺序分配的，但结果是按 `SalesOrderID` 的顺序返回的。部分结果如图 1-4 所示。为了显示行号分配正确，图中显示了网格滚动到第一个客户
+  `CustomerID 11000` 的位置。
+
+
+  ![../images/335106_2_En_1_Chapter/335106_2_En_1_Fig4_HTML.jpg](img/335106_2_En_1_Fig4_HTML.jpg)
+
+
+  图 1-4
+
+
+  显示查询的 `ORDER BY` 与 `OVER` 子句不同的部分结果
+
+
+  就像查询的 `ORDER BY` 子句一样，你可以在 `OVER` 子句中使用 `DESCENDING` 或 `DESC` 关键字来指定降序，如清单 1-4 所示。
+
+
+  ```
+
+  --1-4.1 使用降序 ORDER BY 的行号
+
+  SELECT CustomerID, SalesOrderID,
+
+  ROW_NUMBER() OVER(ORDER BY CustomerID DESC) AS RowNumber
+
+  FROM Sales.SalesOrderHeader;
+
+  清单 1-4
+
+  使用降序 ORDER BY 的 ROW_NUMBER
+
+  ```
+
+
+  图 1-5 显示了部分结果。由于数据库引擎可以轻松地按 `CustomerID` 降序返回结果，你可以很容易地看到行号 1 被分配给了最大的 `CustomerID`。
+
+
+  ![../images/335106_2_En_1_Chapter/335106_2_En_1_Fig5_HTML.jpg](img/335106_2_En_1_Fig5_HTML.jpg)
+
+
+  图 1-5
+
+
+  使用降序 `ORDER BY` 的 `ROW_NUMBER` 的部分结果
+
+
+  在 `SalesOrderHeader` 表中，`CustomerID` 不是唯一的。请注意，在最后一个例子中，30118 是最大的 `CustomerID`。`SalesOrderID`
+  为 71803 的行号是 1，而 `SalesOrderID` 为 65221 的行号是 2。无法保证行号会精确地按这种方式分配，只要最小的 `RowNumber`
+  与 `CustomerID` 30118 对齐即可。为了确保行号按预期对齐，请在 `OVER` 子句的 `ORDER BY` 表达式中使用唯一的列或列的组合。如果使用多个列，请用逗号分隔。你甚至可以以随机顺序应用行号。清单
+  1-5 演示了这一点。
+
+
+
+  '
+- "# 1-5. 使用随机 ORDER BY 的行号\n\n```sql\n--1-5.1 使用随机 ORDER BY 的行号\nSELECT CustomerID,\
+  \ SalesOrderID,\nROW_NUMBER() OVER(ORDER BY NEWID()) AS RowNumber\nFROM Sales.SalesOrderHeader;\n\
+  ```\n\n通过使用 `NEWID()` 函数，行号以随机方式分配。图 1-6 展示了这一点。运行此代码，您将看到不同的 `CustomerID` 值与行号对齐。每次数据按行号顺序返回，这只是因为数据库引擎这样做更容易。\n\
+  \n![../images/335106_2_En_1_Chapter/335106_2_En_1_Fig6_HTML.jpg](img/335106_2_En_1_Fig6_HTML.jpg)\n\
+  \n*图 1-6：使用随机 ORDER BY 的 ROW_NUMBER 的部分结果*\n\n如您所料，以特定顺序应用行号涉及排序，这是一个开销很大的操作。如果您希望生成行号但不关心顺序，可以使用选择字面值而非列名的子查询。清单\
+  \ 1-6 演示了如何做到这一点。\n\n```sql\n--1-6.1 使用常量作为 ORDER BY\nSELECT CustomerID, SalesOrderID,\n\
+  ROW_NUMBER() OVER(ORDER BY (SELECT 1)) AS RowNumber\nFROM Sales.SalesOrderHeader;\n\
+  --1-6.2 对查询应用 ORDER BY\nSELECT CustomerID, SalesOrderID,\nROW_NUMBER() OVER(ORDER\
+  \ BY (SELECT 1)) AS RowNumber\nFROM Sales.SalesOrderHeader\nORDER BY SalesOrderID;\n\
+  --1-6.3 无 ROW_NUMBER 和无 ORDER BY\nSELECT CustomerID, SalesOrderID\nFROM Sales.SalesOrderHeader;\n\
+  ```\n\n图 1-7 显示了部分结果。在查询 1 和 2 中，选择常量的子查询替代了 `ORDER BY` 列。`OVER` 子句是相同的，但行号的应用方式不同，即以最简单的方式应用。两个查询的区别在于查询\
+  \ 2 有一个 `ORDER BY` 子句。由于没有指定行号分配的特定顺序，最简单的方式就是即使没有 `ROW_NUMBER` 函数时结果也会返回的顺序。查询\
+  \ 3 展示了在没有 `ROW_NUMBER` 和 `ORDER BY` 的情况下行是如何返回的。您可能想知道优化器为何选择在查询 1 和 3 中按 `CustomerID`\
+  \ 顺序返回结果。恰好在 `CustomerID` 上有一个覆盖这些查询的非聚集索引。优化器选择了在 `CustomerID` 上有序的索引来解决查询。\n\n\
+  ![../images/335106_2_En_1_Chapter/335106_2_En_1_Fig7_HTML.jpg](img/335106_2_En_1_Fig7_HTML.jpg)\n\
+  \n*图 1-7：让引擎决定如何应用行号的部分结果*\n\n从这个例子中还可以了解到 `ROW_NUMBER` 是非确定性的。它不能保证在相同情况下返回相同的值。通过查看每个窗口函数的文档，您会发现每一个都是非确定性的。您可能会认为这是错误的，因为两个查询使用了不同的\
+  \ `ORDER BY` 子句，导致两个 `ROW_NUMBER` 函数具有不同的输入。SQL Server 文档中的文章“确定性和非确定性函数”指出：\n\n\
+  > *您无法影响任何内置函数的确定性。每个内置函数是确定性的还是非确定性的，取决于 SQL Server 的实现方式。例如，在查询中指定 `ORDER BY`\
+  \ 子句不会改变该查询中使用的函数的确定性。*\n\n如果 `ORDER BY` 子句由唯一的列集组成，您可以预测行号的分配方式，但 `ROW_NUMBER`\
+  \ 仍然是非确定性的。清单 1-7 是一个例子。\n\n```sql\n--1-7.1 OVER 子句仅包含 CustomerID\nSELECT CustomerID,\
+  \ SalesOrderID,\nROW_NUMBER() OVER(ORDER BY CustomerID) AS RowNumber\nFROM Sales.SalesOrderHeader\n\
+  ORDER BY CustomerID, SalesOrderID;\n--1-7.2 相同的查询，仅更改 ORDER BY 子句\nSELECT CustomerID,\
+  \ SalesOrderID,\nROW_NUMBER() OVER(ORDER BY CustomerID) AS RowNumber\nFROM Sales.SalesOrderHeader\n\
+  ORDER BY CustomerID, SalesOrderID DESC;\n```\n\n图 1-8 显示了部分结果。注意，`SalesOrderID`\
+  \ 在查询 1 中被分配为 1，在查询 2 中被分配为 3。两个查询之间唯一的区别是 `ORDER BY` 子句。由于 `CustomerID` 11000 有三个订单，数字\
+  \ 1、2 和 3 必须分配给这三行，但无法保证它们将如何被分配。\n\n![../images/335106_2_En_1_Chapter/335106_2_En_1_Fig8_HTML.jpg](img/335106_2_En_1_Fig8_HTML.jpg)\n\
+  \n*图 1-8：演示非确定性*\n\n关于确定性，您无法使用窗口函数完成的有几件事。您不能在计算列（表中由表达式组成的列）中使用窗口函数表达式，也不能将窗口函数表达式用作视图聚集索引的键。\n\
+  \n`OVER` 子句中的 `ORDER BY` 表达式非常灵活。您可以使用表达式而不是列，就像之前示例中的 `NEWID()` 所展示的那样。您也可以列出多个列或表达式。清单\
+  \ 1-8 演示了在 `ORDER BY` 中使用 `CASE` 语句。\n\n```sql\n--1-8.1 在 ORDER BY 中使用表达式\nSELECT\
+  \ CustomerID, SalesOrderID, OrderDate,\nROW_NUMBER() OVER(ORDER BY CASE WHEN OrderDate\
+  \ > '2013/12/31'\nTHEN 0 ELSE 1 END, SalesOrderID) AS RowNumber\nFROM Sales.SalesOrderHeader;\n\
+  ```\n\n图 1-9 显示了部分结果。在这种情况下，行号首先应用于 2014 年的订单，然后按 `SalesOrderID` 分配。网格向下滚动到 2014\
+  \ 年的最后三个订单，以便您可以看到接下来应用的数字来自数据的开头，即 2011 年。\n\n![../images/335106_2_En_1_Chapter/335106_2_En_1_Fig9_HTML.jpg](img/335106_2_En_1_Fig9_HTML.jpg)\n\
+  \n*图 1-9：使用表达式和另一个列的部分结果*\n\n`OVER` 子句还有两个额外的组成部分：分区和框架。您将在第 5 章中学习到 2012 年引入的框架。分区将窗口划分为多个更小的窗口，接下来您将了解这部分内容。\n\
+  \n\n\n## 使用分区划分窗口\n\n如果你所在的房间正好有一扇窗户，现在就看看它。它是一整块大玻璃，还是被分成了多个小窗格？一扇被分成多个窗格的窗户仍然是一扇窗户。每一个单独的窗格本身也是一扇窗户。\n\
+  \n同样的概念适用于窗口函数。整个结果集就是窗口，但你也可以根据一个或多个列将设置划分为更小的窗口。`OVER` 子句包含一个可选组件 `PARTITION BY`。当没有提供\
+  \ `PARTITION BY` 时，分区就是整个大窗口。\n\n使用 `LAG` 解决股票市场问题的查询通过 `TickerSymbol` 列对数据进行了分区。通过按\
+  \ `TickerSymbol` 分离数据，一只股票的 `ClosePrice` 不会被另一只股票的行所检索。在本章前面演示的 `ROW_NUMBER` 函数的情况下，你可以强制数字为每个客户重新从\
+  \ 1 开始。清单 1-9 演示了这一特性。\n\n```sql\n--1-9.1 结合 PARTITION BY 使用 ROW_NUMBER\nSELECT\
+  \ CustomerID, SalesOrderID,\nROW_NUMBER() OVER(PARTITION BY CustomerID ORDER BY\
+  \ SalesOrderID)\nAS RowNumber\nFROM Sales.SalesOrderHeader;\n```\n清单 1-9 使用 PARTITION\
+  \ BY\n\n图 1-10 展示了部分结果。注意，行号为每个客户重新从 1 开始。\n\n![../images/335106_2_En_1_Chapter/335106_2_En_1_Fig10_HTML.jpg](img/335106_2_En_1_Fig10_HTML.jpg)\n\
+  图 1-10 结合 `ROW_NUMBER` 使用 `PARTITION BY` 选项的部分结果\n\n所有窗口函数都支持 `OVER` 子句的 `PARTITION\
+  \ BY` 表达式。它也总是可选的。如果省略 `PARTITION BY`，所有行都将包含在窗口中。当使用 `PARTITION BY` 时，每个窗口将仅包含与\
+  \ `PARTITION BY` 列匹配的行。\n\n## 揭示特殊案例窗口\n\n到目前为止，示例都很直接，但如果你不知道发生了什么，有些情况会显得违反直觉。本节中的示例使用了\
+  \ `ROW_NUMBER` 函数，但这些概念适用于任何窗口函数。\n\n首先，看看当 `DISTINCT` 关键字与 `ROW_NUMBER` 一起使用时会发生什么。窗口函数在\
+  \ `DISTINCT` 之前操作，这可能导致你意想不到的结果。清单 1-10 演示了将 `DISTINCT` 与 `ROW_NUMBER` 结合使用，以获取唯一的\
+  \ `OrderDates` 列表及其行号。\n\n```sql\n--1-10.1 使用 DISTINCT\nSELECT DISTINCT OrderDate,\n\
+  ROW_NUMBER() OVER(ORDER BY OrderDate) AS RowNumber\nFROM Sales.SalesOrderHeader\n\
+  ORDER BY RowNumber;\n\n--1-10.2 使用 CTE 分离逻辑\nWITH OrderDates AS (\n    SELECT DISTINCT\
+  \ OrderDate\n    FROM Sales.SalesOrderHeader)\nSELECT OrderDate,\n    ROW_NUMBER()\
+  \ OVER(ORDER BY OrderDate) AS RowNumber\nFROM OrderDates\nORDER BY RowNumber;\n\
+  ```\n清单 1-10 将 `DISTINCT` 与 `ROW_NUMBER` 结合使用\n\n图 1-11 展示了部分结果。查询 1 返回了 31,465\
+  \ 行，尽管许多订单日期相同，表中每个订单都返回了一行。这绝对不是预期的答案。行号是在应用 `DISTINCT` 之前生成的。因为行号是唯一的，结果中的每一行最终都是唯一的，所以\
+  \ `DISTINCT` 无法消除任何行。查询 2 展示了解决方案：首先在 CTE 中获取订单日期的唯一列表，然后在外部查询中应用行号。查询 2 返回 1124\
+  \ 行，即唯一订单日期的数量。你也可以使用临时表、表变量、视图或派生表来首先创建唯一列表。\n\n![../images/335106_2_En_1_Chapter/335106_2_En_1_Fig11_HTML.jpg](img/335106_2_En_1_Fig11_HTML.jpg)\n\
+  图 1-11 将 `DISTINCT` 与 `ROW_NUMBER` 结合使用的部分结果\n\n当你使用 `TOP` 时，也会发现有趣的行为。同样，行号是在应用\
+  \ `TOP` 之前生成的。我最初是在为一些单元测试向表中插入随机行时发现这一点的。思路是将示例行以新的 ID 号重新插入到同一个表中。为了生成新的 ID，我希望在现有最大\
+  \ ID 的基础上添加行号。因为我希望插入特定数量的行，所以我使用了 `TOP`。结果行号并没有像我预期的那样从 1 开始，而是从一个随机值开始。清单 1-11\
+  \ 展示了使用 `TOP` 如何影响窗口函数。\n\n```sql\n--1-11.1 将 TOP 与 ROW_NUMBER 结合使用\nSELECT TOP(6)\
+  \ CustomerID, SalesOrderID,\nROW_NUMBER() OVER(ORDER BY SalesOrderID) AS RowNumber\n\
+  FROM Sales.SalesOrderHeader\nORDER BY NEWID();\n\n--1-11.2 使用 CTE 分离逻辑\nWITH Orders\
+  \ AS (\n    SELECT TOP(6) CustomerID, SalesOrderID\n    FROM Sales.SalesOrderHeader\n\
+  \    ORDER BY NEWID())\nSELECT CustomerID, SalesOrderID,\nROW_NUMBER() OVER(ORDER\
+  \ BY SalesOrderID) AS RowNumber\nFROM Orders;\n```\n清单 1-11 将 `TOP` 与 `ROW_NUMBER`\
+  \ 结合使用\n\n图 1-12 展示了结果。如果你运行这个示例，会看到不同的随机结果。该示例的目的是生成六行随机数据，并且行号从 1 开始。查询 1 返回了行号，但行号并非从\
+  \ 1 开始，也没有任何顺序。通过使用 CTE 分离逻辑，`TOP` 可以首先操作。查询 2 返回一组随机的行，但行号如预期那样从 1 开始。\n\n![../images/335106_2_En_1_Chapter/335106_2_En_1_Fig12_HTML.jpg](img/335106_2_En_1_Fig12_HTML.jpg)\n\
+  图 1-12 将 `TOP` 与 `ROW_NUMBER` 结合使用的结果\n\n最后一个有趣的情况涉及将窗口函数添加到聚合查询中。此功能在第 3 章的“向聚合查询添加窗口聚合”一节中介绍。\n\
+  \n## 总结\n\n窗口函数随 SQL Server 2005 和 2012 引入，为解决具有挑战性的查询提供了新的、简便的方法。窗口函数是 SQL ANSI\
+  \ 标准的一部分。标准委员会已经定义了更多的功能，因此微软未来可能会包含额外的函数。窗口函数必须包含一个 `OVER` 子句，该子句定义了每行要操作的窗口。根据所使用的窗口函数，`OVER`\
+  \ 子句可能包含 `ORDER BY` 和框架表达式。`PARTITION BY` 表达式在所有窗口函数中都受支持，并将根据所需结果酌情使用。在许多情况下，使用窗口函数比旧方法提供更好的性能，但它们几乎总是让查询更容易编写。\n\
+  \n既然你已经了解了窗口函数的基础知识，现在该研究排名函数了。在第 2 章中，你将学习如何使用 SQL Server 2005 引入的四个排名函数来解决复杂的\
+  \ T-SQL 查询。\n\n## 探索排名函数\n\n这四个排名函数是由微软在 2005 年引入 T-SQL 的。其中三个函数，`ROW_NUMBER`、`RANK`\
+  \ 和 `DENSE_RANK`，为查询结果中的每一行分配一个序列号。第四个排名函数 `NTILE`，通过为结果中的每一行分配一个桶编号来划分行。低排名行组获得\
+  \ `NTILE` 值 1，而最高排名的行组则被分配最大的编号。\n\n虽然为一行添加编号本身通常不是最终答案，但这个功能往往是许多解决方案的基础。本章展示了如何使用这四个排名函数，以及如何在本章和本书后续章节中将它们应用于一些实际问题。\n\
+  \n\n## 使用 ROW_NUMBER\n\n根据我在 SQL Server 活动中对听众的调查，`ROW_NUMBER` 是最广为人知且最常用的窗口函数。许多\
+  \ SQL Server 专业人士承认使用过 `ROW_NUMBER`，即使他们并未意识到这是窗口函数之一。在第 1 章中，当你学习 `OVER` 子句时，你已经看到了\
+  \ `ROW_NUMBER` 的实际应用。现在，你将更深入地了解 `ROW_NUMBER`。\n\n`ROW_NUMBER` 函数为窗口中的每一行返回一个从 1\
+  \ 开始的唯一整数。`OVER` 子句内部的 `ORDER BY` 表达式是必需的，它决定了编号的应用顺序。所有窗口函数都支持一个可选的 `PARTITION\
+  \ BY` 表达式，该表达式将窗口划分为更小的窗口（分区）。每个分区的行号从 1 开始并递增 1。以下是 `ROW_NUMBER` 的基本语法，它可能出现在查询的\
+  \ `SELECT` 列表和 `ORDER BY` 子句中：\n\n```sql\nROW_NUMBER() OVER([PARTITION BY column1[,\
+  \ column2, ...]]\nORDER BY column1 [ASC | DESC][, column2 [ASC | DESC] ...])\n```\n\
+  \n清单 [2-1] 展示了使用和不使用 `PARTITION BY` 表达式的 `ROW_NUMBER`。为了按 `CustomerID` 对齐行号以便比较，`OVER`\
+  \ 子句的 `ORDER BY` 表达式是不同的。\n\n```sql\n-- 2-1.1 使用带 PARTITION BY 和不带 PARTITION BY\
+  \ 的 ROW_NUMBER\nSELECT CustomerID, CAST(OrderDate AS DATE) AS OrderDate, SalesOrderID,\n\
+  ROW_NUMBER() OVER(PARTITION BY CustomerID ORDER BY SalesOrderID) AS WithPart,\n\
+  ROW_NUMBER() OVER(ORDER BY CustomerID) AS WithoutPart\nFROM Sales.SalesOrderHeader;\n\
+  ```\n\n图 [2-1] 显示了部分结果。行号列 `WithPart` 和 `WithoutPart` 对于前三行（`CustomerID` 11000）的值是相同的。在此之后，由于\
+  \ `PARTITION BY` 表达式，`WithPart` 行对于每个新的 `CustomerID` 重新开始编号。\n\n![图 2-1：带分区和不带分区的\
+  \ ROW_NUMBER 部分结果](img/335106_2_En_2_Fig1_HTML.jpg)\n\n关于这个查询还有另一个有趣的事情需要考虑。第二个\
+  \ `OVER` 子句中的 `ORDER BY` 表达式 `CustomerID` 在此数据中不是唯一的。`SalesOrderID` 为 43793 的两行的行号都返回\
+  \ 1。对于该行，`WithoutPart` 的值可能是 2 或 3，因为 `CustomerID` 11000 有三个订单，并且 `ORDER BY` 表达式仅基于该列。行号是正确应用的，因为它们是按\
+  \ `CustomerID` 顺序排列的，但由于 `CustomerID` 不唯一，不能保证在 `CustomerID` 内部应用行号的顺序。`SalesOrderID`\
+  \ 43793 的 `WithoutPart` 值可能是 1、2 或 3。在第 1 章中，我简要提到所有窗口函数都是非确定性的，清单 [2-2] 展示了如何使用相同的\
+  \ `OVER` 子句产生不同的行号。\n\n```sql\n-- 2-2.1 查询 ORDER BY 升序\nSELECT CustomerID,\nCAST(OrderDate\
+  \ AS DATE) AS OrderDate,\nSalesOrderID,\nROW_NUMBER() OVER(ORDER BY CustomerID)\
+  \ AS RowNumber\nFROM Sales.SalesOrderHeader\nORDER BY CustomerID, SalesOrderID;\n\
+  \n-- 2-2.2 查询 ORDER BY 降序\nSELECT CustomerID,\nCAST(OrderDate AS DATE) AS OrderDate,\n\
+  SalesOrderID,\nROW_NUMBER() OVER(ORDER BY CustomerID) AS RowNumber\nFROM Sales.SalesOrderHeader\n\
+  ORDER BY CustomerID, SalesOrderID DESC;\n```\n\n图 [2-2] 显示了部分结果。`OVER` 子句是相同的，但查询的排序方式不同。`SalesOrderID`\
+  \ 43793 在查询 1 中的行号是 1，但在查询 2 中的行号是 3。\n\n![图 2-2：在 OVER 子句中使用非唯一 ORDER BY 的不同结果](img/335106_2_En_2_Fig2_HTML.jpg)\n\
+  \n这证明 `ROW_NUMBER` 是非确定性的；换句话说，在相同的情况下，你可以从该函数获得不同的值。查询的 `ORDER BY` 子句不影响确定性，因此这是一个有效的测试。\n\
+  \n为了确保使用 `ROW_NUMBER`（实际上是使用任何窗口函数）时获得可重复的结果，请确保 `OVER` 子句中的 `ORDER BY` 列是唯一的。清单\
+  \ [2-3] 是一个使用多个 `ORDER BY` 列以使表达式唯一的示例。\n\n```sql\n-- 2-3.1 使用唯一 ORDER BY 的 ROW_NUMBER\n\
+  SELECT CustomerID,\nCAST(OrderDate AS DATE) AS OrderDate,\nSalesOrderID,\nROW_NUMBER()\
+  \ OVER(ORDER BY CustomerID, SalesOrderID) AS RowNum\nFROM Sales.SalesOrderHeader\n\
+  ORDER BY CustomerID, SalesOrderID;\n\n-- 2-3.2 改为降序\nSELECT CustomerID,\nCAST(OrderDate\
+  \ AS Date) AS OrderDate,\nSalesOrderID,\nROW_NUMBER() OVER(ORDER BY CustomerID,\
+  \ SalesOrderID) AS RowNum\nFROM Sales.SalesOrderHeader\nORDER BY CustomerID, SalesOrderID\
+  \ DESC;\n```\n\n图 [2-3] 显示了部分结果。在这种情况下，无论查询的 `ORDER BY` 子句如何，`SaleOrderID` 43793\
+  \ 的行号都是 1。`ROW_NUMBER` 仍然是一个非确定性函数，但由于唯一的 `ORDER BY` 列，赋值是一致的。\n\n![图 2-3：在 OVER\
+  \ 子句中使用唯一 ORDER BY 表达式](img/335106_2_En_2_Fig3_HTML.jpg)\n\n在 `OVER` 子句的 `PARTITION\
+  \ BY` 表达式中也可以包含多个列、表达式和子查询。事实上，正如你将在本章末尾的“使用排名函数解决查询”部分看到的，在 `PARTITION BY` 中使用多个列是解决一些实际示例的关键。\n\
+  \n使用 `ROW_NUMBER` 时，数据库引擎对每个分区中的行进行排序，并根据每行的位置分配唯一编号。你已经看到 `OVER` 的 `ORDER BY` 表达式不唯一的情况，因此当值存在并列时，不能保证行号每次完全一致。现在你将学习两个以不同方式处理并列情况的函数：`RANK`\
+  \ 和 `DENSE_RANK`。\n\n\n## 理解 RANK 与 DENSE_RANK\n\n`RANK` 和 `DENSE_RANK` 函数与 `ROW_NUMBER`\
+  \ 看起来非常相似。事实上，在许多查询中，它们返回的值与 `ROW_NUMBER` 完全相同。然而，`RANK` 和 `DENSE_RANK` 函数却大不相同，因为它们不是简单地分配连续数字，而是根据\
+  \ `ORDER BY` 表达式对行进行排名。\n\n当 `OVER` 子句的 `ORDER BY` 列不唯一时，差异就会显现。例如，许多客户可能在同一天下单，但每个订单都有一个唯一的\
+  \ `SalesOrderID`。如果使用 `OrderDate` 列而不是 `SalesOrderID`，结果中就会出现并列。并列行的排名将是相同的。\n\n\
+  `RANK` 和 `DENSE_RANK` 之间也有区别。`RANK` 函数返回当前行相对于分区中所有行位置的排名。`DENSE_RANK` 函数则根据当前行在分区内\
+  \ `ORDER BY` 表达式的唯一值返回排名。`RANK` 表示当前行之前有多少行，而 `DENSE_RANK` 表示当前值之前有多少个 *唯一值*。另一种理解方式是：`ROW_NUMBER`\
+  \ 是基于位置的，`DENSE_RANK` 是基于逻辑的，而 `RANK` 介于两者之间。`ROW_NUMBER` 基于行排好序后的位置，而 `DENSE_RANK`\
+  \ 基于唯一值的排列顺序。\n\n这两个函数的语法与 `ROW_NUMBER` 的语法非常相似：\n\n```\nRANK() OVER([PARTITION\
+  \ BY [,,...]] ORDER BY  [,,...])\nDENSE_RANK() OVER([PARTITION BY [,,...]]\nORDER\
+  \ BY  [,,...])\n```\n\n代码清单 2-4 对比了 `ROW_NUMBER`、`RANK` 和 `DENSE_RANK`。该查询经过筛选，显示在同一天下了多个订单的客户。\n\
+  \n```\n--2-4.1 使用 RANK 和 DENSE_RANK\nSELECT CustomerID, CAST(OrderDate AS DATE)\
+  \ AS OrderDate,\nROW_NUMBER() OVER(ORDER BY OrderDate) AS RowNumber,\nRANK() OVER(ORDER\
+  \ BY OrderDate) AS [Rank],\nDENSE_RANK() OVER(ORDER BY OrderDate) AS DenseRank\n\
+  FROM Sales.SalesOrderHeader\nWHERE CustomerID IN (11330, 29676);\n代码清单 2-4\n使用 RANK\
+  \ 和 DENSE_RANK\n```\n\n图 2-4 显示了部分结果。每个 `OVER` 子句中的 `ORDER BY` 列是 `OrderDate`，它不是唯一的。行号是唯一的且连续的，正如预期的那样。请注意，第三行和第四行的\
+  \ `Rank` 值都是 3。这两行的 `OrderDate` 都是 2013-07-31，形成了并列。这是数据集中的第三个排名 `OrderDate`。在第五行，`Rank`\
+  \ 值“追上”了 `RowNumber` 值，均为 5。第五行的日期 2013-08-09 是数据集中的第五个排名 `OrderDate`。\n\n![../images/335106_2_En_2_Chapter/335106_2_En_2_Fig4_HTML.jpg](img/335106_2_En_2_Fig4_HTML.jpg)\n\
+  \n图 2-4: 比较 ROW_NUMBER、RANK 和 DENSE_RANK 的部分结果\n\n第三行和第四行的 `DenseRank` 值也都是 3。然而，请注意第五行的\
+  \ `DenseRank` 是 4。日期 2013-08-09 是数据集中的第四个 *不同* `OrderDate`。\n\n`ROW_NUMBER`、`RANK`\
+  \ 和 `DENSE_RANK` 函数为每一行分配一个数字。现在你将了解一种不同类型的排名函数，`NTILE`。\n\n## 使用 NTILE 划分数据\n\n\
+  `NTILE` 函数是一个排名函数，但有点特别。它分配的数字用于将结果划分为等分的桶。你必须指定需要多少个桶，并且与其他排名函数一样，`OVER` 子句中需要包含\
+  \ `ORDER BY` 表达式。以下是 `NTILE` 的语法：\n\n```\nNTILE() OVER([PARTITION BY [,,...]]\n\
+  ORDER BY  [,,...])\n```\n\n在 `NTILE` 单词后面的括号内，提供你希望在结果中看到的桶的数量。`PARTITION BY` 表达式是可选的，`ORDER\
+  \ BY` 是必需的。代码清单 2-5 展示了一个示例，该示例根据 2013 年的销售额将月份划分为四个桶。\n\n```\n--2.5.1 使用 NTILE\n\
+  WITH Orders AS (\nSELECT MONTH(OrderDate) AS OrderMonth,\nFORMAT(SUM(TotalDue),'C')\
+  \ AS Sales\nFROM Sales.SalesOrderHeader\nWHERE OrderDate >= '2013/01/01' and OrderDate\
+  \ < '2014/01/01'\nGROUP BY MONTH(OrderDate))\nSELECT OrderMonth, Sales, NTILE(4)\
+  \ OVER(ORDER BY Sales) AS Bucket\nFROM Orders;\n代码清单 2-5\n使用 NTILE\n```\n\n图 2-5\
+  \ 显示了结果。该查询在名为 `Orders` 的 CTE 中将 2013 年的销售额按月份进行聚合。在外部查询中，应用了 `NTILE` 函数。每个月份所属的桶取决于该月份的销售额。`桶\
+  \ #1` 包含销售额最低的三个月。`桶 #4` 包含销售额最高的三个月。\n\n![../images/335106_2_En_2_Chapter/335106_2_En_2_Fig5_HTML.jpg](img/335106_2_En_2_Fig5_HTML.jpg)\n\
+  \n图 2-5: 使用 NTILE\n\n在此示例中，使用四个桶，数据被均匀地分配到各个桶中。有时，行无法被桶数均匀分配。当分配后多出一行时，`桶 #1` 将获得这一额外行。当分配后多出两行时，`桶\
+  \ #1` 和 `#2` 将各获得一个额外行，以此类推。代码清单 2-6 演示了这种情况。\n\n```\n--2.6.1 使用不均匀的桶进行 NTILE\n\
+  WITH Orders AS (\nSELECT MONTH(OrderDate) AS OrderMonth, FORMAT(SUM(TotalDue),'C')\n\
+  AS Sales\nFROM Sales.SalesOrderHeader\nWHERE OrderDate >= '2013/01/01' and OrderDate\
+  \ < '2014/01/01'\nGROUP BY MONTH(OrderDate))\nSELECT OrderMonth, Sales, NTILE(5)\
+  \ OVER(ORDER BY Sales) AS Bucket\nFROM Orders;\n代码清单 2-6\n使用不均匀的桶进行 NTILE\n```\n\
+  \n![../images/335106_2_En_2_Chapter/335106_2_En_2_Fig6_HTML.jpg](img/335106_2_En_2_Fig6_HTML.jpg)\n\
+  \n图 2-6: NTILE 使用不均匀桶的结果\n\n此查询返回五个桶。十二除以五等于二余二。如果你查看图 2-6 中显示的结果，会看到 `桶 #1` 和 `桶\
+  \ #2` 各有三行。其他桶各有两行。\n\n在本章中，你已经看到了许多解释如何使用排名函数的示例，但还没有看到任何实际应用的例子。下一节将演示一些可以用这些函数解决的真实世界问题。\n\
+  \n## 使用排名函数解决查询\n\n自 2005 年这些函数首次引入以来，我在编写查询时发现越来越多使用排名函数的理由。我相信它们帮助我学会了以基于集合的方式思考，并且随着时间的推移，使用窗口函数变得自然而然。当我面临一个具有挑战性的查询时，我通常会先添加一个行号，看看是否能找到任何模式，然后据此继续。\n\
+  \n\n### 数据去重\n\n解决问题的方法总是不止一种，数据去重就是一个很好的例子。传统方法涉及将不同的行存储在临时表中。然后你可以截断原始表，并将这些行从临时表插回。可能存在无法清空原始表，而必须有选择地删除多余行的情况。你可以使用行号来解决这个问题。清单\
+  \ 2-7 创建了一个包含重复行的表。\n\n```sql\n--2-7.1 创建一个用于存放重复行的表\nCREATE TABLE #dupes(Col1 INT,\
+  \ Col2 CHAR(1));\n--2-7.2 插入一些行\nINSERT INTO #dupes(Col1, Col2)\nVALUES (1,'a'),(1,'a'),(2,'b'),\n\
+  (3,'c'),(4,'d'),(4,'d'),(5,'e');\n--2-7.3\nSELECT Col1, Col2\nFROM #dupes;\n```\n\
+  \n**清单 2-7** 创建包含重复行的表\n\n图 2-7 显示了结果。你可以看到有几行是重复的。在实际应用中，该表可能有更多列，但两列足以演示此技术。\n\
+  \n![包含重复行的表](img/335106_2_En_2_Fig7_HTML.jpg)\n**图 2-7** 包含重复行的表\n\n清单 2-8 包含一个删除重复项的脚本。为了更好地理解其工作原理，它被分解为两个步骤。请确保在与清单\
+  \ 2-7 相同的查询窗口中运行此代码，以便临时表存在。\n\n```sql\n--2-8.1 添加 ROW_NUMBER 并按所有列分区\nSELECT Col1,\
+  \ Col2,\nROW_NUMBER() OVER(PARTITION BY Col1, Col2 ORDER BY Col1) AS RowNumber\n\
+  FROM #dupes;\n--2-8.2 删除 RowNumber > 1 的行\nWITH Dupes AS (\nSELECT Col1, Col2,\n\
+  ROW_NUMBER() OVER(PARTITION BY Col1, Col2 ORDER BY Col1)\nAS RowNumber\nFROM #dupes)\n\
+  DELETE Dupes WHERE RowNumber > 1;\n--2-8.3 结果\nSELECT Col1, Col2\nFROM #dupes;\n\
+  ```\n\n**清单 2-8** 删除重复行\n\n图 2-8 显示了运行此脚本的结果。查询 1 中添加了一个 `ROW_NUMBER` 函数。为了使行号对于每个唯一的行重新开始编号，需要按表中的所有列进行分区。该表只有两列，但如果它有更多列，它们都应列在\
+  \ `PARTITION BY` 表达式中。由于行号对于每个唯一的行重新开始编号，因此很容易看出要删除的行：它们的行号都大于 1。语句 2 删除了这些行。因为你不能将\
+  \ `ROW_NUMBER` 函数添加到 `WHERE` 子句中，所以通过将行号添加到 CTE 中来分离逻辑。直接从 CTE 中删除重复项。最后，查询 3 证明重复项已消失。\n\
+  \n![删除重复行](img/335106_2_En_2_Fig8_HTML.jpg)\n**图 2-8** 删除重复行\n\n### 查找每组的前 N 行\n\
+  \n我第一次思考这个问题是在一次技术面试中。潜在客户想知道我会如何找到特定年份内每个月的前四个订单。解决它的一种方法涉及使用 `CROSS APPLY` 和 `TOP`。最容易编写的方法是使用\
+  \ `ROW_NUMBER`。清单 2-9 展示了这两种方法。\n\n```sql\n--2-9.1 使用 CROSS APPLY 查找前四个订单\nWITH\
+  \ Months AS (\nSELECT MONTH(OrderDate) AS OrderMonth\nFROM Sales.SalesOrderHeader\n\
+  WHERE OrderDate >= '2013-01-01' AND OrderDate < '2014-01-01')\nSELECT OrderMonth,\
+  \ OrderDate, SalesOrderID, TotalDue\nFROM Months\nCROSS APPLY (\nSELECT TOP 4 OrderDate,\
+  \ SalesOrderID, TotalDue\nFROM Sales.SalesOrderHeader\nWHERE MONTH(OrderDate) =\
+  \ Months.OrderMonth\nAND OrderDate >= '2013-01-01' AND OrderDate < '2014-01-01'\n\
+  ORDER BY SalesOrderID) AS Orders\nORDER BY OrderMonth, SalesOrderID;\n\n--2-9.2\
+  \ 使用 ROW_NUMBER 查找前四个订单\nWITH Orders AS (\nSELECT MONTH(OrderDate) AS OrderMonth,\
+  \ OrderDate,\nSalesOrderID, TotalDue,\nROW_NUMBER() OVER(PARTITION BY MONTH(OrderDate)\n\
+  ORDER BY SalesOrderID) AS RowNumber\nFROM Sales.SalesOrderHeader\nWHERE OrderDate\
+  \ >= '2013-01-01' AND OrderDate < '2014-01-01')\nSELECT OrderMonth, CAST(OrderDate\
+  \ AS DATE) AS OrderDate,\nSalesOrderID, TotalDue\nFROM Orders\nWHERE RowNumber <=\
+  \ 4\nORDER BY OrderMonth, SalesOrderID;\n```\n\n**清单 2-9** 查找每月前四个订单\n\n图 2-9 显示了部分结果，即一月和二月的行。每个查询总共返回了\
+  \ 48 行。查询 1 比较复杂。在我看来，它不容易理解。CTE 创建了一个 2013 年销售月份的列表。外部查询使用 `CROSS APPLY` 将 `Months`\
+  \ CTE 连接到内部查询。为了为外部查询的每一行拉回前四行，使用了 `TOP`。在这种情况下必须使用 `CROSS APPLY`，因为使用派生表只会拉回总共四行，而不是每月四行。\n\
+  \n![返回每月前四个销售的部分结果](img/335106_2_En_2_Fig9_HTML.jpg)\n**图 2-9** 返回每月前四个销售的部分结果\n\
+  \n查询 2 使用 `ROW_NUMBER` 来完成同样的事情。CTE 包含结果所需的所有表达式，外加一个行号。行号按月份分区，以便编号为每个月重新开始。外部查询只是从\
+  \ CTE 中检索数据并根据行号进行过滤。\n\n对于这个问题的另一种变化，如何找出每个月价格最高的四个订单呢？清单 2-10 展示了如何编写此查询。\n\n\
+  ```sql\n--2-10.1 使用 ROW_NUMBER 查找前四个订单\nWITH Orders AS (\nSELECT  MONTH(OrderDate)\
+  \ AS OrderMonth, OrderDate,\nSalesOrderID, TotalDue,\nROW_NUMBER() OVER(PARTITION\
+  \ BY MONTH(OrderDate)\nORDER BY TotalDue DESC) AS RowNumber\nFROM Sales.SalesOrderHeader\n\
+  WHERE OrderDate >= '2013-01-01' AND OrderDate < '2014-01-01')\nSELECT OrderMonth,\
+  \ CAST(OrderDate AS DATE) AS OrderDate,\nSalesOrderID,\nTotalDue\nFROM Orders\n\
+  WHERE RowNumber <= 4\nORDER BY OrderMonth, TotalDue DESC;\n```\n\n**清单 2-10** 查找每月最昂贵的四个订单\n\
+  \n图 2-10 显示了部分结果。在这种情况下，返回了每个月的四个订单，并且这些是每个月的最高销售额。\n\n![每月四个最昂贵订单的部分结果](img/335106_2_En_2_Fig10_HTML.jpg)\n\
+  **图 2-10** 每月四个最昂贵订单的部分结果\n\n你也可以使用此技术查找特定位置的行或一系列行，例如用于分页。例如，你可能需要在网页上一次显示十行。只需在查询中添加行号到\
+  \ CTE 后，在 `WHERE` 子句中为你想要显示的第一行和最后一行提供一个变量，这很容易。还有另一种可能效果更好的方法，即 `OFFSET/FETCH`\
+  \ 技术，该技术从 SQL Server 2012 首次可用。这是 `ORDER BY` 子句的一个选项，更多信息可以在这里找到： [`https://docs.microsoft.com/en-us/sql/t-sql/queries/select-order-by-clause-transact-sql?view=sql-server-2017`](https://docs.microsoft.com/en-us/sql/t-sql/queries/select-order-by-clause-transact-sql%253Fview%253Dsql-server-2017)\n\
+  \n### 创建计数表\n\n在许多问题中，计数表（或数字表）都能派上用场，而且创建这种表也有几种方法。清单 2-11 展示了一个使用 `ROW_NUMBER`\
+  \ 的示例脚本。\n\n```sql\n--2-11.1 创建表\nCREATE TABLE #Numbers(Number INT);\n--2-11.2 填充计数表\n\
+  INSERT INTO #Numbers(Number)\nSELECT TOP(1000000) ROW_NUMBER() OVER(ORDER BY a.object_id)\n\
+  FROM sys.objects a\nCROSS JOIN sys.objects b\nCROSS JOIN sys.objects c;\n清单 2-11\n\
+  创建数字表\n```\n\n通过使用 `CROSS JOIN`，你可以生成大量行，本例中通过 `TOP` 限制为一百万行。然后通过添加 `ROW_NUMBER`，数字\
+  \ 1 到 1,000,000 就会被加入表中。\n\n现在你有了一个计数表，你可能会想用它做什么。当你需要在表中查找缺失的日期或 ID 号时，计数表通常很有用。清单\
+  \ 2-12 是一个示例。请确保在创建计数表的查询窗口中运行。\n\n```sql\n--2-12.1 找到最早日期和天数差\nDECLARE @Min DATE,\
+  \ @DayCount INT;\nSELECT @Min = MIN(OrderDate),\n       @DayCount = DATEDIFF(DAY,MIN(OrderDate),MAX(OrderDate))\n\
+  FROM Sales.SalesOrderHeader;\n--2-12.2 将数字转换为日期，然后查找缺失的日期\nWITH Dates AS (\n   \
+  \ SELECT TOP(@DayCount) DATEADD(DAY,Number,@Min) AS OrderDate\n    FROM #Numbers\
+  \ AS N\n    ORDER BY Number\n)\nSELECT Dates.OrderDate\nFROM Dates\nLEFT JOIN Sales.SalesOrderHeader\
+  \ AS SOH\n    ON Dates.OrderDate = SOH.OrderDate\nWHERE SOH.SalesOrderID IS NULL;\n\
+  清单 2-12\n使用计数表查找没有订单的日期\n```\n\n此示例首先在表中找到最小日期以及最小日期和最大日期之间的差值。然后，它使用一个 CTE（公用表表达式）将数字从最早日期的次日开始转换为日期。在外部查询中，它将\
+  \ `Dates` CTE 与表进行比较，基于 `OrderDate` 进行连接，并找出那些 `NULL` 的行。图 2-11 显示了结果。有三个日期没有任何订单。\n\
+  \n![../images/335106_2_En_2_Chapter/335106_2_En_2_Fig11_HTML.jpg](img/335106_2_En_2_Fig11_HTML.jpg)\n\
+  \n图 2-11：没有订单的日期\n\n### 解决奖金问题\n\n这个例子是我多年来用来解释如何使用 `NTILE` 函数的一个典型场景。假设你是一位销售团队的经理。你有一笔奖金要发放，并希望根据每个人的销售额来分配这笔钱。业绩最好的销售小组每人将获得\
+  \ $4000，业绩最差的小组将获得 $1000。清单 2-13 展示了如何使用 `NTILE` 来解决这个问题。\n\n```sql\n--2-13.1 使用\
+  \ NTILE 分配奖金\nWITH Sales AS (\n    SELECT SP.FirstName, SP.LastName,\n         \
+  \  SUM(SOH.TotalDue) AS TotalSales\n    FROM [Sales].[vSalesPerson] SP\n    JOIN\
+  \ Sales.SalesOrderHeader SOH\n        ON SP.BusinessEntityID = SOH.SalesPersonID\n\
+  \    WHERE SOH.OrderDate >= '2011-01-01' AND SOH.OrderDate < '2012-01-01'\n    GROUP\
+  \ BY FirstName, LastName)\nSELECT FirstName, LastName, TotalSales,\n       NTILE(4)\
+  \ OVER(ORDER BY TotalSales) * 1000 AS Bonus\nFROM Sales;\n清单 2-13\n解决奖金问题\n```\n\
+  \n图 2-12 显示了结果。此查询仅筛选了 2011 年这一年的数据。数据被聚合，并在一个名为 `Sales` 的 CTE 中计算每个人的 `TotalSales`\
+  \ 总和。在外部查询中，`NTILE` 函数将行分成四个组（桶）。提供给 `NTILE` 的参数指定了组的数量。通过将组号乘以 1000，就得到了奖金数额。销售额最低的销售人员获得的奖金较少。\n\
+  \n![../images/335106_2_En_2_Chapter/335106_2_En_2_Fig12_HTML.jpg](img/335106_2_En_2_Fig12_HTML.jpg)\n\
+  \n图 2-12：奖金问题的结果\n\n你可能注意到，前两组各有三个人，而后两组只有两个人。这是因为十不能被四整除。余数中的一行被分配给了前两组。在这个例子中，有两个人获得了最高奖金，但如果你想将余数行分配给表现最好的组呢？你可以按降序对行排序以将额外的行移动到顶部，但接下来就出现了如何计算奖金的问题。通过重新使用直线的代数公式\
+  \ `y = mx + b`，就可以得到正确的结果。直线的斜率 (`m`) 是 -1000，截距 (`b`) 是 5000。清单 2-14 展示了这种做法。\n\
+  \n```sql\n--2-14.1 按相反顺序分配奖金\nWITH Sales AS (\n    SELECT SP.FirstName, SP.LastName,\n\
+  \           SUM(SOH.TotalDue) AS TotalSales\n    FROM [Sales].[vSalesPerson] SP\n\
+  \    JOIN Sales.SalesOrderHeader SOH\n        ON SP.BusinessEntityID = SOH.SalesPersonID\n\
+  \    WHERE SOH.OrderDate >= '2011-01-01' AND SOH.OrderDate < '2012-01-01'\n    GROUP\
+  \ BY FirstName, LastName)\nSELECT FirstName, LastName, TotalSales,\n       -1000\
+  \ * NTILE(4) OVER(ORDER BY TotalSales DESC) + 5000 AS Bonus\nFROM Sales;\n清单 2-14\n\
+  使用代数让三个人获得最高奖金\n```\n\n图 2-13 显示了结果。通过按相反方向排序，然后将 `NTILE` 的结果乘以 -1000 再加 5000，就有三个人获得了最高奖金。\n\
+  \n![../images/335106_2_En_2_Chapter/335106_2_En_2_Fig13_HTML.jpg](img/335106_2_En_2_Fig13_HTML.jpg)\n\
+  \n图 2-13：让三个人获得最高奖金时的结果\n\n我还听说一些公司使用 `NTILE` 来划分比赛结果或捐赠者群体。虽然不常用，但如果你有适用场景，请记住它。\n\
+  \n## 总结\n\n排名函数 `ROW_NUMBER`、`RANK`、`DENSE_RANK` 和 `NTILE` 是所有窗口函数中最基础的。排名函数为结果的每一行添加一个编号。`OVER`\
+  \ 子句中的 `ORDER BY` 表达式是必需的，并且根据具体情况，你可能还需要添加 `PARTITION BY`。这些函数本身通常不是最终解决方案，但常常构成更复杂解决方案的基础。\n\
+  \n当面对一个棘手的查询时，你可能想添加一个行号来查找行之间的模式或关系。然后利用这些模式和关系来找出解决方案。在第 9 章和第 10 章中，你将看到排名函数被用来解决更多查询问题。\n\
+  \n第 3 章将介绍窗口聚合，它允许你在查询中添加像 `SUM` 或 `Avg` 这样的函数，而无需将查询转变为聚合查询。你将不需要 `GROUP BY`，也不会丢失任何明细数据。\n\
+  \n"
+- '# 3. 使用窗口聚合进行汇总
+
+
+  2005 年，微软为 T-SQL 引入了另一种类型的窗口函数：窗口聚合。通过在聚合函数上添加一个 `OVER` 子句，你可以避免通常必须遵守的规则。在编写聚合查询时，你会丢失那些未包含在
+  `GROUP BY` 子句中的明细数据。从 SQL Server 2005 开始，你可以通过添加 `OVER` 子句来消除这一限制。通过添加 `OVER`，你也可以省略
+  `GROUP BY` 和 `HAVING` 子句。你还可以将窗口聚合函数添加到聚合查询中，以返回不同聚合级别的汇总值。
+
+
+  在本章中，你将学习如何通过窗口函数将聚合函数添加到非聚合查询中。你还将学习通过 OVER 子句将窗口聚合函数添加到聚合查询中，但实现不同级别的聚合。在本章的最后，我们将一起看一些实际问题。
+
+
+  ## 使用窗口聚合
+
+
+  窗口聚合就是你日常使用的那些常用聚合函数，比如 `SUM` 和 `AVG`，只不过加上了 `OVER` 子句。到目前为止，你已经见过 `OVER` 子句与 `LAG`
+  和排名函数一起使用。在那些情况下，`ORDER BY` 组件是必需的。但 SQL Server 2005 的窗口聚合功能**不支持** `ORDER BY` 组件。第
+  4 章将介绍一个 2012 年的增强功能，该功能确实使用 `ORDER BY`，但你必须先了解 2005 年的这个功能。
+
+
+  虽然窗口聚合的 `OVER` 子句中不支持 `ORDER BY` 组件，但所有窗口函数都支持 `PARTITION BY`，窗口聚合也不例外。如果省略 `PARTITION
+  BY`，你将得到一个空的 `OVER` 子句，该函数将应用于整个结果集，例如，计算总计或整体平均值。如果包含 `PARTITION BY`，则函数将应用于各个分区，例如，计算小计。语法如下：
+
+  ```
+
+  () OVER([PARTITION BY [,,...])
+
+  ```
+
+
+  可以作为窗口聚合使用的内置聚合函数列于表 3-1。
+
+
+  表 3-1
+
+  窗口聚合函数列表
+
+
+  | 聚合函数 | 定义 |
+
+  | --- | --- |
+
+  | AVG | 计算组的平均值。 |
+
+  | CHECKSUM_AGG | 计算组的校验和。常用于检测数据变化。 |
+
+  | COUNT | 用于获取行数或列的非空值计数。 |
+
+  | COUNT_BIG | 功能类似 COUNT，但返回一个大整数。 |
+
+  | MAX | 返回集合中的最大值。 |
+
+  | MIN | 返回集合中的最小值。 |
+
+  | STDEV | 计算组的标准差。 |
+
+  | STDEVP | 计算组中总体的标准差。 |
+
+  | SUM | 对组中的值进行求和。 |
+
+  | VAR | 返回组的统计方差。 |
+
+  | VARP | 返回组中总体的统计方差。 |
+
+
+  如果你查看 SQL Server 2019 支持的聚合函数，会发现有三个函数未包含在此列表中：`GROUPING`、`GROUPING_ID` 和 `APPROX_COUNT_DISTINCT`。当使用更高级的
+  `GROUP BY` 选项（如 `ROLLUP`）时，`GROUPING` 和 `GROUPING_ID` 用于标识分组级别。`APPROX_COUNT_DISTINCT`
+  是 SQL Server 2019 的新函数。对于大型数据集，当近似值足够好时，可以使用此新函数代替 `COUNT(DISTINCT)`。`COUNT(DISTINCT)`
+  不能用作窗口函数，因此 `APPROX_COUNT_DISTINCT` 同样不被允许也是合理的。
+
+
+  本章示例将重点介绍常用函数 `AVG`、`SUM`、`MIN`、`MAX` 和 `COUNT`。代码清单 3-1 展示了一些窗口聚合的示例。
+
+  ```
+
+  --3.1.1 窗口聚合示例
+
+  SELECT CustomerID, SalesOrderID,
+
+  CAST(MIN(OrderDate) OVER() AS DATE) AS FirstOrderDate,
+
+  CAST(MAX(OrderDate) OVER() AS DATE) AS LastOrderDate,
+
+  COUNT(*) OVER() OrderCount,
+
+  FORMAT(SUM(TotalDue) OVER(),''C'') TotalAmount
+
+  FROM Sales.SalesOrderHeader
+
+  ORDER BY CustomerID, SalesOrderID;
+
+  --3.1.2 使用 PARTITION BY
+
+  SELECT CustomerID, SalesOrderID,
+
+  CAST(MIN(OrderDate) OVER(PARTITION BY CustomerID) AS DATE)
+
+  AS FirstOrderDate,
+
+  CAST(MAX(OrderDate) OVER(PARTITION BY CustomerID) AS DATE)
+
+  AS LastOrderDate,
+
+  COUNT(*) OVER(PARTITION BY CustomerID) OrderCount,
+
+  FORMAT(SUM(TotalDue) OVER(PARTITION BY CustomerID),''C'') AS TotalAmount
+
+  FROM Sales.SalesOrderHeader
+
+  ORDER BY CustomerID, SalesOrderID;
+
+  ```
+
+  代码清单 3-1
+
+  使用窗口聚合
+
+
+  图 3-1 显示了部分结果。关于这些示例，首先要注意的是两个查询中都没有 `GROUP BY` 子句。向原本非聚合的查询中添加窗口聚合表达式，并不会将该查询变为聚合查询。这些查询在显示每行详细信息的同时，也显示了汇总值。
+
+
+  ![../images/335106_2_En_3_Chapter/335106_2_En_3_Fig1_HTML.jpg](img/335106_2_En_3_Fig1_HTML.jpg)
+
+  图 3-1
+
+  使用窗口聚合的部分结果
+
+
+  查询 1 使用了空的 `OVER` 子句。这意味着计算是在整个结果集上进行的。`FirstOrderDate` 是数据中最早的 `OrderDate`，`LastOrderDate`
+  是数据中最新的 `OrderDate`。`OrderCount` 是总计数，`TotalAmount` 是所有行的总金额。查询 2 在每个 `OVER` 子句中包含了对
+  `CustomerID` 的 `PARTITION BY`。注意在结果中，查询 2 的值是针对每个客户特定的。
+
+
+  在之前的例子中，每个查询内的 `OVER` 子句是相同的。你可以在同一个查询中使用不同的 `OVER` 子句。代码清单 3-2 在一个查询中有两个具有不同 `OVER`
+  子句的窗口聚合函数。
+
+  ```
+
+  --3.2.1 使用不同的 OVER 子句
+
+  SELECT CustomerID, SalesOrderID, FORMAT(TotalDue,''c'') AS TotalDue,
+
+  FORMAT(SUM(TotalDue) OVER(PARTITION BY CustomerID),''c'') AS CustomerSales,
+
+  FORMAT(SUM(TotalDue) OVER(),''c'') AS TotalSales
+
+  FROM Sales.SalesOrderHeader
+
+  WHERE OrderDate >= ''2013-01-01'' AND OrderDate < ''2014-01-01''
+
+  ORDER BY CustomerID, SalesOrderID;
+
+  ```
+
+  代码清单 3-2
+
+  使用不同的 OVER 子句
+
+
+  图 3-2 显示了部分结果。此查询返回每个客户的总计和整体总计。
+
+
+  ![../images/335106_2_En_3_Chapter/335106_2_En_3_Fig2_HTML.jpg](img/335106_2_En_3_Fig2_HTML.jpg)
+
+  图 3-2
+
+  使用不同 OVER 子句的部分结果
+
+
+  在前面的例子中还注意到，有些窗口聚合函数嵌套在 `CAST` 或 `FORMAT` 函数内部。窗口函数也可以像常规聚合函数一样，在列、更复杂的表达式或子查询上操作。代码清单
+  3-3 展示了一个例子。
+
+  ```
+
+  --3-3-1 在表达式中使用窗口函数
+
+  SELECT CustomerID, SalesOrderID,
+
+  CAST(OrderDate AS Date) AS OrderDate,
+
+  MIN(SalesOrderID/CustomerID)
+
+  OVER(PARTITION BY CustomerID) AS Expr1,
+
+  CAST(MIN(DATEADD(d,1,OrderDate)) OVER() AS DATE) AS Expr2,
+
+  AVG((SELECT COUNT(*)
+
+  FROM Sales.SalesOrderDetail AS SOD
+
+  WHERE SalesOrderID = SOH.SalesOrderID)) OVER() AS Expr3
+
+  FROM Sales.SalesOrderHeader AS SOH;
+
+  ```
+
+  代码清单 3-3
+
+  在表达式中使用窗口函数
+
+
+  部分结果如图 3-3 所示。`Expr1` 是 `SalesOrderID` 除以 CustomerID 的商。`Expr2` 将 `DATEADD` 函数嵌套在
+  `MIN` 函数内，而 `MIN` 函数又嵌套在 `CAST` 函数内。`Avg` 函数应用于一个子查询，并返回明细行的平均数量。
+
+
+  ![../images/335106_2_En_3_Chapter/335106_2_En_3_Fig3_HTML.jpg](img/335106_2_En_3_Fig3_HTML.jpg)
+
+  图 3-3
+
+  嵌套函数的部分结果
+
+
+  你可以看到，向任何非聚合查询中添加窗口聚合函数是很容易的。务必遵循数据类型规则；例如，不能对字符数据计算总和。你不会为此功能使用 `ORDER BY`，如果你希望将计算应用于划分成子集的行，则会使用
+  `PARTITION BY` 表达式。
+
+
+  窗口聚合的一个非常直观的用法是在聚合查询中使用它们。
+
+
+
+  ## 将窗口聚合添加到聚合查询中
+
+
+  当我第一次尝试将窗口聚合添加到聚合查询中时，它没有正常工作，这让我很惊讶，而错误信息则让我更加意外。清单 3-4 展示了一个例子。
+
+
+  ```sql
+
+  --3-4.1 将窗口聚合添加到聚合查询
+
+  SELECT CustomerID, SUM(TotalDue) AS CustomerTotal,
+
+  SUM(TotalDue) OVER() AS GrandTotal
+
+  FROM Sales.SalesOrderHeader
+
+  GROUP BY CustomerID;
+
+  ```
+
+  **清单 3-4**
+
+  将窗口聚合添加到聚合查询
+
+
+  图 3-4 显示了错误信息。
+
+
+  ![../images/335106_2_En_3_Chapter/335106_2_En_3_Fig4_HTML.jpg](img/335106_2_En_3_Fig4_HTML.jpg)
+
+
+  **图 3-4**
+
+  将窗口聚合添加到聚合查询后产生的错误信息
+
+
+  显然，`TotalDue` 列*被包含*在一个聚合表达式中，将其添加到 `GROUP BY` 子句中显然不是解决办法。要理解这里发生了什么，你必须思考窗口聚合所操作的窗口。窗口中的行集是在
+  `GROUP BY` 操作之后创建的。该窗口包含 `GROUP BY` 子句中列出的任何表达式加上任何聚合表达式。窗口函数任何部分中包含的任何表达式都必须遵循与
+  `SELECT` 列表相同的规则。这意味着将 `CustomerID` 作为窗口函数的参数或作为 `PARTITION BY` 列是没问题的，因为 `CustomerID`
+  是 `GROUP BY` 的一部分。但要在窗口聚合表达式的任何角色中使用 `TotalDue`，必须先将其聚合。清单 3-5 展示了正确的解决方案。
+
+
+  ```sql
+
+  --3-5.1 如何将窗口聚合添加到聚合查询
+
+  SELECT CustomerID, SUM(TotalDue) AS CustomerTotal,
+
+  SUM(SUM(TotalDue)) OVER() AS GrandTotal
+
+  FROM Sales.SalesOrderHeader
+
+  GROUP BY CustomerID;
+
+  ```
+
+  **清单 3-5**
+
+  如何将窗口聚合添加到聚合查询
+
+
+  语法看起来可能有些奇怪，因为你不能嵌套聚合函数，但窗口函数必须应用于 `TotalDue` 的总和，而不仅仅是 `TotalDue` 本身。图 3-5 显示了部分结果，并证明了这是有效的。
+
+
+  ![../images/335106_2_En_3_Chapter/335106_2_En_3_Fig5_HTML.jpg](img/335106_2_En_3_Fig5_HTML.jpg)
+
+
+  **图 3-5**
+
+  将窗口聚合添加到聚合查询后的部分结果
+
+
+  另一种更直观的方法是将窗口聚合分离到一个 CTE（公用表表达式）中，或者使用其他方法来分离逻辑。清单 3-6 展示了如何做到这一点。
+
+
+  ```sql
+
+  --3.6.1 使用 CTE
+
+  WITH SALES AS (
+
+  SELECT CustomerID, SUM(TotalDue) AS CustomerTotal
+
+  FROM Sales.SalesOrderHeader
+
+  GROUP BY CustomerID)
+
+  SELECT CustomerID, CustomerTotal,
+
+  SUM(CustomerTotal) OVER() AS GrandTotal
+
+  FROM Sales;
+
+  ```
+
+  **清单 3-6**
+
+  使用 CTE 替代嵌套
+
+
+  结果与图 3-5 相同。在 CTE 内部，查询按 `CustomerID` 分组。为每个客户计算总和 `CustomerTotal`。在外层查询中，窗口聚合被应用于
+  `CustomerTotal`。窗口聚合仍然是应用于聚合表达式，但逻辑被分离开了，因此更容易理解。以这种方式编写查询除了增加清晰度之外，并没有其他优势。
+
+
+  清单 3-7 有另一个有趣的例子，涉及 `GROUP BY` 子句中的多个表达式。
+
+
+  ```sql
+
+  --3-7.1 对多个分组依据应用窗口聚合
+
+  SELECT YEAR(OrderDate) AS OrderYear,
+
+  CustomerID, SUM(TotalDue) AS CustTotalForYear,
+
+  SUM(SUM(TotalDue)) OVER(PARTITION BY CustomerID) AS CustomerTotal
+
+  FROM Sales.SalesOrderHeader
+
+  GROUP BY CustomerID, YEAR(OrderDate)
+
+  ORDER BY CustomerID, OrderYear;
+
+  ```
+
+  **清单 3-7**
+
+  向包含多个表达式的 GROUP BY 子句的查询添加窗口聚合
+
+
+  部分结果显示在图 3-6 中。`GROUP BY` 子句列出了 `CustomerID` 列和 `YEAR(OrderDate)` 表达式。在应用窗口聚合之前，结果集包含每个客户每年的数据行。`CustTotalForYear`
+  是一个常规的聚合表达式。最后一个表达式是一个窗口聚合，其 `PARTITION BY` 表达式基于 `CustomerID`，因此 `CustomerTotal`
+  是该客户的总体小计。这个例子的重点是，你可以使用窗口聚合函数来返回不同聚合级别的值。
+
+
+  ![../images/335106_2_En_3_Chapter/335106_2_En_3_Fig6_HTML.jpg](img/335106_2_En_3_Fig6_HTML.jpg)
+
+
+  **图 3-6**
+
+  在包含多个表达式的 GROUP BY 查询中使用窗口聚合
+
+
+  在聚合查询内的窗口函数所操作的窗口中，行已经被过滤和分组。可供窗口函数使用的列列表受到 `GROUP BY` 子句的限制。这是默认的窗口；你可以对其进行分区，但不能包含窗口之外的任何内容。你可以缩小窗口范围，但不能扩大。你可以将
+  `PARTITION BY` 表达式基于整个结果集（空的 `OVER` 子句）、按 `CustomerID` 或按 `YEAR(OrderYear)` 进行分区，而不会出错。你不会使用
+  `CustomerID` 和 `YEAR(OrderYear)` 的组合，因为那与 `GROUP BY` 完全匹配。
+
+
+  向聚合查询添加窗口聚合的规则适用于所有窗口函数。请始终牢记，`GROUP BY` 和 `HAVING` 子句首先执行。`FROM`、`WHERE`、`GROUP
+  BY` 和 `HAVING` 子句的结果决定了基础窗口中的行、列及其粒度。在窗口函数任何位置使用的任何列都必须是 `GROUP BY` 列之一，或者在窗口函数内部进行了聚合。
+
+
+  为避免混淆，首先在 CTE 中执行第一次聚合。然后，在外层查询中应用窗口函数。
+
+
+  ## 使用窗口聚合解决常见查询
+
+
+  将窗口聚合添加到复杂的非聚合查询中非常容易。而用其他方法实现同样的功能可能会使查询的规模加倍。
+
+
+  ### 销售额占比问题
+
+
+  这个特定的例子可以应用于许多情况。你可以使用窗口聚合来执行计算，例如百分比。清单 3-8 演示了如何在显示详细信息的同时显示销售额占比。
+
+
+  ```sql
+
+  --3-8.1 计算销售额占比
+
+  SELECT P.ProductID,
+
+  FORMAT(SUM(OrderQty * UnitPrice),''C'') AS ProductSales,
+
+  FORMAT(SUM(SUM(OrderQty * UnitPrice)) OVER(),''C'') AS TotalSales,
+
+  FORMAT(SUM(OrderQty * UnitPrice)/
+
+  SUM(SUM(OrderQty * UnitPrice)) OVER(), ''P'') AS PercentOfSales
+
+  FROM Sales.SalesOrderDetail AS SOD
+
+  JOIN Production.Product AS P ON SOD.ProductID = P.ProductID
+
+  JOIN Production.ProductSubcategory AS SUB ON P.ProductSubcategoryID
+
+  = SUB.ProductSubcategoryID
+
+  JOIN Production.ProductCategory AS CAT ON SUB.ProductCategoryID
+
+  = CAT.ProductCategoryID
+
+  WHERE CAT.Name = ''Bikes''
+
+  GROUP BY P.ProductID
+
+  ORDER BY PercentOfSales DESC;
+
+  ```
+
+  **清单 3-8**
+
+  使用窗口函数显示销售额占比
+
+
+  图 3-7 显示了部分结果。这是一个聚合查询，因此在窗口聚合内部任何角色中使用的列都必须是 `GROUP BY` 列或进行了聚合。空的 `OVER` 子句用于计算
+  `TotalSales`。按 `ProductID` 计算的总和除以整个结果集的总销售额，并进行格式化，从而得出每种自行车型号的销售额占比。
+
+
+  ![../images/335106_2_En_3_Chapter/335106_2_En_3_Fig7_HTML.jpg](img/335106_2_En_3_Fig7_HTML.jpg)
+
+
+  **图 3-7**
+
+  按 ProductID 显示的销售额占比
+
+
+
+
+  ### 分区表问题
+
+
+  我最喜欢的一个例子涉及查看表分区的元数据。表分区与 `PARTITION BY` 无关；它是一项让大型数据库中的数据管理更轻松的功能。由于 AdventureWorks
+  数据库中没有表是分区的，请运行清单 3-9 来创建一个分区表。过去，你需要企业版才能运行此功能。从 2016 SP 1 开始，Microsoft 将该功能移植到了所有版本。
+
+
+  ```
+
+  --3-9.1 创建分区函数
+
+  CREATE PARTITION FUNCTION testFunction (DATE)
+
+  AS RANGE RIGHT
+
+  FOR VALUES (''2011-01-01'',''2012-01-01'',''2013-01-01'',''2014-01-01'');
+
+  GO
+
+  --3-9.2 创建分区方案
+
+  CREATE PARTITION SCHEME testScheme
+
+  AS PARTITION testFunction ALL TO (''Primary'');
+
+  GO
+
+  --3-9.3 创建分区表
+
+  CREATE TABLE dbo.Orders(CustomerID INT, SalesOrderID INT,
+
+  OrderDate DATE, TotalDue MONEY)
+
+  ON testScheme(OrderDate);
+
+  GO
+
+  --3-9.4 填充表
+
+  INSERT INTO dbo.Orders(customerID, SalesOrderID,
+
+  OrderDate, TotalDue)
+
+  SELECT CustomerID, SalesOrderID,
+
+  OrderDate, TotalDue
+
+  FROM Sales.SalesOrderHeader;
+
+  GO
+
+  --3-9.5 创建另一个分区表
+
+  CREATE TABLE dbo.Customer (CustomerID INT, ModifiedDate DATE)
+
+  ON testScheme(ModifiedDate);
+
+  GO
+
+  --3-9.6 填充表
+
+  INSERT INTO dbo.Customer(CustomerID, ModifiedDate)
+
+  SELECT CustomerID, ModifiedDate
+
+  FROM Sales.Customer;
+
+  GO
+
+  ```
+
+  清单 3-9：创建一个分区表
+
+
+  当一个表被分区后，尽管在底层数据被分开了，你仍然可以用与以往相同的方式编写查询来检索数据。如果你想了解更多关于表分区的知识，请务必查阅 SQL Server 关于此主题的文档，因为这超出了本书的范围。
+
+
+  几年前，我的同事发给我一个查询并寻求帮助。他想查看分区表中每个分区的数据行占比。清单 3-10 展示了他发给我的查询以及我想出的解决方案。
+
+
+  ```
+
+  --3-10.1 同事的查询
+
+  SELECT OBJECT_NAME(p.OBJECT_ID) TableName,
+
+  ps.partition_number, ps.Row_count
+
+  FROM sys.data_spaces  d
+
+  JOIN sys.indexes i
+
+  JOIN (SELECT DISTINCT OBJECT_ID
+
+  FROM sys.partitions
+
+  WHERE partition_number > 1) p
+
+  ON i.OBJECT_ID = p.OBJECT_ID
+
+  ON d.data_space_id = i.data_space_id
+
+  JOIN sys.dm_db_partition_stats ps
+
+  ON i.OBJECT_ID = ps.OBJECT_ID and i.index_id = ps.index_id
+
+  WHERE i.index_id <= 1;
+
+
+  --3-10.2 解决方案
+
+  SELECT OBJECT_NAME(p.OBJECT_ID) TableName,
+
+  ps.partition_number, ps.Row_count,
+
+  ps.Row_count * 1.0 / SUM(ps.Row_count) OVER (PARTITION BY p.OBJECT_ID)
+
+  AS PercentOfRows
+
+  FROM sys.data_spaces  d
+
+  JOIN sys.indexes i
+
+  JOIN (SELECT DISTINCT OBJECT_ID
+
+  FROM sys.partitions
+
+  WHERE partition_number > 1) p
+
+  ON i.OBJECT_ID = p.OBJECT_ID
+
+  ON d.data_space_id = i.data_space_id
+
+  JOIN sys.dm_db_partition_stats ps
+
+  ON i.OBJECT_ID = ps.OBJECT_ID and i.index_id = ps.index_id
+
+  WHERE i.index_id < 2;
+
+  ```
+
+  清单 3-10：分区表问题与解决方案
+
+
+  图 3-8 显示了查询 2 的结果。原始查询（查询 1）包含结果中除 `PercentOfRows` 列之外的所有列。希望你同意原始查询相当复杂。期望的解决方案可以在查询
+  2 中找到。`Row_count` 列除以按 `OBJECT_ID` 分区后的 `Row_count` 总和。该分区使得结果对每个表都是特定的。答案还乘以了 1.0
+  以消除整数除法。它还为了可读性进行了格式化。使用旧方法来完成同样的事情编写起来会困难得多。
+
+
+  ![../images/335106_2_En_3_Chapter/335106_2_En_3_Fig8_HTML.jpg](img/335106_2_En_3_Fig8_HTML.jpg)
+
+  图 3-8：分区表问题的解决方案
+
+
+  要清理本节中创建的数据库对象，请运行清单 3-11。
+
+
+  ```
+
+  --3-11 删除本节中创建的对象
+
+  DROP TABLE dbo.Customer;
+
+  DROP TABLE dbo.Orders;
+
+  DROP PARTITION SCHEME testScheme;
+
+  DROP PARTITION FUNCTION testFunction;
+
+  GO
+
+  ```
+
+  清单 3-11：清理数据库对象
+
+
+  每当你需要使用某个聚合函数在不同于查询结果的层级上进行汇总时，考虑使用窗口聚合函数。
+
+
+  ## 创建自定义窗口聚合函数
+
+
+  从 SQL Server 2005 开始，你可以使用 .NET 语言通过 CLR（公共语言运行时）集成来创建自定义聚合函数。令人惊讶的是，这些函数也可以作为窗口聚合函数工作。创建一个
+  C# DLL 超出了本书的范围，但本章的代码下载包含了一个用于此类函数的 C# 程序。如果你想学习如何创建自己的自定义函数，可以使用这个项目作为模板。有关创建自定义聚合函数的更多信息，请在
+  SQL Server 文档中搜索“CLR User-Defined Aggregates”。
+
+
+  该项目在章节的代码文件夹中包含一个 DLL 文件。将此文件复制到 SQL Server 可以访问的位置，例如 `C:\Custom` 文件夹。如果你已将文件复制到其他位置，则需要修改清单
+  3-12 中的命令。还必须启用 CLR 集成，因此请确保在本地 SQL Server 实例上执行此操作，或者至少在允许更改此设置的实例上执行。运行清单 3-12
+  来设置自定义窗口聚合函数。请注意，CLR 严格安全功能是在 SQL Server 2017 中添加的，但在安装了一些更新的 SQL Server 2016 上也可用。如果你的
+  SQL Server 版本较低，请注释掉代码的 3-12.2 部分。
+
+
+  ```
+
+  --3-12.1 启用 CLR
+
+  EXEC sp_configure ''clr_enabled'', 1;
+
+  GO
+
+  RECONFIGURE;
+
+  GO
+
+  --3-12.2 启用未签名的程序集
+
+  EXEC sp_configure ''show advanced options'', 1;
+
+  RECONFIGURE;
+
+  EXEC sp_configure ''clr strict security'',0;
+
+  GO
+
+  RECONFIGURE;
+
+  --3-12.3 注册 DLL
+
+  CREATE ASSEMBLY CustomAggregate FROM
+
+  ''C:\Custom\CustomAggregate.dll'' WITH PERMISSION_SET = SAFE;
+
+  GO
+
+  --3-12.4 创建函数
+
+  CREATE Aggregate Median (@Value INT) RETURNS INT
+
+  EXTERNAL NAME CustomAggregate.Median;
+
+  GO
+
+  --3-12.5 测试函数
+
+  WITH Orders AS (
+
+  SELECT CustomerID, SUM(OrderQty) AS OrderQty, SOH.SalesOrderID
+
+  FROM Sales.SalesOrderHeader AS SOH
+
+  JOIN Sales.SalesOrderDetail AS SOD
+
+  ON SOH.SalesOrderID = SOD.SalesOrderDetailID
+
+  GROUP BY CustomerID, SOH.SalesOrderID)
+
+  SELECT CustomerID, OrderQty, dbo.Median(OrderQty) OVER(PARTITION BY CustomerID)
+  AS Median
+
+  FROM Orders
+
+  WHERE CustomerID IN (13011, 13012, 13019);
+
+  GO
+
+  ```
+
+  清单 3-12：设置自定义窗口聚合函数
+
+
+  语句 1 为服务器打开 CLR 集成。语句 2 启用运行未签名程序集的能力。你应该对你计划使用的任何程序集进行签名。语句 3 注册程序集。语句 4 启用新的自定义函数。查询
+  5 测试名为 `MEDIAN` 的新函数。图 3-9 显示了使用 `MEDIAN` 函数的结果。当数值个数为奇数时，中位数返回中间值。当数值个数为偶数时，它返回两个中间值的平均值。客户
+  13011 有三个订单。5、1 和 3 的中位数是 3。客户 13019 有两个订单。中位数是 6，即 2 和 10 的中间值。
+
+
+  ![../images/335106_2_En_3_Chapter/335106_2_En_3_Fig9_HTML.jpg](img/335106_2_En_3_Fig9_HTML.jpg)
+
+  图 3-9：使用自定义 MEDIAN 函数
+
+
+  如果你希望删除该函数并关闭 CLR 集成，请运行清单 3-13。
+
+
+  ```
+
+  --3-13.1 删除对象
+
+  DROP AGGREGATE Median;
+
+  DROP ASSEMBLY CustomAggregate;
+
+  GO
+
+  --3-13.2 将 CLR 集成重置为默认值
+
+  EXEC sp_configure ''clr_enabled'', 0;
+
+  GO
+
+  RECONFIGURE;
+
+  EXEC sp_configure ''clr strict security'',1;
+
+  GO
+
+  ```
+
+  清单 3-13：清理数据库
+
+
+
+  ## 概述
+
+
+  窗口聚合使得向非聚合查询添加摘要计算，或向聚合查询添加不同聚合级别的摘要变得非常容易。当你需要将详细数据与整体总计进行比较或生成小计时，这非常方便。如果你灵感迸发，甚至可以创建自己的自定义窗口聚合函数。
+
+
+  现在你已经了解了如何使用 SQL Server 2005 发布的所有窗口函数特性。第 4 章 将展示 2012 年引入的首个特性：移动和累积窗口聚合。
+
+
+  '
+- "# 4. 计算累积和移动聚合\n\n假设你被分配了一项任务，编写一个带有按客户分类的销售累积总计的 T-SQL 查询。也许你首先想到的是使用游标来完成，或者你可能熟悉一些查询技术，如自连接。如果你运行的是\
+  \ SQL Server 2012 或更高版本，那么你很幸运！窗口函数使得计算累积总计、移动平均值等变得非常容易。\n\n在本章中，你将学习如何在窗口聚合表达式中添加\
+  \ `ORDER BY` 子句会改变一切！你将学习如何为累积和移动聚合添加计算，这在业务报告和仪表盘中经常需要。\n\n## 向窗口聚合添加 ORDER BY\n\
+  \n在第 3 章中，你学习了如何使用窗口聚合在不分组的情况下向查询添加摘要。2005 版的窗口聚合功能不支持 `OVER` 子句中的 `ORDER BY` 组件。从\
+  \ SQL Server 2012 开始，你可以向窗口聚合添加 `ORDER BY` 来计算累积总计。为了区分此功能与 2005 功能，本书将 2012 功能称为*累积窗口聚合*。添加\
+  \ `ORDER BY` 时，窗口会发生变化。每一行都有不同的行集（即窗口）用于操作。窗口基于 `ORDER BY` 表达式。默认情况下，窗口由结果集中的第一行开始，并包括直到当前行的所有后续行。图\
+  \ 4-1 展示了按 `CustomerID` 分区时窗口的工作原理。\n\n![../images/335106_2_En_4_Chapter/335106_2_En_4_Fig1_HTML.jpg](img/335106_2_En_4_Fig1_HTML.jpg)\n\
+  \n图 4-1\n每一行都有不同的窗口\n\n在本章之前的示例中，组成窗口的实际行由 `PARTITION BY` 表达式确定。对于累积聚合，窗口中的行由 `PARTITION\
+  \ BY`、`ORDER BY` 和一个*框架*共同定义。框架可用于更精细地定义窗口。本节中的示例使用了默认框架。你将在本章的“计算移动总计和平均值”部分以及第\
+  \ 5 章中了解更多关于框架的信息。语法如下：\n\n```\n() OVER([PARTITION BY ]\nORDER BY  [Frame definition])\n\
+  ```\n\n代码清单 4-1 演示了如何使用累积窗口聚合来计算累积总计。\n\n```\n--4-1.1 累积总计\nSELECT CustomerID, SalesOrderID,\
+  \ CAST(OrderDate AS DATE) AS OrderDate,\nTotalDue, SUM(TotalDue) OVER(PARTITION\
+  \ BY CustomerID\nORDER BY SalesOrderID) AS RunningTotal\nFROM Sales.SalesOrderHeader;\n\
+  ```\n\n代码清单 4-1\n计算累积总计\n\n图 4-2 展示了部分结果。`RunningTotal` 列的值不断增加，直到遇到不同的 `CustomerID`。此时，总计重新开始计算。\n\
+  \n![../images/335106_2_En_4_Chapter/335106_2_En_4_Fig2_HTML.jpg](img/335106_2_En_4_Fig2_HTML.jpg)\n\
+  \n图 4-2\n使用累积聚合计算累积总计的部分结果\n\n代码清单 4-1 示例中的 `OVER` 子句使用了默认框架，该框架是 `OVER` 子句的一部分。第\
+  \ 5 章 将深入介绍框架，但你将在下一节中先了解一些基础知识。通过修改框架，你可以计算移动聚合。\n\n\n## 计算移动总计和平均值\n\n移动总计和平均值是非常流行的商业和经济指标。例如，开发者可能被要求提供按\
+  \ 3 个月或 12 个月计算这些指标的报告。默认情况下，用于累积窗口聚合的窗口在分区内持续增长，但对于移动聚合，你希望窗口大小保持不变。这可以通过添加窗口框架定义来实现。以下是包含移动聚合窗口框架的累积窗口聚合语法。第\
+  \ 5 章详细介绍了窗口框架，所以现在只需复制示例中的代码。\n\n```sql\n() OVER([PARTITION BY ]]\nORDER BY \n\
+  [ROWS BETWEEN  PRECEDING AND CURRENT ROW])\n```\n\n窗口对每一行都不同。图 4-3 展示了移动聚合的窗口工作原理。\n\
+  \n![../images/335106_2_En_4_Chapter/335106_2_En_4_Fig3_HTML.jpg](img/335106_2_En_4_Fig3_HTML.jpg)\n\
+  \n图 4-3：按 3 个月计算的移动聚合窗口\n\n运行清单 4-2 查看示例。\n\n```sql\n--4-2.1 产品销售数量的三个月总和与平均值\n\
+  SELECT MONTH(SOH.OrderDate) AS OrderMonth, SOD.ProductID, SUM(SOD.OrderQty) AS QtySold,\n\
+  SUM(SUM(SOD.OrderQty))\nOVER(PARTITION BY SOD.ProductID ORDER BY MONTH(SOH.OrderDate)\n\
+  ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) AS ThreeMonthSum,\nAVG(SUM(SOD.OrderQty))\n\
+  OVER(PARTITION BY SOD.ProductID ORDER BY MONTH(SOH.OrderDate)\nROWS BETWEEN 2 PRECEDING\
+  \ AND CURRENT ROW) AS ThreeMonthAvg\nFROM Sales.SalesOrderHeader AS SOH\nJOIN Sales.SalesOrderDetail\
+  \ AS SOD ON SOH.SalesOrderID = SOD.SalesOrderID\nJOIN Production.Product AS P ON\
+  \ SOD.ProductID = P.ProductID\nWHERE OrderDate >= '2013-01-01' AND OrderDate < '2014-01-01'\n\
+  GROUP BY MONTH(SOH.OrderDate), SOD.ProductID;\n--清单 4-2：计算移动平均值和总和\n```\n\n该查询筛选出\
+  \ 2013 年下的订单，并按月份和`ProductID`进行聚合。图 4-4 显示了部分结果，即产品 707 一年的销售情况。注意，每种情况下的窗口函数都应用于聚合值，即`OrderQty`的总和。在聚合查询中使用窗口函数时，函数或`OVER`子句中使用的任何列都遵循与`SELECT`列表相同的规则。更多信息请参见第\
+  \ 3 章的“将窗口聚合添加到聚合查询”部分。通过在`OVER`子句中添加`ORDER BY`和`ROWS`表达式（框架），窗口每次向前移动，最多包含三行。\n\
+  \n![../images/335106_2_En_4_Chapter/335106_2_En_4_Fig4_HTML.jpg](img/335106_2_En_4_Fig4_HTML.jpg)\n\
+  \n图 4-4：计算移动聚合的部分结果\n\n大多数情况下，对三个月计算的要求是，如果不足三个月无法计算平均值，则值应为`NULL`，但这些函数只会对可用数据进行求和。例如，一月和二月的三个月总和与平均值应为`NULL`。从三月开始，三个月的数据已备齐，因此会返回总和。为此，你需要检查月份的数量。清单\
+  \ 4-3 展示了一种方法。\n\n```sql\n--4-3.1 当不足三个月时显示 NULL\nSELECT MONTH(SOH.OrderDate) AS\
+  \ OrderMonth, SOD.ProductID,\nSUM(SOD.OrderQty) AS QtySold,\nCASE WHEN ROW_NUMBER()\
+  \ OVER(PARTITION BY SOD.ProductID\nORDER BY MONTH(SOH.OrderDate)) = '2013-01-01'\
+  \ AND OrderDate < '2014-01-01'\nGROUP BY MONTH(SOH.OrderDate), SOD.ProductID;\n\
+  --清单 4-3：当行数不足时返回 NULL\n```\n\n图 4-5 显示了部分结果，即`ProductID` 707 一年的销售情况。通过使用`CASE`语句检查`ROW_NUMBER`，当可用行数不足三行时返回`NULL`。\n\
+  \n![../images/335106_2_En_4_Chapter/335106_2_En_4_Fig5_HTML.jpg](img/335106_2_En_4_Fig5_HTML.jpg)\n\
+  \n图 4-5：当可用行数不足三行时返回 NULL\n\n## 使用累积聚合解决查询\n\n创建累加和移动聚合非常简单！你将在第 5 章学习如何利用`OVER`子句的框架组件，以确保得到预期的结果。在第\
+  \ 8 章中，还将讨论框架的性能，这也很重要。与排名函数不同，计算累加或移动聚合可能本身就是解决方案，而不仅仅是解决方案中的一个步骤。下一节将展示如何使用累积窗口函数来解决更有趣的问题。\n\
+  \n\n\n\n### 上一个有效值问题\n\n我在一个论坛上看到这个问题，有几个人尝试过解决。最好的解决方案是由 T-SQL 专家 Itzik Ben-Gan\
+  \ 开发的。\n\n该问题所用的表有两列。第一列 `ID` 是一个递增的整数，是表的主键。第二列可能包含 `NULL` 值。任务是将每个 `NULL` 替换为前一个非\
+  \ `NULL` 值。\n\n#### 清单 4-4：创建并填充表\n\n以下代码创建并填充表，并显示各行数据。\n\n```sql\n--4-4.1 创建表\n\
+  CREATE TABLE #TheTable(ID INT, Data INT);\n--4-4.2 填充表\nINSERT INTO #TheTable(ID,\
+  \ Data)\nVALUES(1,1),(2,1),(3,NULL),\n(4,NULL),(5,6),(6,NULL),\n(7,5),(8,10),(9,13),\n\
+  (10,12),(11,NULL);\n--4-4.3 显示结果\nSELECT * FROM #TheTable;\n```\n\n#### 图 4-6：上一个有效值问题的原始数据\n\
+  \n图 4-6 显示了表中的原始数据。注意第 3、4、6 和 11 行的 `Data` 列为 `NULL`。解决方案将用 1 替换第 3 和第 4 行的 `NULL`，用\
+  \ 6 替换第 6 行的，用 12 替换第 11 行的。\n\n![上一个有效值问题的原始数据](img/335106_2_En_4_Fig6_HTML.jpg)\n\
+  \n我发现 Itzik 的解决方案非常优雅和巧妙。它利用了这样一个事实：你可以使用任何聚合函数作为累积窗口聚合，而不仅仅是 `SUM` 和 `AVG`。看一下第\
+  \ 4 行。需要用来替换 `NULL` 的值是第 2 行的 `Data` 值。第 2 行的 `ID` 也是从第 1 行到第 4 行中，`Data` 列非 `NULL`\
+  \ 的所有行中的最大 `ID`。一个从分区第 1 行开始一直到当前行的窗口，与计算运行总计所需的窗口是相同的！你可以利用这个事实来找到截至当前行、`Data`\
+  \ 值非 `NULL` 的最大 `ID`。\n\n#### 清单 4-5：解决方案步骤 1\n\n```sql\n--4-5.1 找到最大的非空行\nSELECT\
+  \ ID, Data,\nMAX(CASE WHEN Data IS NOT NULL THEN ID END)\nOVER(ORDER BY ID) AS MaxRowID\n\
+  FROM #TheTable;\n```\n\n#### 图 4-7：步骤 1 的结果\n\n图 4-7 显示了目前的结果。`MaxRowID` 列是每一行所需的\
+  \ `Data` 值所在行的 `ID`。`MAX` 函数查找截至当前行、`Data` 值非 `NULL` 的所有行中的最大 `ID` 值。\n\n![步骤 1\
+  \ 的结果](img/335106_2_En_4_Fig7_HTML.jpg)\n\n我最初的想法是，我可以使用 `MaxRowID` 列将表与自身连接，但仔细看看这些数据。在\
+  \ `MaxRowID` 值相同的每一组行中，有一行非 `NULL` 的 `Data`，其余都是 `NULL`。有三行的 `MaxRowID` 是 2。其中只有一行有非\
+  \ `NULL` 的 `Data` 值。我接下来的想法是直接按 `MaxRowID` 分组，并对 `Data` 列使用 `MAX` 函数。但问题在于，这样做会丢失你需要查看的细节信息。然而，窗口聚合函数允许你在不将查询更改为聚合查询的情况下添加聚合函数。与其在\
+  \ `MaxRowID` 上分组，不如按它进行分区。\n\n#### 清单 4-6：完整解决方案\n\n```sql\n--4-6.1 解决方案\nWITH MaxData\
+  \ AS\n(SELECT ID, Data,\nMAX(CASE WHEN Data IS NOT NULL THEN ID END)\nOVER(ORDER\
+  \ BY ID) AS MaxRowID\nFROM #TheTable)\nSELECT ID, Data,\nMAX(Data) OVER(PARTITION\
+  \ BY MaxRowID) AS NewData\nFROM MaxData;\n```\n\n#### 图 4-8：上一个有效值问题的完整结果\n\n图 4-8\
+  \ 显示了结果。解决方案的第一部分被添加到了一个 CTE 中。在外层查询中，`MAX` 函数用于查找最大的 `Data` 值（实际上是唯一非 `NULL` 的那个值），并按\
+  \ `MaxRowID` 进行分区。\n\n![上一个有效值问题的完整结果](img/335106_2_En_4_Fig8_HTML.jpg)\n\n一旦看到这个解决方案，它似乎就变得相当简单了。感谢\
+  \ Itzik Ben-Gan 想出了这个方法。\n\n\n### 订阅问题\n\n在当今世界，我们许多人不再订阅杂志或报纸，但就在不久之前，它们还非常流行。客户会订阅出版物，有时会在某个时间点取消订阅。在这个问题中，你必须计算每个月底的有效订阅数量。数据中可能会有晚于最晚订阅日期的取消日期，对于这些行你可以忽略。\n\
+  \n解决这个问题最直观的方法是使用一个临时表，为每个月创建一行。然后遍历数据的每一行，根据开始和停止日期进行加减。遗憾的是，这种方法运行速度极慢。利用累积聚合功能可以轻松解决这个问题，而且运行速度快！\n\
+  \n首先，创建一个包含一些随机注册数据的临时表。由于是随机的，你的最终结果将与我的不同。此脚本创建一个包含 100,000 行的表，但你可以根据需要调整这个数字。清单\
+  \ 4-7 创建并填充了该表。\n\n```sql\n--4-7.1 创建临时表\nCREATE TABLE #Registrations(ID INT NOT\
+  \ NULL IDENTITY PRIMARY KEY,\nDateJoined DATE NOT NULL, DateLeft DATE NULL);\n--4-7.2\
+  \ 变量\nDECLARE @Rows INT = 10000, @Years INT = 5, @StartDate DATE = '2019-01-01'\n\
+  --4-7.3 插入 10,000 行，包含五年的可能日期\nINSERT INTO #Registrations (DateJoined)\nSELECT TOP(@Rows)\
+  \ DATEADD(DAY,CAST(RAND(CHECKSUM(NEWID())) * @Years * 365  as INT) ,@StartDate)\n\
+  FROM sys.objects a\nCROSS JOIN sys.objects b\nCROSS JOIN sys.objects c;\n--4-7.4\
+  \ 为 75%的订阅者添加取消日期\nUPDATE TOP(75) PERCENT #Registrations\nSET DateLeft = DATEADD(DAY,CAST(RAND(CHECKSUM(NEWID()))\
+  \ * @Years * 365  as INT),DateJoined)\n--4-7.5 订阅数据\nSELECT *\nFROM #Registrations\n\
+  ORDER BY DateJoined;\n```\n清单 4-7\n创建订阅表\n\n部分结果将如图 4-9 所示。\n\n![`../images/335106_2_En_4_Chapter/335106_2_En_4_Fig9_HTML.jpg`](img/335106_2_En_4_Fig9_HTML.jpg)\n\
+  图 4-9\n部分订阅数据\n\n如果你阅读我在 2009 年写的一篇用于解决类似问题的文章（[`www.red-gate.com/simple-talk/sql/performance/writing-efficient-sql-set-based-speed-phreakery/`](http://www.red-gate.com/simple-talk/sql/performance/writing-efficient-sql-set-based-speed-phreakery/)），你会发现高效的代码也曾很复杂且难以理解。在那篇文章中，我解释了\
+  \ SQL 专家 Peter Larsson 提出的一种解决方案，它使用了临时表、`UNPIVOT`和一个不受支持的“古怪”更新。有了 SQL Server 2012，这个问题的解决方案写起来就非常容易，而且性能很好。清单\
+  \ 4-8 展示了该解决方案。\n\n```sql\n--4-8.1 解决订阅问题\nWITH NewSubs AS (\nSELECT EOMONTH(DateJoined)\
+  \ AS TheMonth,\nCOUNT(DateJoined) AS PeopleJoined\nFROM #Registrations\nGROUP BY\
+  \ EOMONTH(DateJoined)),\nCancelled AS (\nSELECT EOMONTH(DateLeft) AS TheMonth,\n\
+  COUNT(DateLeft) AS PeopleLeft\nFROM #Registrations\nGROUP BY EOMONTH(DateLeft))\n\
+  SELECT NewSubs.TheMonth AS TheMonth, NewSubs.PeopleJoined,\nCancelled.PeopleLeft,\n\
+  SUM(NewSubs.PeopleJoined - ISNULL(Cancelled.PeopleLeft,0))\nOVER(ORDER BY NewSubs.TheMonth)\
+  \ AS Subscriptions\nFROM NewSubs\nLEFT JOIN Cancelled ON NewSubs.TheMonth = Cancelled.TheMonth;\n\
+  ```\n清单 4-8\n使用 SQL Server 2012 功能解决订阅问题\n\n部分结果如图 4-10 所示。第一步是按月获取新订阅和取消订阅的计数。为此，必须按月对数据进行分组。在这个案例中，使用了\
+  \ `EOMONTH` 函数，它将每个日期更改为当月的最后一天。\n\n![`../images/335106_2_En_4_Chapter/335106_2_En_4_Fig10_HTML.jpg`](img/335106_2_En_4_Fig10_HTML.jpg)\n\
+  图 4-10\n订阅问题的部分结果\n\n新订阅数和取消订阅数被分别放入 CTE 中，以分别获取每个月的 `PeopleJoined` 和 `PeopleLeft`\
+  \ 值。外部查询将 `NewSubs` CTE 与 `Cancelled` CTE 通过 `LEFT JOIN` 连接，因为有许多月份没有取消订阅。`PeopleJoined`\
+  \ 减去已处理了 `NULL` 值的 `PeopleLeft` 之后的总和被计算为一个累计总计。\n\n该查询编写起来非常容易，而且运行相当快。在我的 Azure\
+  \ 虚拟机上，针对 100,000 行数据运行，耗时少于 100 毫秒。\n\n## 总结\n\n从 SQL Server 2012 开始，在 `OVER` 子句中添加\
+  \ `ORDER BY` 会将窗口聚合变为累积窗口聚合。这让你可以轻松创建累计总计，以及移动总计和平均值。然而，此功能并不仅限于用于求和与平均值。`MAX` 函数也曾被用于解决一个难题。\n\
+  \n在本章中，通过观察移动总和与平均值，你初步了解了帧。第 5 章将深入探讨帧。\n\n---\n\n"
+- "# 5. 向窗口添加帧\n\n你已经审视过窗口，并利用它编写了强大的查询来解决一些常见问题。你已将窗口分区，就像大窗户上较小的窗格。现在，你将学习如何通过使用帧来创建非常精细的窗口，就像彩色玻璃一样。\n\
+  \n在本章中，你将了解在支持帧的情况下，帧对于结果的准确性为何如此重要。帧对于性能也很重要，但你将在第 8 章学习相关内容。\n\n\n## 理解 Framing\n\
+  \n当 2012 年的 T-SQL 功能在 2011 年首次公布时，我必须承认 framing 让我有些畏惧。我尽可能避免学习它，因为我实在不太喜欢那个语法，也不太理解它到底是怎么回事。幸运的是，frames\
+  \ 只在特定的窗口函数中支持，所以它们并不常用。生活中最可怕的事情，比如公开演讲，往往带来最大的回报，窗口函数表达式中的 framing 也是如此。花时间理解\
+  \ framing 将真正帮助你从窗口函数中获得最大收益。\n\n使用 framing，你可以指定一个比分区更小的窗口。例如，你可能想要一个从集合的第一行开始但在当前行停止的窗口。你可能想要一个从当前行之前仅\
+  \ 12 行开始，而不管分区中有多少行的窗口。使用 frames，你可以定义满足这些特殊要求的窗口。\n\n在开始向你的 `OVER` 子句添加 frames\
+  \ 之前，你应该理解几个关键术语。表 5-1 列出了这些术语及其定义。\n\n**表 5-1**\n\n**关键 Framing 术语**\n\n| 关键术语\
+  \ | 定义 |\n| --- | --- |\n| `ROWS` | 一个物理操作符。查看行的位置。 |\n| `RANGE` | 一个逻辑操作符，但在当前版本的\
+  \ SQL Server 中未完全实现。查看表达式的值而非位置。 |\n| `UNBOUNDED PRECEDING` | 帧从集合中的第一行开始。 |\n|\
+  \ `UNBOUNDED FOLLOWING` | 帧在集合中的最后一行结束。 |\n| `N PRECEDING` | 当前行之前的物理行数。仅与 `ROWS`\
+  \ 一起支持。 |\n| `N FOLLOWING` | 当前行之后的物理行数。仅与 `ROWS` 一起支持。 |\n| `CURRENT ROW` | 当前计算所在的行。\
+  \ |\n\n你在第 4 章看到，用于累计聚合的窗口对于每一行都是不同的。如果你在计算累计总和，第 1 行的窗口就是第 1 行。第 2 行的窗口是第 1 行和第\
+  \ 2 行。第 3 行的窗口是第 1 行到第 3 行，依此类推。在每种情况下，窗口都从分区的第一行开始，在当前行结束。图 5-1 展示了按 `CustomerID`\
+  \ 分区时帧的样子。注意，第 4 行的窗口在一个新的分区 `CustomerID` 11001 中，并且第 4 行是该分区的第一行。\n\n![../images/335106_2_En_5_Chapter/335106_2_En_5_Fig1_HTML.jpg](img/335106_2_En_5_Fig1_HTML.jpg)\n\
+  \n**图 5-1**\n\n**每一行都有一个不同的窗口**\n\n帧定义由关键字 `ROWS` 或 `RANGE` 后跟单词 `BETWEEN` 组成。然后你必须指定一个起点和终点。语法如下：\n\
+  \n```\nROWS BETWEEN  AND \nRANGE BETWEEN  AND \n```\n\n有两种可能的帧表达式可以给你一个累计聚合，比如累计总和，从分区的第一行开始，到当前行结束：`ROWS\
+  \ BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW` 和 `RANGE BETWEEN UNBOUNDED PRECEDING\
+  \ AND CURRENT ROW`。你将在本章后面了解更多关于 `ROWS` 和 `RANGE` 之间的区别，但现在你应该理解，`RANGE BETWEEN\
+  \ UNBOUNDED PRECEDING AND CURRENT ROW` 是默认的帧，即当支持帧但未指定时使用的帧。这就是为什么你可以只为 `SUM` 的\
+  \ `OVER` 子句添加一个 `ORDER BY` 表达式就能产生累计总和。表达式 `SUM(TotalDue) OVER(ORDER BY OrderID)`\
+  \ 和 `SUM(TotalDue) OVER(ORDER BY OrderID RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT\
+  \ ROW)` 是等效的。\n\n出于你将在本章后面了解的原因，首选的帧表达式使用 `ROWS` 而不是 `RANGE`。你也可以使用累计总和帧的缩写语法：`ROWS\
+  \ UNBOUNDED PRECEDING`。\n\n要创建一个从当前行开始并包含到集合末尾的所有行的帧，请使用 `ROWS BETWEEN CURRENT ROW\
+  \ AND UNBOUNDED FOLLOWING`。这将允许你创建一个反向的累计总和。使用帧的另一种方式是指定帧中包含的行数。此语法只能与 `ROWS` 一起使用。你可以指定当前行之前、之后或前后的行数。如果你打算指定当前行之前的行数，这个表达式还有一个快捷方式：`ROWS\
+  \ <N> PRECEDING`。想象一下，你有一个由 10 行组成的分区，当前行是第 5 行。表 5-2 列出了几个帧示例以及这些示例所引用的行。\n\n**表\
+  \ 5-2**\n\n**Framing 示例**\n\n| 帧定义 | 行 |\n| --- | --- |\n| `ROWS BETWEEN 3 PRECEDING\
+  \ AND CURRENT ROW` | 2–5 |\n| `ROWS BETWEEN CURRENT ROW AND 4 FOLLOWING` | 5–9 |\n\
+  | `ROWS BETWEEN 3 PRECEDING AND 4 FOLLOWING` | 2–9 |\n| `ROWS | RANGE BETWEEN UNBOUNDED\
+  \ PRECEDING AND CURRENT ROW` | 1–5 |\n| `ROWS | RANGE BETWEEN CURRENT ROW AND UNBOUNDED\
+  \ FOLLOWING` | 5–10 |\n\n图 5-2 说明了这些示例。\n\n![../images/335106_2_En_5_Chapter/335106_2_En_5_Fig2_HTML.png](img/335106_2_En_5_Fig2_HTML.png)\n\
+  \n**图 5-2**\n\n**一些 framing 示例**\n\n`RANGE` 操作符不能在指定之前或之后的行数时使用，但它可以与 `UNBOUNDED\
+  \ PRECEDING` 和 `UNBOUNDED FOLLOWING` 短语一起使用。不太可能有人会故意指定 RANGE；他们很可能是漏掉了帧而默认得到了 `RANGE`。\n\
+  \nSQL 标准中有一些功能在 T-SQL 的实现中被遗漏了。该功能允许你指定一个时间段而不是行数。清单 5-1 是一个理论上的查询，可能在将来可用。\n\n\
+  ```sql\n--5-1.1 一个理论上的查询\nSELECT SUM(TotalDue) OVER(ORDER BY OrderDate\nRANGE BETWEEN\
+  \ INTERVAL 5 MONTH PRECEDING and 1 MONTH FOLLOWING\n) SixMonthTotal\nFROM Sales.SalesOrderHeader;\n\
+  ```\n**清单 5-1**\n**一个使用预期中 RANGE 功能的理论查询**\n\n在了解当前实现功能中 `ROWS` 和 `RANGE` 的区别之前，先回顾几个使用帧的示例。\n\
+  \n\n\n## 将框架应用于累计聚合和移动聚合\n\n框架概念最早随 SQL Server 2012 版本被引入。它适用于一部分窗口函数，包括你在第 4 章学到的累计聚合函数，以及两个偏移函数：`FIRST_VALUE`\
+  \ 和 `LAST_VALUE`。你将在第 6 章学习偏移函数。\n\n通过指定框架，你可以计算反向累计总和和移动聚合。运行代码清单 5-2 查看一些示例。\n\
+  \n```sql\n--5-2.1 累计与反向累计总和\nSELECT CustomerID, CAST(OrderDate AS DATE) AS OrderDate,\
+  \ SalesOrderID, TotalDue,\nSUM(TotalDue) OVER(PARTITION BY CustomerID ORDER BY SalesOrderID\n\
+  ROWS UNBOUNDED PRECEDING) AS RunningTotal,\nSUM(TotalDue) OVER(PARTITION BY CustomerID\
+  \ ORDER BY SalesOrderID\nROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING) AS ReverseTotal\n\
+  FROM Sales.SalesOrderHeader\nORDER BY CustomerID, SalesOrderID;\n--5-2.2 移动求和与移动平均\n\
+  SELECT YEAR(OrderDate) AS OrderYear, MONTH(OrderDate) AS OrderMonth,\nCOUNT(*) AS\
+  \ OrderCount,\nSUM(COUNT(*)) OVER(ORDER BY YEAR(OrderDate), MONTH(OrderDate)\nROWS\
+  \ BETWEEN 2 PRECEDING AND CURRENT ROW) AS ThreeMonthCount,\nAVG(COUNT(*)) OVER(ORDER\
+  \ BY YEAR(OrderDate), MONTH(OrderDate)\nROWS BETWEEN 2 PRECEDING AND CURRENT ROW)\
+  \ AS ThreeMonthAvg\nFROM Sales.SalesOrderHeader\nWHERE OrderDate >= '2012-01-01'\
+  \ AND OrderDate < '2013-01-01'\nGROUP BY YEAR(OrderDate), MONTH(OrderDate);\n```\n\
+  代码清单 5-2\n使用框架\n\n图 5-3 展示了部分结果。通过指定窗口应从当前行开始并持续到分区末尾，你可以像查询 1 那样创建一个反向累计总和。通过指定窗口由当前行及前两行组成，如查询\
+  \ 2，你便创建了一个移动窗口。\n\n![../images/335106_2_En_5_Chapter/335106_2_En_5_Fig3_HTML.jpg](img/335106_2_En_5_Fig3_HTML.jpg)\n\
+  图 5-3\n使用框架计算的部分结果\n\n你可能会注意到，使用 `N PRECEDING` 的计算在行数不足三个月时也会返回值。为了解决这个问题，你可以过滤掉不合格的行。代码清单\
+  \ 5-3 展示了你可能会如何操作。\n\n```sql\n--5-3.1 过滤掉前置行数不足 2 的行\nWITH Sales AS (\nSELECT YEAR(OrderDate)\
+  \ AS OrderYear, MONTH(OrderDate) AS OrderMonth,\nCOUNT(*) AS OrderCount,\nSUM(COUNT(*))\
+  \ OVER(ORDER BY YEAR(OrderDate), MONTH(OrderDate)\nROWS BETWEEN 2 PRECEDING AND\
+  \ CURRENT ROW) AS ThreeMonthCount,\nAVG(COUNT(*)) OVER(ORDER BY YEAR(OrderDate),\
+  \ MONTH(OrderDate)\nROWS BETWEEN 2 PRECEDING AND CURRENT ROW) AS ThreeMonthAvg,\n\
+  ROW_NUMBER() OVER(PARTITION BY YEAR(OrderDate)\nORDER BY MONTH(OrderDate)) AS RowNum\n\
+  FROM Sales.SalesOrderHeader\nGROUP BY YEAR(OrderDate), MONTH(OrderDate)\n)\nSELECT\
+  \ OrderYear, OrderMonth, OrderCount, ThreeMonthCount, ThreeMonthAvg\nFROM Sales\n\
+  WHERE RowNum >= 3;\n```\n代码清单 5-3\n过滤掉前置行数不足两行的行\n\n此查询包含了按年分区的 `ROW_NUMBER`，因此不会返回\
+  \ 2011 年的 5 月和 6 月。图 5-4 展示了部分结果。\n\n![../images/335106_2_En_5_Chapter/335106_2_En_5_Fig4_HTML.jpg](img/335106_2_En_5_Fig4_HTML.jpg)\n\
+  图 5-4\n过滤掉不足行后的部分结果\n\n要获得如前面示例中的 `ThreeMonthAvg` 这样的移动聚合值，你必须使用框架。如果你只是想要一个累计总和，或许可以不指定框架。`ReverseTotal`\
+  \ 确实需要框架，因为它从数据末尾开始，到当前行结束。通常在讲解窗口函数时，会有人提到将 `ORDER BY` 表达式改为降序 (descending) 可以得到反向累计总和，他们是对的。代码清单\
+  \ 5-4 展示了一个例子。\n\n```sql\n--5-4.1 不使用框架的累计与反向累计总和\nSELECT CustomerID, CAST(OrderDate\
+  \ AS DATE) AS OrderDate, SalesOrderID, TotalDue,\nSUM(TotalDue) OVER(PARTITION BY\
+  \ CustomerID ORDER BY SalesOrderID) AS RunningTotal,\nSUM(TotalDue) OVER(PARTITION\
+  \ BY CustomerID ORDER BY SalesOrderID DESC\n) AS ReverseTotal\nFROM Sales.SalesOrderHeader\n\
+  ORDER BY CustomerID, SalesOrderID;\n```\n代码清单 5-4\n不使用框架的累计总和与反向累计总和\n\n其结果与图 5-3\
+  \ 中第一个查询显示的结果相同。在 SQL Server 2019 之前，我会警告不要这样做，因为存在性能影响。你将在第 8 章了解更多关于 `ROWS` 和\
+  \ `RANGE` 在性能上的差异。在此之前，你确实需要意识到这两种运算符在逻辑上的一个关键区别。\n\n\n\n## 理解 ROWS 与 RANGE 的逻辑差异\n\
+  \n在第 8 章中，你将会看到，在 2019 年之前的 SQL Server 版本中，使用 `ROWS` 的窗口框架相比 `RANGE` 具有显著的性能优势。这两个操作符之间还存在逻辑上的差异。`ROWS`\
+  \ 操作符是一个位置操作符，而 `RANGE` 操作符则是一个逻辑操作符。这非常类似于 `ROW_NUMBER` 和 `RANK` 之间的区别。当 `ORDER\
+  \ BY` 表达式中存在并列值时，`RANK` 会重复该值，而 `ROW_NUMBER` 会返回唯一值。同样地，在计算累计总和时，如果 `OVER` 子句的 `ORDER\
+  \ BY` 表达式中存在并列值，`ROWS` 和 `RANGE` 也会返回不同的结果。运行清单 5-5 来查看这种差异。\n\n```sql\n--5-5.1\
+  \ 比较 ROWS 与 RANGE 的逻辑差异\nSELECT CustomerID, CAST(OrderDate AS DATE) AS OrderDate,\
+  \ SalesOrderID, TotalDue,\nSUM(TotalDue) OVER(ORDER BY OrderDate\nROWS UNBOUNDED\
+  \ PRECEDING) AS RunningTotalRows,\nSUM(TotalDue) OVER(ORDER BY OrderDate\nRANGE\
+  \ UNBOUNDED PRECEDING) AS RunningTotalRange\nFROM Sales.SalesOrderHeader\nWHERE\
+  \ CustomerID =11300\nORDER BY SalesOrderID;\n```\n\n清单 5-5\nROWS 与 RANGE 的区别\n\n\
+  部分结果如图 5-5 所示。`OVER` 子句中的 `ORDER BY` 表达式都是 `OrderDate`，该列的值并不唯一。请看第 7 行和第 8 行，该客户在同一天下了两个订单。`RunningTotalRows`\
+  \ 的值按预期递增，而 `RunningTotalRange` 的值对于这两行是相同的。在第 9 行，`RunningTotalRange` 的值又重新对齐了。\n\
+  \n![../images/335106_2_En_5_Chapter/335106_2_En_5_Fig5_HTML.jpg](img/335106_2_En_5_Fig5_HTML.jpg)\n\
+  \n图 5-5\n比较 ROWS 与 RANGE 的部分结果\n\n在这种情况下，`ROWS` 的窗口从第一行开始，包含根据 `ORDER BY` 排序后直至当前行的所有行。`RANGE`\
+  \ 的窗口则是从第一行开始，包含所有与当前行的 `ORDER BY` 表达式具有 *相同值* 的行。在确定第 7 行的窗口时，`RANGE` 不仅查看位置，还查看值。第\
+  \ 8 行的 `OrderDate` 值与第 7 行的值相同，因此第 8 行也被包含在第 7 行的窗口中。\n\n如果你认为 `RANGE` 存在 bug，可以运行清单\
+  \ 5-6，它使用了一种较旧的技术，返回的结果与使用 `RANGE` 相同。\n\n```sql\n--5-6.1 查看较旧的技术\nSELECT CustomerID,\
+  \ CAST(OrderDate AS DATE) AS OrderDate,\nSalesOrderID, TotalDue,\n(SELECT SUM(TotalDue)\n\
+  FROM Sales.SalesOrderHeader AS IQ\nWHERE IQ.CustomerID = OQ.CustomerID\nAND IQ.OrderDate\
+  \ <= OQ.OrderDate) AS RunningTotal\nFROM Sales.SalesOrderHeader AS OQ\nWHERE CustomerID\
+  \ =11300\nORDER BY SalesOrderID;\n```\n\n清单 5-6\n使用较旧技术得到相同结果\n\n部分结果如图 5-6 所示。请看第\
+  \ 7 行和第 8 行。你会发现，由于 `OrderDate` 值相同，`RunningTotal` 的值也相同。\n\n![../images/335106_2_En_5_Chapter/335106_2_En_5_Fig6_HTML.jpg](img/335106_2_En_5_Fig6_HTML.jpg)\n\
+  \n图 5-6\n使用较旧技术计算累计总和的部分结果\n\n如果你确保 `ORDER BY` 表达式是唯一的，那么无论使用旧方法还是使用默认窗口框架的窗口聚合，都能得到预期的结果。\n\
+  \n如前所述，`RANGE` 操作符实际上旨在与月份或季度等逻辑集合一起使用。此功能已由 ANSI 标准定义，但目前在 SQL Server 中尚未实现。在此期间，请务必始终使用\
+  \ `ROWS` 来指定窗口框架。\n\n## 总结\n\n编写计算累计总和或移动平均值的查询很容易。默认情况下，窗口框架是用 `RANGE` 定义的，但建议使用\
+  \ `ROWS`，以防 `ORDER BY` 表达式不唯一。在旧版本的 SQL Server 中，使用 `ROWS` 还会带来性能提升，你将在第 8 章中了解到这一点。窗口框架还允许你指定一个随结果向下移动的窗口大小，以便进行诸如三个月平均值之类的计算。\n\
+  \n窗口框架的语法并不容易掌握，但时不时地查阅本章中的语法并不丢脸。幸运的是，除了使用累积窗口聚合以及 `FIRST_VALUE` 和 `LAST_VALUE`\
+  \ 函数时，你不必担心窗口框架的问题。你将在下一章，即第 6 章中学习 `FIRST_VALUE` 和 `LAST_VALUE`。\n\n"
+- '# 6. 瞥见另一行
+
+
+  除了累积窗口聚合，Microsoft 在 SQL Server 2012 中还新增了八个窗口函数。其中四个函数（在本书中我将称之为偏移函数）是我最喜欢的 T-SQL
+  函数，它们是 `LAG`、`LEAD`、`FIRST_VALUE` 和 `LAST_VALUE`。这些函数让你无需自连接，就能在结果中包含来自其他行的任何列，并且性能极佳。
+
+
+  在本章中，你将学习如何使用 `LAG`、`LEAD`、`FIRST_VALUE` 和 `LAST_VALUE`。你会看到它们是多么容易使用。性能非常出色，但你将在第
+  8 章中了解到这方面的信息。
+
+
+
+
+  ## 理解 LAG 和 LEAD
+
+
+  你在第 1 章中已经学习了如何使用 `LAG` 来解决股票市场问题。根据 `OVER` 子句的 `ORDER BY` 表达式，你可以使用 `LAG` 来获取结果集中当前行之前某行的某一列，使用
+  `LEAD` 来获取当前行之后某行的某一列。`LAG` 和 `LEAD` 不支持框架，因此大多数情况下你无需担心性能问题。分区是可选的，就像其他窗口函数一样，而
+  `ORDER BY` 是必需的。基本语法如下：
+
+
+  ```sql
+
+  LAG () OVER([PARTITION BY ] ORDER BY )
+
+  LEAD () OVER([PARTITION BY ] ORDER BY )
+
+  ```
+
+
+  运行列表 6-1 来看看 `LAG` 和 `LEAD` 的实际应用。
+
+
+  ```sql
+
+  --6-1.1 使用 LAG 和 LEAD
+
+  SELECT CustomerID, SalesOrderID, CAST(OrderDate AS DATE) AS OrderDate,
+
+  LAG(CAST(OrderDate AS DATE)) OVER(PARTITION BY CustomerID
+
+  ORDER BY SalesOrderID) AS PrevOrderDate,
+
+  LEAD(CAST(OrderDate AS DATE)) OVER(PARTITION BY CustomerID
+
+  ORDER BY SalesOrderID) AS NextOrderDate
+
+  FROM Sales.SalesOrderHeader;
+
+  --6-1.2 将 LAG 和 LEAD 作为参数使用
+
+  SELECT CustomerID, SalesOrderID, CAST(OrderDate AS DATE) AS OrderDate,
+
+  DATEDIFF(DAY,LAG(OrderDate)
+
+  OVER(PARTITION BY CustomerID ORDER BY SalesOrderID), OrderDate)
+
+  AS DaysSincePrevOrder,
+
+  DATEDIFF(DAY, OrderDate, LEAD(OrderDate)
+
+  OVER(PARTITION BY CustomerID ORDER BY SalesOrderID))
+
+  AS DaysUntilNextOrder
+
+  FROM Sales.SalesOrderHeader;
+
+  ```
+
+  **列表 6-1**
+
+  使用 `LAG` 和 `LEAD`
+
+
+  图 6-1 展示了部分结果。查询 1 使用 `LAG` 和 `LEAD` 函数来查找相对于当前行的前一个和后一个订单日期。函数的参数是转换为 `DATE` 数据类型的
+  `OrderDate`。就像其他窗口函数一样，`PARTITION BY` 是可选的。在此例中，数据按 `CustomerID` 进行分区。`ORDER BY`
+  是 `OVER` 子句中非常重要的一部分，它决定了哪一行是前一行，哪一行是后一行。查询 2 的 `OVER` 子句与查询 1 相同，区别在于 `LAG` 和 `LEAD`
+  表达式被用作 `DATEDIFF` 函数的参数，以计算订单之间的天数。
+
+
+  ![../images/335106_2_En_6_Chapter/335106_2_En_6_Fig1_HTML.jpg](img/335106_2_En_6_Fig1_HTML.jpg)
+
+
+  **图 6-1**
+
+  `LAG` 和 `LEAD` 函数的部分结果
+
+
+  请注意结果中有几个 `NULL` 值。第 1 行是分区的第一行，你无法找到更早的行，因此 `PrevOrderDate` 和 `DaysSincePrevOrder`
+  返回 `NULL`。第 3 行是分区的最后一行，分区中没有第 3 行之后的行，所以第 3 行的 `NextOrderDate` 和 `DaysUntilNextOrder`
+  为 null。
+
+
+  到目前为止，你已经了解了使用 `LAG` 和 `LEAD` 的默认方式。这两个函数各自有两个可选参数。第一个参数是 `Offset`，默认值为 1。默认情况下，`LEAD`
+  从当前行之前的一行提取表达式，`LAG` 从当前行之后的一行提取表达式。通过使用 `Offset` 参数，你可以访问距离超过一行的行中的列。关于偏移量需要注意的一个有趣点是，它只允许正整数。使用
+  `LAG` 时，正数表示“向后”；使用 `LEAD` 时，正数表示“向前”。使用 `Offset` 参数的语法如下：
+
+
+  ```sql
+
+  LAG( [,]) OVER()
+
+  LEAD( [,]) OVER()
+
+  ```
+
+
+  列表 6-2 演示了如何使用 `Offset` 参数。
+
+
+  ```sql
+
+  --6-2.1 在 LAG 中使用 Offset
+
+  WITH Totals AS (
+
+  SELECT YEAR(OrderDate) AS OrderYear,
+
+  MONTH(OrderDate)/4 + 1 AS OrderQtr,
+
+  SUM(TotalDue) AS TotalSales
+
+  FROM Sales.SalesOrderHeader
+
+  GROUP BY YEAR(OrderDate), MONTH(OrderDate)/4 + 1)
+
+  SELECT OrderYear, Totals.OrderQtr, TotalSales,
+
+  LAG(TotalSales, 4) OVER(ORDER BY OrderYear, OrderQtr)
+
+  AS PreviousYearsSales
+
+  FROM Totals
+
+  ORDER BY OrderYear, OrderQtr;
+
+  ```
+
+  **列表 6-2**
+
+  在 `LAG` 中使用 `Offset` 参数
+
+
+  图 6-2 展示了结果。在此示例中，总计在一个 CTE 中按年和日历季度进行聚合。日历季度是通过计算月份、除以四再加一得到的。在外部查询中，通过使用偏移量为 4
+  的 `LAG`，返回了同一季度上一年的销售额。请注意，此方法仅在数据中没有间隔时有效，因为它使用的是物理偏移量，而非逻辑偏移量。为了证明结果的正确性，请将第 8
+  行（2013 年第一季度）的 `PreviousYearSales` 与第 4 行（2012 年第一季度）的 `TotalSales` 进行比较。
+
+
+  ![../images/335106_2_En_6_Chapter/335106_2_En_6_Fig2_HTML.jpg](img/335106_2_En_6_Fig2_HTML.jpg)
+
+
+  **图 6-2**
+
+  在 `LAG` 中使用 `Offset` 的结果
+
+
+  结果的前四行在 `PreviousYearSales` 中返回 `NULL`。这是因为在到达第 5 行之前，没有与当前行相距偏移量 4 的行。如果返回 `NULL`
+  是个问题，你可以使用第二个可选参数，用默认值替换 `NULL`。要使用第二个参数，你也必须填写第一个参数。语法如下：
+
+
+  ```sql
+
+  LAG( [,] [,]) OVER()
+
+  LEAD( [,] [,]) OVER()
+
+  ```
+
+
+  列表 6-3 演示了如何使用 `Default` 参数。
+
+
+  ```sql
+
+  --6-3.1 在 LAG 中使用 Offset 和 Default
+
+  WITH Totals AS (
+
+  SELECT YEAR(OrderDate) AS OrderYear,
+
+  MONTH(OrderDate)/4 + 1 AS OrderQtr,
+
+  SUM(TotalDue) AS TotalSales
+
+  FROM Sales.SalesOrderHeader
+
+  GROUP BY YEAR(OrderDate), MONTH(OrderDate)/4 + 1)
+
+  SELECT OrderYear, Totals.OrderQtr, TotalSales,
+
+  LAG(TotalSales, 4, 0) OVER(ORDER BY OrderYear, OrderQtr)
+
+  AS PreviousYearsSales
+
+  FROM Totals
+
+  ORDER BY OrderYear, OrderQtr;
+
+  ```
+
+  **列表 6-3**
+
+  在 `LAG` 中使用 `Default` 参数
+
+
+  图 6-3 展示了结果。此查询与列表 6-2 中的查询相同，只是增加了 `Default` 参数。`PreviousYearSales` 中的所有 `NULL`
+  值都被更改为零。当然，你也可以在 `LEAD` 中同时使用 `Offset` 和 `Default`。
+
+
+  ![../images/335106_2_En_6_Chapter/335106_2_En_6_Fig3_HTML.jpg](img/335106_2_En_6_Fig3_HTML.jpg)
+
+
+  **图 6-3**
+
+  在 `LAG` 中使用 `Default` 参数的结果
+
+
+
+
+  ## 理解 `FIRST_VALUE` 和 `LAST_VALUE`
+
+
+  虽然 `LAG` 和 `LEAD` 允许你从距当前行指定行数的任意行中包含任何列，但 `FIRST_VALUE` 和 `LAST_VALUE` 函数让你可以包含分区中第一行或最后一行的任何列。乍一看，这似乎与
+  `MIN` 和 `MAX` 非常相似，但它们实际上大不相同。用于排序的列不一定是需要提取到结果中的列。第一个值不一定是最小值。这些函数没有任何可选参数，但它们确实支持**框架**。如果你对这个概念不熟悉，请回顾第
+  5 章以了解更多关于框架的信息。回想一下，默认框架从分区的第一行开始，并包括直到当前行的所有行。这在使用 `LAST_VALUE` 时会导致一个问题。如果你不指定框架，`LAST_VALUE`
+  会从当前行返回值，而不是从分区的最后一行返回。这是因为在默认框架下，当前行与最后一行是相同的。清单 6-4 演示了如何使用 `FIRST_VALUE` 和 `LAST_VALUE`。
+
+
+  ```sql
+
+  --6-4.1 使用 FIRST_VALUE 和 LAST_VALUE
+
+  SELECT CustomerID, SalesOrderID, TotalDue,
+
+  FIRST_VALUE(TotalDue) OVER(PARTITION BY CustomerID
+
+  ORDER BY SalesOrderID) AS FirstOrderAmt,
+
+  LAST_VALUE(TotalDue) OVER(PARTITION BY CustomerID
+
+  ORDER BY SalesOrderID) AS LastOrderAmt_WRONG,
+
+  LAST_VALUE(TotalDue) OVER(PARTITION BY CustomerID
+
+  ORDER BY SalesOrderID
+
+  ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING) AS LastOrderAmt
+
+  FROM Sales.SalesOrderHeader
+
+  ORDER BY CustomerID, SalesOrderID;
+
+  ```
+
+  清单 6-4
+
+  使用 `FIRST_VALUE` 和 `LAST_VALUE`
+
+
+  图 6-4 显示了部分结果。窗口按 `CustomerID` 进行分区，并按 `SalesOrderID` 排序。查询本身按 `CustomerID` 和 `SalesOrderID`
+  排序，以便你可以验证结果。看一下第 2 行。`FirstOrderAmt` 正确地返回了第 1 行的 `TotalDue` 值。`FirstOrderAmt`
+  的窗口框架是默认的，即从分区开始到当前行的所有行。由于没有为 `LastOrderAmt_WRONG` 指定框架，其框架也是相同的，只到当前行为止。然而，查询的本意是从分区的最后一行提取一个值。为了做到这一点，必须指定框架。`LastOrderAmt`
+  的表达式包含了正确的框架，因此它确实返回了预期的值。
+
+
+  ![../images/335106_2_En_6_Chapter/335106_2_En_6_Fig4_HTML.jpg](img/335106_2_En_6_Fig4_HTML.jpg)
+
+
+  图 6-4
+
+  使用 `FIRST_VALUE` 和 `LAST_VALUE` 的部分结果
+
+
+  新的图形数据库函数 `SHORTEST_PATH` 在不使用 `OVER` 子句的情况下使用了它。阅读这篇文章了解更多：[`https://www.red-gate.com/simple-talk/sql/sql-development/sql-server-2019-graph-database-and-shortest_path/`](https://www.red-gate.com/simple-talk/sql/sql-development/sql-server-2019-graph-database-and-shortest_path/)
+
+
+  ## 使用偏移函数解决查询
+
+
+  我最喜欢的 T-SQL 函数一直是 `LAG` 和 `LEAD`。它们不仅易于使用，而且性能也非常出色。你将在第 8 章中了解更多关于偏移函数与其他方法性能比较的内容。在第
+  1 章中，你已经看到使用 `LAG` 比较收盘价是多么容易。现在你将看到如何使用偏移函数来解决其他一些现实世界的问题。
+
+
+  ### 同比增长率计算
+
+
+  同比增长率（YOY）是商业中非常常用的指标。它将一个时期（如月份或季度）与上一年的同一时期进行比较。运行清单 6-5 看看使用 `LAG` 计算这个有多简单。
+
+
+  ```sql
+
+  --6-5.1 计算同比增长
+
+  WITH
+
+  Level1 AS (
+
+  SELECT YEAR(OrderDate) AS SalesYear,
+
+  MONTH(OrderDate) AS SalesMonth,
+
+  SUM(TotalDue) AS TotalSales
+
+  FROM Sales.SalesOrderHeader
+
+  GROUP BY YEAR(OrderDate), MONTH(OrderDate)
+
+  ),
+
+  Level2 AS (
+
+  SELECT SalesYear, SalesMonth,TotalSales,
+
+  LAG(TotalSales,12) OVER(ORDER BY SalesYear) AS PrevYearSales
+
+  FROM Level1)
+
+  SELECT SalesYear, SalesMonth,FORMAT(TotalSales,''C'') AS TotalSales,
+
+  FORMAT(PrevYearSales,''C'') AS PrevYearSales,
+
+  FORMAT((TotalSales-PrevYearSales)/PrevYearSales,''P'') AS YOY_Growth
+
+  FROM Level2
+
+  WHERE PrevYearSales IS NOT NULL;
+
+  ```
+
+  清单 6-5
+
+  使用 `LAG` 计算同比增长
+
+
+  图 6-5 显示了部分结果。为了演示一种循序渐进的方法，这个查询包含了两个 CTE。除了过滤掉 `NULL` 值外，通过两级编写查询也可以得到相同的结果，但我认为这种方法更容易理解。第一个
+  CTE `Level1` 创建了一个按年和月列出的销售清单。`Level2` 添加了使用 `LAG` 的表达式来计算上一年同一月份的销售额。最后，在外部查询中，通过从当前销售额中减去上一年的销售额，再除以上一年的销售额，来执行同比增长计算。`FORMAT`
+  函数用于将结果转换为百分比格式。无法与上一行进行比较的行从外部查询中过滤掉了。
+
+
+  ![../images/335106_2_En_6_Chapter/335106_2_En_6_Fig5_HTML.jpg](img/335106_2_En_6_Fig5_HTML.jpg)
+
+
+  图 6-5
+
+  计算同比增长的部分结果
+
+
+
+
+  ### 考勤卡问题
+
+
+  此问题涉及员工每日上下班的考勤卡记录。目标是计算每位员工每个班次的工作时长。列表 6-6 包含了创建临时表并显示初始行的语句。
+
+
+  ```sql
+
+  --6-6.1 创建表
+
+  DROP TABLE IF EXISTS #TimeCards;
+
+  CREATE TABLE #TimeCards(
+
+  TimeStampID INT NOT NULL IDENTITY PRIMARY KEY,
+
+  EmployeeID INT NOT NULL,
+
+  ClockDateTime DATETIME2(0) NOT NULL,
+
+  EventType VARCHAR(5) NOT NULL);
+
+  --6-6.2 插入数据
+
+  INSERT INTO #TimeCards(EmployeeID,
+
+  ClockDateTime, EventType)
+
+  VALUES
+
+  (1,''2019-01-02 08:00'',''ENTER''),
+
+  (2,''2019-01-02 08:03'',''ENTER''),
+
+  (2,''2019-01-02 12:00'',''EXIT''),
+
+  (2,''2019-01-02 12:34'',''Enter''),
+
+  (3,''2019-01-02 16:30'',''ENTER''),
+
+  (2,''2019-01-02 16:00'',''EXIT''),
+
+  (1,''2019-01-02 16:07'',''EXIT''),
+
+  (3,''2019-01-03 01:00'',''EXIT''),
+
+  (2,''2019-01-03 08:10'',''ENTER''),
+
+  (1,''2019-01-03 08:15'',''ENTER''),
+
+  (2,''2019-01-03 12:17'',''EXIT''),
+
+  (3,''2019-01-03 16:00'',''ENTER''),
+
+  (1,''2019-01-03 15:59'',''EXIT''),
+
+  (3,''2019-01-04 01:00'',''EXIT'');
+
+  --6-6.2 显示行
+
+  SELECT TimeStampID, EmployeeID, ClockDateTime, EventType
+
+  FROM #TimeCards;
+
+  ```
+
+
+  列表 6-6: 创建并填充 `#TimeCard` 表
+
+
+  图 6-6 展示了此问题的行数据。请注意，每一个 `ENTER` 行都有一个匹配的 `EXIT` 行。
+
+
+  ![../images/335106_2_En_6_Chapter/335106_2_En_6_Fig6_HTML.jpg](img/335106_2_En_6_Fig6_HTML.jpg)
+
+
+  图 6-6: 考勤卡行数据
+
+
+  使用 `LEAD` 函数可以轻松解决此问题。列表 6-7 展示了解决方案。
+
+
+  ```sql
+
+  WITH Level1 AS (
+
+  SELECT EmployeeID, EventType, ClockDateTime,
+
+  LEAD(ClockDateTime) OVER(PARTITION BY EmployeeID ORDER BY ClockDateTime)
+
+  AS NextDateTime
+
+  FROM #TimeCards
+
+  ),
+
+  Level2 AS (
+
+  SELECT EmployeeID, CAST(ClockDateTime AS DATE) AS WorkDate,
+
+  SUM(DATEDIFF(second, ClockDateTime,NextDateTime)) AS Seconds
+
+  FROM Level1
+
+  WHERE EventType = ''Enter''
+
+  GROUP BY EmployeeID, CAST(ClockDateTime AS DATE))
+
+  SELECT EmployeeID, WorkDate,
+
+  TIMEFROMPARTS(Seconds / 3600, Seconds % 3600 / 60,
+
+  Seconds % 3600 % 60, 0, 0) AS HoursWorked
+
+  FROM Level2
+
+  ORDER BY EmployeeID, WorkDate;
+
+  ```
+
+
+  列表 6-7: 考勤卡问题的解决方案
+
+
+  该解决方案被拆分开以便于理解。第一个公共表表达式 `Level1` 使用 `LEAD` 函数来查找下一行的 `ClockDateTime`。计算了两行之间的时间差（秒数），并排除了
+  `Exit` 行。在该层级也对秒数进行了汇总，以防员工有午休打卡的情况。主查询使用 `TIMEFROMPARTS` 函数将秒数转换为“小时:分钟”格式。图 6-7
+  展示了结果。
+
+
+  ![../images/335106_2_En_6_Chapter/335106_2_En_6_Fig7_HTML.jpg](img/335106_2_En_6_Fig7_HTML.jpg)
+
+
+  图 6-7: 考勤卡问题的结果
+
+
+  ## 小结
+
+
+  自 SQL Server 2012 起可用的偏移函数 `LAG`、`LEAD`、`FIRST_VALUE` 和 `LAST_VALUE` 功能非常强大。它们不仅使编写从不同行提取值的查询变得容易，而且性能也非常出色，你将在第
+  8 章亲身体会到。
+
+
+  还有一组函数需要学习，即统计函数。第 7 章将教你掌握利用这些窗口函数所需的知识。
+
+
+  '
+- "# 7. 理解统计函数\n\n2012 年，微软为 SQL Server 新增了四个窗口函数。它们是统计函数 `PERCENT_RANK`、`CUME_DIST`、`PERCENTILE_CONT`\
+  \ 和 `PERCENTILE_DISC`。这些函数使得分析来自科学、学术或体育等众多领域的数据变得容易。\n\n在本章中，你将学习如何使用这些统计函数。\n\n\
+  ## 使用 PERCENT_RANK 和 CUME_DIST\n\n还记得你在学校参加的那些标准化考试吗？你可能会得到每个测试领域（如数学或语言技能）的原始分数和百分比。百分比排名是一种计算群体中每个个体与其他人相比情况的方法。\n\
+  \n从 SQL Server 2012 开始，有两个函数可以对数据（如考试成绩，甚至身高）进行排名。假设有 100 名七年级学生按身高排队。我的孙子托马斯是个相当高的男孩，所以他可能会站在第\
+  \ 95 位。他比其他 94 名学生都高。他的身高高于 94% 的身高，并且高于或等于 95% 的身高。托马斯身高的 `PERCENT_RANK` 是 0.9494，`CUME_DIST`（累积分布）是\
+  \ 0.95。\n\n你可能会疑惑为什么 `PERCENT_RANK` 是 0.9494 而不是 0.94。`PERCENT_RANK` 的公式是：（排名值 -\
+  \ 1）除以（总数 - 1）：`(rank-1)/(N-1)`。`CUME_DIST` 的公式是：排名值除以总数：`rank/N`。托马斯身高的 `PERCENT_RANK`\
+  \ 可以通过 94 除以 99 得到，而不是 94 除以 100。\n\n就像所有其他窗口函数一样，使用这些函数时需要 `OVER` 子句。它必须包含一个 `ORDER\
+  \ BY` 表达式，用于确定分数或值的排列顺序。`PARTITION BY` 表达式是可选的。如果使用，则比较将在分区内进行，而不是跨分区。语法如下：\n\n\
+  ```sql\nPERCENT_RANK OVER([PARTITION BY <partition_column>] ORDER BY <order_column>)\n\
+  CUME_DIST OVER([PARTITION BY <partition_column>] ORDER BY <order_column>)\n```\n\
+  \n列表 7-1 演示了如何使用这些函数来比较给定年份中每个月的销售额。\n\n```sql\n--7-1.1 使用 PERCENT_RANK 和 CUME_DIST\n\
+  SELECT COUNT(*) NumberOfOrders, Month(OrderDate) AS OrderMonth,\nRANK() OVER(ORDER\
+  \ BY COUNT(*)) AS Ranking,\nPERCENT_RANK() OVER(ORDER BY COUNT(*)) AS PercentRank,\n\
+  CUME_DIST() OVER(ORDER BY COUNT(*)) AS CumeDist\nFROM Sales.SalesOrderHeader\nWHERE\
+  \ OrderDate >= '2013-01-01' AND OrderDate < '2014-01-01'\nGROUP BY  Month(OrderDate);\n\
+  ```\n\n列表 7-1: 使用 PERCENT_RANK 和 CUME_DIST\n\n图 7-1 展示了结果。该查询经过筛选，仅包含 2013 年的订单，并按月份分组。每个函数的\
+  \ `ORDER BY` 表达式都是订单数量。回想一下，当你在聚合查询中使用窗口函数时，函数中使用的任何列都必须遵循 `SELECT` 列表的规则。有关在聚合查询中添加窗口函数的更多信息，请参见第\
+  \ 3 章。第一行的 `PercentRank` 是 0。第一行的 `PercentRank` 值始终为 0，因为该行未排在任何其他行之上。最后一行的 `PercentRank`\
+  \ 和 `CumeDist` 都将是 1，即 100%。除最后一行外的所有行中，`CumeDist` 都大于 `PercentRank`。请注意，当出现并列情况时（如第\
+  \ 3 和第 4 行），值会重复。\n\n![../images/335106_2_En_7_Chapter/335106_2_En_7_Fig1_HTML.jpg](img/335106_2_En_7_Fig1_HTML.jpg)\n\
+  \n图 7-1: 使用 PERCENT_RANK 和 CUME_DIST 的结果\n\n这是另一个比较我居住的圣路易斯大都会区月平均最高气温的例子。运行列表 7-2\
+  \ 以创建并填充表格。\n\n```sql\n--7-2.1 创建表\nCREATE TABLE #MonthlyTempsStl(MNo Int, MName\
+  \ varchar(15), AvgHighTempF INT, AvgHighTempC DECIMAL(4,2));\n--7-2.2 插入华氏温度行\n\
+  INSERT INTO #MonthlyTempsStl (Mno, Mname, AvgHighTempF)\nVALUES(1,'Jan',40),(2,'Feb',45),(3,'Mar',55),(4,'Apr',67),(5,'May',77),(6,'Jun',85),\n\
+  (7,'Jul',89),(8,'Aug',88),(9,'Sep',81),(10,'Oct',69),(11,'Nov',56),(12,'Dec',43);\n\
+  --7-2.3 计算摄氏温度\nUPDATE #MonthlyTempsStl\nSET AvgHighTempC = (AvgHighTempF - 32)\
+  \ * 5.0/9;\n--7-2.4 返回结果\nSELECT * FROM #MonthlyTempsStl;\n```\n\n列表 7-2: 圣路易斯平均最高气温\n\
+  \n\n\n图 7-2 展示了表中的行。\n![../images/335106_2_En_7_Chapter/335106_2_En_7_Fig2_HTML.jpg](img/335106_2_En_7_Fig2_HTML.jpg)\n\
+  图 7-2 平均月最高温度\n\n清单 7-3 返回了温度的百分比排名和累积分布。\n```\n--7-3.1 对温度进行排名\nSELECT MName, AvgHighTempF,\
+  \ AvgHighTempC,\nPERCENT_RANK() OVER(ORDER BY AvgHighTempF) * 100.0 AS PR,\nCUME_DIST()\
+  \ OVER(ORDER BY AvgHighTempF) * 100.0 AS CD\nFROM #MonthlyTempsStl;\n```\n清单 7-3\
+  \ 对温度进行排名\n\n图 7-3 展示了结果。一月是最冷的月份，而七月是最热的。就像第一个例子一样，百分比排名和累积分布在七月都达到了 100。\n![../images/335106_2_En_7_Chapter/335106_2_En_7_Fig3_HTML.jpg](img/335106_2_En_7_Fig3_HTML.jpg)\n\
+  图 7-3 排名后的温度\n\n## 使用 PERCENTILE_CONT 和 PERCENTILE_DISC\n\n你已经了解了如何使用 `PERCENT_RANK()`\
+  \ 和 `CUME_DIST()` 对一系列值进行排名和比较。另外两个统计函数 `PERCENTILE_CONT()`（百分位连续值）和 `PERCENTILE_DISC()`（百分位离散值）则执行相反的任务。给定一个百分比排名，这些函数会找到该位置的值。这两个函数的区别在于，`PERCENTILE_CONT()`\
+  \ 会在数据集上插值计算出一个值，而 `PERCENTILE_DISC()` 会从数据集中返回一个精确的值。\n\n一个非常常见的需求是找到一组值的中位数或中间值。你可以通过使用\
+  \ `PERCENTILE_CONT()` 并指定希望找到 50% 位置的值来完成此任务。\n\n这些函数的语法与其他窗口函数也略有不同。你仍然需要提供一个 `OVER`\
+  \ 子句，但在 `OVER` 子句内部，你只需在需要时指定 `PARTITION BY` 表达式。\n\n`ORDER BY` 不再放在 `OVER` 子句中，而是放在一个名为\
+  \ `WITHIN GROUP` 的新子句中。`WITHIN GROUP` 子句必须返回一个数字列表。回想一下，其他函数的 `OVER` 子句中的 `ORDER\
+  \ BY` 是用来对行进行排序的，但在这里，`WITHIN GROUP` 表达式才是要操作的数字列表。`ORDER BY` 必须只包含一个表达式，并且计算结果为数值类型，如\
+  \ `INT` 或 `DECIMAL`。\n\n语法如下：\n```\nPERCENTILE_CONT() WITHIN GROUP(ORDER BY )\n\
+  OVER([PARTITION BY ])\nPERCENTILE_DISC() WITHIN GROUP(ORDER BY )\nOVER([PARTITION\
+  \ BY ])\n```\n\n对于上一节图 7-1 中所示的结果，中位数是多少？由于返回的是偶数行，中位数是 719 和 1740 的平均值，即 1229.5。清单\
+  \ 7-4 演示了如何使用 `PERCENTILE_CONT()` 计算中位数。同时也展示了 `PERCENTILE_DISC()`，但由于行数是偶数，它返回的不是中位数。结果会在每一行上返回；如果你只想看到答案，请使用\
+  \ `DISTINCT`。\n```\n--7-4.1 查找集合的中位数\nSELECT COUNT(*) NumberOfOrders, Month(OrderDate)\
+  \ AS orderMonth,\nPERCENTILE_CONT(.5) WITHIN GROUP (ORDER BY COUNT(*))\nOVER() AS\
+  \ TheMedian,\nPERCENTILE_DISC(.5) WITHIN GROUP (ORDER BY COUNT(*))\nOVER() AS PercentileDisc\n\
+  FROM Sales.SalesOrderHeader\nWHERE OrderDate >= '2013-01-01' AND OrderDate < '2014-01-01'\n\
+  GROUP BY Month(OrderDate);\n```\n清单 7-4 使用 PERCENTILE_CONT 查找中位数\n\n结果如图 7-4 所示。查询\
+  \ 1 显示了全年的计数和月份，以及 `TheMedian` 和 `PercentileDisc`。由于集合中每一行的答案都相同，所以这些值在每一行上都是一样的。查询\
+  \ 2 去掉了计数和月份，并使用了 `DISTINCT`，因此只返回答案。请注意，`PERCENTILE_CONT()` 通过对两个中间值取平均值来进行插值计算，从而得出真正的中位数。然而，`PERCENTILE_DISC()`\
+  \ 返回的值是 719。这是集合中的一个实际值。如果值的数量是偶数，那么当要计算的百分位为 0.5 时，此函数将返回最接近中位数的第一个值。\n![../images/335106_2_En_7_Chapter/335106_2_En_7_Fig4_HTML.jpg](img/335106_2_En_7_Fig4_HTML.jpg)\n\
+  图 7-4 查找中位数\n\n当行数为奇数时，在这种情况下，这两个函数将返回相同的值。清单 7-5 通过过滤掉一个月来展示当行数为奇数时会发生什么。\n```\n\
+  --7-5.1 过滤掉一月份\nSELECT  DISTINCT PERCENTILE_CONT(.5) WITHIN GROUP (ORDER BY COUNT(*))\n\
+  OVER() AS TheMedian,\nPERCENTILE_DISC(.5) WITHIN GROUP (ORDER BY COUNT(*))\nOVER()\
+  \ AS PercentileDisc\nFROM Sales.SalesOrderHeader\nWHERE OrderDate >= '2013-02-01'\
+  \ AND OrderDate < '2014-01-01'\nGROUP BY Month(OrderDate);\n```\n清单 7-5 在行数为奇数时查找中位数\n\
+  \n图 7-5 展示了结果。在这种情况下，由于行数是奇数，两个函数返回相同的值。\n![../images/335106_2_En_7_Chapter/335106_2_En_7_Fig5_HTML.jpg](img/335106_2_En_7_Fig5_HTML.jpg)\n\
+  图 7-5 行数为奇数时，两个函数返回相同的值\n\n虽然寻找中位数是这些函数一个有趣的应用，但你也可以用它们来查找任何其他百分比排名位置的值。一个有用的应用是返回前\
+  \ 25% 位置的值。清单 7-6 创建并填充了一个包含学生成绩的 `#scores` 表，并返回了在前 25% 位置找到的分数。\n```\n--7-6.1\
+  \ 设置表\nCREATE TABLE #scores(StudentID INT IDENTITY, Score DECIMAL(5,2));\n--7-6.2\n\
+  --使用 Itzik 风格的数字表插入分数\nWITH lv0 AS (SELECT 0 g UNION ALL SELECT 0)\n,lv1 AS (SELECT\
+  \ 0 g FROM lv0 a CROSS JOIN lv0 b)\n,lv2 AS (SELECT 0 g FROM lv1 a CROSS JOIN lv1\
+  \ b)\n,lv3 AS (SELECT 0 g FROM lv2 a CROSS JOIN lv2 b)\n,lv4 AS (SELECT 0 g FROM\
+  \ lv3 a CROSS JOIN lv3 b)\n,Tally (n) AS (SELECT ROW_NUMBER() OVER (ORDER BY (SELECT\
+  \ NULL))\nFROM lv4)\nINSERT INTO #scores(Score)\nSELECT TOP(1000) CAST(RAND(CHECKSUM(NEWID()))\
+  \ * 100 as DECIMAL(5,2)) AS Score\nFROM Tally;\n--7-6.3 返回前 25% 位置的分数\nSELECT DISTINCT\
+  \ PERCENTILE_DISC(.25) WITHIN GROUP\n(ORDER BY Score DESC) OVER() AS Top25\nFROM\
+  \ #scores;\n```\n清单 7-6 查找前 25% 位置的分数\n\n图 7-6 展示了结果。当然，你的结果会有所不同，因为分数是随机生成的。在设置好变量和表之后，插入了\
+  \ 1,000 行带有随机值的记录。查询 3 通过使用 `PERCENTILE_DISC()` 0.25 并按分数降序排序，返回了前 25% 位置的分数。\n\
+  ![../images/335106_2_En_7_Chapter/335106_2_En_7_Fig6_HTML.jpg](img/335106_2_En_7_Fig6_HTML.jpg)\n\
+  图 7-6 前 25% 位置的分数\n\n\n## 比较统计函数与旧方法\n\n函数 `PERCENT_RANK` 和 `CUME_DIST` 主要提供了一种便利性，而非像你在第\
+  \ 6 章学到的偏移函数那样的惊人突破。通过在一个简单计算中使用 `RANK` 函数，你也可以得出相同的答案。公式如下：\n\n```\nPERCENT_RANK\
+  \ = (排名 – 1)/(N – 1)\nCUME_DIST = 排名/N\n```\n\n代码清单 7-7 演示了如何使用 SQL Server 2005\
+  \ 的功能得到与代码清单 7-1 相同的结果。\n\n```\n--7-7.1 使用 2005 功能\nSELECT COUNT(*) NumberOfOrders,\
+  \ Month(OrderDate) AS OrderMonth,\n((RANK() OVER(ORDER BY COUNT(*)) -1) * 1.0)/(COUNT(*)\
+  \ OVER() -1)\nAS PercentRank,\n(RANK() OVER(ORDER BY COUNT(*)) * 1.0)/COUNT(*) OVER()\n\
+  AS CumeDist\nFROM Sales.SalesOrderHeader\nWHERE OrderDate >= '2013-01-01' AND OrderDate\
+  \ < '2014-01-01'\nGROUP BY  Month(OrderDate);\n代码清单 7-7\n使用 SQL Server 2005 功能获得相同结果\n\
+  ```\n\n图 7-7 展示了结果。除了零被填充到 12 位之外，结果看起来是一样的。在此示例中，使用了窗口聚合函数 `COUNT(*) OVER` 来计算分区中的行数。对于\
+  \ `PercentRank`，在相除之前，排名和计数都减去了 1。\n\n![../images/335106_2_En_7_Chapter/335106_2_En_7_Fig7_HTML.jpg](img/335106_2_En_7_Fig7_HTML.jpg)\n\
+  图 7-7\n使用旧方法计算百分比的结果\n\n对于 `PERCENTILE_CONT` 和 `PERCENTILE_DISC` 函数，是否可以使用旧方法呢？`PERCENTILE_DISC`\
+  \ 并不困难，因为它总是返回集合中的一个实际值。代码清单 7-8 展示了如何仅使用 2005 功能来计算 `PERCENTILE_DISC`。\n\n```\n\
+  --7-8.1 PERCENTILE_DISC\nWITH Level1 AS (\nSELECT DISTINCT Month(OrderDate) AS OrderMonth,\
+  \ \nCOUNT(*) AS NumberOfOrders,\nPERCENT_RANK() OVER(ORDER BY COUNT(*)) AS PercentRank\n\
+  FROM Sales.SalesOrderHeader\nWHERE OrderDate >= '2013-01-01' AND OrderDate < '2014-01-01'\n\
+  GROUP BY  Month(OrderDate))\nSELECT TOP(1) NumberOfOrders AS PercentileDisc\nFROM\
+  \ Level1\nWHERE Level1.PercentRank <= 0.75\nORDER BY Level1.PercentRank DESC;\n\
+  代码清单 7-8\n仅使用 SQL Server 2005 功能计算 PERCENTILE_DISC\n```\n\n图 7-8 展示了结果。查询 1 使用了新功能，以便与旧方法进行比较。查询\
+  \ 2 将计算百分比排名的查询移动到一个名为 `Level1` 的 CTE 中。在外层查询中，返回了一行百分比排名等于或小于 0.75 的数据。\n\n![../images/335106_2_En_7_Chapter/335106_2_En_7_Fig8_HTML.jpg](img/335106_2_En_7_Fig8_HTML.jpg)\n\
+  图 7-8\n使用旧方法计算 PERCENTILE_DISC 的结果\n\n对 `PERCENTILE_CONT` 实现相同的目的则更为棘手，但仍可实现。在这种情况下，当确切行不可用时，会使用给定百分比排名之上和之下的一个值来计算一个值。尝试找到中位数时，你只需对两行取平均值，但在尝试找到任何其他百分比排名时则不然。代码清单\
+  \ 7-9 展示了解决方案。\n\n```\n--7-9.1 PERCENTILE_CONT\nWITH Level1 AS (\nSELECT DISTINCT\
+  \ Month(OrderDate) AS OrderMonth, \nCOUNT(*) AS NumberOfOrders,\nPERCENTILE_CONT(0.75)\
+  \ WITHIN GROUP (ORDER BY COUNT(*)) OVER() AS PercentCont,\nPERCENT_RANK() OVER(ORDER\
+  \ BY COUNT(*)) AS PercentRank,\nROW_NUMBER() OVER(ORDER BY COUNT(*)) AS RowNum,\n\
+  0.75 * (COUNT(*) OVER() - 1) + 1 AS TheRow\nFROM Sales.SalesOrderHeader\nWHERE OrderDate\
+  \ >= '2013-01-01' AND OrderDate < '2014-01-01'\nGROUP BY Month(OrderDate)),\nLevel2\
+  \ AS (\nSELECT RowNum, NumberOfOrders,\nFLOOR(TheRow) AS TheBottomRow,\nCEILING(TheRow)\
+  \ AS TheTopRow,\nTheRow\nFROM Level1 ),\nLevel3 AS (\nSELECT SUM(CASE WHEN RowNum\
+  \ = TheBottomRow THEN NumberOfOrders END) AS BottomValue,\nSUM(CASE WHEN RowNum\
+  \ = TheTopRow THEN NumberOfOrders END) AS TopValue,\nMAX(TheRow % Level2.TheBottomRow)\
+  \ AS Diff\nFROM Level2)\nSELECT Level3.BottomValue +\n(Level3.TopValue - Level3.BottomValue)\
+  \ * Diff\nFROM Level3;\n代码清单 7-9\n使用 SQL Server 2005 功能查找 PERCENTILE_CONT\n```\n\
+  \n图 7-9 展示了结果。查询 1 使用了 `PERCENTILE_CONT` 函数，以便与旧方法进行比较。`Level1` CTE 包含一个查询，列出了每个月的行号和订单计数。它还计算出如果列表中存在确切值，哪一行会包含该值，即\
+  \ `TheRow`。在此例中，该行是 9.25。在 `Level2` 中，使用 `FLOOR` 函数找到 `TheRow` 之下的一行(9)，使用 `CEILING`\
+  \ 函数找到 `TheRow` 之上的一行(10)。在 `Level3` 中，找到了两行的值以及一个乘数 MP。MP 是 `TheRow` 的小数部分(0.25)。代码通过执行取模运算(9.25\
+  \ % 9)找到它。外层查询将两行之间的差值乘以 MP 后，加到底行的值上。呼！\n\n![../images/335106_2_En_7_Chapter/335106_2_En_7_Fig9_HTML.jpg](img/335106_2_En_7_Fig9_HTML.jpg)\n\
+  图 7-9\n将 PERCENTILE_CONT 与旧方法进行比较\n\n## 小结\n\n既然你已经见识了统计函数 `PERCENT_RANK`、`CUME_DIST`、`PERCENTILE_DISC`\
+  \ 和 `PERCENTILE_CONT`，那么你已使用了 SQL Server 2012 至 2019 版可用的所有窗口函数。在第 8 章中，你将学习使用所有窗口函数时的性能考量。\n\
+  \n"
+- '# 8. 为获得更佳性能进行调优
+
+
+  微软一直宣传窗口函数比旧技术具有更好的性能。在许多情况下，这是事实，但在我看来，最大的优势是这些函数让解决棘手的查询变得更容易。在某些情况下，它们替代了游标、临时表和三角连接。甚至在考虑性能之前，它们就是非常强大的工具。
+
+
+  然而，在使用窗口函数时，为了确保查询运行得尽可能快，有些事情你需要了解。自 2012 年以来，微软没有添加任何新功能，但在最近的版本中，它对查询处理进行了一些更改，这些更改直接影响窗口函数的性能。
+
+
+  在本章中，你将学习在执行计划中需要关注什么，瓶颈在哪里，以及如何创建索引来帮助任何使用窗口函数的查询。你还将学习窗口函数与使用旧方法相比如何，以及何时使用旧方法可能是个好主意。
+
+
+  ## 使用执行计划
+
+
+  图形化执行计划让 T-SQL 查询的调优变得更加容易。您可以比较多个查询的性能，并寻找查询内部的瓶颈。如果您对图形化执行计划还不熟悉，可以阅读 Grant Fritchey
+  所著的*《SQL Server 2017 查询性能调优》*（Apress，2018），或者直接跟随本文了解您能学到什么。
+
+
+  多年来，数据库专业人员一直使用 SQL Server Management Studio (`SSMS`) 来运行查询。自本书第一版以来，微软不仅更新了图形化执行计划中使用的图标，最近还引入了一个新的跨平台工具——Azure
+  Data Studio (`ADS`)，其执行计划的外观有所不同。要看到差异，可以在 `SSMS` 和 `ADS` 中分别运行清单 8-1 中的简单查询。在 `SSMS`
+  中运行查询前，请务必键入 `CTRL + M` 以开启执行计划。在 `ADS` 中，运行查询后只需点击 `Explain` 即可。
+
+
+  ```
+
+  --8-1.1 一个简单查询
+
+  SELECT *
+
+  FROM HumanResources.Employee;
+
+  清单 8-1
+
+  要运行的简单查询
+
+  ```
+
+
+  图 8-1 展示了这两个执行计划。
+
+
+  ![../images/335106_2_En_8_Chapter/335106_2_En_8_Fig1_HTML.jpg](img/335106_2_En_8_Fig1_HTML.jpg)
+
+  图 8-1：来自 `SSMS` 和 `ADS` 的图形化执行计划
+
+
+  本章将展示由 `SSMS` 18 版本生成的执行计划。要跟随操作，请确保本章所有示例都切换开启了实际执行计划。
+
+
+  有一个专门用于窗口函数的执行操作符；它是 `Sequence Project (Compute Scalar)` 操作符，如图 8-2 所示。这个操作符无需担心。它只是意味着计算所需的列已被添加到结果中。您会在包含某些窗口函数的查询执行计划中看到它，但并非所有情况都会出现。要查看该计划，请运行清单
+  8-2。
+
+
+  ![../images/335106_2_En_8_Chapter/335106_2_En_8_Fig2_HTML.jpg](img/335106_2_En_8_Fig2_HTML.jpg)
+
+  图 8-2：包含 `Sequence Project (Compute Scalar)` 操作符的执行计划
+
+
+  ```
+
+  --8-2.1 生成 Sequence Project (Compute Scalar) 操作符的查询
+
+  SELECT CustomerID, ROW_NUMBER() OVER(ORDER BY SalesOrderID) AS RowNumber
+
+  FROM Sales.SalesOrderHeader;
+
+  清单 8-2
+
+  查看 Sequence Project 操作符 (Compute Scalar)
+
+  ```
+
+
+  另一个在窗口函数查询中常见的操作符是 `Segment` 操作符，同样显示在图 8-2 中 `Sequence Project (Compute Scalar)`
+  操作符的右侧。`Segment` 操作符将输入划分为段或组。如果没有 `PARTITION BY` 表达式，那么段将是整个结果集。否则，段将根据 `PARTITION
+  BY` 表达式进行划分。通过打开 `Segment` 操作符的属性，您会看到 `Group By` 属性是空白的。图 8-3 展示了这一点。
+
+
+  ![../images/335106_2_En_8_Chapter/335106_2_En_8_Fig3_HTML.jpg](img/335106_2_En_8_Fig3_HTML.jpg)
+
+  图 8-3：`Segment` 操作符的 `Group By` 属性
+
+
+  如果您通过添加 `PARTITION BY` 来修改查询，如清单 8-3 所示，`Group By` 属性就会显示 `PARTITION BY` 的列。
+
+
+  ```
+
+  --8-3.1 添加 PARTITION BY
+
+  SELECT CustomerID,
+
+  ROW_NUMBER() OVER(PARTITION BY CustomerID ORDER BY SalesOrderID) AS RowNumber
+
+  FROM Sales.SalesOrderHeader;
+
+  清单 8-3
+
+  添加 PARTITION BY
+
+  ```
+
+
+  图 8-4 显示了属性如何变化。
+
+
+  ![../images/335106_2_En_8_Chapter/335106_2_En_8_Fig4_HTML.jpg](img/335106_2_En_8_Fig4_HTML.jpg)
+
+  图 8-4：添加分区后的 `Group By` 属性
+
+
+  在调优查询时，`Sequence Project (Compute Scalar)` 和 `Segment` 操作符无需担心。需要注意且您可以采取措施的操作符是
+  `Sort` 操作符，如图 8-5 所示。`Sort` 操作符出现在多种查询中，并且常常是窗口函数查询中的瓶颈。要查看该计划，请运行清单 8-4。
+
+
+  ![../images/335106_2_En_8_Chapter/335106_2_En_8_Fig5_HTML.jpg](img/335106_2_En_8_Fig5_HTML.jpg)
+
+  图 8-5：包含 `Sort` 操作符的执行计划
+
+
+  ```
+
+  --8-4.1 展示 Sort 操作符的查询
+
+  SELECT CustomerID, SalesOrderID,
+
+  ROW_NUMBER() OVER(PARTITION BY CustomerID ORDER BY OrderDate) AS RowNumber
+
+  FROM Sales.SalesOrderHeader;
+
+  清单 8-4
+
+  包含 Sort 操作符的查询
+
+  ```
+
+
+  请注意，即使执行了聚集索引扫描，`Sort` 操作符也占用了运行该查询所用资源的 80%。本章稍后将介绍如何创建索引以在许多情况下消除 `Sort`。
+
+
+  还有两个操作符需要注意。看一下图 8-6 中的 `Table Spool` 操作符。运行清单 8-5 来亲自生成该计划。
+
+
+  ![../images/335106_2_En_8_Chapter/335106_2_En_8_Fig6_HTML.jpg](img/335106_2_En_8_Fig6_HTML.jpg)
+
+  图 8-6：包含 `Table Spool` 操作符的执行计划
+
+
+  ```
+
+  --8-5.1 包含 Table Spool 操作符的查询
+
+  SELECT CustomerID, SalesOrderID, SUM(TotalDue)
+
+  OVER(PARTITION BY CustomerID) AS SubTotal
+
+  FROM Sales.SalesOrderHeader;
+
+  清单 8-5
+
+  包含 Table Spool 操作符的查询
+
+  ```
+
+
+  `Table Spool` 操作符意味着在 `tempdb` 中创建了一个工作表来帮助解决查询。您会在窗口聚合和一些其他窗口函数中看到 `Table Spool`
+  操作符。这个工作表会消耗大量资源，包括锁，但如果您使用的是 SQL Server 2019，则有个好消息，本章稍后会介绍。
+
+
+  另一个需要注意的操作符是 `Window Spool` 操作符，它与之类似，但*有时*会在内存中创建工作表。运行清单 8-6 以查看图 8-7 所示的计划。
+
+
+  ![../images/335106_2_En_8_Chapter/335106_2_En_8_Fig7_HTML.jpg](img/335106_2_En_8_Fig7_HTML.jpg)
+
+  图 8-7：包含 `Window Spool` 操作符的计划
+
+
+  ```
+
+  --8-6.1 包含窗口假脱机操作符的查询
+
+  SELECT CustomerID, SalesOrderID, TotalDue,
+
+  SUM(TotalDue) OVER(PARTITION BY CustomerID ORDER BY SalesOrderID) AS RunningTotal
+
+  FROM Sales.SalesOrderHeader;
+
+  清单 8-6
+
+  包含 Window Spool 操作符的查询
+
+  ```
+
+
+  `Window Spool` 操作符理论上意味着工作表在内存中创建，但在某些情况下，它会在 `tempdb` 中创建。区别将在本章后面介绍。与 `Table Spool`
+  操作符一样，此操作符在 2019 版本中也有一些性能改进。
+
+
+  ## 使用 STATISTICS IO
+
+
+  另一个理解查询性能的实用工具是 `STATISTICS IO`。该设置将提供运行查询时所读取页面的信息。其优点在于，无论服务器上是否有其他查询在运行，或者数据是否已在缓存中，结果都是一致的。如果缓存是“热的”，即所需数据已在内存中，查询通常会运行得更快，你可能会误以为是自己做了优化。只要查询、索引、数据或设置没有改变，返回的逻辑读数（读取的数据页数量）将保持一致。这使其成为比较两个查询或判断新索引是否有效的绝佳工具。我喜欢同时使用执行计划和
+  `STATISTICS IO` 来确保我理解正在发生的情况。
+
+
+  运行清单 8-7 来查看上一节中的查询如何比较。虽然这些查询产生的结果不同，但从性能角度观察它们之间的差异仍然很有趣。请注意，数据库兼容性模式已设置为 2014
+  版本。
+
+
+  ```
+
+  --8-7.0 设置
+
+  USE [master];
+
+  GO
+
+  --根据需要更改数据库名称
+
+  ALTER DATABASE [AdventureWorks]
+
+  SET COMPATIBILITY_LEVEL = 120;
+
+  GO
+
+  USE [AdventureWorks];
+
+  SET STATISTICS IO ON;
+
+  SET NOCOUNT ON;
+
+  GO
+
+  --8-7.1 产生序列项目的查询
+
+  PRINT ''8-7.1'';
+
+  SELECT CustomerID, ROW_NUMBER() OVER(ORDER BY SalesOrderID) AS RowNumber
+
+  FROM Sales.SalesOrderHeader;
+
+  --8-7.2 显示排序运算符的查询
+
+  PRINT ''8-7.2'';
+
+  SELECT CustomerID, SalesOrderID,
+
+  ROW_NUMBER() OVER(PARTITION BY CustomerID ORDER BY OrderDate) AS RowNumber
+
+  FROM Sales.SalesOrderHeader;
+
+  --8-7.3 带有表假脱机运算符的查询
+
+  PRINT ''8-7.3'';
+
+  SELECT CustomerID, SalesOrderID, SUM(TotalDue) OVER(PARTITION BY CustomerID)
+
+  AS SubTotal
+
+  FROM Sales.SalesOrderHeader;
+
+  清单 8-7
+
+  使用 STATISTICS IO
+
+  ```
+
+
+  图 8-8 显示了由 `STATISTICS IO` 设置在消息选项卡中产生的结果。代码清单首先开启 `STATISTICS IO` 并关闭行计数。在每个查询之前，一个
+  `PRINT` 语句会打印查询编号，以便你知道哪些信息对应哪个查询。
+
+
+  ![../images/335106_2_En_8_Chapter/335106_2_En_8_Fig8_HTML.jpg](img/335106_2_En_8_Fig8_HTML.jpg)
+
+
+  图 8-8
+
+  查询的 STATISTICS IO 输出
+
+
+  最有用的信息来自 `logical reads`（逻辑读），即读取的页数。查询 1 和查询 2 各需要 689 次 `logical reads`。这大约是 `Sales.SalesOrderHeader`
+  表聚集索引中的页数。如果你回顾图 8-1，你会看到执行了聚集索引扫描。使用窗口聚合的查询 3 也需要 689 次 `logical reads` 来扫描聚集索引，但它还在
+  `tempdb` 中创建了一个工作表。它使用了 139,407 次 `logical reads` 来通过工作表执行计算。
+
+
+  在执行计划显示相同成本但查询运行时间不同的情况下，使用 `STATISTICS IO` 非常有益。在调优查询时，我总是同时使用这两个工具。
+
+
+  ## 通过索引提升窗口函数性能
+
+
+  排序通常是带有窗口函数的查询的瓶颈。你看到清单 8-4 中的查询里，排序运算符消耗了 95% 的资源。通过添加正确的索引，有可能消除排序并减少逻辑读数。最优索引将正确排序并覆盖查询。当然，你不能为编写的每个查询都添加索引，但对于性能至关重要的查询，你会知道该怎么做。
+
+
+  重新运行清单 8-4 中的查询，确保首先切换开启实际执行计划设置。单击 `Select` 运算符并查看工具提示，如图 8-9 所示。你可以看到预留的 `Memory
+  Grant`（内存授予）为 4416，用作排序空间，`Estimated Subtree Cost`（估计子树成本）为 2.71698。
+
+
+  ![../images/335106_2_En_8_Chapter/335106_2_En_8_Fig9_HTML.jpg](img/335106_2_En_8_Fig9_HTML.jpg)
+
+
+  图 8-9
+
+  SELECT 工具提示
+
+
+  单击 `Sort` 运算符，然后按 `F4` 查看属性。`Order By` 属性列出了两个列。图 8-10 显示了相关信息。
+
+
+  ![../images/335106_2_En_8_Chapter/335106_2_En_8_Fig10_HTML.jpg](img/335106_2_En_8_Fig10_HTML.jpg)
+
+
+  图 8-10
+
+  Order By 列
+
+
+  `Sort` 运算符正按 `CustomerID` 和 `OrderDate` 排序。这是合理的，因为 `PARTITION BY` 表达式是 `CustomerID`，而
+  `ORDER BY` 表达式是 `OrderDate`。数据必须先按 `PARTITION BY` 列划分，然后按 `ORDER BY` 列排序。另外请注意图中还有三个
+  `Output List`（输出列表）列。如果你查看 `Output List`，会看到 `CustomerID`、`OrderDate` 和 `SaleOrderID`，即查询中使用的三个列。候选索引将以
+  `CustomerID` 和 `OrderDate` 作为键，并将 `SalesOrderID` 作为包含列。在这种情况下，`SalesOrderID` 不是必需的，因为它是表的聚集键，并且已经是任何非聚集索引的一部分。
+
+
+  另一件需要考虑的事是表上现有的索引。该表在 `CustomerID` 上有一个非聚集索引 `IX_SalesOrderHeader_CustomerID`。你可以修改这个索引，而不是创建一个新索引。以前使用旧索引的查询现在可以使用新索引。运行清单
+  8-8 来删除现有索引并创建一个新索引。
+
+
+  ```
+
+  --8-8.1 删除现有索引
+
+  DROP INDEX [IX_SalesOrderHeader_CustomerID] ON [Sales].[SalesOrderHeader];
+
+  GO
+
+  --8-8.2 为查询创建新索引
+
+  CREATE NONCLUSTERED INDEX [IX_SalesOrderHeader_CustomerID_OrderDate]
+
+  ON [Sales].[SalesOrderHeader] ([CustomerID], [OrderDate]);
+
+  清单 8-8
+
+  修改索引
+
+  ```
+
+
+  现在重新运行清单 8-4 中的查询。新的执行计划如图 8-11 所示。
+
+
+  ![../images/335106_2_En_8_Chapter/335106_2_En_8_Fig11_HTML.jpg](img/335106_2_En_8_Fig11_HTML.jpg)
+
+
+  图 8-11
+
+  索引更改后的执行计划
+
+
+  首先你应该看到的是 `Sort` 运算符消失了。现在运行查询的主要成本是扫描新的非聚集索引。图 8-12 显示了 `SELECT` 工具提示。
+
+
+  ![../images/335106_2_En_8_Chapter/335106_2_En_8_Fig12_HTML.jpg](img/335106_2_En_8_Fig12_HTML.jpg)
+
+
+  图 8-12
+
+  索引更改后的 SELECT 工具提示
+
+
+
+  内存授予不再需要，而估计子树成本仅为 `0.104003`。这是一个相当大的改进！对于带有 `WHERE` 子句的查询，应在 `PARTITION BY` 和
+  `OVER` 列之前，将该列添加到索引的首位。在前面的例子中，创建一个新的索引比在以 `CustomerID` 开头的索引上添加列更合理，这样可以不影响那些需要
+  `CustomerID` 作为第一个索引键的现有查询。不幸的是，如果新列不属于 `OVER` 子句的一部分，排序操作可能还会出现。
+
+
+  这样设计的索引能有效提升任何单表窗口函数查询的性能。然而，大多数查询涉及多个表。清单 8-9 展示了从多表查询返回相同结果的两种方式。这些查询具有不同的执行计划。此结果假设已应用了清单
+  8-8 中的索引更改。
+
+
+  ```sql
+
+  --8-9.1 使用连接的查询
+
+  SELECT SOH.CustomerID, SOH.SalesOrderID, SOH.OrderDate, C.TerritoryID,
+
+  ROW_NUMBER() OVER(PARTITION BY SOH.CustomerID ORDER BY SOH.OrderDate)
+
+  AS RowNumber
+
+  FROM Sales.SalesOrderHeader AS SOH
+
+  JOIN Sales.Customer C ON SOH.CustomerID = C.CustomerID;
+
+  --8-9.2 重新排列查询
+
+  WITH Sales AS (
+
+  SELECT CustomerID, OrderDate, SalesOrderID,
+
+  ROW_NUMBER() OVER(PARTITION BY CustomerID ORDER BY OrderDate)
+
+  AS RowNumber
+
+  FROM Sales.SalesOrderHeader)
+
+  SELECT Sales.CustomerID, SALES.SalesOrderID, Sales.OrderDate,
+
+  C.TerritoryID, Sales.RowNumber
+
+  FROM Sales
+
+  JOIN Sales.Customer AS C ON C.CustomerID = Sales.CustomerID;
+
+  ```
+
+
+  清单 8-9
+
+  带有连接的窗口函数
+
+
+  图 8-13 展示了执行计划。查询 1 通过合并连接将 `Customer` 表和 `SalesOrderHeader` 表的行连接起来，因为两个索引都按 `CustomerID`
+  排序。然后输出结果按 `CustomerID` 和 `OrderDate` 排序，并计算行号。查询 2 将 `SalesOrderHeader` 表移至一个 CTE
+  中，并在那里应用行号。从执行计划中可以看到，行号是在连接到 `Customer` 表之前应用的。您还可以看到排序操作消失了，其相对成本为 12%。在这种情况下，通过重新排列查询，第二个查询的性能更好。`PARTITION
+  BY` 和 `ORDER BY` 列都来自同一个查询，但情况并非总是如此。查询会迅速变得复杂，您可能无法总是消除排序。我曾遇到过涉及多个连接表的查询中存在顽固的排序算子，无法将其移除。幸运的是，排序的成本通常与计划中的其他算子相比很小。
+
+
+  ![连接的执行计划](img/335106_2_En_8_Fig13_HTML.jpg)
+
+
+  图 8-13
+
+  连接的执行计划
+
+
+  ## 为性能而设计框架
+
+
+  在第 5 章中，您学习了如何向 `OVER` 子句添加框架以创建移动聚合。在第 6 章中，您看到了 `FIRST_VALUE` 和 `LAST_VALUE` 函数为何需要框架。在每种情况下，我都解释了有时需要框架才能获得正确的结果，但它对于性能原因也很重要。本章后面，我将介绍
+  SQL Server 2019 中一些令人兴奋的性能更新，但现在，本节中的示例将假设数据库处于 SQL Server 2017 兼容模式或更低版本。
+
+
+  如果表很小，即使省略框架，查询也能快速运行。清单 8-10 将数据库兼容模式设置为 2017 (`140`) 并打开统计信息。然后，它创建一个用于测试的表并填充数据。如果需要，请修改数据库名称。
+
+
+  ```sql
+
+  --8-10.1 设置兼容性级别
+
+  USE master;
+
+  GO
+
+  ALTER DATABASE AdventureWorks2017
+
+  SET COMPATIBILITY_LEVEL = 140 WITH NO_WAIT;
+
+  GO
+
+  USE AdventureWorks2017;
+
+  GO
+
+  --8-10.2 打开 STATISTICS IO
+
+  SET STATISTICS IO ON;
+
+  SET NOCOUNT ON;
+
+  GO
+
+  --8-10.3 创建一个更大的测试表
+
+  DROP TABLE IF EXISTS dbo.SOD ;
+
+  CREATE TABLE dbo.SOD(SalesOrderID INT, SalesOrderDetailID INT, LineTotal Money);
+
+  --8-10.4 填充表
+
+  INSERT INTO dbo.SOD(SalesOrderID, SalesOrderDetailID, LineTotal)
+
+  SELECT SalesOrderID, SalesOrderDetailID, LineTotal
+
+  FROM Sales.SalesOrderDetail
+
+  UNION ALL
+
+  SELECT SalesOrderID + MAX(SalesOrderID) OVER(), SalesOrderDetailID, LineTotal
+
+  FROM Sales.SalesOrderDetail;
+
+  --8-10.5 创建非聚集索引
+
+  CREATE INDEX SalesOrderID_SOD ON dbo.SOD
+
+  (SalesOrderID, SalesOrderDetailID) INCLUDE(LineTotal);
+
+  ```
+
+
+  清单 8-10
+
+  创建大型测试表
+
+
+  清单 8-11 包含两个性能不佳的查询。运行脚本前请务必打开实际执行计划。
+
+
+  ```sql
+
+  --8-11.1 运行总和
+
+  PRINT ''8-11.1''
+
+  SELECT SalesOrderID, SalesOrderDetailID, LineTotal,
+
+  SUM(LineTotal)
+
+  OVER(PARTITION BY SalesOrderID ORDER BY SalesOrderDetailID) RunningTotal
+
+  FROM SOD;
+
+  --8-11.2 使用 FIRST_VALUE 的查询
+
+  PRINT ''8-11.2''
+
+  SELECT SalesOrderID, SalesOrderDetailID, LineTotal,
+
+  FIRST_VALUE(LineTotal)
+
+  OVER(PARTITION BY SalesOrderID ORDER BY SalesOrderDetailID) FirstValue
+
+  FROM SOD;
+
+  ```
+
+
+  清单 8-11
+
+  两个性能不佳的查询
+
+
+  图 8-14 显示了统计信息。在每种情况下，从临时表中执行了超过 140 万次逻辑读取。
+
+
+  ![两个性能不佳查询的逻辑读取](img/335106_2_En_8_Fig14_HTML.jpg)
+
+
+  图 8-14
+
+  两个性能不佳查询的逻辑读取
+
+
+  图 8-15 显示了查询的执行计划。请注意窗口假脱机算子，它表明创建了一个临时表，但该表并非在内存中创建。
+
+
+  ![两个性能不佳查询的执行计划](img/335106_2_En_8_Fig15_HTML.jpg)
+
+
+  图 8-15
+
+  两个性能不佳查询的执行计划
+
+
+  当支持框架但被省略时，会使用默认框架。默认框架是 `RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW`。`RANGE`
+  运算符旨在处理逻辑时间段，这在 SQL Server 中尚未实现。当使用 `RANGE` 时，临时表总是在 tempdb 中创建，而不是在内存中。为了解决此问题，请在框架中指定
+  `ROWS` 运算符。清单 8-12 显示了更正后的查询。
+
+
+  ```sql
+
+  PRINT ''8-12.1''
+
+  SELECT SalesOrderID, SalesOrderDetailID, LineTotal,
+
+  SUM(LineTotal)
+
+  OVER(PARTITION BY SalesOrderID ORDER BY SalesOrderDetailID
+
+  ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) RunningTotal
+
+  FROM SOD;
+
+  --8-12.2 使用 ROWS 的 FIRST_VALUE 查询
+
+  PRINT ''8-12.2''
+
+  SELECT SalesOrderID, SalesOrderDetailID, LineTotal,
+
+  FIRST_VALUE(LineTotal)
+
+  OVER(PARTITION BY SalesOrderID ORDER BY SalesOrderDetailID
+
+  ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) RunningTotal
+
+  FROM SOD;
+
+  ```
+
+
+  清单 8-12
+
+  使用 ROWS 的查询
+
+
+  图 8-16 显示临时表现在产生 0 次逻辑读取。这表明临时表是在内存中创建的。如果您回顾执行计划，它们将与图 8-15 所示的计划相同。
+
+
+  ![使用 ROWS 时的逻辑读取](img/335106_2_En_8_Fig16_HTML.jpg)
+
+
+  图 8-16
+
+  使用 ROWS 时的逻辑读取
+
+
+  这些示例比较了逻辑读取次数，但您如何知道这真的会对查询运行时间产生影响？如果您的客户打电话抱怨查询运行缓慢，解释逻辑读取情况良好对他们来说毫无意义。在本章的“时间测量比较”部分，您将看到逻辑读取确实暗示了性能差异。
+
+
+
+  ## 利用行存储上的批处理模式
+
+
+  有两类窗口函数在过去扩展性不佳：窗口聚合函数和统计函数。这些函数易于使用，但如果在大量行上操作，性能就会下降。你可以通过预聚合来规避这些问题，使函数应用于更少的行，但这并非总是可行。清单
+  8-13 展示了两个示例，它们使用清单 8-10 中创建的表，并确保数据库处于 2017 (140) 兼容模式。
+
+
+  ```sql
+
+  --8-13.1 设置兼容级别
+
+  USE master;
+
+  GO
+
+  ALTER DATABASE AdventureWorks2017
+
+  SET COMPATIBILITY_LEVEL = 140 WITH NO_WAIT;
+
+  GO
+
+  USE AdventureWorks2017;
+
+  GO
+
+  --8-13.2 一个窗口聚合函数
+
+  PRINT ''8-13.1''
+
+  SELECT SalesOrderID, SalesOrderDetailID, LineTotal,
+
+  SUM(LineTotal) OVER(PARTITION BY SalesOrderID) AS SubTotal
+
+  FROM SOD;
+
+  --8-13.2 一个统计函数
+
+  PRINT ''8-11.2''
+
+  SELECT SalesOrderID, SalesOrderDetailID, LineTotal,
+
+  PERCENT_RANK()
+
+  OVER(PARTITION BY SalesOrderID ORDER BY SalesOrderDetailID) AS Ranking
+
+  FROM SOD;
+
+  ```
+
+
+  清单 8-13: 一个窗口聚合函数和一个统计函数
+
+
+  ### 图 8-17: 窗口聚合函数和统计函数的逻辑读取
+
+
+  图 8-17 显示了逻辑读取情况。注意，由于使用了工作表，产生了大量的逻辑读取。
+
+
+  ![../images/335106_2_En_8_Chapter/335106_2_En_8_Fig17_HTML.jpg](img/335106_2_En_8_Fig17_HTML.jpg)
+
+
+  ### 图 8-18: 显示表假脱机运算符的执行计划
+
+
+  尽管查询语法简单，但实际执行计划相当复杂。图 8-18 显示了部分计划。请注意，每个计划都有不止一个 `Table Spool`（表假脱机）运算符。`Table
+  Spool` 运算符意味着在 `tempdb` 中创建了工作表。即使估计成本很低，这也总会消耗大量资源。
+
+
+  ![../images/335106_2_En_8_Chapter/335106_2_En_8_Fig18_HTML.jpg](img/335106_2_En_8_Fig18_HTML.jpg)
+
+
+  你可能想知道为什么 `PERCENT_RANK()` 函数性能不佳，而 `RANK()` 函数的性能尚可接受。这是因为 `PERCENT_RANK()` 函数的公式是
+  `(RANK -1)/(TotalRows -1)`。在内部，它使用了窗口聚合函数 `COUNT` 来计算总行数。其他三个统计函数也存在同样的性能问题。
+
+
+  2012 年，微软引入了非聚集 `列存储索引`（`CI`）。`CI` 是一种不同的数据存储方式，其中一页包含一列中的许多行（可能成千上万）。这意味着可以实现高压缩率，查询速度可以提升一个数量级。随着
+  SQL Server 的每个新版本，微软都增强了 `CI`，包括引入一种新的处理大数据集聚合的方法：`批处理模式`。这对于需要高 CPU 资源的查询尤其有用。在
+  SQL Server 2019 之前（在撰写本文时仍处于预览版），查询中必须涉及 `CI` 才能使用批处理模式。从 2019 版本开始，即使查询中没有 `CI`，优化器也可以选择使用
+  `批处理模式`。这被称为 `行存储上的批处理模式`。
+
+
+  清单 8-14 展示了新的 `行存储上的批处理模式` 如何提升窗口聚合查询的性能。
+
+
+  ```sql
+
+  --8-14.1 设置兼容级别
+
+  USE master;
+
+  GO
+
+  ALTER DATABASE AdventureWorks2017
+
+  SET COMPATIBILITY_LEVEL = 150 WITH NO_WAIT;
+
+  GO
+
+  USE AdventureWorks2017;
+
+  GO
+
+  --8-14.2 一个窗口聚合函数
+
+  PRINT ''8-14.1''
+
+  SELECT SalesOrderID, SalesOrderDetailID, LineTotal,
+
+  SUM(LineTotal) OVER(PARTITION BY SalesOrderID) AS SubTotal
+
+  FROM SOD;
+
+  ```
+
+
+  清单 8-14: 使用行存储上的批处理模式
+
+
+  ### 图 8-19: 使用批处理模式时的逻辑读取
+
+
+  图 8-19 显示了逻辑读取情况。注意，工作表的逻辑读取为 0。
+
+
+  ![../images/335106_2_En_8_Chapter/335106_2_En_8_Fig19_HTML.jpg](img/335106_2_En_8_Fig19_HTML.jpg)
+
+
+  ### 图 8-20: 带有窗口聚合运算符的执行计划
+
+
+  图 8-20 显示了实际执行计划。在这种情况下，与在 2017 兼容模式下运行相同查询相比，计划非常简单。另请注意，一个新的运算符 `Window Aggregate`（窗口聚合）成为了计划的一部分。
+
+
+  ![../images/335106_2_En_8_Chapter/335106_2_En_8_Fig20_HTML.jpg](img/335106_2_En_8_Fig20_HTML.jpg)
+
+
+  ### 图 8-21: 批执行模式
+
+
+  当鼠标悬停在运算符上时，你会看到图 8-21 所示的属性。注意，`执行模式` 是 `Batch`（批处理）。
+
+
+  ![../images/335106_2_En_8_Chapter/335106_2_En_8_Fig21_HTML.jpg](img/335106_2_En_8_Fig21_HTML.jpg)
+
+
+  自从窗口聚合函数引入以来，我一直很喜欢使用它们，但我总是担心性能问题。现在，当函数必须在大量行上操作时，`批处理模式` 可以介入并提升性能。请注意，微软没有公布何时切换到
+  `批处理模式` 是值得的，因此你的结果可能会有所不同。
+
+
+  `行存储上的批处理模式` 也有助于提升统计函数 `PERCENT_RANK()`、`CUME_DIST()`、`PERCENTILE_CONT()` 和 `PERCENTILE_DISC()`
+  的性能。在内部，这些函数在其公式中使用了窗口聚合，因此它们受益于此是合理的。
+
+
+  在撰写本文时，尚不清楚 SQL Server 的哪些版本将包含此强大功能。
+
+
+
+  ## 时间对比测量
+
+
+  到目前为止，你已经学习了在执行计划和 `STATISTICS IO` 中需要关注什么。然而，你的客户并不会关心执行计划或逻辑读取次数。你的客户只关心查询运行的速度。另一个名为
+  `STATISTICS TIME` 的设置可用于测量查询运行所需的时间。虽然 `STATISTICS IO` 有助于比较两个查询之间的 I/O，但你可能也会对查询实际运行多长时间感兴趣，尤其是在处理运行时间较长的查询时。清单
+  8-15 展示了一个使用本章前面创建的 `dbo.SOD` 表的示例。
+
+
+  ```sql
+
+  --8-15.1 更改设置
+
+  SET STATISTICS IO OFF;
+
+  SET STATISTICS TIME ON;
+
+  GO
+
+  --8-15.2 更改兼容性
+
+  USE MASTER;
+
+  GO
+
+  ALTER DATABASE AdventureWorks2017
+
+  SET COMPATIBILITY_LEVEL = 140 WITH NO_WAIT;
+
+  USE AdventureWorks2017;
+
+  GO
+
+  --8-15.3
+
+  PRINT ''
+
+  DEFAULT frame''
+
+  SELECT SalesOrderID, SalesOrderDetailID, LineTotal,
+
+  SUM(LineTotal) OVER(PARTITION BY SalesOrderID
+
+  ORDER BY SalesOrderDetailID) AS RunningTotal
+
+  FROM SOD;
+
+  --8-15.4
+
+  PRINT ''
+
+  ROWS''
+
+  SELECT SalesOrderID, SalesOrderDetailID, LineTotal,
+
+  SUM(LineTotal) OVER(PARTITION BY SalesOrderID
+
+  ORDER BY SalesOrderDetailID
+
+  ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS SubTotal
+
+  FROM SOD;
+
+  ```
+
+  清单 8-15
+
+  使用 `STATISTICS TIME`
+
+
+  该清单比较了两个返回累计值的查询。第一个使用 `DEFAULT` 框架，第二个使用 `ROWS`。兼容性模式也被更改为 SQL Server 2017，以避免利用批处理模式。图
+  8-22 展示了 `STATISTICS TIME` 返回的信息。
+
+
+  ![../images/335106_2_En_8_Chapter/335106_2_En_8_Fig22_HTML.jpg](img/335106_2_En_8_Fig22_HTML.jpg)
+
+  图 8-22
+
+  `STATISTICS TIME` 信息
+
+
+  使用 `ROWS` 耗时不到 2 秒，而不指定框架则耗时约 21 秒。测量查询运行时间还有其他几种方法。例如，你可以运行一个扩展事件会话。另外需要注意的一点是，如果你使用查询窗口来计时查询，填充网格所花费的时间也被包含在内。你也可以在
+  SSMS 选项中打开 *执行后放弃结果* 以避免填充网格。在 SSMS 的某些早期版本中，此设置也会影响“消息”选项卡。为避免此问题，清单 8-16 将行插入临时表而非直接显示它们。
+
+
+  ```sql
+
+  --8-16.1
+
+  PRINT ''
+
+  DEFAULT frame''
+
+  SELECT SalesOrderID, SalesOrderDetailID, LineTotal,
+
+  SUM(LineTotal) OVER(PARTITION BY SalesOrderID
+
+  ORDER BY SalesOrderDetailID) AS RunningTotal
+
+  INTO #temp1
+
+  FROM SOD;
+
+  --8-16.2
+
+  PRINT ''
+
+  ROWS''
+
+  SELECT SalesOrderID, SalesOrderDetailID, LineTotal,
+
+  SUM(LineTotal) OVER(PARTITION BY SalesOrderID
+
+  ORDER BY SalesOrderDetailID
+
+  ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS SubTotal
+
+  INTO #Temp2
+
+  FROM SOD;
+
+  DROP TABLE #Temp1;
+
+  DROP TABLE #temp2;
+
+  ```
+
+  清单 8-16
+
+  丢弃结果行
+
+
+  图 8-23 展示了差异。
+
+
+  ![../images/335106_2_En_8_Chapter/335106_2_En_8_Fig23_HTML.jpg](img/335106_2_En_8_Fig23_HTML.jpg)
+
+  图 8-23
+
+  丢弃结果时的耗时
+
+
+  ### 注意
+
+  你可能会注意到一些奇怪的现象。为什么 CPU 时间大于已用时间？这是因为优化器通过并行处理将查询分配到多个核心上执行，因此时间是所有核心上时间的总和。
+
+
+  我发现对更大数量的行进行比较非常有趣。为此，我运行了一个来自数据平台专家 Adam Machanic 的脚本，名为 `Thinking Big Adventure`。（你可以轻松地通过谷歌搜索找到这个脚本。）该脚本创建了一个包含
+  3000 万行的表，名为 `bigTransactionHistory`。如果你有兴趣自己运行计时测试，所使用的查询将与本章中的其他查询一起提供。
+
+
+  图 8-24 比较了使用窗口聚合与使用产生相同结果的 CTE 的性能。在我的虚拟机上以 2016 模式运行时，窗口聚合耗时 5 分钟，而使用 CTE 耗时 1.75
+  分钟。当切换到 2019 模式时，两种方法都运行得很快。
+
+
+  ![../images/335106_2_En_8_Chapter/335106_2_En_8_Fig24_HTML.png](img/335106_2_En_8_Fig24_HTML.png)
+
+  图 8-24
+
+  窗口聚合性能
+
+
+  图 8-25 显示了 `DEFAULT` 框架和 `ROWS` 在累计计算上的差异。在 2016 模式下，使用默认框架耗时 36 分钟，而使用 `ROWS` 耗时
+  3.5 分钟。切换到 2019 模式后，每种方法都仅需 1.3 分钟！
+
+
+  ![../images/335106_2_En_8_Chapter/335106_2_En_8_Fig25_HTML.png](img/335106_2_En_8_Fig25_HTML.png)
+
+  图 8-25
+
+  累计计算性能
+
+
+  ## 清理数据库
+
+  如果你想将你的 AdventureWorks 数据库恢复到原始状态，可以运行清单 8-17。
+
+
+  ```sql
+
+  --8-17.1 删除索引
+
+  DROP INDEX [IX_SalesOrderHeader_CustomerID_OrderDate]
+
+  ON Sales.SalesOrderHeader;
+
+  GO
+
+  --8-17-2 重新创建原始索引
+
+  CREATE INDEX [IX_SalesOrderHeader_CustomerID] ON Sales.SalesOrderHeader
+
+  (CustomerID);
+
+  --8-17-3 删除特殊表
+
+  DROP TABLE IF EXISTS dbo.SOD;
+
+  --8-17-4 删除 Thinking Big Adventure 表
+
+  DROP TABLE IF EXISTS dbo.bigTransactionHistory;
+
+  DROP TABLE IF EXISTS dbo.bigProduct;
+
+  ```
+
+  清单 8-17
+
+  清理数据库
+
+
+  ## 总结
+
+  你可以通过添加一个对 `PARTITION BY` 和 `ORDER BY` 子句进行排序的索引来影响包含窗口函数的查询的性能。一个构建得当的索引可以提高许多包含窗口函数的查询的性能。当框架受支持时，包含它非常重要。在某些情况下，你还可以利用
+  2019 的行存储上的批处理模式功能。
+
+
+  既然你已经了解了所有可能的窗口函数类型以及如何调优它们，是时候看更多真实世界的例子了。在第 9 章中，你将处理棒球数据！
+
+
+  '
+- "# 9. 利用间隙、岛屿和连续期打出全垒打\n在任何数据集中，我们都可以检查数据如何分组。这可以让我们识别缺失的行、发现异常模式或开发高级分析技术。最基本地，能够定位间隙和岛屿将告诉我们有关缺失数据值的信息。当我们深入研究时，它将允许我们识别连续期、干旱期或值得进一步调查的异常事件。\n\
+  \n这个概念的核心是边界。边界代表一个停止点或转折点，在此处具有统计显著性的数据集相遇。日期和时间是数据中最常见的自然边界条件，因为我们世界的很多事物都是按事件发生的时间组织的。我们也可以查看标识值的范围，并确定某个值何时缺失，或者在发现间隙之前存在多少连续值。任何可以有意义排序的数据都可以分析是否存在间隙、岛屿或数据组。\n\
+  \n为了有效演示这些概念和技术，我们将使用一组棒球数据来进行我们的工作。因为棒球是一项古老的运动，而我们的数据跨越了一百多年，所以它是一组极好的测试数据，因为它庞大、混乱且充满了不寻常的事件。1920\
+  \ 年代的数据库远不如我们今天拥有的数据库，因此我们可以确保存在糟糕、缺失或异常的事件，这将为分析增添乐趣。\n\n窗口函数对于执行间隙/岛屿分析至关重要，因为它们提供了极大的灵活性，并允许我们应用复杂的分析，而无需编写冗长的\
+  \ T-SQL。虽然可以使用相关子查询、临时表或迭代，但我们的目标是呈现易于阅读和维护且性能合理的解决方案。\n\n\n## 经典的间隔/岛屿问题\n\n在本章的分析中，我们将**间隔**定义为一个序列的结束与下一个序列开始之间的距离。而一个**岛屿**则是由前一个间隔的结束与下一个间隔的开始所界定的数据集。间隔和岛屿都由一系列值来定义，这些值指明了间隔或岛屿的开始与结束。间隔和岛屿共存，一方的存在意味着另一方的存在。没有围绕它的数据岛屿，间隔就不可能存在；而没有间隔的环绕，岛屿也不可能存在。数据集的开始和结束通常被视为终止符，其作用类似于间隔，即使我们不认为它们是数据中的间隔。\n\
+  \n间隔是两个数据序列之间的距离，而岛屿则是一对间隔所界定的数据。\n\n间隔分析最简单的应用是查找表中缺失的 ID 值。考虑一个我们用一组整数填充的表，如清单\
+  \ 9-1 所示。\n\n```sql\nCREATE TABLE dbo.integers\n(integer_id INT NOT NULL);\nINSERT\
+  \ INTO dbo.integers\n(integer_id)\nVALUES\n(1), (2), (3), (4), (5), (6), (7), (8),\
+  \ (9), (12), (13), (14), (15), (17), (19), (20), (21), (22), (23), (24);\n```\n\
+  清单 9-1\n为间隔分析创建并填充一个整数值表\n\n我们在 `INSERT` 语句中有意跳过了一些值。挑战在于确定使用 T-SQL 定位缺失整数值的最佳方法。由于这是一个小列表，我们可以直观地从\
+  \ `INSERT` 语句中确认缺失值：\n\n*   1 2 3 4 5 6 7 8 9…12 13 14 15…17…19 20 21 22 23 24\n\
+  \n最简单但最慢的方法是遍历表，逐个计数整数，并在遇到缺失值时进行标记。这很容易理解，但速度极慢且局限性大。在包含数百万或数十亿行的更现实的数据集中，遍历每个值来查找缺失数据效率会低到不值得尝试。此外，该策略对于非整数数据（如日期和时间）会失效。对于这些数据类型，值之间的距离是不确定的，需要额外的分析来定义间隔和岛屿。\n\
+  \n### 查找岛屿\n\n窗口函数允许我们以单一步骤处理此数据并返回结果列表，如清单 9-2 所示。\n\n```sql\nWITH CTE_ISLANDS\
+  \ AS (\nSELECT\ninteger_id,\ninteger_id - ROW_NUMBER() OVER (ORDER BY integer_id)\
+  \ AS gap_quantity\nFROM dbo.integers)\nSELECT\nMIN(integer_id) AS island_start,\n\
+  MAX(integer_id) AS island_end\nFROM CTE_ISLANDS\nGROUP BY gap_quantity;\n```\n清单\
+  \ 9-2\n返回非重复整数列表中岛屿的查询\n\n在此查询中，我们定义了一个公共表表达式，它返回整数值以及该值与其行号之间的差值。在不重复的正整数序列中，该差值只能由序列中的间隔造成，为此我们可以使用\
+  \ `MIN` 和 `MAX` 来量化剩余数据岛屿的端点。结果如图 9-1 所示。\n\n![../images/335106_2_En_9_Chapter/335106_2_En_9_Fig1_HTML.jpg](img/335106_2_En_9_Fig1_HTML.jpg)\n\
+  图 9-1\n通过清单 9-2 的查询找到的整数岛屿\n\n处理重复值很重要，因此我们通过向整数列表添加一些重复项来继续分析：\n\n```sql\nINSERT\
+  \ INTO dbo.integers\n(integer_id)\nVALUES\n(2), (12), (12), (24);\n```\n\n如果我们运行之前的查询，图\
+  \ 9-2 所示的结果将显得毫无意义。\n\n![../images/335106_2_En_9_Chapter/335106_2_En_9_Fig2_HTML.jpg](img/335106_2_En_9_Fig2_HTML.jpg)\n\
+  图 9-2\n通过清单 9-2 的查询找到的整数岛屿\n\n重复值的存在干扰了我们的计算，因为计算基于行数表示唯一值的假设。窗口函数 `DENSE_RANK`\
+  \ 可以为我们解决这个问题，因为它只考虑唯一值，不会为重复值分配多个 ID。清单 9-3 展示了一个使用此窗口函数提供准确岛屿列表的新查询。\n\n```sql\n\
+  WITH CTE_ISLANDS AS (\nSELECT\ninteger_id,\ninteger_id - DENSE_RANK() OVER (ORDER\
+  \ BY integer_id) AS gap_quantity\nFROM dbo.integers)\nSELECT\nMIN(integer_id) AS\
+  \ island_start,\nMAX(integer_id) AS island_end,\nCOUNT(*) AS distinct_value_count\n\
+  FROM CTE_ISLANDS\nGROUP BY gap_quantity;\n```\n清单 9-3\n使用 `DENSE_RANK` 处理重复值\n\n\
+  此查询的结果证实，即使存在重复值，我们也可以返回岛屿集合，如图 9-3 所示。\n\n![../images/335106_2_En_9_Chapter/335106_2_En_9_Fig3_HTML.jpg](img/335106_2_En_9_Fig3_HTML.jpg)\n\
+  图 9-3\n通过清单 9-2 的查询找到的整数岛屿\n\n作为额外收获，我们包含了每个岛屿内的行数统计。这很有价值，因为它确实包含了重复值。范围 1-9 包含\
+  \ 10 个值，因为数字 2 重复了一次。这对于量化特定岛屿内的数据量（无论具体值如何）很有用。如果我们想返回忽略重复值的绝对岛屿长度，只需简单地用岛屿结束值减去开始值并加\
+  \ 1。例如，`9-1 + 1 = 9` 就是范围 1-9 内的 9 个唯一整数值。\n\n### 查找间隔\n\n定位数据中的间隔需要我们首先考虑岛屿集合，然后反转该数据集以查找它们之间的间隔。这需要更多工作，但可以用与定位岛屿类似的方式完成。清单\
+  \ 9-4 中的查询展示了一种在整数列表中查找间隔的方法。\n\n```sql\nWITH CTE_GAPS AS (\nSELECT\ninteger_id,\n\
+  ROW_NUMBER() OVER (ORDER BY integer_id) AS island_quantity\nFROM dbo.integers)\n\
+  SELECT\nISLAND_END.integer_id + 1 AS gap_starting_value,\nISLAND_START.integer_id\
+  \ - 1 AS gap_ending_value,\nISLAND_START.integer_id - ISLAND_END.integer_id - 1\
+  \ AS gap_length\nFROM CTE_GAPS AS ISLAND_END\nINNER JOIN CTE_GAPS AS ISLAND_START\n\
+  ON ISLAND_START.island_quantity = ISLAND_END.island_quantity + 1\nWHERE ISLAND_START.integer_id\
+  \ - ISLAND_END.integer_id > 1;\n```\n清单 9-4\n通过使用 `ROW_NUMBER` 的自连接公共表表达式查找间隔\n\n\
+  此查询的结果可以在图 9-4 中找到，它提供了整数集中的三个间隔。\n\n![../images/335106_2_En_9_Chapter/335106_2_En_9_Fig4_HTML.jpg](img/335106_2_En_9_Fig4_HTML.jpg)\n\
+  图 9-4\n整数集中的间隔，包括间隔长度\n\n结果显示了三个符合先前确定的四个岛屿的间隔。由于间隔被定义为值的缺失，因此间隔长度就是该范围内的整数数量。同样，重复值对我们的结果没有影响，我们特意使用\
+  \ `ROW_NUMBER` 而不是 `DENSE_RANK`，因为计算重复值会干扰间隔计算，并在存在重复值时导致错误的范围。\n\n\n## 限制与注意事项\n\
+  \n数据集中的岛屿数量总是等于间隔数量加一。虽然这看起来是个微不足道的事实，但它允许我们对间隔和岛屿之间的关系做出简化假设，并为每个间隔分配一对与之相关的岛屿。在讨论数据邻近性时，紧邻间隔前后发生的事件可能具有重要意义，赋予它们特殊含义或许能帮助我们预测未来事件。如果某个间隔或岛屿代表异常，并且我们能够唯一量化导致该间隔或岛屿的相应事件，那么这些事件就可以被预警，并有可能通过自动化手段避免。\n\
+  \n在数据集中识别间隔和岛屿的方法有很多种。我们将标准化采用那些最易于编写、记录和维护的方法。本章后续将讨论性能问题，并探讨在存在延迟或资源消耗顾虑时，如何加快间隔/岛屿分析的速度。\n\
+  \n到目前为止，我们的示例都围绕一组正整数展开。虽然我们已经考虑了重复值，但我们的分析不适用于其他数据类型。如果我们希望在一组小数、日期或时间中寻找间隔或岛屿，我们的计算方法就显得不足了。本章的剩余部分将着重于扩展间隔和岛屿分析，以涵盖我们在现实世界中遇到的数据。这些数据通常通过分析日期和时间（而非整数或标识符）来进行处理，并且需要额外的代码才能进行有意义的分析。\n\
+  \n## 数据聚类\n\n真实数据很少由连续不重复的正整数组成。虽然标识符（ID）常被用来组织信息，但通常使用日期和时间来自然地引用数据。对基于日期时间组件的数据进行间隔和岛屿分析，引出了一个新实体的定义：**数据聚类**。\n\
+  \n我们可以根据创建的边界来分组数据。例如，我们可以获取销售数据并按月、财季或年份进行分组，以观察随时间的变化。这些分组是静态且不变的。我们知道一份季度报告每年会包含\
+  \ 4 个数据桶，一份月度报告包含 12 个，一份周度报告包含 52 个。\n\n我们也可以选择有机地对数据进行分组，创建规则并允许数据根据这些规则被划分成未知数量的分段。我们选择的规则将基于邻近性的度量，通过检查两个事件是否位于同一数据岛屿中来确定它们是否彼此相关。\n\
+  \n**数据聚类**是一个有机分组的数据集合，在更大的数据集中由单个岛屿表示。用于确定分组规则的维度可以是数字型的，如整数或小数，也可以是日期时间型的。理论上，只要我们能构建关于数据如何交互的规则，任何数据类型都可以用于此目的。例如，如果邻近性恰好基于字母顺序距离计算，那么字符串也可以用来确定数据聚类。\n\
+  \n为了引入这个概念，让我们考虑一下值班技术员的困境。当系统出现问题时会收到警报；技术员醒来修复问题，然后回去睡觉，直到下一个问题出现。回顾过去一周、一个月或一年的警报时，将事件按最可能相关的进行分组是有价值的。\n\
+  \n最简单的方法是查看时间。时间上接近发生的事件很可能（尽管不保证）是相关的。如果一个网络交换机发生故障，那么所有连接到它的设备都将无法访问。如果一个云服务中断一分钟，那么任何使用该服务的应用程序也会遇到问题。\n\
+  \n让我们构建一个简单的数据集来介绍这个概念。清单 9-5 展示了用于创建新表并填充测试数据的 T-SQL。\n\n```sql\nCREATE TABLE dbo.error_log\n\
+  (        error_log_id INT NOT NULL IDENTITY(1,1) CONSTRAINT PK_error_log PRIMARY\
+  \ KEY CLUSTERED,\nerror_time_utc DATETIME NOT NULL,\nerror_source VARCHAR(50) NOT\
+  \ NULL,\nseverity VARCHAR(10) NOT NULL,\nerror_description VARCHAR(100) NOT NULL);\n\
+  GO\nINSERT INTO dbo.error_log (error_time_utc, error_source, severity, error_description)\n\
+  VALUES\n('2/20/2019 00:00:15', 'print_server_01', 'low', 'device unreachable'),\n\
+  ('2/21/2019 00:00:13', 'print_server_01', 'low', 'device unreachable'),\n('2/22/2019\
+  \ 00:00:11', 'print_server_01', 'low', 'device unreachable'),\n('2/23/2019 00:00:17',\
+  \ 'print_server_01', 'low', 'device unreachable'),\n('2/24/2019 00:00:12', 'print_server_01',\
+  \ 'low', 'device unreachable'),\n('2/25/2019 00:00:15', 'print_server_01', 'low',\
+  \ 'device unreachable'),\n('2/26/2019 00:00:12', 'print_server_01', 'low', 'device\
+  \ unreachable'),\n('2/22/2019 22:34:01', 'network_switch_05', 'critical', 'device\
+  \ unresponsive'),\n('2/22/2019 22:34:06', 'sql_server_02', 'critical', 'device unreachable'),\n\
+  ('2/22/2019 22:34:06', 'sql_server_02 sql service', 'critical', 'service down'),\n\
+  ('2/22/2019 22:34:06', 'sql_server_02 sql server agent service', 'high', 'service\
+  \ down'),\n('2/22/2019 22:34:06', 'app_server_11', 'critical', 'device unreachable'),\n\
+  ('2/22/2019 22:34:11', 'file_server_03', 'high', 'device unreachable'),\n('2/22/2019\
+  \ 22:34:31', 'app_server_10', 'critical', 'device unreachable'),\n('2/22/2019 22:34:39',\
+  \ 'web_server', 'medium', 'device unreachable'),\n('2/22/2019 22:35:00', 'web_site',\
+  \ 'medium', 'http 404 thrown'),\n('2/05/2019 03:05:00', 'app_git_repo', 'low', 'repo\
+  \ unavailable'),\n('2/12/2019 03:05:00', 'app_git_repo', 'low', 'repo unavailable'),\n\
+  ('2/19/2019 03:05:00', 'app_git_repo', 'low', 'repo unavailable'),\n('2/26/2019\
+  \ 03:05:00', 'app_git_repo', 'low', 'repo unavailable'),\n('2/26/2019 03:07:15',\
+  \ 'git service error', 'medium', \"),\n('1/31/2019 23:59:50', 'sql_server_01', 'critical',\
+  \ 'corrupt database identified'),\n('1/31/2019 23:59:53', 'sql_server_01', 'critical',\
+  \ 'corrupt database identified'),\n('1/31/2019 23:59:57', 'sql_server_01', 'critical',\
+  \ 'corrupt database identified'),\n('2/1/2019 00:00:00', 'sql_server_01 sql service',\
+  \ 'critical', 'service down'),\n('2/1/2019 00:00:15', 'sql_server_01 sql server\
+  \ agent service', 'critical', 'service down'),\n('2/1/2019 00:15:00', 'etl data\
+  \ load to sql_server_01', 'medium', 'job failed'),\n('2/1/2019 00:30:00', 'etl data\
+  \ load to sql_server_01', 'medium', 'job failed'),\n('2/1/2019 00:45:00', 'etl data\
+  \ load to sql_server_01', 'medium', 'job failed'),\n('2/1/2019 01:00:00', 'etl data\
+  \ load to sql_server_01', 'medium', 'job failed'),\n('2/1/2019 01:15:00', 'etl data\
+  \ load to sql_server_01', 'medium', 'job failed'),\n('2/1/2019 01:30:00', 'etl data\
+  \ load to sql_server_01', 'medium', 'job failed')\nGO\n```\n\n清单 9-5\n创建用于演示简单数据聚类/邻近性分析的错误日志\n\
+  \n对该表进行快速查询可以展示我们正在处理的数据类型，如图 9-5 所示。\n\n![../images/335106_2_En_9_Chapter/335106_2_En_9_Fig5_HTML.jpg](img/335106_2_En_9_Fig5_HTML.jpg)\n\
+  \n图 9-5\n来自 `dbo.error_log` 的数据样本\n\n我们的兴趣在于对警报进行分组，以显示那些彼此相关的警报。这可以通过 `GROUP BY`\
+  \ 来实现，但我们如何决定按什么分组呢？如果一个警报发生在晚上 11:59:59，另一个发生在凌晨 12:00:00，按日期或小时分组会将它们显示为不相关的事件。就我们的目的而言，我们假设所有在\
+  \ 5 分钟内发生的事件被视为同一个数据聚类的一部分并且是相关的。清单 9-6 展示了一个查询，该查询将按此规则从日志中返回错误。\n\n\n\n## 9.4.2\
+  \ 使用 CTE 查询进行邻近性分析\n\n```sql\nWITH CTE_ERROR_HISTORY AS (\nSELECT\nLAG(error_log.error_time_utc)\
+  \ OVER (ORDER BY error_log.error_time_utc, error_log.error_log_id) AS previous_event_time,\n\
+  LEAD(error_log.error_time_utc) OVER (ORDER BY error_log.error_time_utc, error_log.error_log_id)\
+  \ AS next_event_time,\nROW_NUMBER() OVER (ORDER BY error_log.error_time_utc, error_log.error_log_id)\
+  \ AS island_location,\nerror_log.error_time_utc,\nerror_log.error_log_id\nFROM dbo.error_log),\n\
+  CTE_ISLAND_START AS (\nSELECT\nROW_NUMBER() OVER (ORDER BY CTE_ERROR_HISTORY.error_time_utc,\
+  \ CTE_ERROR_HISTORY.error_log_id) AS island_number,\nCTE_ERROR_HISTORY.error_time_utc\
+  \ AS island_start_time,\nCTE_ERROR_HISTORY.next_event_time,\nCTE_ERROR_HISTORY.island_location\
+  \ AS island_start_location\nFROM CTE_ERROR_HISTORY\nWHERE DATEDIFF(MINUTE, CTE_ERROR_HISTORY.previous_event_time,\
+  \ CTE_ERROR_HISTORY.error_time_utc) > 5 OR CTE_ERROR_HISTORY.previous_event_time\
+  \ IS NULL),\nCTE_ISLAND_END AS (\nSELECT\nROW_NUMBER() OVER (ORDER BY CTE_ERROR_HISTORY.error_time_utc,\
+  \ CTE_ERROR_HISTORY.error_log_id) AS island_number,\nCTE_ERROR_HISTORY.error_time_utc\
+  \ AS island_end_time,\nCTE_ERROR_HISTORY.next_event_time,\nCTE_ERROR_HISTORY.island_location\
+  \ AS island_end_location\nFROM CTE_ERROR_HISTORY\nWHERE DATEDIFF(MINUTE, CTE_ERROR_HISTORY.error_time_utc,\
+  \ CTE_ERROR_HISTORY.next_event_time) > 5 OR CTE_ERROR_HISTORY.next_event_time IS\
+  \ NULL)\nSELECT\nCTE_ISLAND_START.island_start_time,\nCTE_ISLAND_END.island_end_time,\n\
+  CTE_ISLAND_END.island_end_location - CTE_ISLAND_START.island_start_location + 1\
+  \ AS count_of_events\nFROM CTE_ISLAND_START\nINNER JOIN CTE_ISLAND_END\nON CTE_ISLAND_START.island_number\
+  \ = CTE_ISLAND_END.island_number;\n```\n\n*代码清单 9-6 将错误按 5 分钟内的邻近性分组为相关数据簇的查询*\n\
+  \n这个查询看起来很长，但遵循了一种有条理的方法，我们将在后续工作中采用这种方法：\n\n1.  创建一个规则来确定邻近性以及事件何时相关。\n2.  创建一个数据集，其中包含当前事件、前一个事件和下一个事件。\n\
+  3.  使用邻近性规则定义所有数据簇的起点。\n4.  使用邻近性规则定义所有数据簇的终点。\n5.  将起点和终点连接在一起以生成结果集。\n\n`LEAD`\
+  \ 和 `LAG` 用于快速检索数据集中的前一个和后一个事件，而 `ROW_NUMBER` 用于跟踪岛屿计数，以便在查询结束时用于连接。结果可以在图 9-6 中看到。\n\
+  \n![../images/335106_2_En_9_Chapter/335106_2_En_9_Fig6_HTML.jpg](img/335106_2_En_9_Fig6_HTML.jpg)\n\
+  \n*图 9-6 错误日志数据，按发生在彼此 5 分钟内的事件分组*\n\n我们可以看到，少量错误被分组到更大的数据簇中，而其余的则因邻近性而不相关。任何查看这些数据的人都能判断何时发生了重大中断，并可以根据这些中断的大小、长度或深度来追踪指标。\n\
+  \n虽然我们的结果只包含时间和计数，但我们可以添加关于哪些事件在每个范围内发生得最多、最少，或者范围内第一个事件的详细信息（因为它通常是中断的原因）。\n\n\
+  对数据进行唯一排序非常重要。`LEAD`、`LAG` 和 `ROW_NUMBER` 都必须有一个唯一的 `ORDER BY` 子句。在我们的示例中，我们在时间之后包含了\
+  \ *error_log_id*，这是一个标识列。这确保了每次执行此查询时，数据都以相同的方式唯一排序。如果基础数据具有重复值，并且我们没有应用唯一的排序顺序，那么在这些边界上可能存在数据不一致或不准确的风险。\n\
+  \n邻近性分析的关键是定义一个可用于将数据排序为编号组的规则。有了这个规则，我们就可以确定数据簇的边界并将它们连接起来，以产生一组分组的结果。与使用 `GROUP\
+  \ BY` 不同，我们直到运行时才知道结果集的大小。返回的行数将由数据驱动，可能是一行（包含许多相关事件），也可能是多行（包含一组不相关的事件）。\n\n如果我们调整规则，就可以改变结果的形状。如果事件发生在彼此\
+  \ 15 分钟内被视为相关，而不是 5 分钟，那么我们将得到一个事件计数更高的较小数据集。如果我们将规则调整得更严格，将 1 分钟内发生的事件视为相关，那么我们的结果集将包含更多的行和更小的计数。试验规则是这种分析风格的关键组成部分，将帮助我们确定哪些指标对于给定的数据集最有意义。如有疑问，我们可以自动化一个过程，该过程遍历许多不同的规则，以确定哪一个能提供最大的价值。\n\
+  \n## 追踪连续记录\n\n一个数据簇可以表示多种类型的数据分组。在体育中，连续记录意义重大，并构成了许多用于持续数据驱动决策的统计数据的基础。赢和输是最常被报告的模式，但经理们也会追踪细节。在棒球中，连续安打、连续出局、失误以及许多其他指标都可以作为事件序列进行追踪。这些序列表现为岛屿或间隙，我们可以像处理错误日志数据那样以相同的方式进行报告。\n\
+  \n在接下来的例子中，我们将使用一组棒球数据，这些数据定义在一个名为 `dbo.GameLog` 的单一宽表中。该表每场比赛包含一行，并包含详尽的细节，如图 9-7\
+  \ 中的样本所示。\n\n![../images/335106_2_En_9_Chapter/335106_2_En_9_Fig7_HTML.jpg](img/335106_2_En_9_Fig7_HTML.jpg)\n\
+  \n*图 9-7 棒球比赛日志数据样本*\n\n其中包括天气、比赛得分以及裁判、教练和经理的姓名等详细信息。对于较旧的比赛，许多数据缺失或不完整，因此我们编写的任何查询都必须容忍这一事实。该数据包括从\
+  \ 1871 年到 2018 年的所有常规赛、全明星赛和季后赛，总计记录了 219,832 场棒球比赛。\n\n所有缩写、名称、代码和模糊维度都有查找表，可用于验证其存在或含义。为了我们的工作，将跳过这些附加维度，因为它们不会为我们的连续记录分析提供任何额外价值。\n\
+  \n\n\n## 连胜与连败\n\n引入这个新的数据集后，让我们深入探讨最基本的连胜/连败情况。我们将连胜定义为被失利或平局所**界定**的一段连续胜利。一段连胜可能跨越多个赛季，默认情况下，我们不会将常规赛与季后赛混合计算。连败的计算方式相同：即被胜利或平局界定的一段连续失利。虽然平局在现代比赛中很少见，但在使用户外照明和室内球场之前，平局非常普遍。\n\
+  \n首先，让我们考虑某支特定棒球队伍在历史上的最长连胜纪录。`代码清单 9-7`中的查询将获取比赛日志数据，将其分组为连续的胜/负区段，从而创建可供分析的数据集群。\n\
+  \n```sql\nWITH GAME_LOG AS (\n    SELECT\n        CASE WHEN (HomeScore > VisitingScore\
+  \ AND HomeTeamName = 'NYA') OR (VisitingScore > HomeScore AND VisitingTeamName =\
+  \ 'NYA') THEN 'W'\n             WHEN (HomeScore > VisitingScore AND VisitingTeamName\
+  \ = 'NYA') OR (VisitingScore > HomeScore AND HomeTeamName = 'NYA') THEN 'L'\n  \
+  \           WHEN VisitingScore = HomeScore THEN 'T'\n        END AS result,\n  \
+  \      LAG(CASE WHEN (HomeScore > VisitingScore AND HomeTeamName = 'NYA') OR (VisitingScore\
+  \ > HomeScore AND VisitingTeamName = 'NYA') THEN 'W'\n                 WHEN (HomeScore\
+  \ > VisitingScore AND VisitingTeamName = 'NYA') OR (VisitingScore > HomeScore AND\
+  \ HomeTeamName = 'NYA') THEN 'L'\n                 WHEN VisitingScore = HomeScore\
+  \ THEN 'T' END) OVER (ORDER BY GameLog.GameDate, GameLog.GameLogId) AS previous_game_result,\n\
+  \        LEAD(CASE WHEN (HomeScore > VisitingScore AND HomeTeamName = 'NYA') OR\
+  \ (VisitingScore > HomeScore AND VisitingTeamName = 'NYA') THEN 'W'\n          \
+  \        WHEN (HomeScore > VisitingScore AND VisitingTeamName = 'NYA') OR (VisitingScore\
+  \ > HomeScore AND HomeTeamName = 'NYA') THEN 'L'\n                  WHEN VisitingScore\
+  \ = HomeScore THEN 'T' END) OVER (ORDER BY GameLog.GameDate, GameLog.GameLogId)\
+  \ AS next_game_result,\n        ROW_NUMBER() OVER (ORDER BY GameLog.GameDate, GameLog.GameLogId)\
+  \ AS island_location,\n        GameLog.GameDate,\n        GameLog.GameLogId\n  \
+  \  FROM dbo.GameLog\n    WHERE (GameLog.HomeTeamName = 'NYA' OR GameLog.VisitingTeamName\
+  \ = 'NYA')\n        AND GameLog.GameType = 'REG'),\nCTE_ISLAND_START AS (\n    SELECT\n\
+  \        ROW_NUMBER() OVER (ORDER BY GAME_LOG.GameDate, GAME_LOG.GameLogId) AS island_number,\n\
+  \        GAME_LOG.GameDate AS island_start_time,\n        GAME_LOG.island_location\
+  \ AS island_start_location\n    FROM GAME_LOG\n    WHERE GAME_LOG.result = 'W'\n\
+  \        AND (GAME_LOG.previous_game_result <> 'W' OR GAME_LOG.previous_game_result\
+  \ IS NULL)),\nCTE_ISLAND_END AS (\n    SELECT\n        ROW_NUMBER() OVER (ORDER\
+  \ BY GAME_LOG.GameDate, GAME_LOG.GameLogId) AS island_number,\n        GAME_LOG.GameDate\
+  \ AS island_end_time,\n        GAME_LOG.island_location AS island_end_location\n\
+  \    FROM GAME_LOG\n    WHERE GAME_LOG.result = 'W'\n        AND (GAME_LOG.next_game_result\
+  \ <> 'W' OR GAME_LOG.next_game_result IS NULL))\nSELECT\n    CTE_ISLAND_START.island_start_time,\n\
+  \    CTE_ISLAND_END.island_end_time,\n    CTE_ISLAND_END.island_end_location - CTE_ISLAND_START.island_start_location\
+  \ + 1 AS count_of_events,\n    DATEDIFF(DAY, CTE_ISLAND_START.island_start_time,\
+  \ CTE_ISLAND_END.island_end_time) + 1 AS length_of_streak_in_days\nFROM CTE_ISLAND_START\n\
+  INNER JOIN CTE_ISLAND_END\n    ON CTE_ISLAND_START.island_number = CTE_ISLAND_END.island_number\n\
+  ORDER BY CTE_ISLAND_END.island_end_location - CTE_ISLAND_START.island_start_location\
+  \ DESC;\n```\n\n`代码清单 9-7` 计算某球队所有连胜纪录并按最长优先排序的 TSQL\n\n在这个例子中，我们查找的是纽约洋基队（NYA）的最长连胜纪录。我们特意保留了本章前面介绍的岛屿查询的结构。通过复用这段代码，随着我们提出的问题变得更具挑战性，我们的工作将大大简化。第一个\
+  \ CTE 过滤了数据，只包含洋基队参与的比赛。它也说明了`LAG`和`LEAD`函数可以用来提供更复杂的度量指标，在此例中是使用`CASE`语句获取上一场比赛的结果。\n\
+  \n第二个和第三个 CTE 非常相似，它们通过使用一个筛选器来定义每段连胜的开始和结束，该筛选器用于界定连胜与平局/失利的边界。请注意，我们在两种情况下都检查了`NULL`值，以确保考虑到数据集中的第一行和最后一行，这些行之前或之后没有比赛。\n\
+  \n最后的`SELECT`语句与我们之前实现的几乎相同。唯一的增加是使用了`DATEDIFF`函数来确定连胜持续的天数。我们按连胜长度排序，以便最长的记录出现在列表顶部。排除季后赛和平局后，`图\
+  \ 9-8`中的结果提供了此查询的输出。\n\n![../images/335106_2_En_9_Chapter/335106_2_En_9_Fig8_HTML.jpg](img/335106_2_En_9_Fig8_HTML.jpg)\n\
+  \n`图 9-8` 洋基队的连胜纪录，最长的记录位于列表顶部\n\n我们可以看到最长的连胜发生在 1947 年 6 月 29 日至 7 月 17 日，历时 18\
+  \ 天，跨越了 19 场比赛。如果在`CTE_ISLAND_START`和`CTE_ISLAND_END`中将`W`替换为`L`，我们就可以返回洋基队的最长连败纪录，如`图\
+  \ 9-9`所示。\n\n![../images/335106_2_En_9_Chapter/335106_2_En_9_Fig9_HTML.jpg](img/335106_2_En_9_Fig9_HTML.jpg)\n\
+  \n`图 9-9` 洋基队的连败纪录，最长的记录位于列表顶部\n\n## 跨分区数据集的连胜/连败\n\n虽然确定一支球队对阵所有对手的连胜或连败很有用，但我们可能想知道一支球队对阵其他各支球队的单独表现。这就引入了一个新的挑战：在应用空隙/岛屿分析返回每个对手球队的结果时，需要对数据进行分区。\n\
+  \n这可以通过创建一个球队列表并逐个迭代来轻松完成。但这种方法速度较慢，并且缺乏我们目前流程所展现的创造性。另一种方法是调整窗口函数的使用方式，使其不仅按日期和\
+  \ ID 排序，还按对手球队进行分区。\n\n让我们考虑波士顿红袜队对阵美国职业棒球大联盟其他各支球队的连胜纪录。要计算对阵任何单支球队的最长连胜，我们需要对代码进行以下调整：\n\
+  \n1.  按对手球队对所有窗口函数进行分区。\n2.  将对手球队添加到`GAME_LOG`公共表表达式中。\n3.  在选择最终数据集时，除了岛屿编号外，还需按对手球队进行连接。\n\
+  \n`代码清单 9-8`展示了我们修改后的查询，该查询将返回对阵任何给定对手球队的连胜/连败。\n\n\n\n```\nWITH GAME_LOG AS (\n\
+  SELECT\nCASE WHEN (HomeScore > VisitingScore AND HomeTeamName = 'BOS') OR (VisitingScore\
+  \ > HomeScore AND VisitingTeamName = 'BOS') THEN 'W'\nWHEN (HomeScore > VisitingScore\
+  \ AND VisitingTeamName = 'BOS') OR (VisitingScore > HomeScore AND HomeTeamName =\
+  \ 'BOS') THEN 'L'\nWHEN VisitingScore = HomeScore THEN 'T'\nEND AS result,\nLAG(CASE\
+  \ WHEN (HomeScore > VisitingScore AND HomeTeamName = 'BOS') OR (VisitingScore >\
+  \ HomeScore AND VisitingTeamName = 'BOS') THEN 'W'\nWHEN (HomeScore > VisitingScore\
+  \ AND VisitingTeamName = 'BOS') OR (VisitingScore > HomeScore AND HomeTeamName =\
+  \ 'BOS') THEN 'L'\nWHEN VisitingScore = HomeScore THEN 'T' END) OVER (PARTITION\
+  \ BY CASE WHEN VisitingTeamName = 'BOS' THEN HomeTeamName ELSE VisitingTeamName\
+  \ END\nORDER BY GameLog.GameDate, GameLog.GameLogId) AS previous_game_result,\n\
+  LEAD(CASE WHEN (HomeScore > VisitingScore AND HomeTeamName = 'BOS') OR (VisitingScore\
+  \ > HomeScore AND VisitingTeamName = 'BOS') THEN 'W'\nWHEN (HomeScore > VisitingScore\
+  \ AND VisitingTeamName = 'BOS') OR (VisitingScore > HomeScore AND HomeTeamName =\
+  \ 'BOS') THEN 'L'\nWHEN VisitingScore = HomeScore THEN 'T' END) OVER (PARTITION\
+  \ BY CASE WHEN VisitingTeamName = 'BOS' THEN HomeTeamName ELSE VisitingTeamName\
+  \ END\nORDER BY GameLog.GameDate, GameLog.GameLogId) AS next_game_result,\nROW_NUMBER()\
+  \ OVER (PARTITION BY CASE WHEN VisitingTeamName = 'BOS' THEN HomeTeamName ELSE VisitingTeamName\
+  \ END ORDER BY GameLog.GameDate, GameLog.GameLogId) AS island_location,\nCASE WHEN\
+  \ VisitingTeamName = 'BOS' THEN HomeTeamName ELSE VisitingTeamName END AS opposing_team,\n\
+  GameLog.GameDate,\nGameLog.GameLogId\nFROM dbo.GameLog\nWHERE GameLog.GameType =\
+  \ 'REG'\nAND GameLog.HomeTeamName = 'BOS' OR GameLog.VisitingTeamName = 'BOS'),\n\
+  CTE_ISLAND_START AS (\nSELECT\nROW_NUMBER() OVER (PARTITION BY GAME_LOG.opposing_team\
+  \ ORDER BY GAME_LOG.GameDate, GAME_LOG.GameLogId) AS island_number,\nGAME_LOG.GameDate\
+  \ AS island_start_time,\nGAME_LOG.island_location AS island_start_location,\nGAME_LOG.opposing_team\n\
+  FROM GAME_LOG\nWHERE GAME_LOG.result = 'W'\nAND (GAME_LOG.previous_game_result <>\
+  \ 'W' OR GAME_LOG.previous_game_result IS NULL)),\nCTE_ISLAND_END AS (\nSELECT\n\
+  ROW_NUMBER() OVER (PARTITION BY GAME_LOG.opposing_team ORDER BY GAME_LOG.GameDate,\
+  \ GAME_LOG.GameLogId) AS island_number,\nGAME_LOG.GameDate AS island_end_time,\n\
+  GAME_LOG.island_location AS island_end_location,\nGAME_LOG.opposing_team\nFROM GAME_LOG\n\
+  WHERE GAME_LOG.result = 'W'\nAND (GAME_LOG.next_game_result <> 'W' OR GAME_LOG.next_game_result\
+  \ IS NULL))\nSELECT\nCTE_ISLAND_START.island_start_time,\nCTE_ISLAND_START.opposing_team,\n\
+  CTE_ISLAND_END.island_end_time,\nCTE_ISLAND_END.island_end_location - CTE_ISLAND_START.island_start_location\
+  \ + 1 AS count_of_events,\nDATEDIFF(DAY, CTE_ISLAND_START.island_start_time, CTE_ISLAND_END.island_end_time)\
+  \ + 1 AS length_of_streak_in_days\nFROM CTE_ISLAND_START\nINNER JOIN CTE_ISLAND_END\n\
+  ON CTE_ISLAND_START.island_number = CTE_ISLAND_END.island_number\nAND CTE_ISLAND_START.opposing_team\
+  \ = CTE_ISLAND_END.opposing_team\nORDER BY CTE_ISLAND_END.island_end_location -\
+  \ CTE_ISLAND_START.island_start_location DESC;\n```\n\n### **清单 9-8：** 计算一支球队对阵每个对手的所有连胜记录的\
+  \ T-SQL\n\n对我们的初始通用表表达式进行进一步的数据分区增加了复杂性，但后续代码与我们之前编写的非常相似。图 9-10 展示了这种分区数据集以及其结果与我们之前连胜计算的区别。\n\
+  \n![../images/335106_2_En_9_Chapter/335106_2_En_9_Fig10_HTML.jpg](img/335106_2_En_9_Fig10_HTML.jpg)\n\
+  \n#### **图 9-10：** 红袜队对阵每个对手的连胜记录\n\n我们可以看到，红袜队对阵华盛顿参议员队曾有过连续 22 场胜利的记录，这一壮举跨越了一年多的时间！通过按对手团队对数据集进行分区，我们不再将所有比赛作为一个集合来分析，而是将对阵每个其他团队的比赛作为一组集合来分析。\n\
+  \n这种技术可用于隔离数据集中的模式，并了解在不同挑战下表现如何变化。有时，一个连胜记录会被大量其他数据和时间所分隔，如果不将其从噪音中隔离出来，可能不会立即显现。\n\
+  \n我们可以将分析更进一步，在单个查询中计算所有球队对阵所有其他球队的所有连胜记录。这消除了硬编码团队名称的需要，并将为我们获得大量额外数据——前提是我们想同时为所有团队收集这些数据。清单\
+  \ 9-9 展示了如何实现这一点。需要更多的 T-SQL，但其中没有比我们迄今为止已经演示过的更复杂的部分。\n\n```\nWITH GAME_LOG AS\
+  \ (\nSELECT\nCASE WHEN HomeScore > VisitingScore THEN 'W'\nWHEN VisitingScore >\
+  \ HomeScore THEN 'L'\nWHEN HomeScore = VisitingScore THEN 'T'\nEND AS result,\n\
+  VisitingTeamName AS opposing_team,\nHomeTeamName AS team_to_trend,\nGameLog.GameDate,\n\
+  GameLog.GameLogId\nFROM dbo.GameLog\nWHERE GameLog.GameType = 'REG'\nUNION ALL\n\
+  SELECT\nCASE WHEN VisitingScore > HomeScore THEN 'W'\nWHEN HomeScore > VisitingScore\
+  \ THEN 'L'\nEND AS result,\nHomeTeamName AS opposing_team,\nVisitingTeamName AS\
+  \ team_to_trend,\nGameLog.GameDate,\nGameLog.GameLogId\nFROM dbo.GameLog\nWHERE\
+  \ GameLog.GameType = 'REG'\nAND VisitingScore <> HomeScore),\nGAME_LOG_ORDERED AS\
+  \ (\nSELECT\nGAME_LOG.GameLogId,\nGAME_LOG.GameDate,\nGAME_LOG.team_to_trend,\n\
+  GAME_LOG.opposing_team,\nGAME_LOG.result,\nLAG(GAME_LOG.result) OVER (PARTITION\
+  \ BY team_to_trend, opposing_team ORDER BY GAME_LOG.GameDate, GAME_LOG.GameLogId)\
+  \ AS previous_game_result,\nLEAD(GAME_LOG.result) OVER (PARTITION BY team_to_trend,\
+  \ opposing_team ORDER BY GAME_LOG.GameDate, GAME_LOG.GameLogId) AS next_game_result,\n\
+  ROW_NUMBER() OVER (PARTITION BY team_to_trend, opposing_team ORDER BY GAME_LOG.GameDate,\
+  \ GAME_LOG.GameLogId) AS island_location\nFROM GAME_LOG),\nCTE_ISLAND_START AS (\n\
+  SELECT\nROW_NUMBER() OVER (PARTITION BY GAME_LOG_ORDERED.team_to_trend, GAME_LOG_ORDERED.opposing_team\
+  \ ORDER BY GAME_LOG_ORDERED.GameDate, GAME_LOG_ORDERED.GameLogId) AS island_number,\n\
+  GAME_LOG_ORDERED.GameDate AS island_start_time,\nGAME_LOG_ORDERED.island_location\
+  \ AS island_start_location,\nGAME_LOG_ORDERED.opposing_team,\nGAME_LOG_ORDERED.team_to_trend\n\
+  FROM GAME_LOG_ORDERED\nWHERE GAME_LOG_ORDERED.result = 'W'\nAND (GAME_LOG_ORDERED.previous_game_result\
+  \ <> 'W' OR GAME_LOG_ORDERED.previous_game_result IS NULL)),\nCTE_ISLAND_END AS\
+  \ (\nSELECT\nROW_NUMBER() OVER (PARTITION BY GAME_LOG_ORDERED.team_to_trend, GAME_LOG_ORDERED.opposing_team\
+  \ ORDER BY GAME_LOG_ORDERED.GameDate, GAME_LOG_ORDERED.GameLogId) AS island_number,\n\
+  GAME_LOG_ORDERED.GameDate AS island_end_time,\nGAME_LOG_ORDERED.island_location\
+  \ AS island_end_location,\nGAME_LOG_ORDERED.opposing_team,\nGAME_LOG_ORDERED.team_to_trend\n\
+  FROM GAME_LOG_ORDERED\nWHERE GAME_LOG_ORDERED.result = 'W'\nAND (GAME_LOG_ORDERED.next_game_result\
+  \ <> 'W' OR GAME_LOG_ORDERED.next_game_result IS NULL))\nSELECT\nCTE_ISLAND_START.island_start_time,\n\
+  CTE_ISLAND_START.team_to_trend,\nCTE_ISLAND_START.opposing_team,\nCTE_ISLAND_END.island_end_time,\n\
+  CTE_ISLAND_END.island_end_location - CTE_ISLAND_START.island_start_location + 1\
+  \ AS count_of_events,\nDATEDIFF(DAY, CTE_ISLAND_START.island_start_time, CTE_ISLAND_END.island_end_time)\
+  \ + 1 AS length_of_streak_in_days\nFROM CTE_ISLAND_START\nINNER JOIN CTE_ISLAND_END\n\
+  ON CTE_ISLAND_START.island_number = CTE_ISLAND_END.island_number\nAND CTE_ISLAND_START.opposing_team\
+  \ = CTE_ISLAND_END.opposing_team\nAND CTE_ISLAND_START.team_to_trend = CTE_ISLAND_END.team_to_trend\n\
+  ORDER BY CTE_ISLAND_END.island_end_location - CTE_ISLAND_START.island_start_location\
+  \ DESC;\n```\n\n### **清单 9-9：** 计算所有球队对阵所有其他球队的连胜记录的查询\n\n\n\n为了总结我们的研究发现，我们需要将比赛结果转换为一个一维数据集，其中仅体现一支队伍与另一支队伍的对决，而不区分主客场。为此，我们使用第一个`CTE`将比赛数据展平为一组统一的比赛记录。我们谨慎地只计算一次平局，否则可能会扭曲结果。\n\
+  \n第二个`CTE`接收这些数据，并应用`LAG`、`LEAD`和`ROW_NUMBER`函数，为连续区间的分析提供基础。我们查询的其余部分类似于之前，但增加了一个`JOIN`操作，以确保我们能根据趋势球队、对手球队和区间编号来编译连胜记录。这个扩展分析的结果可以在图\
+  \ 9-11 中找到。\n\n![../images/335106_2_En_9_Chapter/335106_2_En_9_Fig11_HTML.jpg](img/335106_2_En_9_Fig11_HTML.jpg)\n\
+  \n**图 9-11**\n\n各队对阵所有对手球队的连胜记录\n\n我们可以看到，历史上任何一支队伍对阵另一支队伍的最长连胜发生在 1883 年至 1884\
+  \ 年间，由底特律狼獾队对阵普罗维登斯灰队。红袜队早先的 22 场连胜在该列表中排名第四。\n\n我们能完成的最终任务是确定如列表 9-10 所示所有球队的整体最长连胜记录，而不是针对某支队伍对阵特定对手的情况。这将是一个极其相似的过程，并将突出展示一致的编码实践如何使我们能够重用相当多的`TSQL`，并减少在此过程中出错的机会。\n\
+  \n```\nWITH GAME_LOG AS (\n    SELECT\n        CASE WHEN HomeScore > VisitingScore\
+  \ THEN 'W'\n             WHEN VisitingScore > HomeScore THEN 'L'\n             WHEN\
+  \ HomeScore = VisitingScore THEN 'T'\n        END AS result,\n        VisitingTeamName\
+  \ AS opposing_team,\n        HomeTeamName AS team_to_trend,\n        GameLog.GameDate,\n\
+  \        GameLog.GameLogId\n    FROM dbo.GameLog\n    WHERE GameLog.GameType = 'REG'\n\
+  \    UNION ALL\n    SELECT\n        CASE WHEN VisitingScore > HomeScore THEN 'W'\n\
+  \             WHEN HomeScore > VisitingScore THEN 'L'\n        END AS result,\n\
+  \        HomeTeamName AS opposing_team,\n        VisitingTeamName AS team_to_trend,\n\
+  \        GameLog.GameDate,\n        GameLog.GameLogId\n    FROM dbo.GameLog\n  \
+  \  WHERE GameLog.GameType = 'REG'\n        AND VisitingScore  HomeScore),\nGAME_LOG_ORDERED\
+  \ AS (\n    SELECT\n        GAME_LOG.GameLogId,\n        GAME_LOG.GameDate,\n  \
+  \      GAME_LOG.team_to_trend,\n        GAME_LOG.result,\n        LAG(GAME_LOG.result)\
+  \ OVER (PARTITION BY team_to_trend ORDER BY GAME_LOG.GameDate, GAME_LOG.GameLogId)\
+  \ AS previous_game_result,\n        LEAD(GAME_LOG.result) OVER (PARTITION BY team_to_trend\
+  \ ORDER BY GAME_LOG.GameDate, GAME_LOG.GameLogId) AS next_game_result,\n       \
+  \ ROW_NUMBER() OVER (PARTITION BY team_to_trend ORDER BY GAME_LOG.GameDate, GAME_LOG.GameLogId)\
+  \ AS island_location\n    FROM GAME_LOG),\nCTE_ISLAND_START AS (\n    SELECT\n \
+  \       ROW_NUMBER() OVER (PARTITION BY GAME_LOG_ORDERED.team_to_trend ORDER BY\
+  \ GAME_LOG_ORDERED.GameDate, GAME_LOG_ORDERED.GameLogId) AS island_number,\n   \
+  \     GAME_LOG_ORDERED.GameDate AS island_start_time,\n        GAME_LOG_ORDERED.island_location\
+  \ AS island_start_location,\n        GAME_LOG_ORDERED.team_to_trend\n    FROM GAME_LOG_ORDERED\n\
+  \    WHERE GAME_LOG_ORDERED.result = 'W'\n        AND (GAME_LOG_ORDERED.previous_game_result\
+  \  'W' OR GAME_LOG_ORDERED.previous_game_result IS NULL)),\nCTE_ISLAND_END AS (\n\
+  \    SELECT\n        ROW_NUMBER() OVER (PARTITION BY GAME_LOG_ORDERED.team_to_trend\
+  \ ORDER BY GAME_LOG_ORDERED.GameDate, GAME_LOG_ORDERED.GameLogId) AS island_number,\n\
+  \        GAME_LOG_ORDERED.GameDate AS island_end_time,\n        GAME_LOG_ORDERED.island_location\
+  \ AS island_end_location,\n        GAME_LOG_ORDERED.team_to_trend\n    FROM GAME_LOG_ORDERED\n\
+  \    WHERE GAME_LOG_ORDERED.result = 'W'\n        AND (GAME_LOG_ORDERED.next_game_result\
+  \  'W' OR GAME_LOG_ORDERED.next_game_result IS NULL))\nSELECT\n    CTE_ISLAND_START.island_start_time,\n\
+  \    CTE_ISLAND_START.team_to_trend,\n    CTE_ISLAND_END.island_end_time,\n    CTE_ISLAND_END.island_end_location\
+  \ - CTE_ISLAND_START.island_start_location + 1 AS count_of_events,\n    DATEDIFF(DAY,\
+  \ CTE_ISLAND_START.island_start_time, CTE_ISLAND_END.island_end_time) + 1 AS length_of_streak_in_days\n\
+  FROM CTE_ISLAND_START\nINNER JOIN CTE_ISLAND_END\n    ON CTE_ISLAND_START.island_number\
+  \ = CTE_ISLAND_END.island_number\n    AND CTE_ISLAND_START.team_to_trend = CTE_ISLAND_END.team_to_trend\n\
+  ORDER BY CTE_ISLAND_END.island_end_location - CTE_ISLAND_START.island_start_location\
+  \ DESC;\n```\n**列表 9-10**\n计算所有球队整体连胜记录的查询\n\n为了计算整体连胜记录，我们从`JOIN`和窗口函数中移除了对`opposing_team`的引用，并让`SQL\
+  \ Server`处理其余部分。图 9-12 显示了这些更改的结果。\n\n![../images/335106_2_En_9_Chapter/335106_2_En_9_Fig12_HTML.jpg](img/335106_2_En_9_Fig12_HTML.jpg)\n\
+  \n**图 9-12**\n\n历史上最长的整体连胜记录\n\n我们可以看到，历史上最长的连胜记录是 1875 年由波士顿红袜队创造的，而下一个最长的连胜记录发生在\
+  \ 142 年后，由克利夫兰印第安人队创造。由于我们进行的是对阵所有其他球队的分析，对手球队已从结果中移除。\n\n## 数据质量\n\n在基于连续区间进行数据分析之前，我们需要仔细考虑底层数据的质量。因为我们将数据集分区并排序为不同的端点，一个错误的数据点可能会打乱集合内剩余的数据。如果我们不事先测试，可能会有多种情况使分析失效，这些情况值得在此简要讨论。\n\
+  \n### 空值\n\n考虑我们之前对棒球比分的分析。我们通过比较比分来计算结果，从而分配“W”表示胜利，“L”表示失败，“T”表示平局。如果一个比分为`NULL`会怎样？我们的相等操作将无法返回预期结果，我们的分析也会被破坏。\n\
+  \n列表 9-11 提供了一个查询，该查询将单场比赛的比分更新为`NULL`。\n\n```\nUPDATE GameLog\nSET HomeScore =\
+  \ null,\n    VisitingScore = null\nFROM GameLog\nWHERE GameLogID = 209967;\n```\n\
+  **列表 9-11**\n为数据质量测试设置比分为`NULL`\n\n该行对应于 1875 年 7 月 7 日波士顿的比赛。图 9-13 显示了在我们将一行比分为`NULL`之前和之后波士顿的连胜记录。\n\
+  \n![../images/335106_2_En_9_Chapter/335106_2_En_9_Fig13_HTML.jpg](img/335106_2_En_9_Fig13_HTML.jpg)\n\
+  \n**图 9-13**\n波士顿红袜队在设置`NULL`值前后的连胜记录\n\n`NULL`值的出现导致通过将一场连胜分裂为两部分而创建了一个新的数据区间。这是一个相当良性的结果，只在一个位置导致了坏数据，但并未破坏我们的整个数据集。如果更基本的指标包含`NULL`，例如`GameType`，我们可能会在结果中看到更广泛的无效数据。\n\
+  \n### 意外或无效值\n\n如同任何数据分析一样，我们经常会遇到可能影响我们工作的垃圾数据。日期字段常包含“1/1/1900”作为虚拟值，字符串可能包含空格，而本应为正整数的字段可能包含-1。虽然我们可以在遇到坏数据时尝试验证和纠正，但我们也应编写能尽可能防范它的查询，这样我们的分析才不会被单个异常条目破坏。以下是管理这些场景的一些建议：\n\
+  \n*   使用`CASE`语句时，要么包含一个捕获所有情况的`ELSE`子句，要么在`WHEN`子句集合中涵盖所有可能的选项。\n*   考虑在分析之前过滤掉坏数据。这消除了需要为其编写特殊处理代码的麻烦，并且可以在稍后将问题的存在告知相关方。\n\
+  *   如果坏数据可能被创建并传入你的系统，请在报告中加以说明，以便其使用者了解其存在和局限性。\n*   如果可以容忍，修复坏数据。例如，如果我们知道任何`NULL`或小于零的值都应为零，那么我们可以在分析前将其修复，从而消除问题。\n\
+  \n\n### 重复数据\n\n在我们的分析中，重复数据是通过窗口函数进行管理的。确保重复数据被正确处理的关键在于，确保每个窗口函数内的`ORDER BY`子句能产生一个唯一的排序。\n\
+  \n这要求在整个查询中依赖一个主键或可替换键。例如，本章前面提到的`error_log`数据，在除错误时间外的所有`ORDER BY`子句中都使用了一个唯一的整数主键。这确保了我们的数据首先按日期时间排序，但如果两个错误同时发生，则会进一步按主键排序。\n\
+  \n在我们的棒球数据中，我们使用了`log`表中的整数主键来确保所有查询中的排序都是唯一的。如果不存在唯一的列，那么请考虑使用一组列构成一个可替换键，以便有效地对数据进行排序。\n\
+  \n一个数据集必须拥有一个唯一的列或一组列，才能准确地执行间隙/孤岛分析。\n\n如果不存在唯一的列或列组合，那么我们的数据就存在一个根本性问题，这可能会使我们的间隙/孤岛分析无效。如果这项分析是必要的，那么最佳解决方案是添加一个新的唯一列，比如一个标识列，以确保我们在分析数据集时能唯一地标记每一行。\n\
+  \n一般来说，没有主键的数据集分析起来具有挑战性，但对于许多类型的分析（如间隙/孤岛），如果没有主键，我们就无法保证能够一致地准确返回结果。\n\n## 性能\n\
+  \n窗口函数能够生成一些在 T-SQL 中难以用其他方法返回的独特指标。与所有分析过程一样，性能将取决于分析前需要扫描的数据量。计算单支球队在 1 万行数据上的连胜场次需要扫描\
+  \ 1 万行数据。对于一个包含十亿行的数据集进行同样的操作，则需要读取所有十亿行数据。我们可以通过重新考虑数据集本身以及我们访问它的方式来管理和提升性能。\n\n\
+  以下是一些选项，当在大型数据集上执行间隙/孤岛分析时，如果性能不足，这些选项有助于提升性能：\n\n1.  针对一个 OLAP/报告数据库。任何大规模分析在针对具有高事务性工作负载的数据库运行时都会引起资源竞争。请考虑使用由复制、AlwaysOn、ETL、日志传送或其他数据复制过程支持的报告环境，这些过程将分析工作负载与事务性工作负载分离。\n\
+  \n2.  如果这些查询必须在 OLTP 环境中运行，请在非高峰时段或其他进程运行较少时运行它们。\n\n3.  每个查询开始时的基础筛选器会减少需要分析的数据量。对这些筛选器中的列进行索引，将确保您不会读取任何满足查询所不需要的额外数据。这使得数据可以被切分成更窄的集合，这些集合可以独立于数据集的其余部分进行单独分析。\n\
+  \n4.  增量数据加载可以大大减少满足定期请求的分析所需的数据量。如果间隙/孤岛是按天计算的，那么只需要重新计算前一天的指标即可得到结果。唯一需要注意的是，要从上一个已知的间隙或孤岛的结束点开始分析。这确保了报告期开始时正在进行的事件被完整地报告为一个单一事件，而不是被一次数据加载的结束和下一次加载的开始分割成两个事件。\n\
+  \n5.  自动化分析，使这些任务能够无人值守地执行，并将结果存储在表中以供将来检查。如果间隙/孤岛分析的结果被放入一个永久性存储库，那么未来的报告只需读取该表，而不必每次需要时都执行复杂的查询。\n\
+  \n## 总结\n\n像`LEAD`、`LAG`和`ROW_NUMBER`这样的窗口函数可以组合使用，从而能够对数据集执行各种各样的分析。在本章中，我们演示了它们在查找缺失数据、聚合相关事件以及计算不同类型连胜（或干旱期）中的应用。\n\
+  \n我们还可以使用类似的方法收集许多其他指标。间隙和孤岛分析可用于对数据排序，并确定行在整个集合中与附近行的关系。它们可以让我们定位在大型/复杂表格集合中原本可能不明显的异常。\n\
+  \n计算连胜（或干旱期）使我们能够将随时间推移的重要事件链条串联起来，但我们也可以考虑干旱期。重要事件之间的时间间隔是多长？经过长时间的干旱期后，事件发生的概率是否会增加？任何间隙分析也可以用来生成孤岛，反之，孤岛分析也可以用来生成间隙数据。在这方面，我们总可以将重要事件的存在和不存在都视为值得考虑的指标。\n\
+  \n一旦我们构建了能够执行这些分析的查询，我们就可以以最小的改动重用我们的代码，来处理其他数据集、更改筛选器，或以完全不同的方式处理数据。通过试验筛选器和我们所使用的窗口函数的内容，这些分析的潜在应用是无限的！\n\
+  \n"
+- '# 10. 时间范围计算
+
+
+  一个非常常见的报告需求是按不同的时间范围生成总计以进行比较。典型的报告将包含按月、季度和年的总计，有时还会与去年同期进行比较，或包含累计至今的月总计（MTD）和累计至今的年总计（YTD）。像
+  SQL Server Analysis Services 和 Power BI 这样的产品提供了导航日期层次结构的函数。使用 SQL Server 2012 或更高版本中的窗口函数，您可以利用本书前面提供的技术实现相同的计算。
+
+
+  在本章中，您将把之前学到的所有技术付诸实践，创建用于导航时间线的计算，以生成以下计算：
+
+
+  *   占父级百分比（Percent of Parent）
+
+  *   年初至今（Year-to-date, YTD）
+
+  *   季度初至今（Quarter-to-date, QTD）
+
+  *   月初至今（Month-to-date, MTD）
+
+  *   去年同期（Same Period Prior Year, SP PY）
+
+  *   去年年初至今（Prior year-to-date, PY YTD）
+
+  *   平均值、移动平均（MA）
+
+  *   增长、增长百分比
+
+
+  您已经在第 3 章学习了使用窗口聚合在不进行分组的情况下向查询添加汇总信息，在第 4 章学习了累积聚合，在第 5 章学习了窗口帧定义。您将把这些知识与一些常识结合起来，创建复杂的计算，如果没有窗口函数，这些计算将需要更多的步骤。
+
+
+  请记住，在累积聚合的情况下，`PARTITION BY` 和 `ORDER BY` 子句决定了哪些行最终进入窗口。`FRAME DEFINITION`（帧定义）用于定义分区内将被聚合的行的子集。本节中的示例将使用帧定义来完成繁重的工作。回顾一下，其语法如下：
+
+
+  ```
+
+  () OVER([PARTITION BY [,,...]]
+
+  ORDER BY [,,...] [Frame definition])
+
+  ```
+
+
+  在本章中，您需要使用 AdventureWorksDW 示例数据库。
+
+
+  ## 父级百分比
+
+
+  将特定时期内产品的表现与该时期所有产品的表现进行比较，或将类别中的每个产品与该类别进行比较，是一种非常常见的分析技术。在接下来的这组示例中，你将基于清单 10-1
+  中的简单基础查询进行扩展，通过添加计算列来生成最终的“父级百分比”结果，如图 10-1 所示。你将从一个按月汇总销售的直接查询开始，并随着内容的介绍添加新的计算列，使得每个新列都能独立引入，而无需为每个迭代重复整个代码块示例。
+
+
+  ![../images/335106_2_En_10_Chapter/335106_2_En_10_Fig1_HTML.jpg](img/335106_2_En_10_Fig1_HTML.jpg)
+
+
+  **图 10-1** 我们简单基础查询的结果
+
+
+  ```sql
+
+  --10.1 基础查询。只是一个普通的 GROUP BY。
+
+  SELECT f.ProductKey,
+
+  YEAR(f.orderdate) AS OrderYear,
+
+  MONTH(f.orderdate) AS OrderMonth,
+
+  SUM(f.SalesAmount) AS [Sales]
+
+  FROM dbo.FactInternetSales AS f
+
+  WHERE OrderDate BETWEEN ''2011-01-01'' AND ''2012-12-31''
+
+  GROUP BY f.ProductKey,
+
+  YEAR(f.orderdate),
+
+  MONTH(f.orderdate)
+
+  ORDER BY 2, 3, f.ProductKey;
+
+  ```
+
+
+  **清单 10-1** 基础查询
+
+
+  “父级百分比”或“父级比率”计算通常可以定义为“[子级总计] / [父级总计]”。为了计算定义的比率，你需要计算分子和分母输入，并在第三个度量中将它们组合起来。要计算每个产品对所有销售的总体贡献，你需要确定`[All
+  Sales]`和`[Product All Sales]`的总计。一旦定义了这些，你就可以将`[Ratio to All Sales]`计算为`[Product
+  All Sales] / [All Sales]`。你可以将得到的比率乘以 100 以百分比形式显示，或者依赖报表或前端工具的格式化功能将其显示为百分比。
+
+
+  对于这些度量中的每一个，窗口聚合`SUM()`函数都封装了一个常规的`SUM()`函数，一开始可能看起来有点奇怪，但这是将`[SalesAmount]`聚合到高于查询粒度级别所必需的。结果，如图
+  10-2 所示，是能够在单个查询中将同一源列聚合到不同级别，而无需借助临时表或公用表表达式。
+
+
+  清单 10-2 中的代码包含了你需要附加到基础查询的额外列逻辑，位置在`select`列表的最后一列之后。务必在`[Sales]`后面加上逗号。
+
+
+  ![../images/335106_2_En_10_Chapter/335106_2_En_10_Fig2_HTML.jpg](img/335106_2_En_10_Fig2_HTML.jpg)
+
+
+  **图 10-2** 计算产品销售额占所有销售额百分比的结果
+
+
+  ```sql
+
+  SUM(SUM(f.SalesAmount)) OVER () AS [All Sales],
+
+  SUM(SUM(f.SalesAmount)) OVER (PARTITION BY f.productkey)
+
+  AS [Product All Sales],
+
+  SUM(SUM(f.SalesAmount)) OVER (PARTITION BY f.productkey)
+
+  / SUM(SUM(f.SalesAmount)) OVER()
+
+  AS [Ratio to All Sales]
+
+  ```
+
+
+  **清单 10-2** 用于`[All Sales]`的额外列
+
+
+  `[All Sales]`列的框架没有`PARTITION`子句，这意味着它将聚合查询可用的所有数据，提供所有时间的销售总计。此值对于结果表中的每一行都是相同的。`[Product
+  All Sales]`列的`PARTITION`子句将分区限制为每个产品键的实例，提供按产品所有时间的销售总计。此值对于共享相同`[ProductKey]`值的所有行都是相同的。
+
+
+  `[Ratio to All Sales]`列结合了前两个语句来计算它们之间的比率。关键是要认识到，你可以在单个列中组合多个聚合结果。了解这一点将使你能够创建各种复杂的计算，而这些计算原本可能只能留在报表工具或应用程序代码中。用简单的术语写出计算逻辑是记录你想要实现目标的好方法，并为组合现有计算以形成新计算提供了模板。以下伪代码描述了将在
+  T-SQL 中实现的逻辑：
+
+
+  ```sql
+
+  [Sales] = 按产品、年和月汇总的 SalesAmount
+
+  [All Sales] = 所有产品和所有日期的 SalesAmount 总和
+
+  [Annual Sales] = 按年汇总的所有产品的 SalesAmount 总和
+
+  [Month All Sales] = 按年和月汇总的所有产品的 SalesAmount 总和
+
+  [Product All Sales] = 按产品汇总的所有日期的 SalesAmount 总和
+
+  [Product Annual Sales] = 按产品和年汇总的 SalesAmount 总和
+
+  [Ratio to All Sales] = [Product All Sales] / [All Sales]
+
+  [Ratio to Annual Sales] = [Product Annual Sales] / [Annual Sales]
+
+  [Ratio to Month Sales] = [Sales] / [Month All Sales]
+
+  ```
+
+
+  这种方法最有效的方式是，你首先为给定计算的每个输入列理清逻辑，然后创建利用输入列计算的复杂计算。年度和月级别的列计算遵循类似的模式，因此一旦你为一个级别理清了计算，其余的也会很快跟进。本章后面你将学习如何使用公用表表达式来简化复杂计算的创建。
+
+
+  无需担心在“全部”级别处理被零除错误，因为唯一会导致错误的情况是源表中完全没有行，但对于低于它的每个级别，你必须考虑分母值可能为零的情况。清单 10-3 中“年度”和“月”级别的计算演示了如何做到这一点。通过将窗口`SUM()`语句包装在`NULLIF()`函数中，任何零聚合值都会转换为`NULL`值，从而避免被零除错误。你也可以使用`CASE`语句代替`NULLIF()`，但考虑到所涉及的函数嵌套，`NULLIF()`更简洁。
+
+
+  ```sql
+
+  --10.3 年度和月度父级百分比
+
+  SUM(SUM(f.SalesAmount))
+
+  OVER (PARTITION BY YEAR(f.OrderDate)) AS [Annual Sales],
+
+  SUM(SUM(f.SalesAmount))
+
+  OVER (PARTITION BY f.productkey, YEAR(f.OrderDate))
+
+  AS [Product Annual Sales],
+
+  --组内百分比:
+
+  --[Ratio to Annual Sales] = [Product Annual Sales] / [Annual Sales]
+
+  SUM(SUM(f.SalesAmount))
+
+  OVER (PARTITION BY f.productkey, YEAR(f.OrderDate))
+
+  / NULLIF(SUM(SUM(f.SalesAmount))
+
+  OVER (PARTITION BY YEAR(f.OrderDate))
+
+  , 0) AS [Ratio to Annual Sales],
+
+  SUM(SUM(f.SalesAmount))
+
+  OVER (PARTITION BY YEAR(f.OrderDate), MONTH(f.OrderDate))
+
+  AS [Month All Sales],
+
+  SUM(SUM(f.SalesAmount))
+
+  OVER (PARTITION BY f.productkey, YEAR(f.OrderDate),
+
+  MONTH(f.OrderDate))
+
+  / NULLIF(SUM(SUM(f.SalesAmount))
+
+  OVER (PARTITION BY YEAR(f.OrderDate), MONTH(f.OrderDate))
+
+  , 0) AS [Ratio to Month Sales]
+
+  ```
+
+
+  **清单 10-3** 用于计算年度和月度父级百分比列的额外列
+
+
+  ## 使用 CTE 简化计算
+
+
+  如果你想让代码更易于阅读、理解和维护，可以在一个公共表表达式（`CTE`）中一次性计算所有基本聚合，如列表 10-4 所示，然后在后续查询中执行二阶计算。使用`CTE`中命名的结果列，而不是之前使用的扩展逻辑列，可以显著提高代码的可读性。一旦为任何给定的组合计算推导出逻辑，你就可以注释掉或删除输入列，只返回你感兴趣的最终结果列，如图
+  10-3 所示。
+
+
+  ![../images/335106_2_En_10_Chapter/335106_2_En_10_Fig3_HTML.jpg](img/335106_2_En_10_Fig3_HTML.jpg)
+
+
+  图 10-3
+
+
+  列表 10-4 的结果
+
+
+  ```
+
+  --10.4 父级百分比、年度和月度销售额
+
+  --重构以使用 CTE，使得最终的 SELECT 语句对凡人来说也清晰可读。
+
+  WITH CTE_Base
+
+  AS ( SELECT f.ProductKey,
+
+  YEAR(f.orderdate) AS OrderYear,
+
+  MONTH(f.orderdate) AS OrderMonth,
+
+  SUM(f.SalesAmount) AS [Sales],
+
+  SUM(SUM(f.SalesAmount)) OVER () AS [All Sales],
+
+  SUM(SUM(f.SalesAmount)) OVER (PARTITION BY f.productkey)
+
+  AS [Product All Sales],
+
+  SUM(SUM(f.SalesAmount))
+
+  OVER (PARTITION BY YEAR(f.OrderDate)) AS [Annual Sales],
+
+  SUM(SUM(f.SalesAmount))
+
+  OVER (PARTITION BY YEAR(f.OrderDate), MONTH(f.OrderDate))
+
+  AS [Month All Sales],
+
+  SUM(SUM(f.SalesAmount))
+
+  OVER (PARTITION BY f.productkey, YEAR(f.OrderDate))
+
+  AS [Product Annual Sales]
+
+  FROM dbo.FactInternetSales AS f
+
+  WHERE OrderDate BETWEEN ''2011-01-01'' AND ''2012-12-31''
+
+  GROUP BY f.ProductKey,
+
+  YEAR(f.orderdate),
+
+  MONTH(f.orderdate)
+
+  )
+
+  SELECT ProductKey,
+
+  OrderYear,
+
+  OrderMonth,
+
+  [Sales],
+
+  [Product All Sales] / [All Sales] AS [Ratio to All Sales],
+
+  [Product Annual Sales] / NULLIF([Annual Sales], 0)
+
+  AS [Ratio to Annual Sales],
+
+  [Sales] / NULLIF([Month All Sales], 0) AS [Ratio to Month Sales]
+
+  FROM CTE_Base
+
+  ORDER BY OrderYear,
+
+  OrderMonth,
+
+  ProductKey;
+
+  ```
+
+  列表 10-4
+
+  针对 `[SalesAmount]` 的包含父级百分比计算的基本查询
+
+
+  ## 期间至今计算
+
+
+  期间至今（Period-to-date）计算是财务报告的主要内容，但众所周知，在不借助多个`CTE`或临时表的情况下，很难将其整合到基于查询的报告中。通常，分组是在`SQL
+  Server Reporting Services`或`Excel`等报告工具中执行的，以提供聚合结果，但这仍然可能很棘手。你将通过接下来的示例学习如何通过在`ORDER
+  BY`子句后添加一个`FRAME`子句，在单个结果集中创建多级滚动总计。`FRAME`子句在第 5 章有更详细的介绍。
+
+
+  列表 10-5 演示了如何使用帧定义来按日期、按产品计算月份、季度和年份的期间至今总计。基本查询与之前基本相同，但粒度级别是日期级别而不是月份级别。这样你就可以更详细地查看聚合列的结果。
+
+
+  ```
+
+  --10.5 日级别聚合，包含 MTD、QTD、YTD 的滚动总计
+
+  SELECT f.OrderDate,
+
+  f.ProductKey,
+
+  YEAR(f.orderdate) AS OrderYear,
+
+  MONTH(f.orderdate) AS OrderMonth,
+
+  SUM(f.SalesAmount) AS [Sales],
+
+  SUM(SUM(f.SalesAmount))
+
+  OVER(PARTITION BY f.productkey, YEAR(f.orderdate),
+
+  MONTH(f.orderdate)
+
+  ORDER BY f.productkey, f.orderdate
+
+  ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+
+  ) AS [Sales MTD],
+
+  SUM(SUM(f.SalesAmount))
+
+  OVER(PARTITION BY f.productkey, YEAR(f.orderdate),
+
+  DATEPART(QUARTER, f.OrderDate)
+
+  ORDER BY f.productkey, YEAR(f.orderdate), MONTH(f.orderdate)
+
+  ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+
+  ) AS [Sales QTD],
+
+  SUM(SUM(f.SalesAmount))
+
+  OVER(PARTITION BY f.productkey, YEAR(f.orderdate)
+
+  ORDER BY f.productkey, f.orderdate
+
+  ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+
+  ) AS [Sales YTD],
+
+  SUM(SUM(f.SalesAmount))
+
+  OVER(PARTITION BY f.productkey
+
+  ORDER BY f.productkey, f.orderdate
+
+  ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+
+  ) AS [Sales Running Total]
+
+  FROM dbo.FactInternetSales AS f
+
+  GROUP BY f.orderdate, f.ProductKey, YEAR(f.orderdate), MONTH(f.orderdate)
+
+  ORDER BY f.ProductKey, f.OrderDate;
+
+  ```
+
+  列表 10-5
+
+  按日期计算期间至今运行总计
+
+
+  列表 10-5 所示的 `OVER` 子句示例使用了 `ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW` 帧。这导致计算聚合从帧的开始到当前行的所有行，为你提供在
+  `PARTITION` 子句中指定的级别的正确至今总计。例如，`[Sale Amt MTD]` 聚合列将计算从本月的第一天（第一个无界前置行）到当前行的 `SUM([SalesAmount])`。当使用
+  `FRAME` 子句时，`ORDER BY` 子句成为必需，为帧提供在 `PARTITION` 中按顺序遍历行的上下文。
+
+
+  图 10-4 显示了部分结果。列 [`Sales MTD], [Sales QTD]` 和 [`Sales YTD]` 的值会增加，直到遇到不同的 [`ProductKey]`
+  或 [`ProductKey]` 和时间级别（月份和季度）。图 10-4 中的结果显示聚合在第二季度末中断，因此通过查看 `[ProductKey]` 等于 311、312
+  或 313 的行，你可以看到 MTD 和 QTD 聚合在 10 月 1 日重置。
+
+
+  ![../images/335106_2_En_10_Chapter/335106_2_En_10_Fig4_HTML.jpg](img/335106_2_En_10_Fig4_HTML.jpg)
+
+
+  图 10-4
+
+
+  列表 10-5 在季度末（9 月 30 日）的部分结果
+
+
+  ## 平均值和移动平均值
+
+
+
+  ### 处理日期范围中的间隙
+
+
+  在进入更复杂的示例之前，你需要停下来思考一下处理日期时所面临的挑战。日期作为一种数据类型是连续且顺序的。处理日期的 T-SQL 函数在设计时考虑到了这一点，并能正确处理任何相关的日期运算。然而，实际上，基于日期的数据并不会是连续的。交易数据会出现间隙，可能某天、某周，甚至某个月或更长时间内没有数据。
+
+
+  窗口函数并不具备日期感知能力，因此你需要确保任何聚合计算都能正确处理数据中的间隙。如果你在日期范围或日期周期范围上使用 `LEAD()` 和 `LAG()` 窗口函数，你必须在结果集中提供根据计算需要而包含连续完整日期、月份、季度或年份的分区。未能做到这一点将导致结果不正确。原因在于
+  `LEAD()` 和 `LAG()` 函数是在查询的结果集上操作的，它会在结果集中向前或向后移动指定的行数，而不管这些行所代表的天数或月数。
+
+
+  例如，一个使用窗口函数错误实现的三个月移动平均值，就不会考虑到某个产品在特定月份没有数据的情况。它会在提供的数据上执行框架子集操作，并对前三个月的数据进行平均，而不考虑它们是否为连续的月份。清单
+  10-6 演示了不考虑日期范围中的间隙将如何导致错误或误导性的结果。在此示例中，通过移除任何对 `[OrderDate]` 的分组引用，将数据聚合到月份级别：
+
+
+  ```sql
+
+  --10.6 处理日期间隙，月份级别：未处理间隙
+
+  SELECT ROW_NUMBER()
+
+  OVER(ORDER BY f.ProductKey, YEAR(f.OrderDate), MONTH(f.OrderDate))
+
+  AS [RowID],
+
+  f.ProductKey,
+
+  YEAR(f.OrderDate) AS OrderYear,
+
+  MONTH(f.OrderDate) AS OrderMonth,
+
+  ROUND(SUM(f.SalesAmount), 2) AS [Sales], -- 月份级别
+
+  ROUND(SUM(SUM(f.SalesAmount))
+
+  OVER(PARTITION BY f.ProductKey, YEAR(f.OrderDate)
+
+  ORDER BY f.ProductKey, YEAR(f.OrderDate), MONTH(f.OrderDate)
+
+  ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+
+  ), 2) AS [Sales YTD],
+
+  ROUND(AVG(SUM(f.SalesAmount))
+
+  OVER(PARTITION BY f.ProductKey
+
+  ORDER BY f.ProductKey, YEAR(f.OrderDate), MONTH(f.OrderDate)
+
+  ROWS BETWEEN 3 PRECEDING AND CURRENT ROW
+
+  ),2) AS [3 Month Moving Avg]
+
+  FROM [dbo].[FactInternetSales] AS f
+
+  WHERE ProductKey = 332
+
+  AND f.OrderDate BETWEEN ''2010-12-01'' AND ''2011-12-31''
+
+  GROUP BY f.ProductKey, YEAR(f.OrderDate), MONTH(f.OrderDate)
+
+  ORDER BY f.ProductKey ,YEAR(f.OrderDate), MONTH(f.OrderDate)
+
+  清单 10-6
+
+  错误地处理日期间隙
+
+  ```
+
+
+  请注意图 10-5 中的结果，对于所选的时间范围，只显示了 9 个月。在包含无数据的月份范围上计算移动平均值会产生错误的结果。接下来，你将学习如何通过填补间隙来解决这个问题。
+
+
+  ![`` `../images/335106_2_En_10_Chapter/335106_2_En_10_Fig5_HTML.jpg` ``](img/335106_2_En_10_Fig5_HTML.jpg)
+
+
+  *图 10-5*
+
+  *移动平均值的错误计算*
+
+
+  为了解决这个问题，需要使用一个补充的“日期”表来填补交易数据中的间隙。这不是一个新问题，在数据仓库设计中通过包含一个“日期”维度表已经得到了解决，该表包含指定年份范围内每一天的一行。AdventureWorksDW
+  数据库包含一个 `DimDate` 表，将在以下示例中使用。如果你没有可用的日期维度，也可以使用公用表表达式 (CTE) 来创建一个日期维度表。使用日期值表比使用
+  CTE 性能要好得多。代码下载中包含一个 CTE 派生的日历维度视图示例。
+
+
+  在清单 10-7 中，`DimDate` 表与 `DimProduct` 表进行交叉连接，生成一个包含指定范围内所有日期所有产品的集合。生成的 CTE “表”被用作查询
+  SELECT 部分的主表，这样，即使某个产品在给定时间段内没有交易，范围内的每个日期也会在每个产品的聚合结果中得到体现。你还可以从产品表中获取其他属性，如产品类别、颜色等，以及从事实表中获取行计数和不同计数。这些可以用来创建额外的统计数据。在图
+  10-6 中，你可以看到添加了 `[ProductAlternateKey]`，并在所有分组操作中取代了 `[ProductKey]`，以使结果更易于用户理解。
+
+
+  ![`` `../images/335106_2_En_10_Chapter/335106_2_En_10_Fig6_HTML.jpg` ``](img/335106_2_En_10_Fig6_HTML.jpg)
+
+
+  *图 10-6*
+
+  *考虑销售数据间隙后的移动平均值*
+
+
+  ```sql
+
+  --10.7 月份级别。现在处理交易日期间隙
+
+  WITH CTE_ProductPeriod
+
+  AS (
+
+  SELECT p.ProductKey, p.ProductAlternateKey as [ProductID],
+
+  Datekey, CalendarYear,
+
+  CalendarQuarter, MonthNumberOfYear AS CalendarMonth
+
+  FROM DimDate AS d
+
+  CROSS JOIN DimProduct p
+
+  WHERE d.FullDateAlternateKey BETWEEN ''2011-01-01'' AND ''2013-12-31''
+
+  AND EXISTS(SELECT * FROM FactInternetSales f
+
+  WHERE f.ProductKey = p.ProductKey
+
+  AND f.OrderDate BETWEEN ''2011-01-01'' AND ''2013-12-31'')
+
+  )
+
+  SELECT      ROW_NUMBER()
+
+  OVER(ORDER BY p.[ProductID],
+
+  p.CalendarYear,
+
+  p.CalendarMonth
+
+  ) as [RowID],
+
+  p.[ProductID],
+
+  p.CalendarYear  AS OrderYear,
+
+  p.CalendarMonth AS OrderMonth,
+
+  ROUND(SUM(COALESCE(f.SalesAmount,0)), 2) AS [Sales],
+
+  ROUND(SUM(SUM(f.SalesAmount))
+
+  OVER(PARTITION BY p.[ProductID], p.CalendarYear
+
+  ORDER BY P.[ProductID], p.CalendarYear, p.CalendarMonth
+
+  ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+
+  ), 2) AS [Sales YTD],
+
+  ROUND(SUM(SUM(COALESCE(f.SalesAmount, 0)))
+
+  OVER(PARTITION BY p.[ProductID]
+
+  ORDER BY p.[ProductID], p.CalendarYear, p.CalendarMonth
+
+  ROWS BETWEEN 3 PRECEDING AND CURRENT ROW
+
+  ) / 3, 2) AS [3 Month Moving Avg]
+
+  FROM CTE_ProductPeriod AS p
+
+  LEFT OUTER JOIN [dbo].[FactInternetSales]  AS f
+
+  ON p.ProductKey = f.ProductKey
+
+  AND p.DateKey = f.OrderDateKey
+
+  WHERE p.ProductKey = 332
+
+  AND p.CalendarYear =  2011
+
+  GROUP BY p.[ProductID], p.CalendarYear, p.CalendarMonth
+
+  ORDER BY p.[ProductID], p.CalendarYear, p.CalendarMonth
+
+  清单 10-7
+
+  正确处理日期间隙
+
+  ```
+
+
+  比较前两个查询的结果。`[3 Month Moving Avg]` 列现在对于产品没有销售的月份（二月、三月、十一月）以及紧接空时间段之后的月份（五月、六月、十二月）都是正确的。第二个查询中的计算没有使用
+  `AVG()` 函数，而是将 `SUM()` 除以三来得出平均值。这确保了前三期的平均值更加准确。在接下来的部分中，你将学习在计算移动平均值时，如何将计算仅限制在完整的范围上。
+
+
+
+
+  ### 同一时期上一年
+
+
+  作为提供期初至今计算的一部分，您还需要提供与上一年同一时期、同年上一时期的比较，很可能还要提供差额和差异百分比。这些汇总值的计算方式可以与您目前处理的项目相同：通过用简单的术语定义公式、在列级别确定输入计算，然后使用这些输入计算来构建输出列。
+
+
+  在此示例中，`[ProductKey]` 已从查询中移除，因此结果的粒度是月级别。这使您能更轻松地在较少的行数中看到新计算的效果。为了计算上一年的值，查询不能在
+  `WHERE` 子句中被限制在单一年份。`图 10-7` 显示，窗口函数要能够回溯到上一年，结果集中必须包含不止一年的数据。
+
+
+  ![../images/335106_2_En_10_Chapter/335106_2_En_10_Fig7_HTML.jpg](img/335106_2_En_10_Fig7_HTML.jpg)
+
+
+  `图 10-7` WHERE 子句必须覆盖先前范围的日期
+
+
+  `LAG()` 函数可以通过在记录集中回溯指定的行数来检索和汇总数据。它还有一个可选的默认参数，可用于在向后导航记录时没有可用行的情况下返回零值。`清单 10-8`
+  和 `图 10-8` 展示了这一点：
+
+
+  ![../images/335106_2_En_10_Chapter/335106_2_En_10_Fig8_HTML.jpg](img/335106_2_En_10_Fig8_HTML.jpg)
+
+
+  `图 10-8` 同一月份上一年
+
+
+  ```
+
+  --10.8 同一月份，上一年
+
+  WITH CTE_ProductPeriod
+
+  AS (
+
+  SELECT p.ProductKey, --p.ProductAlternateKey as [ProductID],
+
+  Datekey, CalendarYear, CalendarQuarter,
+
+  MonthNumberOfYear AS CalendarMonth
+
+  FROM DimDate AS d
+
+  CROSS JOIN DimProduct p
+
+  WHERE d.FullDateAlternateKey BETWEEN ''2011-01-01'' AND ''2013-12-31''
+
+  AND EXISTS(SELECT * FROM FactInternetSales f
+
+  WHERE f.ProductKey = p.ProductKey
+
+  AND f.OrderDate BETWEEN ''2011-01-01'' AND ''2013-12-31'')
+
+  )
+
+  SELECT
+
+  ROW_NUMBER()
+
+  OVER(ORDER BY p.CalendarYear, p.CalendarMonth) as [RowID],
+
+  p.CalendarYear AS OrderYear,
+
+  p.CalendarMonth AS OrderMonth,
+
+  ROUND(SUM(COALESCE(f.SalesAmount,0)), 2) AS [Sales],
+
+  ROUND(SUM(SUM(COALESCE(f.SalesAmount, 0)))
+
+  OVER(PARTITION BY p.CalendarYear
+
+  ORDER BY p.CalendarYear, p.CalendarMonth
+
+  ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+
+  ), 2) AS [Sales YTD],
+
+  ROUND(LAG(SUM(f.SalesAmount), 12 , 0)
+
+  OVER(ORDER BY p.CalendarYear, p.CalendarMonth),2)
+
+  as [Sales Same Month PY]
+
+  FROM CTE_ProductPeriod AS p
+
+  LEFT OUTER JOIN [dbo].[FactInternetSales] AS f
+
+  ON p.ProductKey = f.ProductKey
+
+  AND p.DateKey = f.OrderDateKey
+
+  GROUP BY p.CalendarYear, p.CalendarMonth
+
+  ORDER BY p.CalendarYear, p.CalendarMonth
+
+  ```
+
+
+  `清单 10-8` 检索上一年同一月份的结果
+
+
+  ### 增长与增长率计算
+
+
+  一旦您可以回溯并提取过去的某个值，就能非常轻松地计算这些值之间的差异。计算增长率（Percent Growth）的公认方法是 `([当前值] - [先前值])
+  / [先前值]`。如果您希望百分比值采用 "##.###" 的格式，还可以将结果乘以 100。将 `清单 10-9` 中的以下部分添加到 `清单 10-8` 的查询中，以合并新的计算并运行查询。您的结果应与
+  `图 10-9` 匹配。
+
+
+  ![../images/335106_2_En_10_Chapter/335106_2_En_10_Fig9_HTML.jpg](img/335106_2_En_10_Fig9_HTML.jpg)
+
+
+  `图 10-9` 增长：当月与上一年同一月份比较
+
+
+  ```
+
+  -- [增长] = [本年值] - [上年值]
+
+  ROUND(SUM(COALESCE(f.SalesAmount,0))
+
+  - LAG(SUM(f.SalesAmount), 12, 0)
+
+  OVER(ORDER BY p.CalendarYear, p.CalendarMonth), 2)
+
+  as [PY MOM Growth],
+
+  -- [增长率] = ([本年值] - [上年值]) / [上年值]
+
+  (SUM(COALESCE(f.SalesAmount,0))
+
+  - LAG(SUM(f.SalesAmount), 12, 0)
+
+  OVER(ORDER BY p.CalendarYear, p.CalendarMonth)
+
+  ) / nullif(LAG(SUM(f.SalesAmount), 12, 0 )
+
+  OVER(ORDER BY p.CalendarYear, p.CalendarMonth), 0)
+
+  as [PY MOM Growth %]
+
+  ```
+
+
+  `清单 10-9` 增长：当月与上一年同一月份比较
+
+
+  相同的方法可用于确定上个月的值及其与当前月份的差值。添加 `清单 10-10` 中的代码并运行查询，以计算上个月的值、月环比增长和月环比增长率。`图 10-10`
+  中的表格显示了结果。
+
+
+  ![../images/335106_2_En_10_Chapter/335106_2_En_10_Fig10_HTML.jpg](img/335106_2_En_10_Fig10_HTML.jpg)
+
+
+  `图 10-10` 差异：当月与上个月比较
+
+
+  ```
+
+  LAG(SUM(f.SalesAmount), 1, 0)
+
+  OVER(ORDER BY p.CalendarYear, p.CalendarMonth) as [Sales PM],
+
+  -- [增长] = [本月值] - [上月值]
+
+  SUM(COALESCE(f.SalesAmount,0))
+
+  - LAG(SUM(f.SalesAmount), 1, 0)
+
+  OVER(ORDER BY p.CalendarYear, p.CalendarMonth)
+
+  AS [MOM Growth],
+
+  -- [增长率] = ([本月值] - [上月值]) / [上月值]
+
+  (SUM(COALESCE(f.SalesAmount,0))
+
+  - LAG(SUM(f.SalesAmount), 1, 0)
+
+  OVER(ORDER BY p.CalendarYear, p.CalendarMonth))
+
+  / NULLIF(LAG(SUM(f.SalesAmount), 1, 0 )
+
+  OVER(ORDER BY p.CalendarYear, p.CalendarMonth),0)
+
+  AS [MOM Growth %]
+
+  ```
+
+
+  `清单 10-10` 增长：当月与上个月比较
+
+
+  ## 总结
+
+
+  本章内容丰富，在先前所学概念的基础上，创建了用于基于时间的财务分析的复杂计算。其中一些计算过去在 T-SQL 中不易实现，更不用说在单个查询中完成。您了解了需要一致的时间线作为查询的主干，以及如何处理数据中的间隙。您学习了如何创建期初至今、同一时期上一年、上一年年初至今、与父级比率、移动平均值以及增长和增长率计算。
+
+
+  接下来，`第 11 章` 将教您如何利用这些技术来创建更有用的趋势计算。
+
+
+  '
+- '# 11. 时间趋势计算
+
+
+  在本章中，您将把在前一章中学到的所有技术付诸实践，创建用于在时间线上导航的计算，以生成以下计算：
+
+
+  *   移动总和 (MT)
+
+  *   移动平均值 (MA)
+
+  *   变化率 (ROC)
+
+  *   综合应用
+
+  *   帕累托原则（二八法则）
+
+
+
+
+  ## 移动总量与移动平均值
+
+
+  到目前为止，查询已经变得越来越复杂。它们即将变得更加复杂。为了帮助保持其可理解性，你需要从概念上将它们视为在数据之上层层叠加的操作。早期的例子是单个查询，在一次遍历中聚合一组记录。为了引入连续的日期范围以消除交易数据中的空白，通过引入一个
+  CTE（公用表表达式）在主要聚合查询之前做一些预处理，从而增加了第二个操作。你已经在代码清单 10-4 中看到了这一点，但在本章中，我们将更进一步。
+
+
+  在本章的这一部分，你将通过将上一个示例中的聚合结果转化为一个 CTE，并在其上进行结果聚合，来添加第三个操作。在某些情况下，使用一个或两个操作也可以达到相同的结果，但对于需要嵌套窗口函数的情况，唯一的办法就是增加另一个层级。计算月度级别的``[Sales
+  PY YTD]``（上年累计销售额）就是一个例子。为了创建``[Sales YTD]``（本年累计销售额）度量，你必须使用窗口函数的所有子句。已经没有其他方法可以让你将分区移回上一年了。通过先在第二个操作中计算``[Sales
+  YTD]``，你就可以在第三个操作中使用窗口函数来计算``[Sales PY YTD]``。
+
+
+  同样，第二个优点是，任何更高阶操作的列计算都可以使用低阶操作中有意义的列名，从而使计算更容易理解，代码也更紧凑。同时，也必须权衡考虑性能和代码可读性。以下伪代码规划了剩余计算将在
+  T-SQL 中实现的逻辑：
+
+
+  ```
+
+  [Current Sales] = 某一时间段（日、月、年）内 SalesAmount 的总和
+
+  [Prior Sales] = 上一时间段内 SalesAmount 的总和
+
+  [Growth] = [Current Sales] - [Prior Sales]
+
+  [Growth %] = [Growth] / [Prior Sales]
+
+  [3 MMT] = 过去三个月内 SalesAmount 的总和
+
+  [12 MMT] = 过去 12 个月内 SalesAmount 的总和
+
+  [3 MMA] = 过去三个月内月均销售额的平均值
+
+  [12 MMA] = 过去 12 个月内月均销售额的平均值
+
+  [3/12 ROC] = [3 MMT]/([3 MMT].LAG( 11 months))
+
+  [12/12 ROC] = [12 MMT] /([12 MMT].LAG( 11 months))
+
+  [3/12 RoC2]= ([3 MMT]/([3 MMT].LAG( 11 months))* 100) -100
+
+  [12/12 RoC2] = ([12 MMT] /([12 MMT].LAG( 11 months))* 100) -100
+
+  ```
+
+
+  ### 确保数据集完整
+
+
+  最后需要解决的一个问题是，确保任何移动总量或移动平均值计算所基于的数据集都包含正确数量的输入行。例如，一个三个月的移动平均值``[3 MMA]``必须包含三个完整月份的数据，否则计算结果就不正确。通过处理交易日期范围的空白，部分问题得到了解决，但并非全部。在数据集的开始，第一行没有前序行，因此计算该行的移动平均值是不正确的。数据集的第二行也只有一行前序行，为其计算平均值同样不正确。只有到达第三行时，计算三个月移动平均值的条件才满足。表
+  11-1 展示了在给定该产品上年无数据的情况下，应该如何计算三个月移动平均值：
+
+
+  表 11-1
+
+
+  消除跨时间段的平均计算中的不完整结果
+
+
+  | 月份 | 产品 | 销售额 | 年累计销售额 | 三月移动平均 |
+
+  | --- | --- | --- | --- | --- |
+
+  | 一月 | 培根 | 1000 | 1000 |   |
+
+  | 二月 | 培根 | 500 | 1500 |   |
+
+  | 三月 | 培根 | 1500 | 3000 | 1000 |
+
+  | 四月 | 培根 | 600 | 3600 | 867 |
+
+  | 五月 | 培根 | 0 | 3600 | 700 |
+
+  | 六月 | 培根 | 400 | 4000 | 333 |
+
+
+  为了实现这一点，你可以简单地统计三个月窗口期内的行数（`COUNT`），而不是对结果进行平均，并使用这个计数值来决定何时执行计算。如果有三行数据，则执行计算；否则返回空值。下面的例子使用`CASE`语句来判断哪些行有两个前序行：
+
+
+  ```
+
+  CASE WHEN COUNT(*)
+
+  OVER (ORDER BY p.CalendarYear, p.CalendarMonth
+
+  ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) = 3
+
+  THEN AVG(SUM(f.SalesAmount))
+
+  OVER(ORDER BY p.CalendarYear, p.CalendarMonth
+
+  ROWS BETWEEN 2 PRECEDING AND current row)
+
+  ELSE null
+
+  END AS [Sales 3 MMA]
+
+  ```
+
+
+  代码清单 11-1 中的查询包含了 3 个月和 12 个月滚动期的移动总量和移动平均值计算。这些计算在第二个 CTE 操作中实现，因此它们的结果可以在第三个操作的
+  select 语句中进行进一步处理。
+
+
+
+
+  '
+- '# 11.1 月度级别，无产品维度。处理数据空隙，全产品，三步操作查询
+
+
+  ```sql
+
+  /* 11.1 月度级别，无产品维度。处理数据空隙，全产品，三步操作查询 */
+
+  WITH CTE_ProductPeriod /* 操作#1 生成产品周期框架 */
+
+  AS  (
+
+  SELECT `p.ProductKey`, `Datekey`,
+
+  `CalendarYear`, `CalendarQuarter`,
+
+  `MonthNumberOfYear` AS `CalendarMonth`
+
+  FROM `DimDate` AS d
+
+  CROSS JOIN `DimProduct` p
+
+  WHERE `d.FullDateAlternateKey` BETWEEN ''2011-01-01'' AND `GETDATE()`
+
+  AND EXISTS(SELECT * FROM `FactInternetSales` f
+
+  WHERE `f.ProductKey` = `p.ProductKey`
+
+  AND `f.OrderDate` BETWEEN ''2011-01-01'' AND `GETDATE()`)
+
+  ),
+
+  CTE_MonthlySummary /* 操作#2 计算基础统计数据 */
+
+  AS (
+
+  SELECT `ROW_NUMBER`
+
+  OVER(ORDER BY `p.CalendarYear`, `p.CalendarMonth`) AS `[RowID]`,
+
+  `p.CalendarYear` AS `OrderYear`,
+
+  `p.CalendarMonth` AS `OrderMonth`,
+
+  count(distinct `f.SalesOrderNumber`) AS `[Order Count]`,
+
+  count(distinct `f.CustomerKey`) AS `[Customer Count]`,
+
+  ROUND(SUM(`COALESCE(f.SalesAmount,0)`), 2) AS `[Sales]`,
+
+  ROUND(SUM(SUM(`COALESCE(f.SalesAmount, 0)`)
+
+  OVER(PARTITION BY `p.CalendarYear`
+
+  ORDER BY `p.CalendarYear`, `p.CalendarMonth`
+
+  ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+
+  ), 2)
+
+  AS `[Sales YTD]`,
+
+  ROUND(`LAG(SUM(f.SalesAmount), 11, 0 )`
+
+  OVER(ORDER BY `p.CalendarYear`, `p.CalendarMonth`), 2)
+
+  AS `[Sales SP PY]`,
+
+  ROUND(`LAG(SUM(f.SalesAmount), 1, 0)`
+
+  OVER(ORDER BY `p.CalendarYear`, `p.CalendarMonth`), 2)
+
+  AS `[Sales PM]`,
+
+  CASE WHEN `COUNT(*)`
+
+  OVER(ORDER BY `p.CalendarYear`, `p.CalendarMonth`
+
+  ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) = 3
+
+  THEN `AVG(SUM(f.SalesAmount))`
+
+  OVER(ORDER BY `p.CalendarYear`, `p.CalendarMonth`
+
+  ROWS BETWEEN 2 PRECEDING AND current row)
+
+  ELSE null
+
+  END AS `[Sales 3 MMA]`,  /* 3 个月移动平均 */
+
+  CASE WHEN `count(*)`
+
+  OVER(ORDER BY `p.CalendarYear`, `p.CalendarMonth`
+
+  ROWS BETWEEN 2 PRECEDING AND current row) = 3
+
+  THEN `SUM(SUM(f.SalesAmount))`
+
+  OVER(ORDER BY `p.CalendarYear`, `p.CalendarMonth`
+
+  ROWS BETWEEN 2 PRECEDING AND current row)
+
+  ELSE null
+
+  END AS `[Sales 3 MMT]`,   /* 3 个月移动总计 */
+
+  CASE WHEN `COUNT(*)`
+
+  OVER (ORDER BY `p.CalendarYear`, `p.CalendarMonth`
+
+  ROWS BETWEEN 11 PRECEDING AND CURRENT ROW) = 12
+
+  THEN `AVG(SUM(f.SalesAmount))`
+
+  OVER(ORDER BY `p.CalendarYear`, `p.CalendarMonth`
+
+  ROWS BETWEEN 11 PRECEDING AND current row)
+
+  ELSE null
+
+  END AS `[Sales 12 MMA]`, /* 12 个月移动平均 */
+
+  CASE WHEN `count(*)`
+
+  OVER(ORDER BY `p.CalendarYear`, `p.CalendarMonth`
+
+  ROWS BETWEEN 11 PRECEDING AND current row) = 12
+
+  THEN `SUM(SUM(f.SalesAmount))`
+
+  OVER (ORDER BY `p.CalendarYear`, `p.CalendarMonth`
+
+  ROWS BETWEEN 11 PRECEDING AND current row)
+
+  ELSE null
+
+  END AS `[Sales 12 MMT]`  /* 12 个月移动总计 */
+
+  FROM `CTE_ProductPeriod` AS p
+
+  LEFT OUTER JOIN `[dbo].[FactInternetSales]` AS f
+
+  ON `p.ProductKey` = `f.ProductKey`
+
+  AND `p.DateKey` = `f.OrderDateKey`
+
+  GROUP BY `p.CalendarYear`, `p.CalendarMonth`
+
+  )
+
+  SELECT `[RowID]`,
+
+  `[OrderYear]`,
+
+  `[OrderMonth]`,
+
+  `[Order Count]`,
+
+  `[Customer Count]`,
+
+  `[Sales]`,
+
+  `[Sales SP PY]`,
+
+  `[Sales PM]`,
+
+  `[Sales YTD]`,
+
+  `[Sales 3 MMA]`,
+
+  `[Sales 3 MMT]`,
+
+  `[Sales 12 MMA]`,
+
+  `[Sales 12 MMT]`,
+
+  `[Sales]` - `[Sales SP PY]` AS `[Sales SP PY Growth]`,
+
+  (`[Sales]` - `[Sales SP PY]`)
+
+  / `NULLIF([Sales SP PY], 0)` AS `[Sales SP PY Growth %]`,
+
+  `[Sales]` - `[Sales SP PY]` AS `[Sales PY MOM Growth]`,
+
+  (`[Sales]` - `[Sales PM]`)
+
+  / `NULLIF([Sales PM], 0)` AS `[Sales PY MOM Growth %]`
+
+  FROM `CTE_MonthlySummary`
+
+  ORDER BY `[OrderYear]`, `[OrderMonth]`
+
+  ```
+
+
+  **代码清单 11-1**
+
+  使用 CTE 更新的基础查询
+
+
+  请注意最终的 `SELECT` 语句简化和可读性提升了多少。因为你将逻辑封装在了前一个 CTE 操作的列后面，所以生成的列也可以用于操作，包括窗口函数！
+
+
+  ### 月度移动总计与平均值
+
+
+  在汇总中添加的月度移动总计 (MMT) 和月度移动平均值 (MMA) 提供了一种通过跨多个月份求平均值来解决数据中季节性的方法。移动总计和平均值很有用，因为它们平滑了季节性/噪声数据中的波动性。它们还可以用来计算年度变化率
+  (RoC)，可用于识别趋势和衡量较长时间内的周期性变化。
+
+
+  ## 计算同期上年累计至今值
+
+
+  在此之前，你无法为 `[Sales YTD PY]` 创建列。现在，由于 `[Sales YTD]` 列存在于 CTE 的每一行中，你现在可以使用窗口函数来回溯上年的同一时期，并用它来计算本年累计至今与上年累计至今之间的差值。请记住，即使你正在处理返回月度级别数据的查询，此技术同样适用于日期级别的结果。将代码清单
+  11-2 中的以下列计算块添加到代码清单 11-1 的新基础查询中，并探索结果。
+
+
+  ```sql
+
+  `LAG([Sales YTD], 11,0)`
+
+  OVER(ORDER BY `[OrderYear]`, `[OrderMonth]`)
+
+  AS `[Sales PY YTD]`,
+
+  `[Sales YTD]` - `LAG([Sales YTD], 11,0)`
+
+  OVER(ORDER BY `[OrderYear]`, `[OrderMonth]`)
+
+  AS `[Sales PY YTD Diff]`,
+
+  (`[Sales YTD]` - `LAG([Sales YTD], 11,0)`
+
+  OVER(ORDER BY `[OrderYear]`, `[OrderMonth]`))
+
+  /`NULLIF(LAG([Sales YTD], 11, 0)`
+
+  OVER(ORDER BY `[OrderYear]`, `[OrderMonth]`), 0)
+
+  AS `[Sales PY YTD Pct Diff]`
+
+  ```
+
+
+  **代码清单 11-2**
+
+  同期上年累计至今值计算
+
+
+  ## 可视化趋势
+
+
+  由于此查询返回的列数很多，图 11-1 中的图表更能直观地展示结果。创建增长率和增长百分比计算的全部目的，就是为了能够利用它们来分析数据趋势。将数据绘制在图表中是可视化结果并向业务用户展示的好方法。
+
+
+  ![显示月环比差异百分比和同期上年差异百分比的月度趋势图](img/335106_2_En_11_Fig1_HTML.jpg)
+
+
+  **图 11-1**
+
+  显示月环比差异百分比和同期上年差异百分比的月度趋势图
+
+
+  ## 月环比 vs. 同期上年
+
+
+  月环比 (MOM) 差异计算通常作为直接度量指标并不是那么有用。它们显示了从一个时期到下一个时期的变化，这可能非常“嘈杂”，并且可能掩盖潜在趋势。同期上年 (SP
+  PY) 差异计算能更好地展示相对于去年的增长趋势，但也可能受到季节性的影响。销售的巨大变化往往可以归因于假日季节，并不总是反映整体趋势。话虽如此，你现在将通过实现前面提到的变化率计算来改进这些计算，并将季节性的起伏平滑为长期趋势。
+
+
+
+
+  ## 变化率
+
+
+  变化率是移动总量或移动平均值的百分比变化，用于衡量一个指标相比前一年是改善还是恶化。它们对于确定不同信息源之间的领先和滞后指标非常有用。领先指标是可以用来预测企业变化力量的事物。例如，如果你的企业依赖石油化工原料生产产品，石油价格的变化很可能预示着你产品需求的变化，因此可以被视为领先指标。将公司销售额的变化率与股票市场和大宗商品指数的变化率进行对比图表分析，可以确定你公司的表现是领先、滞后还是与股票市场表现同步。
+
+
+  将清单 11-3 中的以下列计算块添加到清单 11-2 的查询中，并探索结果。
+
+
+  ```
+
+  /* Rate of Change [3 MMT]/([3 MMT].LAG( 12 months)) */
+
+  [Sales 3 MMT]
+
+  / LAG(NULLIF([Sales 3 MMT], 0), 11, null)
+
+  OVER(ORDER BY [OrderYear], [OrderMonth])
+
+  as [3/12 RoC],
+
+  /* [12 MMT] /([12 MMT].LAG( 12 months)) */
+
+  [Sales 12 MMT]
+
+  / LAG(NULLIF([Sales 12 MMT],0), 11, null)
+
+  OVER(ORDER BY [OrderYear], [OrderMonth])
+
+  as [12/12 RoC]
+
+  ```
+
+
+  清单 11-3
+
+  变化率计算
+
+
+  变化率小于 1.0 (100%) 表示下降趋势，变化率大于或等于 1.0 表示正增长。也可以修改计算，将比率转换为正数或负数，如下所示：
+
+
+  ```
+
+  /* Rate of Change +/- ([3 MMT]/([3 MMT].LAG( 12 months))* 100) -100 */
+
+  ([Sales 3 MMT] / LAG(NULLIF([Sales 3 MMT], 0), 11, null)
+
+  OVER(ORDER BY [OrderYear], [OrderMonth]) *100) - 100
+
+  as [3/12 RoC2],
+
+  /* ([12 MMT] /([12 MMT].LAG( 12 months))* 100) -100 */
+
+  ([Sales 12 MMT] / LAG(NULLIF([Sales 12 MMT],0), 11, null)
+
+  OVER(ORDER BY [OrderYear], [OrderMonth]) *100) - 100
+
+  as [12/12 RoC2]
+
+  ```
+
+
+  变化率计算的结果最好用图表可视化。与差异百分比的图表相比，你应该会注意到 `[RoC]` 度量与总量的自然曲线相关性更紧密。本例中的 `[RoC]` 度量是销售额的滞后指标，因为它基于销售额。比较来自不同源度量的多个
+  `[ROC]` 序列，可以发现你业务中关键指标的领先指标。图 11-2 使用了 `[ROC]` 计算的第二种形式。请注意，在 2012 年的大部分时间里，尽管销售额按月来看相对平稳，但变化率是负数。
+
+
+  ![../images/335106_2_En_11_Chapter/335106_2_En_11_Fig2_HTML.jpg](img/335106_2_En_11_Fig2_HTML.jpg)
+
+
+  图 11-2
+
+  3 个月和 12 个月区间的变化率趋势
+
+
+  ## 帕累托原则
+
+
+  帕累托原则以意大利经济学家维尔弗雷多·帕累托命名，通常被称为 80/20 法则。它指出，大约 80% 的结果来自 20% 的原因。^(²) 应用该原则可以帮助我们确定业务中需要重点关注的最重要领域。例如，确定销售额前
+  20% 的产品可以为其他类型的分析和决策提供依据。
+
+
+  帕累托分析/图表的计算方法是：按分析金额对项目进行排序，并计算每个项目的累计或滚动总和。然后将累计总和除以总金额以确定百分比。
+
+
+  伪代码如下：
+
+
+  ```
+
+  [All Sales] = SUM([SalesAmount])
+
+  [Cumulative Sales] = cumulative SUM([SalesAmount])
+
+  [PARETO] = [Cumulative Sales] / [All Sales]
+
+  ```
+
+
+  在我们的样本数据中，如清单 11-4 所实现并在图 11-3 中所示的帕累托原则，将帮助我们确定产生大部分收入的产品。
+
+
+  ![../images/335106_2_En_11_Chapter/335106_2_En_11_Fig3_HTML.jpg](img/335106_2_En_11_Fig3_HTML.jpg)
+
+
+  图 11-3
+
+  所有子类别的帕累托计算
+
+
+  ```
+
+  SELECT ps.EnglishProductSubcategoryName AS [Sub Category],
+
+  SUM(f.SalesAmount) AS [Sub Category Sales],
+
+  SUM(SUM(f.SalesAmount)) OVER ()        AS [All Sales],
+
+  SUM(SUM(f.SalesAmount)) OVER (ORDER BY SUM(f.SalesAmount) DESC)    AS [Cumulative
+  Sales],
+
+  SUM(SUM(f.SalesAmount)) OVER (ORDER BY SUM(f.SalesAmount) DESC)
+
+  / SUM(SUM(f.SalesAmount)) OVER () AS [Sales Pareto]
+
+  FROM dbo.FactInternetSales AS f
+
+  INNER JOIN dbo.DimProduct AS p
+
+  ON f.ProductKey = p.ProductKey
+
+  INNER JOIN dbo.DimProductSubcategory AS ps
+
+  ON p.ProductSubcategoryKey = ps.ProductSubcategoryKey
+
+  WHERE OrderDate BETWEEN ''2011-01-01'' AND ''2012-12-31''
+
+  GROUP BY ps.ProductSubCategoryKey,
+
+  ps.EnglishProductSubcategoryName
+
+  order by [Sales Pareto]
+
+  ```
+
+
+  清单 11-4
+
+  帕累托原则
+
+
+  这个例子展示了确定 `[Sales Pareto]` 列所涉及的所有部分，但由于公路自行车占据了如此大的销售份额，我们需要深入研究该子类别以展示更典型的帕累托结果。在清单
+  11-5 中，可以移除 `[All Sales]` 和 `[Cumulative Sales]` 列，因为它们仅用于 `[Sales Pareto]` 计算本身。添加数量总和可以为结果提供更多上下文，如图
+  11-4 所示。
+
+
+  ![../images/335106_2_En_11_Chapter/335106_2_En_11_Fig4_HTML.jpg](img/335106_2_En_11_Fig4_HTML.jpg)
+
+
+  图 11-4
+
+  按产品划分的公路自行车销售帕累托
+
+
+  ```
+
+  SELECT p.EnglishProductName as [Product],
+
+  SUM(f.SalesAmount) AS [Sub Category Sales],
+
+  SUM(f.OrderQuantity) AS [Sub Category Qty],
+
+  SUM(SUM(f.SalesAmount)) OVER (ORDER BY SUM(f.SalesAmount) DESC)
+
+  / SUM(SUM(f.SalesAmount)) OVER () AS [Sales Pareto]
+
+  FROM dbo.FactInternetSales AS f
+
+  INNER JOIN dbo.DimProduct AS p
+
+  ON f.ProductKey = p.ProductKey
+
+  INNER JOIN dbo.DimProductSubcategory AS ps
+
+  ON p.ProductSubcategoryKey = ps.ProductSubcategoryKey
+
+  WHERE OrderDate BETWEEN ''2011-01-01'' AND ''2012-12-31''
+
+  and ps.EnglishProductSubcategoryName = ''Road Bikes''
+
+  GROUP BY P.EnglishProductName
+
+  ,ps.ProductSubCategoryKey,
+
+  ps.EnglishProductSubcategoryName
+
+  order by [Sales Pareto]
+
+  ```
+
+
+  清单 11-5
+
+  精细化的帕累托
+
+
+  多亏了窗口函数的强大功能，现在将帕累托列添加到现有报告查询中是一项高价值、低投入的工作！
+
+
+  ## 总结
+
+
+  本章内容丰富，在先前所学概念的基础上，为基于时间的财务分析创建了复杂的变化趋势计算。在开发你自己的复杂窗口计算时，在着手处理更复杂计算之前，先创建和验证输入计算的方法，以及使用
+  CTE 来规避窗口函数嵌套限制的逐步方法，都将对你大有裨益。
+
+
+  我希望通过阅读本书的各页内容，你已经认识到窗口函数是多么通用和强大。当你使用这些函数时，你将开始看到更多使用它们的方法。它们将改变你处理查询的方式，你将成为一名更出色的
+  T-SQL 开发人员。查询愉快！
+
+
+  脚注 1
+
+
+  '
+- '# 索引
+
+
+  ## A
+
+
+  `AdventureWorksDW` 聚合查询 `CTE` 错误消息 `GROUP BY` 子句 `PARTITIONBY` 表达式 `TotalDue` 列
+  平均值，移动平均值 (MA) 增长率与百分比增长 `AVG()` 函数 `Azure Data Studio` (ADS)
+
+
+  ## B
+
+
+  基础查询 行存储上的批处理模式 执行模式 `SQL server` 统计函数 `Table Spool` 运算符 窗口聚合运算符
+
+
+  ## C
+
+
+  经典的间隙/岛屿问题 定义 发现 间隙 间隙分析 限制/说明 公共语言运行时 (CLR) 公用表表达式 (CTE) `CUME_DIST` 函数
+
+
+
+
+  ## D
+
+
+  `数据集群` `云服务` `数据整理` `日期时间组件` `dbo.error_log` `错误日志` `数据事件` `GROUP BY` `分组错误` `查询分组规则`
+  `系统化方法` `ORDER BY 子句` `邻近性分析` `邻近性分析` `数据质量` `重复项` `NULL` `性能` `意外/无效值` `DATEADD
+  函数` `数据去重` `删除重复行` `ROW_NUMBER 函数` `表创建` `DENSE_RANK 窗口函数` `DimDate 表` `DimProduct
+  表`
+
+
+  ## E
+
+
+  `二八法则`
+
+
+  ## F
+
+
+  `FIRST_VALUE 函数` `FORMAT 函数` `窗口帧` `CURRENT ROW 表达式` `N FOLLOWING` `N PRECEDING`
+  `OVER 子句` `概述` `RANGE 操作符` `ROWS 操作符` `运行与移动聚合` `理论查询` `UNBOUNDED FOLLOWING` `UNBOUNDED
+  PRECEDING` `窗口函数`
+
+
+  ## G
+
+
+  `GROUP BY 子句` `增长率，增长百分比`
+
+
+  ## H, I, J, K
+
+
+  `HAVING 子句`
+
+
+  ## L
+
+
+  `LAG 函数` `默认参数` `偏移参数` `股票市场问题` `同比增长计算用法` `LAG()窗口函数` `最后有效值问题` `LAST_VALUE 函数`
+  `LEAD 函数`
+
+
+  ## M
+
+
+  `MEDIAN 函数` `MIN 函数` `月环比` `移动月度均值` `移动月度总计` `移动总计/均值计算` `年度` `变化率` `CASE 语句` `MMA`
+  `MMT` `MOM` `月度趋势图` `时间段范围` `至今累计计算` `移动总计与均值`
+
+
+  ## N
+
+
+  `NTILE 函数` `ORDER BY 表达式` `不均匀分组` `NULLIF()函数`
+
+
+  ## O
+
+
+  `OFFSET/FETCH 技术` `偏移函数` `参见 LAG 函数；LEAD 函数` `ORDER BY 子句` `ORDER BY 表达式` `ORDER
+  BY，窗口聚合` `OVER 子句`
+
+
+  ## P, Q
+
+
+  `帕累托法则` `PARTITION 子句` `PARTITION BY 表达式` `PERCENTILE_CONT 函数` `PERCENTILE_DISC
+  函数` `PERCENT_RANK 函数` `性能，窗口帧` `执行计划` `查询统计信息` `测试表` `工作表` `至今期累计计算`
+
+
+  ## R
+
+
+  `RANGE 与 ROW 操作符` `排名函数` `DENSE_RANK 函数` `NTILE 函数` `RANK 函数` `ROW_NUMBER 函数` `解决查询`
+  `奖金问题` `数据去重` `每月的前四个订单` `序数表，创建` `变化率` `[占所有销售额比例]列` `运行与移动聚合` `最后有效值问题` `订阅问题`
+  `使用窗口帧`
+
+
+  ## S
+
+
+  `去年同期` `Segment 操作符` `Sequence Project` `SQL Server Management Studio` `Sort 操作符`
+  `统计函数` `CUME_DIST 函数与旧方法` `PERCENTILE_CONT 函数` `PERCENTILE_DISC 函数` `PERCENT_RANK
+  函数` `订阅问题` `EOMONTH 函数` `SQL Server 2012 功能` `表创建` `SUM()函数`
+
+
+  ## T, U, V
+
+
+  `Table Spool 操作符` `工时卡问题` `追踪连续记录` `CASE 语句` `数据簇` `数据驱动决策` `dbo.GameLog` `分区数据集`
+  `SELECT 语句` `胜负`
+
+
+  ## W, X
+
+
+  `WHERE 子句` `窗口聚合函数` `聚合查询` `AVG` `CAST 函数` `CHECKSUM_AGG` `代码实现` `COUNT` `COUNT_BIG`
+  `自定义窗口聚合函数` `MAX` `MIN` `ORDER BY 组件` `OVER 子句` `分区表` `问题创建` `数据库清理问题与解决方案` `销售问题，百分比`
+  `STDEV` `STDEVP` `SUM` `VAR` `VARP` `窗口函数` `Adventure Works 数据库` `DISTINCT` `执行计划`
+  `ADS` `segment 操作符` `sequence project` `sort 操作符` `SSMS` `Table Spool 操作符` `Window
+  Spool 操作符` `FIRST_VALUE 函数` `FROM 子句` `GROUP BY 子句` `HAVING 子句` `索引` `连接` `修改` `ORDER
+  BY 属性` `SELECT` `提示` `LAG 函数` `默认参数` `偏移参数` `同比增长计算用法` `LAST_VALUE 函数` `LEAD 函数`
+  `OVER 子句 降序 ORDER BY 无 ORDER BY` `ORDER BY 子句` `PARTITION BY 表达式` `随机顺序` `ROW_NUMBER
+  函数概述` `PARTITION BY 性能，窗口帧` `SELECT 列表` `STATISTICS IO` `TOP` `WHERE 子句` `Windows
+  函数 行存储上的批处理模式` `STATISTICS TIME` `时间比较` `窗口聚合性能` `Window Spool 操作符`
+
+
+  ## Y, Z
+
+
+  `同比增长计算`
+
+  '

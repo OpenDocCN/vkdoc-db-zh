@@ -1,0 +1,7 @@
++   [MariaDB 和 MySQL 公用表表达式与窗口函数揭秘](README.md)
++   [Daniel Bartholomew MariaDB 与 MySQL 中的公用表表达式与窗口函数揭秘](mariadb-and-mysql-common-table-expressions-and-window-functi_1.md)
++   [第二部分：窗口函数](mariadb-and-mysql-common-table-expressions-and-window-functi_2.md)
++   [第一部分 公用表表达式](mariadb-and-mysql-common-table-expressions-and-window-functi_3.md)
++   [3. 递归公共表表达式](mariadb-and-mysql-common-table-expressions-and-window-functi_4.md)
++   [第二部分](mariadb-and-mysql-common-table-expressions-and-window-functi_5.md)
++   [窗口函数](mariadb-and-mysql-common-table-expressions-and-window-functi_6.md)
