@@ -1,0 +1,4783 @@
+- '![](img/A978-1-4842-2298-0_CoverFigure.jpg)
+
+
+  ![A978-1-4842-2298-0_CoverFigure.jpg](img/A978-1-4842-2298-0_CoverFigure.jpg) Bradley
+  Beard 著  SQL Server R Services 数据科学家入门：Beginning SQL Server R Services Analytics
+  for Data Scientists
+
+
+  ![A421548_1_En_BookFrontmatter_Figa_HTML.png](img/A421548_1_En_BookFrontmatter_Figa_HTML.png)
+
+
+  本书作者引用的任何源代码或其他补充材料，读者均可访问 [`www.apress.com`](http://www.apress.com) 获取。关于如何查找本书源代码的详细信息，请访问
+  [`www.apress.com/source-code/`](http://www.apress.com/source-code/)。读者也可以在 SpringerLink
+  各章节的补充材料部分访问源代码。 ISBN 978-1-4842-2297-3 e-ISBN 978-1-4842-2298-0 DOI 10.1007/978-1-4842-2298-0
+  Library of Congress Control Number: 2016958725 © Bradley Beard 2016 本作品受版权保护。无论涉及材料的全部或部分，所有商业权利均由出版商保留，具体包括翻译权、转载权、插图重用权、朗诵权、广播权、缩微胶片或其他物理方式的复制权，以及信息存储与检索、电子改编、计算机软件方面的传播权，或当前已知或未来开发的类似或不同方法的使用权。书中可能出现商标名称、标识和图像。我们并非每次出现商标名称、标识和图像时都使用商标符号，而是仅以编辑方式使用这些名称、标识和图像，旨在使商标所有者受益，并无侵犯商标权的意图。本书中对商品名称、商标、服务标志及类似术语的使用，即使未特别标识，也不应被视为表达其是否受专有权利约束的意见。尽管本书中的建议和信息在出版时被认为是真实准确的，但作者、编辑或出版商均不对可能出现的任何错误或遗漏承担法律责任。出版商对本出版物所含材料不作任何明示或暗示的担保。
+  本书使用无酸纸印刷。 由 Springer Science+Business Media New York, 233 Spring Street, 6th Floor,
+  New York, NY 10013 向全球图书贸易发行。电话 1-800-SPRINGER，传真 (201) 348-4505，电子邮件 orders-ny@springer-sbm.com，或访问
+  www.springer.com。 Apress Media, LLC 是一家加利福尼亚州有限责任公司，其唯一成员（所有者）是 Springer Science
+  + Business Media Finance Inc (SSBM Finance Inc)。SSBM Finance Inc 是一家特拉华州公司。 本书献给我已故的祖母贝茜·德杰恩斯（Bessie
+  Dejaynes），她在本书写作期间离世。 我爱你，我想念你，我们终会再见。
+
+
+  ## 引言
+
+
+  为了避免听起来像个彻头彻尾的微软粉丝，我得说 SQL Server 2016 加入了一些非常酷的新功能。其中最重要的之一，便是整合了一个在业界广泛使用的海量数据分析工具。这个工具简单地被称为
+  R。你们中有些人可能会问，微软为何要加入这个工具，因为它本质上更像是一个分析或绘图工具，而非数据库工具。
+
+
+  我认为原因相当简单：微软正在扩大其影响力。在我看来，R 是实现这一目标的一个绝佳方式。将 R 工具作为 Visual Studio 工具集和 SQL Server
+  数据库实例的一部分，无疑将改变 SQL Server 开发的格局。过去，数据库开发者需要准备数据以便由某些服务进行分析；现在不再需要了。Visual Studio
+  的 R 工具允许用户直接在 Visual Studio 中准备其脚本，或者直接在 SQL Server Management Studio 中操作。尽管微软不推荐后一种方式，但它仍然是可行的。
+
+
+  ### 我们将涵盖的内容
+
+
+  本书涵盖的内容相当简单明了。我们将……
+
+
+  *   在 SQL Server 2016 上设置一个新实例
+
+  *   设置必要的 R 资源，以便正确创建、使用和执行 R
+
+  *   简要回顾 R 的历史、语法和函数
+
+  *   使用 Visual Studio 的 R 工具创建一个自定义的 R 解决方案
+
+  *   配置 SQL Server Reporting Services
+
+  *   安装并配置 Report Builder
+
+  *   基于在 Visual Studio R 工具中开发的 R 代码，在 Report Builder 中创建报表
+
+  *   通过 Reporting Services 使用这些报表
+
+
+  此时有几点需要注意。具体来说，…
+
+
+  *   Visual Studio 的 R 工具是一个全新的发布版本，因此它存在缺陷的可能性相当大。
+
+  *   我们是作为全新实例完全安装 SQL Server 2016 的，因为我想展示即使用户尚未完全信服 R 的好处，通过将 R 纳入其工作流程也能获得的优势。
+
+
+  安装和配置在 SQL Server 2016 中运行 R 所需的一切组件，其说明都涵盖在 MSDN 上。目前，相关资源的链接位于 [`https://msdn.microsoft.com/en-us/library/mt604883.aspx`](https://msdn.microsoft.com/en-us/library/mt604883.aspx)。请注意，微软可能不会永久保留这个链接，所以请记住
+  Google 是你的好帮手。我将解释使其启动并运行所需的步骤。至于在 Microsoft.com 上查找必要的工具，可能就需要你自己动手了。
+
+
+
+  ### 为何选择 R？
+
+
+  问得好。为什么是 R？答案其实很简单……我认为是因为微软希望借助 `SQL Server` 扩大其在数据科学领域的影响力，因此，他们自然会希望拥有最好的数据分析产品，而
+  `R` 无疑是首选。微软的商业智能（Business Intelligence）产品已经非常出色，因此如果他们能找到一种方法……
+
+
+  *   收购一款已被广泛使用的数据分析产品
+
+  *   将该产品整合到其现有的数据库平台中
+
+  *   提供一个能与 `Visual Studio` 无缝集成的图形用户界面（GUI）
+
+  *   并免费提供这一切
+
+
+  ……那么（数据分析）世界就将是他们的囊中之物了！据我所知，目前还没有任何其他数据库系统能实现与 `R` 如此全面的交互。虽然有很多场景是先在数据库中准备数据，然后再导入到
+  `R` 中，但这种交互是完全不同层面的。
+
+
+  `SQL Server 2016` 实际上将 `R 引擎` 实例作为数据库引擎的原生组件来运行。这太棒了！对于那些在微软对 `SQL Server` 进行重大改动、推出
+  `SQL Server 2005` 时就使用过它的用户来说，你们还记得当时 `Integration Services` 带来的震撼以及“我的 `DTS` 脚本怎么办？？”的疑问吧？这次的改动是同等级别的；对于那些对数据分析或商业智能感兴趣的人来说，加入
+  `R` 所带来的影响注定是深远的，并且必将促成数据科学领域一些惊人的进步。就我个人而言，我迫不及待想成为其中的一部分。
+
+
+  另外，为了让这件事明了……
+
+
+  ```text
+
+  The MIT License (MIT)
+
+  Copyright (c) 2016 Microsoft
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of
+  this software and associated documentation files (the "Software"), to deal in the
+  Software without restriction, including without limitation the rights to use, copy,
+  modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
+  and to permit persons to whom the Software is furnished to do so, subject to the
+  following conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies
+  or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+  FOR A
+
+  PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+  ```
+
+
+  换句话说，感谢你，微软，让我可以免费使用你如此多的资源！我真心感激。
+
+
+  如果你读过我的第一本书 `SQL Server 实用维护计划（Apress, 2016）`，那么你已经熟悉我的写作风格了。我倾向于保持轻松甚至有时古怪的语气，同时不牺牲技术内容。有时，我可能会跑题到一些“兔子洞”里，但最后总会回到正题。大多数时候，我可能需要花点时间才能绕回来，但最终我总会回到原点。
+
+
+  现在——在我们开始安装和设置环境之前——是你花几分钟熟悉 `R` 及其功能的绝佳时机。
+
+
+  一旦你准备好了，就让我们开始数据科学家的旅程吧！
+
+
+  ## 致谢
+
+
+  再次感谢 Jonathan Gennick 和 Jill Balzano 在本书出版过程中给予我的指导。你们太棒了。
+
+
+  再次感谢我的第一位导师 John Wysocki，他目前可能正在某个豪华度假村享受半退休生活：我无法表达我对你点燃我创造力火花的感激之情。
+
+
+  感谢我最新的导师 Suzy Moore，她无疑是我认识的最聪明的人：我迫不及待想向你学习更多。
+
+
+  感谢独一无二的 Chester Flake：感谢你在认证方面提供的指导。任何需要认证培训的人都需要去 [`www.certificationcamps.com`](http://www.certificationcamps.com)
+  今天就注册。你绝不会后悔的。
+
+
+  感谢我的兄弟 Brian、侄女 Holly、嫂子 Andie，以及 Drew、Austin 和 Sam：妈妈说了，晚上 10 点后不准放烟花！
+
+
+  感谢我的父母 Richard 和 Carolyn，我的岳父母 Steve 和 Carey，我的姻亲 Al 和 Val，其他的兄弟 Joe、Rick、Zimmer
+  和 Dave，以及其他姐妹 Morgan、Erika、Jennifer、Kim 和 Michelle，以及所有我忘了提及的人……嗯，你们了解我的……
+
+
+  最后，感谢我的妻子 Jessica 和孩子们——Josh、Kayloo、Matthew 和 Emma，你们不得不忍受我为写这本书而长时间离开：非常感谢你们。
+
+
+  哦，对了……我不能忘了我最好的朋（友） Courtney。她真是个可爱的小宝贝！！
+
+
+  ## 目录
+
+
+  ### 第一部分：设置与安装
+
+
+  #### 第 1 章：SQL Server 2016 的设置与安装
+
+
+  *   规划
+
+  *   开始安装
+
+  *   产品密钥
+
+  *   许可条款
+
+  *   安装规则
+
+  *   功能选择
+
+  *   实例配置
+
+  *   服务器配置
+
+  *   数据库引擎配置
+
+  *   Reporting Services 配置
+
+  *   同意安装 Microsoft R Open
+
+  *   准备安装
+
+  *   安装进度
+
+  *   安装完成
+
+  *   服务验证
+
+  *   SQL Server 管理工具
+
+  *   摘要
+
+
+  #### 第 2 章：适用于 Visual Studio 的 R 工具的设置与安装
+
+
+  *   SQL Server Data Tools
+
+  *   Visual Studio
+
+  *   下载适用于 VS 的 R 工具
+
+  *   下载 Microsoft R Open
+
+  *   Visual Studio 环境
+
+  *   会话
+
+  *   绘图
+
+  *   数据
+
+  *   工作目录
+
+  *   窗口
+
+  *   安装 Microsoft R Client…
+
+  *   将 R 更改为 Microsoft R Client
+
+  *   Microsoft R 产品…
+
+  *   RTVS 文档和示例
+
+  *   R 文档
+
+  *   反馈
+
+  *   检查更新
+
+  *   调查/​新闻
+
+  *   编辑器选项
+
+  *   选项
+
+  *   数据科学设置
+
+  *   探索示例
+
+  *   R 初探
+
+  *   摘要
+
+
+  ## 第 3 章：项目场景定义
+
+
+  *   范围蔓延
+
+  *   项目定义阶段
+
+  *   阶段一：需求收集
+
+  *   螺旋开发过程
+
+  *   软件变更请求流程
+
+  *   阶段二：初步界面设计
+
+  *   加载 R 解决方案
+
+  *   摘要
+
+
+  '
+- '# 第二部分：学习基础
+
+
+  ## 第 4 章：使用 RTVS 构建 R 模型
+
+
+  *   探索示例
+
+  *   R 包管理器
+
+  *   在 R 中绘图
+
+  *   R 中的线性回归
+
+  *   回归诊断
+
+  *   模型对象
+
+  *   摘要
+
+
+  ## 第 5 章：在 RTVS 中绘图
+
+
+  *   报告 1：按机场 ID 的平均风速
+
+  *   导入数据集
+
+  *   打开脚本窗格
+
+  *   准备数据集
+
+  *   按机场 ID 的平均风速（表格形式）
+
+  *   按机场 ID 的平均风速（图形形式）
+
+  *   报告 2：按机场 ID 的平均温度（°F）
+
+  *   按机场 ID 的平均温度（表格形式）
+
+  *   按机场 ID 的平均温度（图形形式）
+
+  *   摘要
+
+
+  '
+- '# 第三部分：创建与查看报告
+
+
+  ## 第 6 章：配置 SQL Server Reporting Services
+
+
+  *   连接到实例
+
+  *   服务账户
+
+  *   Web 服务 URL
+
+  *   数据库
+
+  *   Web 门户 URL
+
+  *   电子邮件设置
+
+  *   执行账户
+
+  *   加密密钥
+
+  *   订阅设置
+
+  *   横向扩展部署
+
+  *   Power BI 集成
+
+  *   摘要
+
+
+  ## 第 7 章：Report Builder 安装与数据准备
+
+
+  *   下载 Report Builder
+
+  *   设置新数据库和表
+
+  *   导入天气数据
+
+  *   生成二进制数据
+
+  *   摘要
+
+
+  #### 第 8 章：使用 Report Builder 构建报告
+
+
+  *   报告 1：按机场 ID 的平均风速
+
+  *   设置报告布局
+
+  *   数据配置
+
+  *   添加动态图像
+
+  *   报告正文属性
+
+  *   运行报告
+
+  *   报告 2：按机场 ID 的平均温度
+
+  *   摘要
+
+
+  #### 第 9 章：在报表服务器中查看报告
+
+
+  *   查看报告
+
+  *   管理报告
+
+  *   属性
+
+  *   数据源
+
+  *   订阅
+
+  *   依赖项
+
+  *   缓存
+
+  *   历史快照
+
+  *   安全性
+
+  *   保存报告
+
+  *   摘要
+
+
+  '
+- "# 第四部分：附录\n\n## 附录 A：在 SQL Server 2014 安装中安装 SQL Server 2016 实例\n\n*   开始\n*  \
+  \ 产品密钥\n*   许可条款\n*   安装规则\n*   功能选择\n*   实例配置\n*   服务器配置\n*   数据库引擎配置\n*   服务器配置\n\
+  *   数据目录\n*   TempDB\n*   FILESTREAM\n*   Reporting Services 配置\n*   同意安装 Microsoft\
+  \ R Open\n*   准备安装\n*   完成\n*   摘要\n\n## 附录 B：软件需求文档\n\n*   项目\n*   作者\n*   为…准备\n\
+  *   问题\n*   解决方案\n*   语言/​平台\n*   媒介\n\n## 附录 C：适用于 Visual Studio 的 R 工具的 R 绘图与表格代码\n\
+  \n*   按机场 ID 的平均温度（图形形式）\n*   按机场 ID 的平均温度（表格形式）\n*   按机场 ID 的平均风速（图形形式）\n*   按机场\
+  \ ID 的平均风速（表格形式）\n\n## 索引\n\n## 内容概览\n\n*   关于作者\n*   关于技术审阅者\n*   致谢\n*   引言\n\
+  *   第一部分：设置与安装\n    *   第 1 章：SQL Server 2016 的设置与安装\n    *   第 2 章：适用于 Visual Studio\
+  \ 的 R 工具的设置与安装\n    *   第 3 章：项目场景定义\n*   第二部分：学习基础\n    *   第 4 章：使用 RTVS 构建 R\
+  \ 模型\n    *   第 5 章：在 RTVS 中绘图\n*   第三部分：创建与查看报告\n    *   第 6 章：配置 SQL Server Reporting\
+  \ Services\n    *   第 7 章：Report Builder 安装与数据准备\n    *   第 8 章：使用 Report Builder\
+  \ 构建报告\n    *   第 9 章：在报表服务器中查看报告\n*   第四部分：附录\n    *   附录 A：在 SQL Server 2014 安装中安装\
+  \ SQL Server 2016 实例\n    *   附录 B：软件需求文档\n    *   附录 C：适用于 Visual Studio 的 R 工具的\
+  \ R 绘图与表格代码\n*   索引\n\n## 关于作者与关于技术审阅者\n\n### 关于作者\n\n### 关于技术审阅者\n\n\n\n"
+- "# 第一部分\n## 安装与设置\n\n### 1. SQL Server 2016 的安装与设置\n\nSQL Server 2016 的一大更新是将 R\
+  \ 语言添加为数据库引擎的组成部分。R 语言始于 1993 年，由奥克兰大学的 Robert Gentleman 和 Ross Ihaka 开发，是一种数据分析语言。它最初是作为一种能在统计分析方面与\
+  \ S 语言抗衡的语言，并逐渐发展成为在统计计算、数据分析和机器学习领域全球最流行的语言之一。\n\n随着商业世界向商业智能和数据分析的重大转变，将 R 作为\
+  \ SQL Server 的组成部分是微软一项明智的商业举措。微软不仅将这一新功能引入了一个已被广泛接受的平台，而且保持了该语言核心的完整性，使得现有的 R 统计人员可以轻松迁移到\
+  \ SQL Server 平台，以增强他们的统计计算方法。最终，这提升了微软在商业智能领域的知名度，并有望使 SQL Server 在日常数据分析操作中获得更广泛的接受。\n\
+  \n2016 年，微软收购了 Revolution Analytics，该公司围绕 R 语言构建，并提供了 R 的开源（Revolution R Open）和商业（Revolution\
+  \ R Enterprise）开发平台。现在，微软的重点是将 R 重度集成到现有产品中，显而易见的首选是 SQL Server，最终将是 Azure。这是一个令人兴奋的版本，因为它为\
+  \ Azure 托管服务提供了机会，可以基于在 Azure 站点或数据库中完成的 R 计算来提供内容。\n\n由于 R 已作为 SQL Server 2016\
+  \ 安装的一部分被添加，我们只需在安装过程中选择该选项进行添加，然后完成一些小的配置任务即可。\n\n为了确保 R 能够运行，有些事项我们需要检查和安装，但我会在具体操作时展示所有步骤。现在，请先下载\
+  \ SQL Server 2016，然后按照我的指导进行安装。需要注意的是，根据服务包或微软是否决定更改安装界面，您的安装屏幕可能与我的略有不同，但我认为内容的要点是相同的。\n\
+  \n### 规划\n\n不过，首先要做的是规划。下载 SQL Server 2016 后，您需要规划基本设置，例如您将使用的账户以及默认文件位置的设置。如果您读过我上一本书，您会知道我对于\
+  \ SQL Server 文件系统的组织有一套非常特定的方式。在本书中，我创建了一个单独的逻辑磁盘 (`E:\\`)，并采用以下文件夹结构：\n\n*   `E:\\\
+  SQL Server`\n    *   `Backups`\n    *   `Data`\n    *   `Logs`\n\n因此，一个主文件夹 `SQL\
+  \ Server`，然后在该文件夹内创建三个子文件夹，用于存放所需的不同部分。可能还会有其他文件夹，例如 `DTSX` 或 `Output`，您可以用于其他用途，但通常情况下，主文件夹内的这三个子文件夹就很好用。\n\
+  \n**注意**\n\n在安装过程中，SQL Server 还会希望将文件放在其他位置；这没问题，因为这是 SQL Server 对系统文件进行分类以保持一切井然有序的方式。我们将在前面指定的文件夹中控制我们的数据、日志和备份文件。\n\
+  \n至于您应该使用哪个账户来运行 SQL Server 2016 的功能，这应该是显而易见的。它需要像常规数据库安装一样运行，因此需要分配它通常应有的账户。明确地说，分配您当前正在运行的任何版本\
+  \ SQL Server 所使用的相同账户。大多数情况下，这需要是一个管理员账户才能安装程序。\n\n这里有个快速的附注：如果您还没有阅读 SQL Server\
+  \ 2016 的硬件和软件要求，您可能需要先查阅一下。另外，附录 A 涵盖了在现有 SQL Server 2014 服务器上安装 SQL Server 2016\
+  \ 的内容。如果您正在运行 SQL Server 2014 并想在同一台服务器上尝试 SQL Server 2016，那么请参阅附录 A 获取指导。（但在任何情况下，您都不应使用生产服务器来跟随本书进行操作）。\n\
+  \n### 开始安装\n\n我们开始吧！双击下载文件夹中的 `setup.exe` 文件。您应该会看到如图 1-1 所示的内容。\n\n![A421548_1_En_1_Fig1_HTML.jpg](img/A421548_1_En_1_Fig1_HTML.jpg)\n\
+  \n**图 1-1.** SQL Server 2016 初始安装屏幕\n\n如果您看到要求对系统进行更改的屏幕，请直接点击 **是**。\n\n图 1-1 显示了您开始安装时应该看到的第一个屏幕。如果您曾经安装过\
+  \ SQL Server，这个屏幕应该看起来很熟悉。点击左侧的 **安装** 链接。您应该会看到如图 1-2 所示的内容。\n\n![A421548_1_En_1_Fig2_HTML.jpg](img/A421548_1_En_1_Fig2_HTML.jpg)\n\
+  \n**图 1-2.** SQL Server 2016 安装选项\n\n到达这里后，点击顶部的链接，标题为 **新建 SQL Server 独立安装或向现有安装添加功能**。\n\
+  \n请注意，最底部的选项是新增的。它写着 **新建 R 服务器（独立）安装**。如果您只想将 R 服务器安装为服务器（即独立的、自包含的数据分析服务器）或客户端（从远程\
+  \ SQL Server R 服务安装操作数据），您应选择此选项。请注意，您还需要 SQL Server 2016 服务正在运行，因此此选项用于向现有的 SQL\
+  \ Server 2016 安装添加 R 服务。\n\n### 产品密钥\n\n下一步是输入您的 **产品密钥**。图 1-3 显示了从前一节图 1-2 继续后您看到的屏幕。在这里，您可以指定希望运行免费版本，或者您可以输入产品密钥以运行许可版本。\n\
+  \n![A421548_1_En_1_Fig3_HTML.jpg](img/A421548_1_En_1_Fig3_HTML.jpg)\n\n**图 1-3.**\
+  \ 产品密钥屏幕\n\nSQL Server 2016 可以安装为以下三种免费版本之一：\n\n*   **评估版**：具备全部功能；基本上是 SQL Server\
+  \ 2016 的企业版，但有效期仅为 180 天。\n*   **开发版**：具备全部功能，但不能用于生产数据库工作。\n*   **速达版**：SQL Server\
+  \ 2016 最小、最基本的安装；不会过期，可用于生产用途。\n\n如果您想选择评估版以外的选项，请直接选择。但请理解选择该选项的含义；例如，速达版不支持 R，因此我不会选择此选项。对于您这里的需求，评估版是完美的，因为您肯定能在\
+  \ 180 天内决定是否希望将这项新功能永久包含在您的 SQL Server 安装中。\n\n当您选择了最合适的版本后，点击 **下一步** 继续。\n\n###\
+  \ 许可条款\n\n下一个屏幕，如图 1-4 所示，只是要求您接受许可条款。\n\n![A421548_1_En_1_Fig4_HTML.jpg](img/A421548_1_En_1_Fig4_HTML.jpg)\n\
+  \n**图 1-4.** 许可条款\n\n老实说，我从未完整阅读过这个许可条款。我不能说我认识有谁读完过。显然，只需勾选 **我接受许可条款** 复选框，然后点击\
+  \ **下一步** 继续。\n\n\n### 安装规则\n\n此屏幕显示 SQL Server 在执行初步检查以确保全新安装过程中会发生的情况。如果出现任何错误或警告，您应该着手进行修正，以便尽可能顺利地进行安装。\n\
+  \n我的屏幕闪烁了几次，最终停留在如图 1-5 所示的屏幕。\n\n![A421548_1_En_1_Fig5_HTML.jpg](img/A421548_1_En_1_Fig5_HTML.jpg)\n\
+  图 1-5. 安装规则\n\n值得注意的是，在此步骤中可能会下载并安装 `SQL Server 2016` 的更新，因此，如果出现包含此信息的提示，请直接安装它。\n\
+  \n因此，除了我的防火墙规则外，一切看起来都很好。由于我的笔记本电脑没有来自网络的连接，所以这应该没问题，因此我将单击 `下一步` 继续。\n\n### 功能选择\n\
+  \n现在我们进入选择实际安装内容的部分。图 1-6 显示了我们一直期待的屏幕。\n\n![A421548_1_En_1_Fig6_HTML.jpg](img/A421548_1_En_1_Fig6_HTML.jpg)\n\
+  图 1-6. 功能选择\n\n此时，我们需要选择测试数据库实例中 `R` 功能所需的最基本组件。在本书中，我们将熟悉 `R`，并使用 `R Tools for\
+  \ Visual Studio` 创建图表，然后在 `SSMS` 中复制这些结果，最终通过 `Reporting Services` 在报表中呈现这些结果。因此，我们只安装\
+  \ `R Services (In-Database)` 和 `Reporting Services – Native`。这为我们提供了深入了解 `R` 及其能为我们做什么所需的一切。这也意味着我们无需安装完整的\
+  \ `SQL Server 2016`。图 1-7 显示了此时您应该选择的选项。\n\n![A421548_1_En_1_Fig7_HTML.jpg](img/A421548_1_En_1_Fig7_HTML.jpg)\n\
+  图 1-7. 已选选项\n\n在此处单击 `下一步` 继续。系统会花一点时间思考要做什么，但最终您会看到如图 1-8 所示的 `实例配置` 屏幕。\n\n![A421548_1_En_1_Fig8_HTML.jpg](img/A421548_1_En_1_Fig8_HTML.jpg)\n\
+  图 1-8. 实例配置\n\n### 实例配置\n\n由于这是一个新的安装，并且之前没有安装过 `SQL Server` 版本，因此 `默认实例` 选项可用。我们当然可以毫无问题地使用此选项，但我通常更喜欢为我的实例命名。这由您决定，但请理解，在本书的剩余部分，我将使用\
+  \ `命名实例` 而不是 `默认实例`。\n\n此时，我们需要定义我们的新实例。如果您查看 `已安装的实例` 部分，会发现那里什么都没有。我们选择 `命名实例`\
+  \ 选项，并将其称为 `SQL2016RS`，代表 `SQL Server 2016 R Services`。`实例 ID` 字段也应更新为 `SQL2016RS`。完成此操作后，您将看到如图\
+  \ 1-9 所示的内容。\n\n![A421548_1_En_1_Fig9_HTML.jpg](img/A421548_1_En_1_Fig9_HTML.jpg)\n\
+  图 1-9. 更新后的实例配置屏幕\n\n请注意此屏幕上列出的 `命名实例` 字段、`实例 ID` 字段、`SQL Server` 目录位置和 `Reporting\
+  \ Services` 目录位置。这些字段都需要引用 `SQL2016RS`。一旦您确认一切都符合预期，请单击 `下一步` 继续。\n\n当您准备好时，单击 `下一步`\
+  \ 继续。\n\n#### 服务器配置\n\n下一个屏幕是我们定义服务的服务器帐户和启动类型的地方。此屏幕如图 1-10 所示。\n\n![A421548_1_En_1_Fig10_HTML.jpg](img/A421548_1_En_1_Fig10_HTML.jpg)\n\
+  图 1-10. 服务器配置\n\n这里真正需要注意的唯一服务是 `SQL Server Launchpad` 服务。此服务负责在数据库引擎内执行 `R`，因此如果\
+  \ `R` 的行为不如预期，请首先检查此服务。\n\n`SQL Browser` 服务在本地服务的上下文中运行，因此没有创建新的服务帐户。换句话说，我们不需要担心那个服务。\n\
+  \n这些服务帐户是默认的，但如果您有自己的服务帐户，随时可以更改为您的服务帐户。如果您没有自己的服务帐户，可以保留这些建议的服务帐户。我知道许多服务器管理员坚持对服务采用最小权限原则，如果您的特定环境是这种情况，那么您需要从服务器管理员处获取服务名称和登录信息才能继续。另一种方法是复制这些服务名称，并将它们包含在您提供给系统管理员的关于安装期间创建的帐户的摘要中，以便系统管理员可以根据需要审核该用户的权限。这里需要重要注意的是，我指的是与“系统管理员”分开的个人或实体，该管理员不是数据库管理员，而是\
+  \ `Windows` 级别的管理员。换句话说，是负责操作系统级别、比应用层高一级的人。\n\n我们在这里只想稍作更改；具体来说，将 `SQL Server Agent`\
+  \ 服务的 `启动类型` 设置为 `自动`。这是我们需要做的唯一更改。图 1-11 显示了此时您应该看到的内容。\n\n![A421548_1_En_1_Fig11_HTML.jpg](img/A421548_1_En_1_Fig11_HTML.jpg)\n\
+  图 1-11. 更新后的服务器配置\n\n请注意，我们无法设置这些帐户中任何一个的密码。这与我见过的每个 `SQL Server` 安装都是一样的。如果您将 `帐户名`\
+  \ 框从默认值更改为自定义服务帐户名，那么 `密码` 框将变为活动状态并接受输入。否则，密码由 `SQL Server` 和 `Windows` 控制。\n\n\
+  还请注意，在默认服务列表下方有一个新的 `向 SQL Server 数据库引擎服务授予执行卷维护任务权限` 复选框。对于我们在本书中所做的事情，无需选中此复选框。在将来的安装中，或者对于生产环境，启用此选项可能是个好主意。\n\
+  \n此时，我们所有的服务都已正确配置。请注意，我们不会打扰 `排序规则` 选项卡。默认情况下，该选项卡中应指定 `SQL_Latin1_General_CP1_CI_AS`。就是这样。请继续并单击\
+  \ `下一步` 继续。\n\n### 数据库引擎配置\n\n下一个屏幕是 `数据库引擎配置`，如图 1-12 所示。在这里，您可以在四个不同的选项卡中设置引擎的选项，如下文各小节所述。\n\
+  \n![A421548_1_En_1_Fig12_HTML.jpg](img/A421548_1_En_1_Fig12_HTML.jpg)\n图 1-12. 数据库引擎配置\n\
+  \n#### 服务器配置\n\n此选项卡允许您指定此数据库引擎实例的身份验证模式和管理员。由于这只是用于测试和评估，我将通过单击屏幕底部的 `添加当前用户` 按钮并选择\
+  \ `Windows 身份验证模式`，将我自己添加为 `Windows 身份验证模式` 下的管理员。图 1-13 显示了已选择这些选项的状态。\n\n![A421548_1_En_1_Fig13_HTML.jpg](img/A421548_1_En_1_Fig13_HTML.jpg)\n\
+  图 1-13. 带选项的服务器配置选项卡\n\n\n\n### 数据目录\n\n你还记得我的文件系统是如何设置的吗？“数据目录”部分描述了我指定的文件结构中这些数据目录的位置。图\
+  \ 1-14 显示了这个屏幕最初的样子。图 1-15 显示了我选择的选项。你可以根据喜好设置这些，但我个人的偏好是不把我想要的文件放在默认的复杂文件夹结构中。\n\
+  \n![A421548_1_En_1_Fig15_HTML.jpg](img/A421548_1_En_1_Fig15_HTML.jpg)\n\n图 1-15.\n\
+  更新后的 数据目录 选项卡\n\n![A421548_1_En_1_Fig14_HTML.jpg](img/A421548_1_En_1_Fig14_HTML.jpg)\n\
+  \n图 1-14.\n初始的 数据目录 选项卡\n\n### TempDB\n\n通常，我会保留 TempDB 选项不变。但在这个例子中，我设置了选项来镜像我已经启用的文件系统。图\
+  \ 1-16 显示了默认设置，图 1-17 显示了更新后的设置。\n\n![A421548_1_En_1_Fig17_HTML.jpg](img/A421548_1_En_1_Fig17_HTML.jpg)\n\
+  \n图 1-17.\nTempDB 更新后的设置\n\n![A421548_1_En_1_Fig16_HTML.jpg](img/A421548_1_En_1_Fig16_HTML.jpg)\n\
+  \n图 1-16.\nTempDB 默认设置\n\n我所做的改动很小。我首先在“Data directories”字段中高亮显示现有选项，然后单击“Remove”按钮。接着我单击“Add”按钮，并添加了\
+  \ `E:\\SQL Server\\Data`。这个位置在“Log directory”字段中被镜像，因此我将其改为 `E:\\SQL Server\\Logs`。这个选项卡的设置就到此为止。\n\
+  \n### FILESTREAM\n\n直接保留“FILESTREAM”选项卡不变。本书中我们不会使用 FILESTREAM。\n\n当你填好所有其他“Database\
+  \ Engine Configuration”选项卡后，单击“Next”。\n\n### Reporting Services 配置\n\n现在我们来配置 Reporting\
+  \ Services。我们将在第 7 章及后续章节中进一步配置 Reporting Services。我们现在使用默认选中的“Install and configure”选项来安装它。图\
+  \ 1-18 显示了该选项。\n\n![A421548_1_En_1_Fig18_HTML.jpg](img/A421548_1_En_1_Fig18_HTML.jpg)\n\
+  \n图 1-18.\nReporting Services 配置\n\n另请注意，当你为 SharePoint 集成模式安装 Reporting Services\
+  \ 时，“Install only”选项是选中的。你可以保留该选项不变，因为反正也没有其他选择。\n\n顺便提一下 Reporting Services 的配置；如果你之后进入并希望安装\
+  \ Reporting Services（因为你当初没有随数据库引擎一起安装），你将只有“Install only”选项可用。原因是，在添加数据库引擎实例后，必须使用\
+  \ Reporting Services Configuration Manager 来配置 Reporting Services。\n\n确保在顶部选择了“Install\
+  \ and configure”选项，然后在 Reporting Services 配置屏幕上单击“Next”以继续。\n\n### 同意安装 Microsoft\
+  \ R Open\n\n如前所述，将 R 集成到 SQL Server 中是一个重大变化。在 SQL Server 2016 的预发布版本中，必须单独安装组件才能使\
+  \ R 正确运行。Microsoft 在各个版本中逐步更新了安装过程，直到最终版本，其中包含了 R 组件的完整下载和安装。请注意，SQL Server 2016\
+  \ 中使用的 R 版本被称为 `Microsoft R Open`，它是“Microsoft 在 GNU General Public License v2 下提供的增强版\
+  \ R 发行版。” R 语言本身的版权仍属于 R Foundation for Statistical Computing。Microsoft 在图 1-19\
+  \ 中非常谨慎地明确说明了这一点。我认为这很重要，因为 Microsoft 为 SQL Server 提供了一个全新的软件包；因此，我们必须同意安装 `Microsoft\
+  \ R Open`，并因此接受 Microsoft 发布的任何补丁或更新。\n\n![A421548_1_En_1_Fig19_HTML.jpg](img/A421548_1_En_1_Fig19_HTML.jpg)\n\
+  \n图 1-19.\n同意安装 Microsoft R Open\n\n单击“Accept”按钮。“Next”按钮将变为可用。继续并单击“Next”以继续。\n\
+  \n### 准备安装\n\n图 1-20 显示了你现在应该看到的“Ready to Install”屏幕。仔细阅读，如果你打算完成本书中的练习，请确保你的设置与之匹配。\n\
+  \n![A421548_1_En_1_Fig20_HTML.jpg](img/A421548_1_En_1_Fig20_HTML.jpg)\n\n图 1-20.\n\
+  准备安装\n\n当你准备好后，单击“Install”。在加载和安装所需内容时，你的屏幕会闪烁几次。\n\n### 安装进度\n\n图 1-21 显示了安装运行时你应该看到的内容。进度条显示了总体进度，因此你可以判断进度和剩余时间。耐心等待。看看进度条。或者去喝杯咖啡。\n\
+  \n![A421548_1_En_1_Fig21_HTML.jpg](img/A421548_1_En_1_Fig21_HTML.jpg)\n\n图 1-21.\n\
+  安装进度\n\n### 安装完成\n\n安装需要一点时间，但最终会完成并显示图 1-22 所示的屏幕。我的安装大约花了 10 分钟完成。向下滚动查看是否所有组件都已正确安装，然后单击“Close”。\n\
+  \n![A421548_1_En_1_Fig22_HTML.jpg](img/A421548_1_En_1_Fig22_HTML.jpg)\n\n图 1-22.\n\
+  安装完成\n\n让我们花点时间规划一下本章接下来还要做什么。我们已经进展了不少，但在停下来休息之前，我们还有一点工作要做。\n\n*   我们目前完成的工作\n\
+  \    *   安装了测试新的 R 功能所需的 SQL Server 2016 组件\n*   我们接下来将要做的工作\n    *   验证所有 SQL Server\
+  \ 2016 服务是否已正确启动\n    *   安装 SQL Server Management Tools\n\n第二个要点可能会让你有点困惑。为什么我们需要安装\
+  \ SQL Server Management Tools？因为，出于某种奇怪的原因（我确信 Microsoft 能给出理由），SQL Server Management\
+  \ Studio 并不作为 SQL Server 安装的一部分提供。我在以前的任何安装中从未见过这种情况，因此我可以假设这是 SQL Server 的新常态。\n\
+  \n### 服务验证\n\n让我们去确认一下需要启动的服务是否都已正确启动。按 Windows 键然后输入 `services` 来启动“服务”窗口。你应该会看到“服务”桌面应用作为选项出现，如图\
+  \ 1-23 所示。继续并单击“服务”应用以继续。或者，你也可以按 Windows 键，输入 `services.msc`，然后按 Enter。这样可以直接打开“服务”窗口，无需搜索。\n\
+  \n![A421548_1_En_1_Fig23_HTML.jpg](img/A421548_1_En_1_Fig23_HTML.jpg)\n\n图 1-23.\n\
+  服务位置\n\n应用程序正常启动，因此向下滚动到 SQL 服务。默认情况下它们应按“名称”排序，所以要跳转到某个字母，只需输入它。这比滚动要快得多。图 1-24\
+  \ 向你显示了相关的 SQL Server 服务及其当前状态。\n\n![A421548_1_En_1_Fig24_HTML.jpg](img/A421548_1_En_1_Fig24_HTML.jpg)\n\
+  \n图 1-24.\n服务\n\n在我看来一切正常。你觉得呢？所有服务都按预期运行，并且都设置为“自动”启动类型。\n\n恭喜！你已成功安装了 SQL Server\
+  \ 2016，并通过确认所有服务都按预期启动，验证了一切正常。\n\n\n\n### SQL Server 管理工具\n\n接下来，我们需要安装 SQL Server\
+  \ 管理工具。此安装任务是 SQL Server 安装中心的一部分，它应该仍在您的桌面上打开。图 1-25 显示了当前 SQL Server 安装中心屏幕的状态。\n\
+  \n![A421548_1_En_1_Fig25_HTML.jpg](img/A421548_1_En_1_Fig25_HTML.jpg)\n\n图 1-25.\
+  \ SQL Server 安装中心\n\n请注意，由于已安装 SQL Server 2016，`SQL Server Management Tools` 的链接已经高亮显示。这正是我们现在想要点击的地方。图\
+  \ 1-26 显示了此操作的结果。\n\n![A421548_1_En_1_Fig26_HTML.jpg](img/A421548_1_En_1_Fig26_HTML.jpg)\n\
+  \n图 1-26. 下载 SQL Server Management Studio\n\n当我们点击 SQL Server 安装中心上的 `Install SQL\
+  \ Server Management Tools` 链接时，Microsoft.com 上会打开一个网页，我们可以从中下载 SSMS。现在，请点击那个名为 `Download\
+  \ SQL Server Management Studio` 的蓝色链接。在撰写本文时，下载大小为 806MB。\n\n在下载的同时，让我们规划一下接下来要做的事情。本质上，我们需要通过验证\
+  \ R 是否正确安装并与数据库引擎正常通信来“完成” SQL Server 的安装。\n\n您几乎忘了这是一本关于 R 的书，对吗？我知道，这一章长得离谱，但我们确实需要让所有组件都运行起来，才能展示\
+  \ R 在当前环境下能做什么。\n\n最终，下载完成。在您的浏览器中，您应该会看到一个类似于图 1-27 所示的按钮。\n\n![A421548_1_En_1_Fig27_HTML.jpg](img/A421548_1_En_1_Fig27_HTML.jpg)\n\
+  \n图 1-27. 下载完成\n\n点击此按钮开始安装，或者转到您的“下载”文件夹并双击名为 `SSMS-Setup-ENU.exe` 的文件以开始安装 SQL\
+  \ Server Management Studio。图 1-28 显示了初始安装屏幕。\n\n![A421548_1_En_1_Fig28_HTML.jpg](img/A421548_1_En_1_Fig28_HTML.jpg)\n\
+  \n图 1-28. SSMS 安装提示\n\n考虑到在您撰写本文和您下载 SQL Server 管理工具之间，Microsoft 可能会发布更新的版本，您最终的\
+  \ `Release` 号可能与我的不同。\n\n嗯，这确实是一个新的安装界面。我以为这会更接近 Visual Studio，但并非如此。指示就在那里；点击 `Install`\
+  \ 开始。图 1-29 显示了点击 `Install` 后的界面。\n\n![A421548_1_En_1_Fig29_HTML.jpg](img/A421548_1_En_1_Fig29_HTML.jpg)\n\
+  \n图 1-29. 初始安装界面\n\n它会在这里加载包大约一分钟，所以就让它做自己的事情并安装所需的内容。第一个安装的主要包是 `.NET Framework\
+  \ 4.6.1`。然后它会继续安装其他包，比如 `Visual Studio 2015 Shell`。一旦我们开始查看用于开发 R 项目的不同 IDE，这将变得很重要。\n\
+  \n最终，安装完成，我们停留在如图 1-30 所示的屏幕上。\n\n![A421548_1_En_1_Fig30_HTML.jpg](img/A421548_1_En_1_Fig30_HTML.jpg)\n\
+  \n图 1-30. 需要重启\n\n接下来，打开 SQL Server Management Studio 并连接到您新安装的实例。按下您的 Windows 键并输入\
+  \ `ssms` 以显示 `Microsoft SQL Server Management Studio` 桌面应用。继续点击该应用以启动应用程序。\n\n提示\n\
+  \n如果您没有以本地 `Administrator` 帐户登录，您可能需要右键单击“开始”菜单中出现的桌面应用图标，然后选择 `以管理员身份运行`。\n\n图\
+  \ 1-31 显示了此更新版本中 SSMS 的初始界面外观。\n\n![A421548_1_En_1_Fig31_HTML.jpg](img/A421548_1_En_1_Fig31_HTML.jpg)\n\
+  \n图 1-31. SQL Server Management Studio\n\n这需要加载界面，然后，最终，我们会看到 SSMS 登录屏幕。图 1-32 显示了此版本与先前版本\
+  \ SSMS 的显著不同之处。\n\n![A421548_1_En_1_Fig32_HTML.jpg](img/A421548_1_En_1_Fig32_HTML.jpg)\n\
+  \n图 1-32. 连接到服务器\n\n回想一下，我将新的 SQL Server 2016 实例命名为 `SQL2016RS`，所以这就是我将要连接的实例。`Server\
+  \ name` 字段的格式是 `SERVER\\INSTANCE`，这就是我格式化我的连接的方式。您也可以从那里下拉菜单并导航到您可能已安装的另一个实例。只要您能到达那里，您觉得更舒适的方式都可以。点击\
+  \ `Connect` 登录到您的实例。\n\n您现在应该看到的对象资源管理器初始屏幕类似于图 1-33。\n\n![A421548_1_En_1_Fig33_HTML.jpg](img/A421548_1_En_1_Fig33_HTML.jpg)\n\
+  \n图 1-33. SQL Server Management Studio\n\n请注意命名实例和显示的 SQL Server 版本。您可能需要展开界面才能看到版本号，但除非\
+  \ Microsoft 从界面中移除它，否则它就会在那里。我的版本是 `13.0.1601-5`，这是撰写本文时的最新稳定版本。一如既往，您可能拥有不同版本的\
+  \ SQL Server 2016。这没关系，因为 Microsoft 尚未弃用任何可能影响本书结果的主要功能。这也意味着我们已成功连接到我们的新实例，并准备开始。\n\
+  \n在我们深入其他内容之前，让我们在 SSMS 中打开行号显示。这是我的一个痛点。转到 `Tools` → `Options`，展开 `Text Editor`，然后点击\
+  \ `All Languages`。图 1-34 显示了此设置的位置。\n\n![A421548_1_En_1_Fig34_HTML.jpg](img/A421548_1_En_1_Fig34_HTML.jpg)\n\
+  \n图 1-34. 行号\n\n只需勾选该框并点击 `OK`——您就设置好了。\n\nMicrosoft 发布了一个后配置过程，我们将首先运行它。这个步骤未来可能会被移除并添加到安装中，但目前，请按照以下步骤完成安装。\n\
+  \n在 SQL Server Management Studio 中打开一个 `New Query` 窗口，并键入以下命令：\n\n```\nexec sp_configure\
+  \ 'external scripts enabled', 1\nReconfigure with override\n```\n\n这是在 SSMS 中执行此代码的结果：\n\
+  \n```\nConfiguration option 'external scripts enabled' changed from 0 to 1\\. Run\
+  \ the RECONFIGURE statement to install.\n```\n\n注意\n\n作为查询的一部分，我们已经运行了 `RECONFIGURE`\
+  \ 语句。\n\n请注意，我们是在对 `master` 数据库执行，并且查询已成功执行。这意味着 R 脚本现在在 SQL Server 中已启用。这个脚本至关重要，因为没有它，我们就无法在数据库引擎内执行\
+  \ R 代码。原因是 `sp_execute_external_script` 存储过程默认是禁用的；必须手动启用它。\n\n接下来，我们需要验证 R 是否确实在运行。为此，Microsoft\
+  \ 说需要重启 SQL Server 实例并运行以下脚本。首先重启实例，然后打开一个 `New Query` 窗口并键入以下内容：\n\n```\nexec sp_execute_external_script\n\
+  @language =N'R',\n@script=N'OutputDataSet<-InputDataSet',\n@input_data_1 =N'select\
+  \ 1 as hello'\nwith result sets (([hello] int not null));\ngo\n```\n\n按 `F5` 执行脚本。预期的结果如图\
+  \ 1-35 所示。\n\n![A421548_1_En_1_Fig35_HTML.jpg](img/A421548_1_En_1_Fig35_HTML.jpg)\n\
+  \n图 1-35. R 已安装并正确通信\n\n太好了！这个简单脚本的成功执行表明 R 运行良好，并与 SQL Server 实例正常通信。从图 1-35 中的结果我们可以看到，我们定义了一个非常简单的查询\
+  \ `select 1 as hello`，我们将其作为名为 `[hello]` 的列返回，数据类型为 `int`，且 `not null`。\n\n\n对于那些尚未记全每一个系统存储过程的人来说，你可能不会认出\
+  \ `sp_execute_external_script` 是一个为执行外部脚本而引入的**全新**存储过程。可以通过以下参数调用此存储过程：\n\n*  \
+  \ `@language`\n    *   所支持的语言名称。目前仅支持 R。\n*   `@script`\n    *   要执行的脚本（你可以将整个脚本输入到存储过程中，或将其作为变量引用）。\n\
+  *   `@input_data_1`\n    *   这里填写用于从数据库收集数据的 SQL 查询。\n*   `@input_data_1_name`\n\
+  \    *   作为 `@input_data_1` 查询结果集的数据框。此属性可选。\n*   `@output_data_1_name`\n    * \
+  \  在 `@script` 中持有输出数据的数据框变量。此属性可选。\n\n信不信由你，微软说我们接下来只需要再做几件事，所以让我们先把它们搞定。\n\n对于\
+  \ Windows 用户，按下 Windows 键 + R，输入 `lusrmgr.msc`，然后按回车。你应该会看到你的“本地用户和组”，如图 1-36 所示。\n\
+  \n![A421548_1_En_1_Fig36_HTML.jpg](img/A421548_1_En_1_Fig36_HTML.jpg)\n\n图 1-36.\
+  \ 本地用户和组（用户）\n\n看到了吗？安装过程中创建了二十个新的用户账户，每个账户都是专门为与 R Services 交互而创建的。这 20 个账户被添加到一个名为\
+  \ `SQLRUserGroup<instance_name>` 的新组中，其中 `<instance_name>` 是你的实例名称。所以以我为例，我的组名为\
+  \ `SQLRUserGroupSQL2016RS`。如果你遵循了这个命名约定，你的也会是同样的名称。\n\n点击屏幕左侧的“组”选项。你应该会看到图 1-37\
+  \ 所示的内容。\n\n![A421548_1_En_1_Fig37_HTML.jpg](img/A421548_1_En_1_Fig37_HTML.jpg)\n\
+  \n图 1-37. 本地用户和组（组）\n\n双击 `SQLRUserGroupSQL2016RS` 链接。你应该会看到图 1-38 所示的内容。\n\n![A421548_1_En_1_Fig38_HTML.jpg](img/A421548_1_En_1_Fig38_HTML.jpg)\n\
+  \n图 1-38. SQLRUserGroupSQL2016RS 详情\n\n按照这种方式配置，我们就可以在这台服务器上正常工作了。我们不需要定义其他任何内容或添加其他用户账户，因为我们已经验证了\
+  \ R 在数据库中运行正确。微软有一些相当好的文章，介绍如何配置数据库实例以接受来自外部开发者的 R 脚本，这本质上涉及将 `SQLRUserGroupSQL2016RS`\
+  \ 组作为新登录名添加到 SQL Server 中。这样，当用户连接到数据库实例运行 R 脚本时，会使用那 20 个新用户账户中的一个，通过 Launchpad\
+  \ 服务代表该用户执行脚本。微软将此称为**隐式身份验证**，因为该组中的用户随后将能够远程访问 SQL Server R Services。\n\n### 小结\n\
+  \n让我们简要回顾一下本章涵盖的内容。\n\n*   安装了完整的 SQL Server 2016 实例\n*   安装了 SQL Server Management\
+  \ Tools\n*   安装后配置了 R\n*   通过运行前面指定的脚本，验证了 R 已正确安装\n\n这是相当重要的第一章。我们涵盖了很多内容，所以如果有任何不清楚的地方，现在正是回头再试一次的好时机。\n\
+  \n接下来，我们将安装 Visual Studio 的 R 工具，我们将用它来编写 R 代码。第一部分显然是必要的，以便在服务器级别安装 R 功能和数据库实例。现在，我们将重点转向使用开发工具设置客户端。\n\
+  \n## 2. Visual Studio R 工具的设置与安装\n\n既然我们已经正确安装了 SQL Server 2016，我们需要某种 IDE 来开发我们的代码。微软通过在\
+  \ Visual Studio 中引入一个全新的 R GUI，使 Visual Studio 2016 变得更好。它被简单地命名为 Visual Studio\
+  \ 的 R 工具。\n\n如果你愿意，你也可以使用其他的 R GUI。你完全不受限制或被迫使用 Visual Studio 的 R 工具。如果你目前有喜欢的 IDE，那么请务必继续使用那个。\n\
+  \n### SQL Server Data Tools\n\n在我们开始之前，快速说明一点。本书**不会**使用 SQL Server Data Tools。相反，我们将使用\
+  \ Visual Studio 的 R 工工具。这一点从章节标题应该很明显。原因很简单，但我花了一点时间才弄明白。让我们看看两者的区别。\n\n*   SQL\
+  \ Server Data Tools\n    *   为 Analysis Services、Reporting Services 或 Integration\
+  \ Services 开发解决方案。允许连接数据库开发；即“实时”编辑数据库。\n*   Visual Studio 的 R 工具\n    *   专为当前的微软用户设计，希望他们在学习\
+  \ R 的同时停留在熟悉的界面中。它不与 SQL Server 中的 R 实例交互，因此需要单独安装一个名为 Microsoft R Open 的组件才能执行任何\
+  \ R 代码。\n\n本书使用 Visual Studio 的 R 工具 (RTVS) 而不是 SQL Server Data Tools (SSDT) 的主要原因是，RTVS\
+  \ 可用于开发 R 代码，而 SSDT 不能。SSDT 可以连接到数据库实例并对数据库运行查询，但它不是 R 的 IDE。或者，RTVS 是 R 的 IDE，但在本书的范围内，我们不直接连接到数据库实例。\n\
+  \n这应该能帮助你快速理解。对我来说，主要区别在于 SSDT 运行一个内部进程，而 RTVS 运行一个外部进程。你可能会发现两者之间的其他差异，如果发现了，很好。不过，正如我所说，我们在本书中使用\
+  \ RTVS。\n\n\n\n## Visual Studio\n\n除了安装 Visual Studio 本身，你还需要下载 Visual Studio 的\
+  \ R 扩展。这样，RTVS 才能有一个 R 版本来执行代码。为了方便地完成此操作并将所有说明集中在一个地方，微软提供了一个解释 **Visual Studio\
+  \ 的 R 工具**（RTVS）的网站。网址是 [`https://beta.visualstudio.com/vs/rtvs/`](https://beta.visualstudio.com/vs/rtvs/)\
+  \ 。该网站的一部分如图 2-1 所示。\n\n![A421548_1_En_2_Fig1_HTML.jpg](img/A421548_1_En_2_Fig1_HTML.jpg)\n\
+  图 2-1. Visual Studio 的 R 工具 网站\n\n正如我提到的，第一步是获取 Visual Studio。点击图 2-1 中显示的“Free\
+  \ Visual Studio”链接。它是右上角的白色方框。随后会打开另一个页面，如图 2-2 所示，页面左侧有一个 Visual Studio Community\
+  \ 的下载链接。\n\n![A421548_1_En_2_Fig2_HTML.jpg](img/A421548_1_En_2_Fig2_HTML.jpg)\n\
+  图 2-2. 下载 Community 2015\n\n从图中我们可以看到，Community 2015 几乎可以开发任何东西。向下滚动并点击紫色火箭飞船图示下方的“Download”按钮。你应该会看到如图\
+  \ 2-3 所示的内容。\n\n![A421548_1_En_2_Fig3_HTML.jpg](img/A421548_1_En_2_Fig3_HTML.jpg)\n\
+  图 2-3. 安装程序开始下载\n\n如果你查看 `Downloads` 文件夹，会发现安装程序已经下载完成。这是一个很小的 209KB 安装程序，很可能在你甚至还没来得及打开\
+  \ `Downloads` 文件夹检查之前就下载好了。\n\n如果你真的愿意，可以完成图 2-3 中提到的调查，但我选择了“No thanks”。抱歉，微软！\n\
+  \n转到你的 `Downloads` 文件夹，双击名为 `vs_community_<random string that looks like a GUID>.exe`\
+  \ 的文件。当然，你的随机字符串和我的不同，所以找一下以 `vs_community` 开头的那个文件。那就是你要双击的文件。然后你应该会在屏幕上看到图 2-4。你即将开始安装，这个过程会消耗几\
+  \ GB 的带宽。\n\n![A421548_1_En_2_Fig4_HTML.jpg](img/A421548_1_En_2_Fig4_HTML.jpg)\n\
+  图 2-4. 打开文件\n\n继续点击“Run”。你会看到图 2-5 弹出。\n\n![A421548_1_En_2_Fig5_HTML.jpg](img/A421548_1_En_2_Fig5_HTML.jpg)\n\
+  图 2-5. 正在初始化安装\n\n最终，你会看到图 2-6，它显示了 Visual Studio Community 2015 的配置选项。\n\n![A421548_1_En_2_Fig6_HTML.jpg](img/A421548_1_En_2_Fig6_HTML.jpg)\n\
+  图 2-6. 选择安装类型\n\n从这里，我们可以选择“Default”或“Custom”。我们实际上只需要 Visual Studio 的基本功能，所以保持默认选项选中并点击“Install”。\n\
+  \n随后会出现图 2-7 所示的屏幕；这开始了 Visual Studio Community 2015 的实际安装。\n\n![A421548_1_En_2_Fig7_HTML.jpg](img/A421548_1_En_2_Fig7_HTML.jpg)\n\
+  图 2-7. 安装开始\n\n安装过程会持续相当长一段时间直到完成。注意，可能还有需要随实际应用程序一起下载的必需更新；所以请耐心等待，让它完成自己的工作。\n\
+  \n你最终会看到图 2-8，它显示应用程序已成功完成安装。\n\n![A421548_1_En_2_Fig8_HTML.jpg](img/A421548_1_En_2_Fig8_HTML.jpg)\n\
+  图 2-8. 安装完成\n\nVisual Studio 现在已安装好。接下来，我们需要下载 Visual Studio 的 R 工具，但首先点击“Restart\
+  \ Now”按钮，或者先关闭并保存所有内容然后重新启动你的计算机。\n\n重启后，你可能会看到图 2-9，它显示一个漂亮的小闪屏，说明 Visual Studio\
+  \ 已安装。\n\n![A421548_1_En_2_Fig9_HTML.jpg](img/A421548_1_En_2_Fig9_HTML.jpg)\n图 2-9.\
+  \ 欢迎使用 Visual Studio\n\n如果重启后没有看到这个屏幕，可能也没关系。只要你成功安装了 Visual Studio，应该就没问题。继续阅读以安装我们需要开始测试\
+  \ R 功能的其余部分。\n\n### 下载 Visual Studio 的 R 工具\n\n第二步，如图 2-1 所示，是下载 Visual Studio 的\
+  \ R 工具。点击图 2-1 中也显示的“Download R Tools for Visual Studio”链接，就会开始下载我需要安装的东西。下载的文件名为\
+  \ `RTVS_2016-06-23.7.exe`，如图 2-10 所示。\n\n![A421548_1_En_2_Fig10_HTML.jpg](img/A421548_1_En_2_Fig10_HTML.jpg)\n\
+  图 2-10. RTVS 文件名\n\n你的文件名可能与此不同，但这没关系。微软负责管理该产品的未来版本，因此我们可以假设安装从你点击的链接中呈现的任何应用程序都是没问题的。\n\
+  \n下载完成后运行该可执行文件。你会看到图 2-11，显示你已准备好开始安装 R 工具。点击“Install”按钮开始安装过程。\n\n![A421548_1_En_2_Fig11_HTML.jpg](img/A421548_1_En_2_Fig11_HTML.jpg)\n\
+  图 2-11. Visual Studio 的 R 工具 0.4\n\n安装程序开始工作，最终在图 2-12 中显示已完成的 R 工具安装界面。\n\n![A421548_1_En_2_Fig12_HTML.jpg](img/A421548_1_En_2_Fig12_HTML.jpg)\n\
+  图 2-12. Visual Studio 的 R 工具 0.4 安装完成\n\n如图 2-12 所示，点击“Close”按钮也会打开一个网页，所以接下来我们在图\
+  \ 2-13 中看一下那个页面。\n\n![A421548_1_En_2_Fig13_HTML.jpg](img/A421548_1_En_2_Fig13_HTML.jpg)\n\
+  图 2-13. 打开的网页\n\n这不是很棒吗！微软为我们准备了一个很棒的页面，上面列出了所有资源。当你设置时，这个页面可能会变化，但可能会非常相似。我强烈建议你浏览列出的资源，尽可能多地收集关于\
+  \ R 的信息。一旦我们进入 RTVS 的界面，我会向你展示一个更好的获取 R 文档的方法，但现在，只是大致浏览一下这个网站，以便了解有哪些可用资源。\n\n\
+  回到图 2-12 所示的安装屏幕，点击“Close”。Visual Studio 的 R 工具现在已成功安装。\n\n\n### 下载 Microsoft R\
+  \ Open\n\n完成安装的最后一步是安装 Microsoft R Open。请返回到 Microsoft 提供并显示在图 2-1 中的网页，点击 **Download\
+  \ Microsoft R Open** 链接。此时，会打开另一个网页；其 URL 是 [`https://mran.revolutionanalytics.com/download/`](https://mran.revolutionanalytics.com/download/)。图\
+  \ 2-14 显示了此时您应该看到的 Microsoft R Open 下载页面。\n\n![A421548_1_En_2_Fig14_HTML.jpg](img/A421548_1_En_2_Fig14_HTML.jpg)\n\
+  图 2-14. 打开的网页\n\n请注意，Microsoft R Open 的下载仅适用于 64 位平台。Microsoft R Open 可用于 64 位版本的\
+  \ Windows (7 SP1, 8.1, 10, Server 2008 R2 SP1, 和 Server 2012)、Ubuntu (14.04 和 15.04)、Red\
+  \ Hat Enterprise Linux (7.1 和 6.5) 以及 SUSE Linux Enterprise Server 11。\n\n请继续点击适合您操作系统的链接；下载应该会开始。在撰写本文时，Windows\
+  \ 安装文件的名称是 `microsoft-r-open-3.3.1.msi`，大小为 131MB。可执行文件下载需要一点时间，所以在等待时可以去喝点什么。\n\
+  \nMicrosoft R Open 下载完成了吗？很好。那么我们现在就安装它吧。双击您刚刚下载的可执行文件。图 2-15 显示了您此时应该看到的界面。\n\n\
+  ![A421548_1_En_2_Fig15_HTML.jpg](img/A421548_1_En_2_Fig15_HTML.jpg)\n图 2-15. 开始\
+  \ Microsoft R Open 安装\n\n点击 **Next**。您应该会被带到图 2-16 所示的屏幕。此屏幕提供了一些关于即将进行的安装的详细信息。阅读给出的信息，勾选\
+  \ **I Acknowledge** 复选框，然后在准备好时点击 **Next**。\n\n![A421548_1_En_2_Fig16_HTML.jpg](img/A421548_1_En_2_Fig16_HTML.jpg)\n\
+  图 2-16. 信息\n\n下一个屏幕，如图 2-17 所示，显示了 **Install Math Kernel Library (Intel© `MKL`)**\
+  \ 安装选项。\n\n![A421548_1_En_2_Fig17_HTML.jpg](img/A421548_1_En_2_Fig17_HTML.jpg)\n\
+  图 2-17. Install Math Kernel Library (Intel© `MKL`) 选项\n\n是否安装完全由您决定，因为它不是必需的安装部分，但建议您安装。默认选中的原因是，添加数学内核库允许您的\
+  \ R 代码使用所有可用资源来生成结果，这意味着完成速度会快得多（取决于您机器的速度和可用资源）。我也建议保留选中此选项。准备好继续时点击 **Next**。\n\
+  \n接下来，我们必须接受正在安装的 `MKL` 的许可条款。这如图 2-18 所示。\n\n![A421548_1_En_2_Fig18_HTML.jpg](img/A421548_1_En_2_Fig18_HTML.jpg)\n\
+  图 2-18. 接受 `MKL` 许可条款\n\n此时，请确保点击 **I accept** 复选框，然后点击 **Next** 继续。\n\n接下来，图 2-19\
+  \ 中的屏幕显示了目标位置信息。点击 **Next** 接受目标文件夹。\n\n![A421548_1_En_2_Fig19_HTML.jpg](img/A421548_1_En_2_Fig19_HTML.jpg)\n\
+  图 2-19. 选择目标位置\n\n在这里点击 **Next**。接下来的屏幕，如图 2-20 所示，让我们开始安装；准备好时点击 **Install**。\n\
+  \n![A421548_1_En_2_Fig20_HTML.jpg](img/A421548_1_En_2_Fig20_HTML.jpg)\n图 2-20. 准备安装\n\
+  \n图 2-21 显示了安装正在进行。谢天谢地，这不需要很长时间。\n\n![A421548_1_En_2_Fig21_HTML.jpg](img/A421548_1_En_2_Fig21_HTML.jpg)\n\
+  图 2-21. 安装中\n\n最后，我们完成了 Microsoft R Open 的安装。图 2-22 显示了此时安装过程中您应该看到的最终屏幕。\n\n![A421548_1_En_2_Fig22_HTML.jpg](img/A421548_1_En_2_Fig22_HTML.jpg)\n\
+  图 2-22. 安装完成\n\n点击图 2-22 中所示的 **Finish** 按钮，以完成安装。此时不需要重新启动。您已具备在 Visual Studio\
+  \ 中启动和运行 R 所需的一切。\n\n### Visual Studio 环境\n\n现在我们已经按照 Microsoft 的说明安装了所有内容，让我们看看我们新的开发环境，看看有什么新的、改变的或不同的。对于那些以前使用过\
+  \ Visual Studio 的人（可能你们中的大多数人），你们会看到熟悉的 Visual Studio 环境。对于那些以前没有使用过 Visual Studio\
+  \ 的人，我邀请你们花一点时间在各个菜单部分中浏览一下，看看您对用户界面的熟悉程度。再次说明，如果您有一个熟悉的 IDE 更愿意用来编写 R 代码，请务必使用那个。我将引导您快速了解一下\
+  \ Visual Studio 2015 中与新的 R 功能特别相关的菜单。\n\n请继续启动 Visual Studio。您可能会看到提示您连接到开发者服务的屏幕。如果看到这个，请继续按\
+  \ **Maybe Later**。这些都是预期的。您最终会看到图 2-23 所示的主 IDE 屏幕。查看菜单栏中位于菜单工具栏中心稍右侧的 **R Tools**\
+  \ 菜单。\n\n![A421548_1_En_2_Fig23_HTML.jpg](img/A421548_1_En_2_Fig23_HTML.jpg)\n图\
+  \ 2-23. `R` 已作为 Visual Studio 的一部分安装\n\n**R Tools** 菜单是现在 Visual Studio 中所有 R 功能的所在。打开此菜单会显示图\
+  \ 2-24 中的选项。\n\n![A421548_1_En_2_Fig24_HTML.jpg](img/A421548_1_En_2_Fig24_HTML.jpg)\n\
+  图 2-24. `R` Tools 菜单选项\n\n让我们看看这些菜单选项。以下小节简要描述了每个菜单选项为您做了什么以及该菜单选项允许您控制什么。\n\n####\
+  \ 会话\n\n**Session** 选项允许您进行 `R` 会话。以下是可用选项：\n\n*   Interrupt R\n*   Attach Debugger\n\
+  *   Reset\n*   Load Workspace…\n*   Save Workspace As…\n\n#### 绘图\n\n**Plots** 选项允许您定义希望如何显示结果。以下是您的可用选项：\n\
+  \n*   Previous Plot\n*   Next Plot\n*   Save as Image\n*   Save as PDF\n*   Copy\
+  \ as Bitmap\n*   Copy as Metafile\n*   Remove Plot\n*   Clear All Plots\n\n显然，您可以看到这是一个巨大的帮助。能够将这些图导出为提到的各种类型，已经比其他一些仅生成\
+  \ Flash 或 Silverlight 的系统具有了相当大的优势。\n\n#### 数据\n\n**Data** 选项允许您定义希望如何使用已存在的数据。以下是您的可用选项：\n\
+  \n*   Import Dataset into R Session from Web URL…\n*   Import Dataset into R Session\
+  \ from Text File…\n*   Delete All Variables\n\n我想知道未来我们是否会获得连接到不同数据库和/或安装的选项……如果\
+  \ Microsoft 决定走那条路，这将是一个有趣的发展。我认为，提供更多的数据源供使用只会增强产品的可用性。\n\n#### 工作目录\n\n**Working\
+  \ Directory** 选项允许您更改工作目录。您的工作目录与 `R` 的安装位置不同。工作目录意味着这是您保存正在处理的文件的地方。\n\n*   Set\
+  \ Working Directory to Source File Location\n*   Set Working Directory to Project\
+  \ Location\n*   Select Working Directory…\n\n## Windows\n\n“Windows”菜单可让你打开新窗口，以监控\
+  \ R 脚本的运行情况。以下是可用选项：\n*   `源代码编辑器`\n*   `R 交互窗口`\n*   `帮助`\n*   `历史记录`\n*   `文件`\n\
+  *   `图形`\n*   `包`\n*   `变量资源管理器`\n\n这些选项显然取代了通常用于类视图或堆栈跟踪的常规视图。由于 R 是一门完全不同的语言，因此采用不同的方式来查看数据和开发任务也就顺理成章了。\n\
+  \n### 安装 Microsoft R Client…\n\n当你想要从 Microsoft 下载并安装 R 客户端时，请选择 `安装 Microsoft R\
+  \ Client` 选项。我们目前不想执行此操作，因此请不要理会它。我稍后会解释 Microsoft R 产品的各个不同组件。\n\n### 将 R 更改为 Microsoft\
+  \ R Client\n\n当你拥有一个本地安装的 R，并希望将其转换为 Microsoft R Client 的一个实例时，请选择 `将 R 更改为 Microsoft\
+  \ R Client`。这意味着你已经安装了 Microsoft R Open，因为这是运行 R Client 的先决条件。在当前示例中，我们同样不想更改 R\
+  \ 客户端。这意味着我们正在连接到远程数据库实例，但事实并非如此。我们是本地连接。\n\n### Microsoft R 产品…\n\n`Microsoft R\
+  \ 产品`菜单选项本质上是一个 URL 快捷方式。选择此选项会将你的网页浏览器导航至 [`www.microsoft.com/en-us/cloud-platform/r-server`](https://www.microsoft.com/en-us/cloud-platform/r-server)，你可以在该页面查看\
+  \ Microsoft 的 R Server 产品选项。\n\n### RTVS 文档和示例\n\n`RTVS 文档和示例`选项会带你访问专门针对 Visual\
+  \ Studio 的 R 工具（RTVS）的文档和示例。提供两个子选项：\n*   `文档`：此选项会带你访问一个网站（[`microsoft.github.io/RTVS-docs`](http://microsoft.github.io/RTVS-docs)），该网站详细介绍了该工具的文档。\n\
+  *   `示例`：此选项会带你访问一个网站（[`microsoft.github.io/RTVS-docs/samples.html`](http://microsoft.github.io/RTVS-docs/samples.html)），你可以在其中查看大量可用的\
+  \ R 脚本示例。我们稍后会回到这一部分。\n\n### R 文档\n\n`R 文档`菜单项提供了对 R 语言本身文档的便捷访问。这里有四个选项：\n*   `R\
+  \ 语言入门`：点击此选项会带你访问 [`cran.r-project.org/doc/manuals/r-release/R-intro.html`](https://cran.r-project.org/doc/manuals/r-release/R-intro.html)。我认为这是个有趣的补充。Microsoft\
+  \ 将完整的 R 文档集直接链接到了 Visual Studio 中。你只需点击链接——即可访问。\n*   `任务视图`：此链接指向 [`cran.r-project.org/web/views/`](https://cran.r-project.org/web/views/)，它展示了一系列可下载和安装的任务视图。在此上下文中，任务视图是为共同目的而协同工作的一组库。这里有很多，所以有机会时可以去探索一下。\n\
+  *   `数据导入/导出`：此链接指向 [`cran.r-project.org/doc/manuals/r-release/R-data.html`](https://cran.r-project.org/doc/manuals/r-release/R-data.html)，这是另一个文档集。读起来很轻松，没什么大不了的。\n\
+  *   `编写 R 扩展`：最后，此链接指向 [`cran.r-project.org/doc/manuals/r-release/R-exts.html`](https://cran.r-project.org/doc/manuals/r-release/R-exts.html)，这又是一个内容广泛的文档集。\n\
+  \n通过这些菜单选项可以获得大量关于 R 的信息。当你对语言有疑问时，请随时利用这些可用资源。我强烈建议至少简要通读一下这些文档，以便熟悉 R 在语法上是如何工作的。这将使本章后面的部分更容易理解。\n\
+  \n### 反馈\n\n选择`反馈`菜单选项来评价产品。以下是可用选项：\n*   `在 GitHub 上报告问题`\n*   `通过电子邮件发送笑脸`\n*\
+  \   `通过电子邮件发送皱眉`\n\n你选择发送的任何反馈最终都会被转交给 Microsoft。\n\n### 检查更新\n\n选择`检查更新`来检查并下载\
+  \ R Tools for Visual Studio 的更新。\n\n### 调查/新闻\n\n选择`调查/新闻`选项将导航至 [`rtvs.azurewebsites.net/news/`](http://rtvs.azurewebsites.net/news/)，Microsoft\
+  \ 在此发布有关 R 的新闻。其中还有`调查`选项，目前仍是“实验性功能”。\n\n### 编辑器选项\n\n选择`编辑器选项`可进入自定义界面选项。这与常规菜单中的\
+  \ `工具` -> `选项`操作相同，只是此菜单默认将选项限定在 R 上下文菜单内。这里有各种选项，包括 `IntelliSense`（智能感知）的运作方式、格式化设置以及常规功能，如行号和自动换行功能。\n\
+  \n#### 选项\n\n此选项让你可以自定义环境选项。这与`编辑器选项`菜单不同，因为`编辑器选项`菜单仅处理编辑器上下文中可用的选项。而`选项`菜单让你处理\
+  \ R 的实际环境选项，例如调试、`CRAN 镜像`位置、常规帮助设置以及 R 安装位置。\n\n##### 数据科学设置\n\n选择此选项将打开一个模态对话框窗口，如图\
+  \ 2-25 所示。你可以选择为所谓的“数据科学家”重新配置 Visual Studio。你将获得一个窗口布局和一些 Microsoft 认为对在 R 中进行数据分析的人员有用的键盘快捷键。\n\
+  \n![A421548_1_En_2_Fig25_HTML.jpg](img/A421548_1_En_2_Fig25_HTML.jpg)\n\n图 2-25.\n\
+  \n重置选项\n\n继续并点击是。可能会打开另一个屏幕，如图 2-26 所示。\n\n![A421548_1_En_2_Fig26_HTML.jpg](img/A421548_1_En_2_Fig26_HTML.jpg)\n\
+  \n图 2-26.\n\n重置键盘选项\n\n如果你希望在使用 RTVS 时重置键盘快捷键，请点击是；否则，点击否。\n\n我们现在可以看到更新后的界面。请查看图\
+  \ 2-27 了解这些变化。\n\n![A421548_1_En_2_Fig27_HTML.jpg](img/A421548_1_En_2_Fig27_HTML.jpg)\n\
+  \n图 2-27.\n\n更新后的界面\n\n你可以看到我的界面布局使得 `R Interactive` 是左下角的主窗口。在右侧，顶部是 `Variable\
+  \ Explorer` 和 `Solution Explorer`。`R Plot`、`R Help` 和 `R History` 都整齐地排列在底部。这证明了\
+  \ R 已正确安装并正常工作。\n\n让我们简要讨论一下 Microsoft 在其 R 产品线中提供了什么。\n\n*   `Microsoft R Server`：一个企业级平台，运行于\
+  \ Hadoop、Teradata DB 甚至 Linux 之上，以提供与数据的强大交互。使用 `ScaleR` 技术进行并行化。\n*   `Microsoft\
+  \ R Client`：一个免费的数据科学工具，与 `Microsoft R Open` 协同工作。`R Client` 使用远程数据并在本地处理操作。使用 `ScaleR`\
+  \ 技术进行并行化。\n*   `Microsoft R Open`：Microsoft 的 R “版本”，简称 `MRO`，在各方面与 R 代码完全兼容。不过，它不引用专有的\
+  \ `ScaleR` 技术。\n*   `SQL Server R Services`：将 R 原生集成到 SQL Server 的数据库引擎中。不过，`ScaleR`\
+  \ 仅在企业版中可用。\n\n此外，`R Server` 是一个服务器级分析平台，而 `R Client` 是一个客户端工具。`MRO` 提供了从客户端访问 R\
+  \ 的接口。因此，例如，在一个典型的数据分析环境中，会有一个 `R Server` 运行 `SQL Server R Services`、`Hadoop`、`Teradata\
+  \ DB` 或 `Linux` 的实例，并有一个或多个 `R Client` 连接运行 `MRO` 来与 `R Server` 或 `SQL Server R\
+  \ Services` 实例中的数据进行交互。客户端可以使用 `ScaleR` 函数消耗其本地工作站上的资源，或者在 `R Server` 上使用 `SQL Server\
+  \ R Services` 或其他分析工具（`Hadoop`、`Teradata DB`）在 Windows 或 Linux 服务器上进行计算。\n\n对于本书中的示例，`R\
+  \ Server` 实例是我们的 `SQL Server R Services` 数据库实例，而 `R Client` 是我们安装的带有 `MRO` 的 `RTVS`。\n\
+  \n### 探索示例\n\n让我们回到 RTVS 文档和示例菜单项中的示例链接。该链接是 [`http://microsoft.github.io/RTVS-docs/samples.html`](http://microsoft.github.io/RTVS-docs/samples.html)。在该页面上，有一个\
+  \ `.zip` 文件的下载，其中包含我们将用来熟悉新 R 环境的示例。将该 `.zip` 文件解压缩到你可以访问的位置，然后导航到 `RTVS-docs-master/examples`\
+  \ 并双击 `README.MD`。这将在 RTVS 中打开此文档。图 2-28 显示了打开后的文档。\n\n![A421548_1_En_2_Fig28_HTML.jpg](img/A421548_1_En_2_Fig28_HTML.jpg)\n\
+  \n图 2-28.\n\n自述文件\n\n在我们尝试进行任何开发活动之前，我们需要对 R 语言本身稍微熟悉一下，所以让我们逐步了解《R 初探》中给出的一些示例。在本书后面介绍的教程中，我们会更多地涉及\
+  \ `R Server` 方面，因为我们将直接与 `SQL Server R Services` 交互以创建包含嵌入式信息的报告。\n\n关于 R 的信息在互联网上非常多，所以如果你已经了解它，那么你可以把这当作复习课程。如果不知道，也别担心。我不打算深入探讨\
+  \ R 的完整历史，也不会让这成为涵盖 R 所有功能的综合指南。相反，我强调基础——然后我们可以继续深入。我认为这足以引起兴趣，并让我们专注于将 R 用于严肃数据分析的实用性。\n\
+  \n### R 初探\n\n导航至 `RTVS-docs-master\\examples\\A first look at R` 目录，并双击该目录下的 `README.MD`\
+  \ 文件。图 2-29 显示了此时你应该看到的内容。\n\n![A421548_1_En_2_Fig29_HTML.jpg](img/A421548_1_En_2_Fig29_HTML.jpg)\n\
+  \n图 2-29. R 初探的 README 文件\n\n该文档告诉我们，我们可以通过运行微软在之前下载的 `.zip` 文件中提供的 R 脚本来\"体验 R\"\
+  。导航回 `RTVS-docs-master\\examples\\A first look at R` 目录，并双击 `1-Getting_Started_with_R.R`。该脚本会在\
+  \ RTVS 中打开，如图 2-30 所示。\n\n![A421548_1_En_2_Fig30_HTML.jpg](img/A421548_1_En_2_Fig30_HTML.jpg)\n\
+  \n图 2-30. R 入门脚本\n\n此时，我们要做的就是逐步执行这个 R 脚本并运行其中的部分内容，以了解 R 的语法结构及其与其他语言的可能对比。我们几乎是一行一行地过一遍这个\
+  \ R 入门脚本，以便能真正理解这个介绍想要传达的内容。\n\n值得通读前 75 行的注释，因为这为你作为新的 R 用户奠定了基础，或者如果你是资深 R 用户，也能刷新记忆。无论如何，这里总有一些东西适合你，所以请务必仔细阅读，特别是\"\
+  R 资源\"和\"R 博客\"部分。\"帮助\"部分也总是很好的，所以也不要跳过它。\n\n第 76 行是第一个可执行的 R 脚本。那一行非常简单，就是 `installed.packages()`。这一行让我们可以看到已安装了哪些包；所以高亮选中第\
+  \ 76 行并按 `Ctrl+Enter` 来执行它。请注意，你的 R 交互窗口（应该仍然打开着）开始加载大量信息，如图 2-31 所示。\n\n![A421548_1_En_2_Fig31_HTML.jpg](img/A421548_1_En_2_Fig31_HTML.jpg)\n\
+  \n图 2-31. R 交互窗口\n\n你可以在 R 交互窗口中向上滚动以查看具体发生了什么，但目前这纯粹是信息性的。浏览这些生成的内容可能会有用，例如，可以确保你安装了最新版本的包，但就一般使用而言，知道它存在是好的。\n\
+  \n注意，现在 R 历史记录窗口中也有了一个值。这非常方便，以防我们以后需要重新执行某行代码。你只需要高亮选中想要重新执行的代码，然后按 `Enter`。这会把代码从\
+  \ R 历史记录窗口移动到 R 交互窗口。从这里，按 `Ctrl+Enter` 即可正常执行该行代码。\n\n高亮选中第 79 行，内容是 `search()`，并执行它。这将列出当前\
+  \ R 会话中已加载的包。接下来，我们使用 `library()` 函数附加一个包，这是 R 将特定包的功能提供给当前会话的方式。\n\n跳到第 85 行，内容是\
+  \ `library(foreign)`。这意味着我们在当前会话中包含 `foreign` 库的功能。高亮选中第 85 行并按 `Ctrl+Enter` 来执行它。一旦你看到\
+  \ R 交互窗口底部的插入符（caret）变回大于号 (`>`)，你就知道代码已经执行完毕。图 2-32 显示了此时你应该看到的内容。\n\n![A421548_1_En_2_Fig32_HTML.jpg](img/A421548_1_En_2_Fig32_HTML.jpg)\n\
+  \n图 2-32. 第 85 行执行结果\n\n这不在此处我们正在使用的 R 脚本中，但如果你现在返回并再次执行第 79 行，你应该会看到图 2-33 所示的内容。\n\
+  \n![A421548_1_En_2_Fig33_HTML.jpg](img/A421548_1_En_2_Fig33_HTML.jpg)\n\n图 2-33.\
+  \ 第 79 行执行结果，显示了 foreign 库\n\n注意 R 交互窗口是如何显示列出的项目的吗？它们按四个一组进行分组，起始的 n 索引号显示在最左侧的列，然后是四个包。下一行以\
+  \ n+4 索引开始，然后列出另外四个包，依此类推。现在看看第一次执行 `search()` 时显示了 12 个包，但现在我们可以在新返回的 `search()`\
+  \ 命令中看到 13 个包。我们可以看到 `foreign` 包的加入是其原因，这就证明该包已成功添加到我们当前的 R 会话中。\n\n当包被添加到 R 镜像时，它们总会包含一个帮助部分。你可以通过高亮选中第\
+  \ 88 行并按 `Ctrl+Enter` 来参考此帮助部分。这会在 RTVS 顶部框架中作为另一个页面打开帮助文档。图 2-34 显示了这个结果。\n\n![A421548_1_En_2_Fig34_HTML.jpg](img/A421548_1_En_2_Fig34_HTML.jpg)\n\
+  \n图 2-34. foreign 库的帮助文档\n\n你可以关闭该文档。接下来，跳到第 90 行。我们将安装 `ggplot2`，这可能是 R 中最流行且功能强大的绑图包。高亮选中第\
+  \ 92 到 94 行并按 `Ctrl+Enter` 执行。图 2-35 显示了此操作的结果。\n\n![A421548_1_En_2_Fig35_HTML.jpg](img/A421548_1_En_2_Fig35_HTML.jpg)\n\
+  \n图 2-35. 加载 ggplot2 包\n\n现在 `ggplot2` 已加载，我们需要运行 `library()` 函数以将其加载到当前的 R 会话中。这在第\
+  \ 97 行显示；高亮选中此行并执行，然后也执行第 98 行。第 98 行说 `search()` 显示当前已加载的包。请注意，`ggplot2` 现在已添加到当前会话的已安装包列表中。\n\
+  \n接下来，我们看一个简单的回归例子，如脚本所示。首先，我需要指出 `ggplot2` 包预加载了许多数据集，用于测试该包的功能。如第 105 行所示，使用语法\
+  \ `data(package = \"ggplot2\")$results` 来访问这些数据。这个语法表示我们想对 `ggplot2` 包运行 `data()`\
+  \ 函数，并将输出中标记为 `results` 的子集返回到屏幕上，如图 2-36 所示。\n\n![A421548_1_En_2_Fig36_HTML.jpg](img/A421548_1_En_2_Fig36_HTML.jpg)\n\
+  \n图 2-36. ggplot2 结果\n\n因此，我们也可以执行命令 `data(package = \"ggplot2\")` 来查看包中包含的数据集列表。图\
+  \ 2-37 显示了这个结果。\n\n![A421548_1_En_2_Fig37_HTML.jpg](img/A421548_1_En_2_Fig37_HTML.jpg)\n\
+  \n图 2-37. ggplot2 数据集\n\n继续并关闭那个窗口，但保持你的 R 脚本打开。我们已经在 R 交互窗口中看到了 `data(package =\
+  \ \"ggplot2\")$results` 的执行结果，所以下一步跳到第 109 行。这一行是 `data(diamonds, package = \"ggplot2\"\
+  )`。这个语法表示我们想要对 `ggplot2` 包中的 `diamonds` 数据集运行 `data()` 命令。高亮选中该行并按 `Ctrl+Enter`\
+  \ 来执行它。这里没有任何巨大的变化或什么特别的事情发生；只是 `diamonds` 数据集刚刚被加载以便进行分析。你知道它刚刚被加载的方式是检查你的变量资源管理器窗口。图\
+  \ 2-38 显示了此时变量资源管理器窗口应有的样子。\n\n![A421548_1_En_2_Fig38_HTML.jpg](img/A421548_1_En_2_Fig38_HTML.jpg)\n\
+  \n图 2-38. diamonds 数据集已加载\n\n\n这是我们的 `diamonds` 数据集，已加载并准备就绪。接下来请转到第 112 行，即 `ls()`\
+  \ 所在行。该命令不带任何参数时，仅返回当前会话中用户定义的数据集或函数。在当前实例中运行这行简单代码，输出结果仅为一个单词：`diamonds`。原因是这是当前会话中唯一加载的数据集。如果您在某个函数内部执行这行无参数代码，您将能看到该特定函数的局部变量。由此可见，这可以作为一个实用的调试工具。\n\
+  \n现在向下执行第 115 行：`str(diamonds)`。该命令允许我们检查作为参数传入的数据集结构。图 2-39 展示了 RTVS 中显示的结构。\n\n\
+  ![A421548_1_En_2_Fig39_HTML.jpg](img/A421548_1_En_2_Fig39_HTML.jpg)\n\n图 2-39.\n\
+  \n`str(diamonds)` 输出结果\n\n快速浏览一下返回的数据；您会看到信息量很大但似乎被截断了。别担心；再看一下您的变量资源管理器。您会发现有一个非常细微的变化：现在\
+  \ `diamonds` 旁边出现了一个指示符，而不仅仅是一个表格图标。点击这个指示符；您应该能看到如图 2-40 所示的内容。\n\n![A421548_1_En_2_Fig40_HTML.jpg](img/A421548_1_En_2_Fig40_HTML.jpg)\n\
+  \n图 2-40.\n\n`diamonds` 详细信息\n\n这对我来说更容易阅读和解读。在顶部，就在图 2-40 中显示的蓝色条上方，列被定义为 `Name`（名称）、`Value`（值）、`Class`（类）和\
+  \ `Type`（类型）。请花点时间在其中浏览一下，熟悉它的外观。这是一个非常酷的功能，允许在真正分析数据之前对其进行内省。\n\n接下来转到第 118 行。这一行是\
+  \ `head(diamonds)`，它只是指示 R 输出数据集中的前六行数据。相反，第 121 行是 `tail(diamonds)`，正如您可能猜到的，它输出数据集中的最后六行数据。这两次执行的结果如图\
+  \ 2-41 所示。\n\n![A421548_1_En_2_Fig41_HTML.jpg](img/A421548_1_En_2_Fig41_HTML.jpg)\n\
+  \n图 2-41.\n\n`head()` 和 `tail()` 演示\n\n接下来是第 127 行：`dim(diamonds)`。`dim()` 函数允许我们查看作为参数传递的对象的维度，本例中是\
+  \ `diamonds`。执行此行只是显示了我们之前通过检查变量资源管理器已经了解到的情况：返回了一个包含 53940 个对象、10 个变量的数据集。\n\n\
+  接下来，我们进入 R 中的绘图部分。R 中用于绘图主要有三个包：`base`、`lattice` 和 `ggplot2`。这也在第 136 行有所提及。\n\n\
+  第 133 和 134 行内容如下：\n\n```\ndiamondSample <- diamonds[sample(nrow(diamonds), 5000),]\n\
+  dim(diamondSample)\n```\n\n在进一步操作之前，让我们先分解一下这段语法。\n\n*   `diamondSample`：声明一个对象用于存储命令的结果。\n\
+  *   `<-`：赋值运算符，声明右侧命令的结果将赋值给左侧的对象。\n*   `diamonds`：引用 `diamonds` 数据集。\n*   `[sample(nrow(diamonds),\
+  \ 5000),]`：从 `diamonds` 数据集中随机抽取 5000 个数据点。\n*   `dim(diamondSample)`：显示 `diamondSample`\
+  \ 对象的维度。\n\n不出所料，`dim(diamondSample)` 命令的结果输出为 `[1] 5000   10`，这意味着返回了一个包含 5000\
+  \ 个对象、10 个变量的数据集。\n\n接下来，我们转到第 140 行：`theme_set(theme_gray(base_size = 18))`。这意味着我们将字体大小设置为\
+  \ 18pt 并使用灰色主题。请高亮并执行该行，然后跳至第 143 和 144 行。这两行显示以下代码：\n\n```\nggplot(diamondSample,\
+  \ aes(x = carat, y = price)) +\ngeom_point(colour = \"blue\")\n```\n\n\n\n首先，请注意这是两行不同的命令，但它实际上是一个长命令。加号的存在表示这是一个续行符，用于函数或参数之外。\n\
+  \n在继续之前，让我们看一下这个命令的语法。\n\n*   `ggplot`：定义要执行的函数。\n*   `diamondSample`：引用 `diamondSample`\
+  \ 对象作为活动数据集。\n*   `aes`：定义图表的美学属性；在此示例中，x 轴是 `carat` 集，y 轴是 `price` 集。\n*   `geom_point`：在点被绘制后进行自定义。\n\
+  \n因此，这意味着我们将生成一个图表。高亮显示这两行并按 `Ctrl+Enter` 执行它们。图 2-42 显示了此操作的结果。\n\n![A421548_1_En_2_Fig42_HTML.jpg](img/A421548_1_En_2_Fig42_HTML.jpg)\n\
+  \n图 2-42.\n\n我们的第一个图表！\n\n注意到 R 绘图窗口在这里获得了焦点吗？这非常方便。还要注意，x 轴是 `carat`，y 轴是 `price`，正如我们在\
+  \ `aes()` 命令中定义的那样。\n\n接下来，转到第 147 至 149 行。你会看到稍微增加了一个 `scale_x_log10()`。这为我们在 x\
+  \ 轴上提供了一个漂亮的对数刻度（这也已在第 146 行中说明），所以现在请高亮显示并执行第 146 至 149 行。图 2-43 显示了你现在应该看到的内容。\n\
+  \n![A421548_1_En_2_Fig43_HTML.jpg](img/A421548_1_En_2_Fig43_HTML.jpg)\n\n图 2-43.\n\
+  \n对数刻度添加\n\n现在开始看起来更有意义了。接下来，又增加了一行让我们在 y 轴上添加另一个对数刻度。这是在第 152 至 155 行；因此高亮显示这些行并按\
+  \ `Ctrl+Enter` 执行它们。图 2-44 显示了你现在应该看到的内容。\n\n![A421548_1_En_2_Fig44_HTML.jpg](img/A421548_1_En_2_Fig44_HTML.jpg)\n\
+  \n图 2-44.\n\nx 和 y 轴上的对数刻度\n\n我认为图表现在更好了。\n\n接下来，我们看看在加载的数据集范围内 R 中的线性回归。线性回归基本上是统计学家定义标量变量与一个或多个解释变量之间关系的方式。简单线性回归是当只有一个解释变量时，这本质上是我们在此示例中将要处理的情况。\n\
+  \n在 R 中，我们必须首先构建数据模型，然后才能访问该模型。为此，请查看第 163 行，其内容是 `model <- lm(log(price) ∼ log(carat)\
+  \ , data = diamondSample)`。再次，在继续之前让我们看看这个语法。\n\n*   `model`：定义继承该命令中定义内容的对象。\n\
+  *   `<-`：一个赋值运算符，声明右侧命令的结果将分配给左侧的对象。\n*   `lm`：定义一个线性模型。\n*   `log(price)`：`price`\
+  \ 数据的对数刻度（也是标量变量）。\n*   `∼`：分隔标量变量和解释变量。标量变量显示在此符号的左侧，解释变量显示在右侧。\n*   `log(carat)`：`carat`\
+  \ 数据的对数刻度（也是解释变量）。\n*   `,data = diamondSample`：定义要使用的数据对象（本例中为 `diamondSample`）。\n\
+  \n高亮显示第 163 行并执行它。注意 IDE 中没有执行任何明显的操作；所以让我们再次检查变量资源管理器。现在里面还有一个名为 `model` 的数据对象。图\
+  \ 2-45 显示了你现在应该看到的内容。\n\n![A421548_1_En_2_Fig45_HTML.jpg](img/A421548_1_En_2_Fig45_HTML.jpg)\n\
+  \n图 2-45.\n\nmodel 数据集\n\n第 166 行简单地写着 `summary(model)`。请执行该行。现在 R 交互窗口中显示了很多信息。看一下图\
+  \ 2-46。\n\n![A421548_1_En_2_Fig46_HTML.jpg](img/A421548_1_En_2_Fig46_HTML.jpg)\n\
+  \n图 2-46.\n\n`summary(model)` 信息\n\n\n"
+- "# 分析模型结果与创建图表\n\n查看此操作返回的结果。这里返回了大量关于模型的非常有用的信息，因此请理解，这是获取模型有意义统计信息的一个绝佳位置。\n\n\
+  转到第 170 至 172 行，这些行显示以下代码：\n\n```r\ncoef(model)\ncoef(model)[1]\nexp(coef(model)[1])\n\
+  ```\n\n第 169 行说明我们要提取模型系数。所以，现在让我们高亮显示这些行并执行它们。图 2-47 显示了您现在在 R 交互窗口中应该看到的内容。\n\n\
+  ![A421548_1_En_2_Fig47_HTML.jpg](img/A421548_1_En_2_Fig47_HTML.jpg)\n\n图 2-47.\n\
+  \n模型系数\n\n现在我们得到了系数，让我们看看第 175 至 179 行的下一段代码。这段代码定义如下：\n\n```r\nggplot(diamondSample,\
+  \ aes(x = carat, y = price)) +\n  geom_point(colour = \"blue\") +\n  geom_smooth(method\
+  \ = \"lm\", colour = \"red\", size = 2) +\n  scale_x_log10() +\n  scale_y_log10()\n\
+  ```\n\n我们已经逐步讲解过这条命令的语法，但我看到有一行`geom_smooth(method = \"lm\", colour = \"red\", size\
+  \ = 2) +`是我们之前没有定义过的。添加这行代码会在图表中增加一条细的红色趋势线。现在高亮显示这些行并执行它们。图 2-48 显示了您作为结果应该看到的内容。\n\
+  \n![A421548_1_En_2_Fig48_HTML.jpg](img/A421548_1_En_2_Fig48_HTML.jpg)\n\n图 2-48.\n\
+  \n图表结果\n\n这是一个非常有意义的图表！正如您所看到的，这些图表正变得越来越好，越来越有趣。\n\n现在跳到第 202 行。这一行是`model <- lm(log(price)\
+  \ ∼ log(carat) + ., data = diamondSample)`，它与我们之前构建的模型密切相关，但这次我们声明了`log(price) ∼\
+  \ log(carat) + .`，这意味着我们希望对价格列的对数与数据集中的所有其他列进行建模。换句话说，这是真正的多元线性回归，而不是简单线性回归。\n\n\
+  高亮显示第 202 行并执行它。请注意，“变量资源管理器”现在显示`List of 13`，而之前显示的是`List of 12`；这意味着我们已将模型添加到列表中，它现在在数据集中可用了。如果您愿意，您可以随时双击`model`来查看其中包含的数据。\n\
+  \n![A421548_1_En_2_Fig49_HTML.jpg](img/A421548_1_En_2_Fig49_HTML.jpg)\n\n图 2-49.\n\
+  \n模型值增加\n\n第 204 行显示了模型的摘要；因此高亮显示此行并执行它。图 2-50 显示了此操作的结果。\n\n![A421548_1_En_2_Fig50_HTML.jpg](img/A421548_1_En_2_Fig50_HTML.jpg)\n\
+  \n图 2-50.\n\n`summary(model)`信息\n\n这很显著（一个不好的双关语），因为 R 平方值是 98%，这意味着 98%的数据非常接近回归线。不错！\n\
+  \n第 211 至 214 行表明我们现在要创建一个数据框，这是 R 在其模型中结构化数据的方式。这些行定义如下：\n\n```r\npredicted_values\
+  \ <- data.frame(\n  actual = diamonds$price,\n  predicted = exp(predict(model, diamonds))\n\
+  )\n```\n\n所以，让我们再次逐步分析，以了解这里的语法在做什么。\n\n*   `predicted_values`: 保存命令结果的对象。\n*  \
+  \ `data.frame`: R 处理结构化数据的方式，类似于一个表。\n*   `actual = diamonds$price`: 设置一个名为`actual`的列变量，其值等于`diamonds`数据集中的`price`值。\n\
+  *   `predicted = exp(predict(model, diamonds))`: 设置一个名为`predicted`的列变量，其值等于在`diamonds`数据集中`model`线性模型的预测值的指数。\n\
+  \n执行第 211 至 214 行。您会发现又没有发生任何事情，这是预期的。再次查看您的“变量资源管理器”；您会看到现在有另一个名为`predicted_values`的数据集可用，这是我们刚刚添加的。图\
+  \ 2-51 显示了您现在应该看到的内容。\n\n![A421548_1_En_2_Fig51_HTML.jpg](img/A421548_1_En_2_Fig51_HTML.jpg)\n\
+  \n图 2-51.\n\n`predicted_values`数据集\n\n接下来是第 217 行，它是`head(predicted_values)`。我们之前见过这个，请回想一下`head()`命令允许我们查看数据的前六行。执行它。您应该看到图\
+  \ 2-52 所示的内容。\n\n![A421548_1_En_2_Fig52_HTML.jpg](img/A421548_1_En_2_Fig52_HTML.jpg)\n\
+  \n图 2-52.\n\n`head(predicted_values)`\n\n接下来是重头戏。第 220 至 224 行包含`ggplot`命令，它为我们绘制出所有内容。到目前为止，我们已经用`actual`和`predicted`列设置了`data.frame`对象。现在我们看到了这些数据可视化后的样子。此命令的\
+  \ R 代码定义如下：\n\n```r\nggplot(predicted_values, aes(x = actual, y = predicted)) +\n\
+  \  geom_point(colour = \"blue\", alpha = 0.01) +\n  geom_smooth(colour = \"red\"\
+  ) +\n  coord_equal(ylim = c(0, 20000)) +\n  ggtitle(\"Linear model of diamonds data\"\
+  )\n```\n\n我非常确定我们可以读懂并解读这个语法，但基本上，我们是在对`predicted_values`数据集运行`ggplot`命令。我们使用`actual`数据作为\
+  \ x 轴的美学值，`predicted`数据作为 y 轴的美学值。数据点是蓝色的，具有根据数据值变化的 alpha（透明度），带有一条红色趋势线，y 轴限制为\
+  \ 20000（这强制了比例尺），以及一个标题。\n\n图 2-53 显示了您在执行第 220 至 224 行后应该看到的内容。\n\n![A421548_1_En_2_Fig53_HTML.jpg](img/A421548_1_En_2_Fig53_HTML.jpg)\n\
+  \n图 2-53.\n\n`predicted_values`的`ggplot`图\n\n真的，这是一个非常有用的图表，你不觉得吗？如果你顺利做到这一步没有任何问题，干得漂亮！你现在已经学到了相当多的\
+  \ R 语法基础知识，并且看到了最常用的 R 绘图包`ggplot2`的实际应用。\n\n## 摘要\n\n让我们回顾一下本章所完成的工作。\n\n*   阅读了\
+  \ RTVS 的文档，网址为 [`http://microsoft.github.io/RTVS-docs`](http://microsoft.github.io/RTVS-docs)\n\
+  *   浏览了位于 [`http://microsoft.github.io/RTVS-docs/samples.html`](http://microsoft.github.io/RTVS-docs/samples.html)\
+  \ 的示例\n*   查阅了位于 [`https://cran.r-project.org/doc/manuals/r-release/R-intro.html`](https://cran.r-project.org/doc/manuals/r-release/R-intro.html)\
+  \ 的 R 文档\n*   查阅了位于 [`https://cran.r-project.org/web/views/`](https://cran.r-project.org/web/views/)\
+  \ 的任务视图\n*   查阅了位于 [`https://cran.r-project.org/doc/manuals/r-release/R-data.html`](https://cran.r-project.org/doc/manuals/r-release/R-data.html)\
+  \ 的关于 R 中数据导入/导出工作原理的资料\n*   了解了位于 [`https://cran.r-project.org/doc/manuals/r-release/R-exts.html`](https://cran.r-project.org/doc/manuals/r-release/R-exts.html)\
+  \ 的关于 R 扩展的资料\n\n我现在就期望你成为 `R` 专家吗？不。我期望你仔细钻研前面列出的所有网址吗？不。我期望的是至少满足以下最低要求：\n\n*\
+  \   `Visual Studio` 已正确安装。\n*   `Visual Studio 的 R 工具` 已正确安装。\n*   `SQL Server 2016`\
+  \ 已正确安装，并且能够与 `R` 引擎通信。\n*   你至少已经简要浏览过前面列出的文档，以便熟悉 `R` 语法。\n\n这些工具的安装方式可能会因后续的服务包而有所不同。但无论如何，都应该有一条清晰的路径来实现我刚才概述的解决方案。至少，在继续本章之前，应该满足上面列出的四点。如果其中任何一项未能\
+  \ 100% 正常运作，请回头解决问题。例如，我在第 1 章中给出的脚本显示了 `SQL Server` 正在与 `R` 引擎协同工作。图 2-29 显示了 `Visual\
+  \ Studio` 也已为 `R` 配置好。因此，此时我们所有人都应处于相同的理解层面。\n\n在下一章中，我们将讨论项目场景定义。在那里，我们将明确界定项目要达成的目标以及我们将采取的步骤来实现它。之后，我们将开始开发我们的解决方案，并使用\
+  \ `SQL Server 2016` 和 `Visual Studio 的 R 工具` 来实施它。\n\n## 3. 项目场景定义\n\n在开始本章之前，我想花点时间说明一下，本章涉及开发中的项目管理方面，而非实际的开发工作。有时，处理管理方面可能是你工作中最令人沮丧的部分，但它仍然是必要的。为了那些在这方面经验不多的读者，我包含了本章。希望它能帮助你理解为下一个项目制定计划是多么重要。\n\
+  \n我们首先要做的，是确保所有部分都能按预期协同工作。回顾第 1 章，从 `SQL Server` 的角度来看，`R` 已设置正确。第 2 章向我们展示了 `RTVS`\
+  \ 也已正确设置。这意味着我们所做工作的软件部分已经就绪。还剩下什么？\n\n本章更侧重于项目的管理方面，而非开发方面。这样做的原因是为你将来（如果还没有的话）终将需要管理一个项目做准备。虽然这绝非关于技术项目管理你需要知道的一切，但它确实为你从技术角度管理期望提供了一个很好的入门。我发现，最好的管理者是那些能够根据情况需要戴上不同帽子的人；他们可以在需要时兼具技术性或管理性。\n\
+  \n每当开始一个新项目时，最好能对你想要做什么以及如何到达你想去的地方有一个清晰的想法。就像开始一次公路旅行，你必须确保有一张地图和前往目的地的路线指示；否则，你只会原地打转，永远无法真正到达任何地方。这恰好是描述一个管理不善项目的类比：耗费了大量时间，花费了大量金钱，但项目却从未真正完成。这是管理不善项目的标志。在我的职业生涯中，我见过许多项目因规划不当或不完整而失败，我可以告诉你，很容易成为新开发面临的最大障碍的受害者，那就是**范围蔓延**的要素。\n\
+  \n### 范围蔓延\n\n究竟什么是范围蔓延？简单来说，就是项目的**需求**没有得到严格遵守。如果定义项目需求的过程耗费了时间、麻烦、精力与心血，最终却不被遵循，那确实毫无意义。在这种情况下，倒不如直接开始开发，然后由客户临时提出当天或当周的开发需求。与之相反的做法是，确立一套客户与开发团队共同认可、并严格遵循的固定需求。这样一来，就不会产生任何人的误解，因为一切从一开始就被清晰地列出并达成一致。我们将在本章稍后部分深入探讨这一点。\n\
+  \n我最喜欢用一块石头来描述范围蔓延。假设你站在栅栏的一侧，你的客户在另一侧。客户隔着栅栏喊话，说想要一块“上了色的石头”。你回应说你非常擅长给石头上色，会尽快交给他们。于是，你四处寻找，找到一块大小适中的石头，然后拿出你最常用的颜色。毕竟你对此非常擅长，所以你默认了客户想要的就是这样。完成的石头看起来棒极了，你把它扔给了栅栏对面的客户。他们立刻扔了回来，因为颜色不对。那么颜色是什么时候确定的呢？其实并没有确定。你假设了你的颜色就是客户想要的；但结果证明，完全不对。然而你并没有吸取教训，决定把石头漆成另一种颜色，然后扔回栅栏。客户立刻又扔了回来，因为颜色还是不对。现在你开始感到沮丧，因为你认为这个颜色是正确的——它必须是正确的！最终，你问客户想要什么颜色；他们回答“蓝色”。这没问题，因为你有蓝色颜料。于是你把石头漆成蓝色，再扔回栅栏。猜猜怎么了？他们立刻又扔了回来，说蓝色的色调不对。这种情况反复发生，直到你终于调对了那个蓝色的色调。但是，他们又一次把石头扔了回来！为什么？这次，他们抱怨石头的形状不对，实际上，这块石头的种类也完全错了。\n\
+  \n所以，项目从“给这块石头上色”这个假设开始，最终演变成了“用这种特定色调的颜料，涂在这种特定形状的、这种特定种类的石头上”。看到了吗？我可以告诉你，这非常令人沮丧。不幸的是，许多项目正是这样管理的。如果你是开发团队中不幸的一员，而不是管理层，你将承受最多的抱怨，因为你不断交付的东西在技术上可能完全合理，但对客户来说在审美上毫无意义。当情况变得明显，开发团队是接收指令以满足客户需求的最后一个环节时，情况会变得特别痛苦，因此，项目能否按时且在预算内完成，最终责任落在了开发团队身上。因此，坚持已达成一致的需求并避免偏离至关重要。\n\
+  \n我发现管理任何大型任务的最佳方法是将其分解为更小、更易管理的任务。这通常被称为`模块化`，是处理几乎所有事情的绝佳方式。在这方面，将任务按阶段划分对我来说非常有意义，让我们稍作关注这一点。\n\
+  \n### 项目定义阶段\n\n与其经历所有范围蔓延的麻烦，最好对需要什么、何时需要以及如何需要有一个非常结构化的构想。项目开发有明确定义的阶段，我很快就会讨论到。相信我；如果你的下一个项目还没有使用某种管理方法，那么采用这些阶段或非常类似的流程将会对你非常有帮助。无论项目规模大小，设定非常具体的目标节点都至关重要。请理解，这绝不是处理项目管理的唯一方式。我确信关于方法论以及必要的步骤会有不同的意见。但我真正希望你从这里学到的是，特别是如果你从未处理过这方面事务的话，那就是在规划项目时，一个管理计划是绝对必要的。\n\
+  \n\n#### 第一阶段：需求收集\n\n此阶段包括软件和硬件定义两部分。这也许是整个流程中最关键的阶段，因为如果此处有误或不完整，将影响其后的所有阶段。因此，我们需要百分之百确保我们的定义是完整的，并获得所有相关方和利益相关者的同意。此阶段需要开发团队创建一套文档，由开发团队交付给客户，并由客户签字并注明日期。至此，该文档集便被视为项目的官方范围。\n\
+  \n在这个需求收集阶段需要做些什么？以下是需要完成的事项清单。\n\n*   开发团队需要编写一份 `软件需求文档`。\n    *   需要清晰定义一个问题或议题。\n\
+  \        *   尽可能从客户那里获取尽可能多的细节，包括这个问题如何影响他们的日常工作，或者增加某个功能后他们的工作能变得多么高效。\n    * \
+  \  需要对所述问题提出一个大致的解决方案。\n        *   这意味着暂时不需要深入细节。如果可能，提供多种不同的解决方案，以便客户了解他们不同的选择。\n\
+  *   需要确定软件语言和技术。\n    *   提供用于开发接口或应用程序的语言和技术的详细信息。\n*   需要确定交付媒介。\n    *   即它将以何种形式交付；通常是基于\
+  \ Web 的，或是桌面应用程序。\n*   开发团队需要编写一份结构化的 `软件设计文档`。\n    *   此文档提供呈现给客户的接口的详细信息。需要向客户指出，该接口很可能会随着时间推移发生细微变化，这取决于当前的\
+  \ Web 或桌面趋势以及所用语言中可用的选项。此文档的大部分内容将由模拟屏幕截图和报告场景组成。\n*   开发团队需要编写一份结构化的 `数据库需求文档`。\n\
+  \    *   此文档提供关于将创建的数据库表和脚本的详细信息，这些内容将呈现接口，并最终向客户呈现整个解决方案。请注意，此文档同时涵盖了数据库的设计和需求。这样做的原因是，客户在很大程度上并不关心数据库的琐碎细节，如数据类型或字段长度。虽然这些信息当然可以在另一份文档中提供给客户，但或许最好将这些信息保持在相对疏远的位置，以免（从客户的角度）用无意义的信息使他们不知所措。这份文档的整体目的是什么？比你最初意识到的要重要得多。例如，此文档可用于为将来与不同远程数据库的交互提供数据库映射。因此，务必将其作为最后创建的文档，以防数据库发生某些变更而文档未能反映这一变化。\n\
+  \n这份清单代表了我认为作为正式请求的一部分需要交付的最低限度的文档。可能还有更多，但这已经是一个良好的开端。\n\n一旦此阶段完成并生成了文档集，就需要正式的验收和签字。必须向客户清楚地说明，在文档签署且开发开始后，不允许进行任何形式的更改。如果确实需要进行更改，你有两个选择。你可以开始一个螺旋式开发过程，或者实施一个\
+  \ `软件变更请求系统`。我强烈推荐使用 `软件变更请求系统`。两者有何区别？\n\n#### 螺旋式开发过程\n\n螺旋式开发是一种特别糟糕的开发形式，发生在项目中实际允许并鼓励范围蔓延时。太可怕了！你能看出允许过多范围蔓延的后果吗？没错；项目永远不会真正完成。项目会持续停留在定义和开发阶段，永远无法进展到完成。\n\
+  \n对于我们这些按项目收费的人来说，鼓励范围蔓延是完全不可接受的。可以这样想：如果你估计一个项目需要 10 小时，并且你为这个项目收费 500 美元，那么你每小时赚\
+  \ 50 美元。然而，并不能保证你能在 10 小时内完成。假设它花了你 20 小时；那么你现在的时薪是 25 美元。更糟的是，它花了你 100 小时。哇！你每小时只赚\
+  \ 5 美元。\n\n显然，这不是你想要的工作方式。相反，你只应交付双方同意的内容，任何变更都被视为 `超出` 预估和已支付范围，并受制于新的协议。根据我的经验，我可以告诉你，当对期望完成的工作有非常清晰的定义时，这会让每个人都感到满意。\n\
+  \n螺旋式开发过程的另一个危险，就像我说的：项目永远不会真正完成。它只是无休止地持续下去，因为客户得到了超出他们所支付的东西，而开发者往往过于胆怯，不敢指出某些事情实际上超出了项目约定的范围。这对你适用吗？你愿意获得这样的名声吗？——花时间走完所有正确管理技巧的流程，却在项目中途向客户未经证实的变更请求让步？我想你不会。我想我们都希望获得这样的声誉：一个有能力的开发者，有诚信去指出客户可能或明显偏离合同、或期望偏离合同的行为。在这种情况下，合同中需要有一个明确定义的补救条款，专门处理强制执行原始合同及其范围所需的具体步骤。\n\
+  \n#### 软件变更请求过程\n\n我推荐在项目及其范围发生变更时使用正式的变更请求。原因很简单：项目保持结构化！初始项目完成并被标记为 `v1.0`，对吧？之后你进行的任何更改，对于小的变更可以是\
+  \ `v1.1`，对于重大变更可能是 `v2.0`。`软件变更请求过程` 包含一个工作流中需要遵循的不同步骤，以促成一个完整的变更请求。这不是客户发一封 `电子邮件`；而是一个完整的过程，在工作流的每一步都需要签字确认。\n\
+  \n##### 请求提交\n\n在此步骤中，任何用户都可以请求对软件进行更改。不过，请求需要完整且有条理，不能只是像“我想把一块石头涂成蓝色”这样模糊的陈述。请求提交通常是一个相当复杂的步骤，用户被迫提供大量与请求相关的信息。确保不仅要收集客户信息，还要收集需要完成的具体任务。\n\
+  \n##### 管理员批准\n\n管理员随后会收到一个变更已被请求的通知。此时，管理员可以接受或拒绝该变更。也存在管理员可能联系请求者以获取更多信息，然后拒绝该请求，以便发起人可以详细阐述原始请求的情况。这非常常见，因为十有八九，普通用户不理解正确满足其请求所需的复杂需求。\n\
+  \n\n#### 软件开发工作流程\n\n##### 设计\n一旦收到被接受的请求，第一步是设计解决方案。有时，直接画出解决方案是最佳方式。它能让你对布局和实现解决方案所需空间有良好的预期。客户期望看到类似\
+  \ `Photoshop` 制作的屏幕草图之类的东西，更可能以 `PDF` 格式呈现。这并非总是硬性要求，但如果用户希望随时了解请求的进展，那么这样做是个好主意。无论客户是否参与，花几分钟时间快速绘制草图，并可能写一段简短的伪代码示例来说明思路，总是值得的。\n\
+  \n##### 编码\n接下来是有趣的部分：编写代码。这可以使用任何完成工作所必需的语言，以及你的应用程序中用于交付解决方案的任何技术。在某些情况下，你会用到多种语言。在\
+  \ Web 开发中，这非常常见。我日常构建应用程序时，经常稳定地混合使用 `HTML`、`ColdFusion`、`CSS` 和 `jQuery`。某些日子某种语言用得更多，但这大致就是我的工作内容。不过，这是过程中第二耗时的活动；最耗时的……是文档。\n\
+  \n##### 文档\n开发中最容易被忽视的部分无疑是记录所做的更改。务必严格遵循这一步！这不同于所有优秀开发人员定期进行的行内注释。那些行内注释也很棒，请别误会。这里特指的文档是面向用户的。它包含两份文档，但用户通常只看到其中一份。一份文档需要定义请求以及为实现该请求所采取的步骤。其原因在于，如果需要，可以基本上回滚这项更改。第二份文档是供用户测试更改的测试脚本。它需要相当简单明了；类似于“点击确定按钮”这样的指示。必须明确说明当某个操作发生时期望发生什么，以及失败的条件是什么。\n\
+  \n##### 单元测试\n这意味着在模块化环境中独立测试解决方案。它是否能独立完成所需功能，还是需要与其他单元或模块交互？换句话说，它应该尽可能地内聚。如果它需要依赖其他东西才能运行，你可能需要重新考虑这个特定的技术方案。是否有可能使用原生代码重写，使其更清晰、更模块化？这些是本阶段必须客观回答的问题。\n\
+  \n##### 回归测试\n在这里，你需要将解决方案作为涵盖整个应用程序的整体解决方案的一部分进行测试。换句话说，该解决方案与当前应用程序配合得如何？它是否能“无缝契合”，还是存在不一致而需要进一步处理？大多数时候，它能无缝集成，但有时则不然。因此，最好将更改视为应用程序整体的一部分来审视，而不是像单元测试那样以模块化的方式看待。考虑该更改的成功路径和失败路径（如果有独立路径）。考虑到系统其余部分的路径，它们是否合理？它实现其宣称功能的程度如何？\n\
+  \n##### 验收测试\n这是在解决方案通过所有其他测试且文档完成后进行的。这是提出请求的用户唯一应该看到的步骤。对其他所有内容，该用户都应该如同面对一个黑匣子，以免你陷入螺旋式开发的陷阱。千万别那么做！这个步骤非常简单，就是一行声明，表明客户同意该更改，并且已按预期交付。只需一个签名和当前日期即可完成此步骤。\n\
+  \n##### 安装\n解决方案被客户接受后，需要进行安装。这有点显而易见，但仍然是流程中必要的部分。这也需要记录，尽管要求可以宽松得多。务必在安装前立即备份数据库。如果你运行的是虚拟实例，我建议创建服务器镜像；如果是常规服务器，则建议创建带备份的系统镜像。其原因应该很清楚：以防万一一切变得一团糟时能快速恢复。一旦所有内容正确加载，请删除任何备份以释放系统空间。\n\
+  \n##### 归档\n最后，安装完成后，需要对解决方案进行归档。这包括两件事：首先，应将解决方案与所有文档一起打包压缩，并添加到某种源代码存储库中。具体使用哪种存储库由你决定。其次，网站或公告板上的请求物理记录应被移除，并添加到归档或已完成部分，以便日后必要时查阅。\n\
+  \n请注意，前述工作流程并非包罗万象，而是旨在帮助你开始理解软件更改请求流程的具体样貌。\n\n现在你已经理解了范围蔓延和螺旋式开发的含义，以及它们为何对项目有害。你也了解了软件更改流程，以及它对几乎任何系统的益处。接下来是什么？让我们继续定义项目定义的各个阶段，然后讨论更多影响项目成功有时也导致项目失败的因素。\n\
+  \n#### 第二阶段：初始界面设计\n此阶段允许开发者（如果适用）创建初始用户界面。有时项目没有界面，因为它们发生在“幕后”。如果你的项目属于这种情况，请直接跳到下一阶段。如果不是这样，而你必须创建一个界面，那么此阶段正是为你准备的。\n\
+  \n初始界面设计相当不言自明：你希望基于需求文档，并利用从客户那里收集到的任何其他信息，创建一个初始界面。请注意，这不包括回头向客户寻求想法或建议。基本上，他们之前已经有机会提出实施建议，而现在实施它们为时已晚，否则就会陷入可怕的螺旋式开发循环。还记得你如何让客户签署了项目范围吗？就像他们不能随意找你一样，从技术上讲，你也不应该回头找他们。如果你发现界面需要以某种方式实施存在真正的问题，或者某个问题阻碍你完成工作，那么你显然需要与客户沟通。这样做的关键在于“训练客户”理解，你严格依据需求文档工作，仅此而已。这样，当你交付所要求的东西时，你就知道它在技术和功能上\
+  \ 100%符合需求文档。\n\n我们已经收集了需求，我在本书的示例下载中列出了这些需求。下载内容包含我们的需求文档和初始数据集。请确保你拥有以下两个文档，否则你会很难跟上进度；它们可以从本书在出版商网站上的目录页面获取：\n\
+  \n* ```\n  Software Requirements Document.docx\n  ```\n\n* `Weather_Sample.csv`\n\
+  \n作为参考，`Weather_Sample.csv` 文件与我们之前从微软下载提供的文档相同。经许可，我们在本书中使用相同的示例。\n\n考虑到这一点，让我们来看看我们已同意提供的报告，并规划一个解决方案。\n\
+  \n\n### 加载 R 解决方案\n\n回想一下，在第 2 章中，我们曾从 [`https://microsoft.github.io/RTVS-docs/samples.html`](https://microsoft.github.io/RTVS-docs/samples.html)\
+  \ 下载了一个 `.zip` 文件。它包含了我们最终将要构建的内容所需的一切。请将该 `.zip` 文件解压缩到一个您容易访问的位置，因为我们马上就要加载其中的解决方案。\n\
+  \n启动 Visual Studio，然后转到 文件 -> 打开 -> 项目/解决方案…。导航到您保存并解压 `.zip` 文件的位置。沿着文件夹路径找到 `RTVS-docs-master/examples/Examples.sln`。选中它并点击\
+  \ 打开，如图 3-1 所示。\n\n![A421548_1_En_3_Fig1_HTML.jpg](img/A421548_1_En_3_Fig1_HTML.jpg)\n\
+  \n图 3-1. 打开项目\n\n项目需要一点时间打开，然后会将解决方案文件加载到 Visual Studio 中。\n\n请注意您的解决方案资源管理器窗口（如果未显示，请按\
+  \ `Ctrl+Alt+L` 使其出现），其中有一组文件，如图 3-2 所示。\n\n![A421548_1_En_3_Fig2_HTML.jpg](img/A421548_1_En_3_Fig2_HTML.jpg)\n\
+  \n图 3-2. 解决方案资源管理器中的文件\n\n双击最底部的 README 文件；就是不在任何文件夹内的那个。此时您应该看到如图 3-3 所示的内容。\n\n\
+  ![A421548_1_En_3_Fig3_HTML.jpg](img/A421548_1_En_3_Fig3_HTML.jpg)\n\n图 3-3. README\
+  \ 文件\n\n这看起来熟悉吗？在第 2 章，图 2-30 中，我们在开始逐步浏览 R 示例之前见过这个。请注意，目录内部还有更多的 README 文件，提供了来自\
+  \ Microsoft R 专家们的更多指导。\n\n在解决方案资源管理器中展开 `A first look at R` 文件夹，然后在右窗格中点击 `Getting_Started_with_R.R`\
+  \ 文件。您应该看到与图 3-4 所示类似的内容。\n\n![A421548_1_En_3_Fig4_HTML.jpg](img/A421548_1_En_3_Fig4_HTML.jpg)\n\
+  \n图 3-4. R 入门初始屏幕\n\n需要明确的是，左上窗格是打开的文件，左下窗格是 R 交互窗口（基本上是 R 操作的结果）。屏幕右上角是解决方案资源管理器和变量资源管理器窗格，右下角是\
+  \ R 绘图、R 帮助和 R 历史记录窗格。您可以根据自己的喜好重新排列窗口，只要您在需要时能方便地使用它们即可。\n\n在本章结束之前，我想讨论几件事。首先，让我向您提出两个问题。数据库中运行的是哪个版本的\
+  \ R？Visual Studio 中运行的是哪个版本的 R？我不得不停下来思考了一会儿，最终得出的结论是：我无法从 SQL Server 判断安装了哪个版本的\
+  \ R。不过，我可以很容易地从 Visual Studio 判断运行的是哪个版本的 R，因为它在 RTVS 内的 R 启动消息中显著显示，如图 3-5 所示。\n\
+  \n![A421548_1_En_3_Fig5_HTML.jpg](img/A421548_1_En_3_Fig5_HTML.jpg)\n\n图 3-5. RTVS\
+  \ 中的 R 版本\n\n多么有趣！如果我同时运行两个不同版本的 R 呢？这肯定会引起问题，特别是如果我在 RTVS 中编写代码，然后又希望在 SSMS 中得到相同的结果。这不会给我不同的结果吗？逻辑表明，这很有可能会发生。因此，显然，我们希望尽可能避免这种情况。\n\
+  \n还记得我们用来在 SQL Server 中执行 R 代码的存储过程吗？再次展示该过程如下：\n\n```sql\nexec sp_execute_external_script\n\
+  @language =N'R',\n@script=N'OutputDataSet<-InputDataSet',\n@input_data_1 =N'select\
+  \ 1 as hello'\nwith result sets (([hello] int not null));\ngo\n```\n\n让我们重写这个过程以获取执行此代码的\
+  \ R 的版本。我们的重写是一个简单的小脚本，您可能希望将其收入您的技巧库，以备不时之需。您可能希望在新建查询窗口中按 `Ctrl+T` 切换到“结果以文本显示”。脚本如下：\n\
+  \n```sql\nexec sp_execute_external_script\n@language =N'R',\n@script=N'OutputDataSet<-InputDataSet;\n\
+  message (R.Version()$version.string);'\nwith result sets (([Version] varchar));\n\
+  go\n```\n\n我相信我们都熟悉通用的脚本实践，所以我们可以看到我使用了 R 的 `message()` 函数，通过调用 `R.Version()$version.string`\
+  \ 来返回 R 的版本。\n\n此操作的结果如代码清单 3-1 所示。\n\n```\nVersion\n\n(0 row(s) affected)\nSTDERR\
+  \ message(s) from external script:\nR version 3.2.2 (2015-08-14)\n代码清单 3-1. SQL\
+  \ Server 2016 中的 R 版本\n```\n\n我们刚刚验证了 Visual Studio 运行的是 R 3.3.1 版本，而 SQL Server\
+  \ 运行的是 R 3.2.2 版本。造成这种情况的原因是 SQL Server R Services 是服务器版本，而 RTVS 是客户端版本。我们要做的是将\
+  \ RTVS 指向 R 3.2.2 版本，这样我们就能在 RTVS 中得到与 SQL Server 相同的结果。为此，请打开 Visual Studio，导航到\
+  \ R Tools 菜单，然后点击 选项。图 3-6 显示了此菜单位置。\n\n![A421548_1_En_3_Fig6_HTML.jpg](img/A421548_1_En_3_Fig6_HTML.jpg)\n\
+  \n图 3-6. 选项菜单\n\n将打开一个屏幕，如图 3-7 所示。\n\n![A421548_1_En_3_Fig7_HTML.jpg](img/A421548_1_En_3_Fig7_HTML.jpg)\n\
+  \n图 3-7. R Tools 高级选项\n\n在图 3-7 所示的屏幕中，`R Engine (64-bit)` 选项被选中，其值为 `C:\\Program\
+  \ Files\\Microsoft\\MRO-3.3.1\\`。这需要更改为 `C:\\Program Files\\Microsoft SQL Server\\\
+  MSSQL13.SQL2016RS\\R_SERVICES`，因为这是 SQL Server 引用数据库内 R 库的位置。请注意，您的文件夹位置可能与我的不同，所以请找到您的\
+  \ `R_SERVICES` 文件夹位置并使用它。替换完此文件夹位置后，点击 确定。系统会提示您重启 Visual Studio，所以请关闭 Visual Studio\
+  \ 并重新打开它。重新打开后，请注意 R 交互窗口包含一些对我们非常重要的信息。代码清单 3-2 显示了此信息。\n\n```\nR version 3.2.2\
+  \ (2015-08-14) -- \"Fire Safety\"\nCopyright (C) 2015 The R Foundation for Statistical\
+  \ Computing\nPlatform: x86_64-w64-mingw32/x64 (64-bit)\nR is free software and comes\
+  \ with ABSOLUTELY NO WARRANTY.\nYou are welcome to redistribute it under certain\
+  \ conditions.\nType 'license()' or 'licence()' for distribution details.\nR is a\
+  \ collaborative project with many contributors.\nType 'contributors()' for more\
+  \ information and\n'citation()' on how to cite R or R packages in publications.\n\
+  Type 'demo()' for some demos, 'help()' for on-line help, or\n'help.start()' for\
+  \ an HTML browser interface to help.\nType 'q()' to quit R.\nMicrosoft R Server\
+  \ version 8.0 (64-bit):\nMicrosoft packages Copyright (C) 2016 Microsoft Corporation\n\
+  Type 'readme()' for release notes.\n代码清单 3-2. 更新后的 R 信息\n```\n\n这证明我们现在已经成功同步了 SQL\
+  \ Server 和 Visual Studio 的版本。下一步是更新包，我们可以通过 R 包管理器轻松完成。回想一下第 2 章，我们需要安装两个包（及其依赖项）：`ggplot2`\
+  \ 和 `data.table`。\n\n通过转到 R Tools -> Windows -> Packages 在 Visual Studio 中打开 R 包管理器。图\
+  \ 3-8 显示了打开后的 R 包管理器。\n\n![A421548_1_En_3_Fig8_HTML.jpg](img/A421548_1_En_3_Fig8_HTML.jpg)\n\
+  \n图 3-8. R 包管理器\n\n在顶部窗格中，点击 Available 行，以显示图 3-9 中所示的内容。\n\n\n\n![A421548_1_En_3_Fig9_HTML.jpg](img/A421548_1_En_3_Fig9_HTML.jpg)\n\
+  \n图 3-9 可用的 R 包\n\n我们需要做的就是搜索 `ggplot2`；因此在窗口顶部的搜索框中键入它。`ggplot2` 包出现在左窗格中。图 3-10\
+  \ 显示了此结果。\n\n![A421548_1_En_3_Fig10_HTML.jpg](img/A421548_1_En_3_Fig10_HTML.jpg)\n\
+  \n图 3-10 查找 ggplot2\n\n接下来，我们只需点击右侧 `ggplot2` 窗格中的安装按钮来安装该包。安装在后台进行，但你随时可以检查 R 交互窗口以查看安装的当前状态。\n\
+  \n包安装完成后，你会看到如图 3-11 所示的内容。\n\n![A421548_1_En_3_Fig11_HTML.jpg](img/A421548_1_En_3_Fig11_HTML.jpg)\n\
+  \n图 3-11 ggplot2 已安装\n\n请注意，`Install` 按钮不再存在，左窗格现在在 `ggplot2` 旁边显示一个圆圈。这表明包已正常安装。\n\
+  \n接下来，我们需要为 `data.table` 包重复相同的说明。我将此留给你作为练习，但你可以复制我刚刚给出的说明，作为一个可重复的过程来安装你想要的任何包。\n\
+  \n### 总结\n\n如果你一直跟上进度并让一切按预期进行，那么到目前为止做得非常好。如果没有，请返回并重新运行安装，以便看到我在示例中展示的内容。如果看不到，恐怕你就无法获得本书的全部价值。接下来的章节会变得更复杂，所以你要为此做好准备。在空闲时间，确保你正在复习\
+  \ R 脚本和函数，包括出色的 `ggplot2` 包。大剧透：我们稍后会大量使用它。\n\n回顾时间！让我们快速浏览一下本章所做内容。\n\n*   了解了范围蔓延和项目定义阶段\n\
+  *   了解了在完成的应用程序中软件变更过程的重要性\n*   熟悉了 R Tools for Visual Studio 的初始界面\n\n接下来，在第 4\
+  \ 章中，我们实际开始确定需求，并将其组合成一个可用的报告。\n\n"
+- '# 第二部分 学习基础
+
+
+  '
+- '# 4. 使用 RTVS 构建 R 模型
+
+
+  我们在第 3 章结束时，在 RTVS 中加载了一个解决方案，然后测试了我们是否能在 R 环境中成功工作。在本章中，我们实际在 R 中构建模型，然后在一系列图表中显示该模型中包含的信息。图表逐渐变得更高级，直到我们达到数据可视化的最终高潮。
+
+
+  我们还介绍了生成模型的大部分代码语法。我们通过逐行深入研究 Microsoft 在 `.zip` 文件中提供的文件来实现这一点。这样，我们可以看到发生的事情，并希望不仅理解发生了什么，而且理解为什么发生。
+
+
+  ### 探索示例
+
+
+  让我们回到 R Tools for Visual Studio (RTVS) 中 R Tools 菜单下的 RTVS 文档和示例链接。该链接是 [`http://microsoft.github.io/RTVS-docs/samples.html`](http://microsoft.github.io/RTVS-docs/samples.html)。在该页面上，有一个包含示例的
+  `.zip` 文件下载，我们将用它来熟悉新的 R 环境。将该 `.zip` 文件解压缩到你可以访问的位置，导航到 `RTVS-docs-master/examples`，然后双击
+  README.MD。这将在 RTVS 中打开自述文档。图 4-1 显示了打开后的此文档。
+
+
+  ![A421548_1_En_4_Fig1_HTML.jpg](img/A421548_1_En_4_Fig1_HTML.jpg)
+
+
+  图 4-1 自述文件
+
+
+  在尝试进行任何开发活动之前，我们需要对 R 作为一门语言有点熟悉，因此让我们逐步了解《R 初探》中给出的一些示例。在本书后面介绍的教程中，我们将更多地处理 R
+  Server 方面，因为我们直接与 SQL Server R Services 接口以创建包含嵌入信息的报告。
+
+
+  互联网上关于 R 的信息非常多，所以如果你已经了解它，那么可以将其视为复习课程。如果不了解，也不用担心。我不会深入探讨 R 的完整历史，也不会使这成为 R 所有功能的综合指南。相反，我将重点介绍基础——然后我们可以在此基础上继续。我认为这足以激发我们所谓的兴趣，并让我们的思维敏锐于将
+  R 用于严肃数据分析的实用性。
+
+
+  导航到 `RTVS-docs-master\examples\A first look at R` 并双击该目录中的 README.MD 文件。图 4-2 显示了此时你应该看到的内容。
+
+
+  ![A421548_1_En_4_Fig2_HTML.jpg](img/A421548_1_En_4_Fig2_HTML.jpg)
+
+
+  图 4-2 《R 初探》自述文件
+
+
+  该文档告诉我们，通过运行 Microsoft 在我们之前下载的 `.zip` 文件中提供的 R 脚本，我们可以“试驾 R”。导航回 `RTVS-docs-master\examples\A
+  first look at R` 目录并双击 1-Getting_Started_with_R.R。然后脚本将在 RTVS 中打开，如图 4-3 所示。
+
+
+  ![A421548_1_En_4_Fig3_HTML.jpg](img/A421548_1_En_4_Fig3_HTML.jpg)
+
+
+  图 4-3 “R 入门”脚本
+
+
+  此时，我们要做的就是逐步查看 R 脚本并执行部分内容，以了解 R 在语法上是如何布局的，以及它与其他语言的比较。我们将几乎逐行浏览“R 入门”脚本，以便我们真正理解这个介绍的内容。
+
+
+  值得阅读前 75 行的注释，因为这为你作为新的 R 用户奠定了基础，或者如果你是旧版 R 用户，可以刷新你的记忆。无论哪种方式，这里都有适合每个人的内容，所以请确保你彻底阅读，特别是
+  R 资源和 R 博客部分。帮助部分总是很好，所以也不要跳过它。
+
+
+  第 76 行是第一个可执行的 R 脚本。那一行非常简单：`installed.packages()`。这一行让我们看到已安装了哪些包；因此高亮显示第 76 行并按
+  Ctrl+Enter 执行它。请注意，你的 R 交互窗口（应该仍然打开）开始加载大量信息，如图 4-4 所示。
+
+
+  ![A421548_1_En_4_Fig4_HTML.jpg](img/A421548_1_En_4_Fig4_HTML.jpg)
+
+
+  图 4-4 R 交互窗口
+
+
+  你可以在 R 交互窗口中向上滚动以准确查看发生了什么，但就目前而言，它纯粹是信息性的。例如，浏览这些生成的内容以确保你拥有已安装包的最新版本可能很有用，但对于一般用途来说，知道它在那里是好的。
+
+
+  注意
+
+
+
+  ### 在 Visual Studio 的 R 工具中执行代码与管理包
+
+
+  R History 窗口中现在也有一个值了。这非常方便，以防我们将来需要重新执行某行代码。你只需高亮选中想要重新执行的代码，然后按 Enter。这会将代码从 R
+  History 窗口移动到 R Interactive 窗口。接着，按 `Ctrl+Enter` 就可以像往常一样执行该行代码。
+
+
+  高亮选中第 79 行，该行内容是 `search()`，并执行它。这会列出当前 R 会话中已加载的包。接下来，我们使用 `library()` 函数附加一个包，这是
+  R 为会话提供特定包功能的方式。
+
+
+  跳到第 85 行，该行内容是 `library(foreign)`。这意味着我们将在当前会话中包含 `foreign` 库的功能。高亮选中第 85 行并按 `Ctrl+Enter`
+  执行它。一旦你看到 R Interactive 窗口底部的插入符号重新变回大于号（`>`），你就知道代码已经执行完毕。图 4-5 展示了此时你应该看到的内容。
+
+
+  ![A421548_1_En_4_Fig5_HTML.jpg](img/A421548_1_En_4_Fig5_HTML.jpg)
+
+
+  **图 4-5. 第 85 行执行**
+
+
+  这不在我们正在使用的 R 脚本中，但如果你现在返回并再次执行第 79 行，你应该会看到如图 4-6 所示的内容。
+
+
+  ![A421548_1_En_4_Fig6_HTML.jpg](img/A421548_1_En_4_Fig6_HTML.jpg)
+
+
+  **图 4-6. 第 79 行执行，显示 foreign 库**
+
+
+  注意 R Interactive 是如何显示这些列出项目的吗？它是以每组四个的方式完成的，起始 n 索引号显示为最左边的列，后面跟着四个包。下一行以 n+4 索引开始，然后列出另外四个包，依此类推。现在看看，第一次执行
+  `search()` 显示了 12 个包，但现在我们可以在新返回的 `search()` 命令中看到返回了 13 个包。我们可以看到 `foreign` 包的添加是造成这个差异的原因，所以这证明了该包已成功添加到我们当前的
+  R 会话中。
+
+
+  当包被添加到 R 镜像时，它们总是包含一个帮助部分。你可以通过高亮选中第 88 行并按 `Ctrl+Enter` 来参考这个帮助部分。这会在 RTVS 的顶部框架中以另一个页面打开帮助文档。图
+  4-7 展示了这个结果。
+
+
+  ![A421548_1_En_4_Fig7_HTML.jpg](img/A421548_1_En_4_Fig7_HTML.jpg)
+
+
+  **图 4-7. foreign 库的帮助文档**
+
+
+  你可以关闭该文档。接下来，跳到第 90 行。我们将要安装 `ggplot2`，它可能是 R 可用的最流行、最强大的图表包。高亮选中第 92 到 94 行并按 `Ctrl+Enter`
+  执行。图 4-8 展示了这个结果。
+
+
+  ![A421548_1_En_4_Fig8_HTML.jpg](img/A421548_1_En_4_Fig8_HTML.jpg)
+
+
+  **图 4-8. 加载 ggplot2 包**
+
+
+  现在 `ggplot2` 已经加载，我们需要运行 `library()` 函数以将其加载到当前 R 会话中。这显示在第 97 行；高亮选中该行并执行它，然后也执行第
+  98 行。第 98 行是 `search()`，如果你还记得，它会显示当前加载的包。注意 `ggplot2` 现在已被添加到此会话当前安装的包列表中。
+
+
+  ### R 包管理器
+
+
+  用于 Visual Studio 的 R 工具的安装包括一个 R 包管理器。如果你导航到 R Tools ➤ Windows 并选择 Packages，如图 4-9
+  所示，会打开一个页面，显示许多关于已安装 R 包的非常酷的信息，如图 4-10 所示。
+
+
+  ![A421548_1_En_4_Fig10_HTML.jpg](img/A421548_1_En_4_Fig10_HTML.jpg)
+
+
+  **图 4-10. R 包管理器**
+
+
+  ![A421548_1_En_4_Fig9_HTML.jpg](img/A421548_1_En_4_Fig9_HTML.jpg)
+
+
+  **图 4-9. Packages 选项的位置**
+
+
+  包管理器的添加非常有用，因为否则，用户将被迫通过命令行手动管理包。虽然有些用户可能更习惯这种方法，但这多少违背了快速应用开发的目的。通过此功能，用户现在可以查看其已安装的包，并选择从此界面更新它们，而不是使用
+  `installed.packages()`。
+
+
+  可以随意在此区域探索一下。例如，左上角包含三个选项：
+
+
+  *   **Available（可用）**：此菜单选项显示当前指向的 CRAN 镜像中所有可用的包。可以通过单击界面右侧的“Install”按钮下载并安装包。
+
+  *   **Installed（已安装）**：此选项显示系统上当前安装的所有包。如果已安装的包有可用更新，左窗格中会出现一个蓝色图标，右窗格中会出现一个“Update”按钮。
+
+  *   **Loaded（已加载）**：此选项显示项目中当前加载的所有包。
+
+
+  详细阐述这些信息，**Available** 菜单选项如图 4-11 所示。
+
+
+  ![A421548_1_En_4_Fig11_HTML.jpg](img/A421548_1_En_4_Fig11_HTML.jpg)
+
+
+  **图 4-11. Available 菜单选项**
+
+
+  注意右侧的“Install”按钮。单击此按钮会将当前选中的包安装到你的 R 安装中。
+
+
+  **Installed** 菜单选项如图 4-12 所示。注意，我已滚动到左窗格底部以显示可更新的包。
+
+
+  ![A421548_1_En_4_Fig12_HTML.jpg](img/A421548_1_En_4_Fig12_HTML.jpg)
+
+
+  **图 4-12. Installed 菜单选项**
+
+
+  注意 `RUnit` 和 `survival` 都需要更新。在左窗格中单击 `RUnit` 包名称，界面会变为如图 4-13 所示。
+
+
+  ![A421548_1_En_4_Fig13_HTML.jpg](img/A421548_1_En_4_Fig13_HTML.jpg)
+
+
+  **图 4-13. RUnit 需要更新**
+
+
+  注意，此时“Update”按钮出现在右窗格中。
+
+
+  最后，**Loaded** 菜单选项如图 4-14 所示。
+
+
+  ![A421548_1_En_4_Fig14_HTML.jpg](img/A421548_1_En_4_Fig14_HTML.jpg)
+
+
+  **图 4-14. Loaded 菜单选项**
+
+
+  除了查看已加载的内容外，你对此区域能做的操作不多。请关闭 R 包管理器窗口。我们继续。
+
+
+  ### R 中的绘图
+
+
+  接下来，我们来看一个简单的回归示例，如脚本所示。首先，我需要指出 `ggplot2` 包预装了相当多用于测试其功能的数据集。如第 105 行所示，使用语法 `data(package
+  = "ggplot2")$results` 访问这些数据。该语法表示我们希望对 `ggplot2` 包运行 `data()` 函数，并将输出中名为 `results`
+  的子集显示在屏幕上，如图 4-15 所示。
+
+
+  ![A421548_1_En_4_Fig15_HTML.jpg](img/A421548_1_En_4_Fig15_HTML.jpg)
+
+
+  图 4-15.
+
+  ggplot2 结果
+
+
+  因此，我们也可以执行命令 `data(package = "ggplot2")` 来查看该包中包含的数据集列表。图 4-16 显示了这一结果。
+
+
+  ![A421548_1_En_4_Fig16_HTML.jpg](img/A421548_1_En_4_Fig16_HTML.jpg)
+
+
+  图 4-16.
+
+  ggplot2 数据集
+
+
+  关闭该窗口，但保持你的 R 脚本打开。我们已经在 R 交互窗口中看到了 `data(package = "ggplot2")$results` 的执行结果，所以下一个跳到第
+  109 行。这一行写着 `data(diamonds, package = "ggplot2")`。这个语法表示我们希望对 `ggplot2` 包中的 `diamonds`
+  数据集运行 `data()` 命令。高亮显示该行并按 Ctrl+Enter 执行。这里并没有任何巨大的变化；只是 `diamonds` 数据集刚刚被加载以供分析。要知道它刚刚被加载，可以检查你的变量资源管理器窗口。图
+  4-17 显示了此时变量资源管理器窗口应有的样子。
+
+
+  ![A421548_1_En_4_Fig17_HTML.jpg](img/A421548_1_En_4_Fig17_HTML.jpg)
+
+
+  图 4-17.
+
+  diamonds 数据集已加载
+
+
+  所以我们的 `diamonds` 数据集已经加载并准备就绪。下一个转到第 112 行，该行写着 `ls()`。这一行本身没有任何参数，只返回当前会话中用户定义的数据集或函数。在这个例子中，运行一行简单的代码只会输出一个词：`diamonds`。原因是这是本次会话中唯一加载的数据集。如果你在一个没有参数的函数中执行这一行，你将能够看到该特定函数的局部变量。如你所见，这可以是一个有用的调试工具。
+
+
+  现在转到并执行第 115 行，该行写着 `str(diamonds)`。该命令允许我们检查作为参数传入的数据集的结构。图 4-18 显示了在 RTVS 中显示的结构。
+
+
+  ![A421548_1_En_4_Fig18_HTML.jpg](img/A421548_1_En_4_Fig18_HTML.jpg)
+
+
+  图 4-18.
+
+  `str(diamonds)` 输出
+
+
+  简单看一下那里返回的数据。你可以看到有很多信息，但似乎被截断了。别担心；再看一下你的变量资源管理器。你看到一个非常细微的变化，即 `diamonds` 旁边现在有一个指示器，而不是只有一个表格图标。点击这个指示器。你应该看到图
+  4-19 所示的内容。
+
+
+  ![A421548_1_En_4_Fig19_HTML.jpg](img/A421548_1_En_4_Fig19_HTML.jpg)
+
+
+  图 4-19.
+
+  diamonds 详细信息
+
+
+  这对我来说更容易阅读和理解。在图 4-19 所示的蓝色栏正上方，列被定义为名称、值、类和类型。在那里浏览一会儿，熟悉它的样子。这是一个非常酷的功能，允许在真正分析数据之前对其进行自省。
+
+
+  接下来转到第 118 行。这一行写着 `head(diamonds)`，它简单地指示 R 输出数据集中的前六行数据。相反，第 121 行写着 `tail(diamonds)`，正如你可能猜到的，输出数据集中的最后六行数据。这两次执行的结果如图
+  4-20 所示。
+
+
+  ![A421548_1_En_4_Fig20_HTML.jpg](img/A421548_1_En_4_Fig20_HTML.jpg)
+
+
+  图 4-20.
+
+  `head()` 和 `tail()` 演示
+
+
+  下一个是第 127 行，写着 `dim(diamonds)`。`dim()` 函数允许我们查看作为参数传递的对象的维度，这里就是 `diamonds`。执行这一行只是显示了我们之前通过检查变量资源管理器已经收集到的信息：返回了一个数据集，包含
+  10 个变量的 53940 个对象。
+
+
+  接下来，我们进入 R 中的绘图部分。在 R 中用于绘图有三个主要的包：`base`、`lattice` 和 `ggplot2`。这也体现在第 136 行。
+
+
+  第 133 行和 134 行如下所示：
+
+
+  ```
+
+  diamondSample <- diamonds[sample(nrow(diamonds), 5000) ,]
+
+  dim(diamondSample)
+
+  ```
+
+
+  在继续之前，让我们分解一下这个语法。
+
+
+  *   `diamondSample`：声明一个对象用于存储命令的结果。
+
+  *   `<-`：赋值运算符，声明右边命令的结果将被赋给左边的对象。
+
+  *   `diamonds`：引用 `diamonds` 数据集。
+
+  *   `[sample(nrow(diamonds), 5000), ]`：从 `diamonds` 数据集中随机抽取 5000 个数据点。
+
+  *   `dim(diamondSample)`：显示 `diamondSample` 对象的维度。
+
+
+  正如预期的那样，`dim(diamondSample)` 命令的结果是输出 `[1] 5000   10`，这意味着返回了一个数据集，包含 10 个变量的 5000
+  个对象。
+
+
+  接下来，我们转到第 140 行，内容是：`theme_set(theme_gray(base_size = 18))`。这意味着我们将字体大小设置为 18pt
+  并使用灰色主题。高亮显示并执行该行，然后跳到第 143 和 144 行。那些行显示以下代码：
+
+
+  ```
+
+  ggplot(diamondSample, aes(x = carat, y = price)) +
+
+  geom_point(colour = "blue")
+
+  ```
+
+
+  首先，请注意这是在两行上，但它实际上是一个长命令。加号的存在表示一个续行符，这是在函数或参数内部使用之外的情况。
+
+
+  在我们继续之前，让我们看一下这个命令的语法。
+
+
+  *   `ggplot`：定义要执行的函数。
+
+  *   `diamondSample`：引用 `diamondSample` 对象作为活动数据集。
+
+  *   `aes`：定义图表的美学品质；在这个例子中，x 轴是 `carat` 集，y 轴是 `price` 集。
+
+  *   `geom_point`：在点被绘制后对其进行自定义。
+
+
+  所以这意味着我们将生成一个图表。高亮显示这两行并按 Ctrl+Enter 执行它们。图 4-21 显示了此操作的结果。
+
+
+  ![A421548_1_En_4_Fig21_HTML.jpg](img/A421548_1_En_4_Fig21_HTML.jpg)
+
+
+  图 4-21.
+
+  我们的第一个图表！
+
+
+  注意到 R 绘图窗口在这里获得了焦点吗？这非常方便。还要注意 x 轴是 `carat`，y 轴是 `price`，正如我们在 `aes()` 命令中定义的那样。
+
+
+  接下来转到第 147 到 149 行。你会看到有一个非常轻微的添加：`scale_x_log10()`。这为我们提供了 x 轴上一个很好的对数刻度（这也在第 146
+  行中说明），所以现在继续高亮显示并执行第 146 到 149 行。图 4-22 显示了你现在应该看到的内容。
+
+
+  ![A421548_1_En_4_Fig22_HTML.jpg](img/A421548_1_En_4_Fig22_HTML.jpg)
+
+
+  图 4-22.
+
+  添加对数刻度
+
+
+  现在开始更有意义了。接下来，添加了另一行，让我们在 y 轴上添加另一个对数刻度。这是在第 152 到 155 行；所以高亮显示这些行并按 Ctrl+Enter
+  执行它们。图 4-23 显示了你现在应该看到的内容。
+
+
+  ![A421548_1_En_4_Fig23_HTML.jpg](img/A421548_1_En_4_Fig23_HTML.jpg)
+
+
+  图 4-23.
+
+  在 x 和 y 轴上应用对数刻度
+
+
+  我认为，现在这个图表更好了。
+
+
+
+  ### R 中的线性回归
+
+
+  接下来，我们将在已加载的数据集范围内探讨 R 中的线性回归。线性回归本质上是统计学家用来定义一个标量变量与一个或多个解释变量之间关系的方法。简单线性回归是指只有一个解释变量的情况，这基本上就是我们在这个示例中要处理的情形。
+
+
+  在 R 中，我们必须先为数据构建一个模型，然后才能使用该模型。为此，请查看第 163 行代码：`model <- lm(log(price) ∼ log(carat)
+  , data = diamondSample)`。再次强调，在我们继续之前，先来看看这句语法。
+
+
+  -   `model`：定义继承该命令所定义内容的对象。
+
+  -   `<-`：一个赋值运算符，声明右侧命令的结果将被赋值给左侧的对象。
+
+  -   `lm`：定义一个线性模型。
+
+  -   `log(price)`：`price`数据的对数尺度（也是标量变量）。
+
+  -   `∼`：分隔标量变量和解释变量。标量变量显示在此符号的左侧，解释变量显示在右侧。
+
+  -   `log(carat)`：`carat`数据的对数尺度（也是解释变量）。
+
+  -   `, data = diamondSample`：定义要使用的数据对象（此处为`diamondSample`）。
+
+
+  高亮第 163 行并执行它。请注意，IDE 中没有显示明显的操作，所以让我们再次检查变量资源管理器。现在里面又多了一个引用为`model`的数据对象。图 4-24
+  展示了你现在应该看到的样子。
+
+
+  ![A421548_1_En_4_Fig24_HTML.jpg](img/A421548_1_En_4_Fig24_HTML.jpg)
+
+  图 4-24. `model`数据集
+
+
+  第 166 行简单地写着`summary(model)`。请执行该行。现在 R 交互窗口中显示了很多信息。看一下图 4-25。
+
+
+  ![A421548_1_En_4_Fig25_HTML.jpg](img/A421548_1_En_4_Fig25_HTML.jpg)
+
+  图 4-25. `summary(model)`信息
+
+
+  看看这个操作返回了什么。这里返回了很多关于模型的非常有用的信息，所以请理解，这是获取模型有意义的统计信息的绝佳位置。
+
+
+  继续看第 170 到 172 行，它们展示了以下代码：
+
+
+  ```
+
+  coef(model)
+
+  coef(model)[1]
+
+  exp(coef(model)[1])
+
+  ```
+
+
+  第 169 行说我们提取模型系数。现在让我们高亮这些行并执行它们。图 4-26 展示了你现在在 R 交互窗口中应该看到的内容。
+
+
+  ![A421548_1_En_4_Fig26_HTML.jpg](img/A421548_1_En_4_Fig26_HTML.jpg)
+
+  图 4-26. `model`系数
+
+
+  现在我们得到了系数，让我们看看第 175 到 179 行的下一段代码。这段代码定义如下：
+
+
+  ```
+
+  ggplot(diamondSample, aes(x = carat, y = price)) +
+
+  geom_point(colour = "blue") +
+
+  geom_smooth(method = "lm", colour = "red", size = 2) +
+
+  scale_x_log10() +
+
+  scale_y_log10()
+
+  ```
+
+
+  我们已经逐步讲解过这个命令的语法，但我看到有一行写着`geom_smooth(method = "lm", colour = "red", size = 2)
+  +`，这是我们之前没有定义的。添加这行代码会给图表添加一条细的红色趋势线。现在高亮这些行并执行它们。图 4-27 展示了你应该看到的结果。
+
+
+  ![A421548_1_En_4_Fig27_HTML.jpg](img/A421548_1_En_4_Fig27_HTML.jpg)
+
+  图 4-27. 图表结果
+
+
+  这是一张很有意义的图表！正如你所见，图表正变得越来越好，也越来越有趣。
+
+
+  ### 回归诊断
+
+
+  接下来，往下看第 190 到 192 行。它们定义如下：
+
+
+  ```
+
+  par(mfrow = c(2, 2))
+
+  plot(model, col = "blue")
+
+  par(mfrow = c(1, 1))
+
+  ```
+
+
+  因此，在这个例子中，我们将绘图布局设置为生成一个 2×2 的图表网格，在模型数据集内显示绘制的信息，然后将绘图布局重置回 1×1 的网格。让我们进一步看看这些语句的语法。
+
+
+  -   `par`：此函数根据`mfrow()`参数指定的方式，将多个不同的图表组合成一个图表。
+
+  -   `mfrow = c(2, 2)`：此参数传入（行数 × 列数）的值，决定了网格在舞台上的布局方式。
+
+  -   `plot(model, col = "blue")`：此函数决定了要绘制什么（`model`）以及绘制数据点的颜色（`col`）。
+
+
+  你可以随意尝试这个或其他任何函数，感受一下语法的作用，以及你对函数所做的细微更改如何影响生成的输出。我通常发现这是学习函数的好方法，所以也许你也会喜欢这个方法。例如，将`col`的值改为蓝色或绿色，看看你的图表发生了什么变化。将`c()`的值改为`c(3,
+  3)`而不是`c(2, 2)`。注意图表是如何重新排列的。
+
+
+  **提示**
+
+  如果你遇到一个错误提示 `Error in plot.new(): figure margins too large`，请运行命令 `dev.off()` 和
+  `par(mar=c(1,1,1,1))` 来清除错误。可能需要运行多次以重置图形组件。非常感谢 Stack Overflow ([`http://stackoverflow.com`](http://stackoverflow.com/))
+  提供的提示！
+
+
+  高亮第 190 到 192 行并执行它们。图 4-28 展示了你现在应该看到的内容。
+
+
+  ![A421548_1_En_4_Fig28_HTML.jpg](img/A421548_1_En_4_Fig28_HTML.jpg)
+
+  图 4-28. 多图表结果
+
+
+  看起来棒极了。注意到大多数数据点都相当接近红线了吗？这表明这个数据集相当可靠，并且没有包含大量离群值。
+
+
+
+
+  ### 模型对象
+
+
+  第 198 行让我们查看 `model` 对象的结构。高亮并执行这一行。你会看到 R 交互窗口中出现一连串活动。图 4-29 显示了这些返回的数据。这是预料之中的，所以请回到
+  R 交互窗口，看看数据是如何返回的。
+
+
+  ![A421548_1_En_4_Fig29_HTML.jpg](img/A421548_1_En_4_Fig29_HTML.jpg)
+
+  图 4-29. 返回的对象数据
+
+
+  请注意，返回的数据实际上相当难以理解，现在可能不太有意义。幸运的是，这只是我们查看 `model` 对象的一种方式。看看你的变量资源管理器窗口并展开 `model`
+  条目。图 4-30 显示了你现在应该看到的内容。
+
+
+  ![A421548_1_En_4_Fig30_HTML.jpg](img/A421548_1_En_4_Fig30_HTML.jpg)
+
+  图 4-30. `model` 条目
+
+
+  请注意，`Name` 列中的条目与 R 交互窗口中美元符号旁边对齐的列相对应。如果你在变量资源管理器窗口中双击 `residuals` 列，左上角窗格中会打开另一个标题为
+  `R Data: $residuals` 的窗口。图 4-31 显示了这个窗口。
+
+
+  ![A421548_1_En_4_Fig31_HTML.jpg](img/A421548_1_En_4_Fig31_HTML.jpg)
+
+  图 4-31. `R Data: $residuals` 窗口
+
+
+  此窗口包含构成数据集的数据。对于变量资源管理器的 Name 列中可以展开的任何列，都可以重复此过程。
+
+
+  接下来是第 199 行，简单地定义为 `model$coefficients`。这行代码基本上意味着我们希望查看 `model` 对象中的 `coefficients`
+  列。执行第 199 行。图 4-32 显示了你现在应该看到的内容。
+
+
+  ![A421548_1_En_4_Fig32_HTML.jpg](img/A421548_1_En_4_Fig32_HTML.jpg)
+
+  图 4-32. 以文本格式显示的 `coefficients`
+
+
+  因此，我们也可以通过在变量资源管理器中双击 `coefficients` 列来查看相同的数据，如图 4-33 所示。
+
+
+  ![A421548_1_En_4_Fig33_HTML.jpg](img/A421548_1_En_4_Fig33_HTML.jpg)
+
+  图 4-33. 以表格格式显示的 `coefficients`
+
+
+  所以，再次说明，有两种方法可以完成同一件事，并且我们已经验证了数据是正确的。
+
+
+  现在跳到第 202 行。这行代码是 `model <- lm(log(price) ∼ log(carat) + ., data = diamondSample)`，它与我们之前构建的模型密切相关，但这次我们声明了
+  `log(price) ∼ log(carat) + .`，这意味着我们希望用数据集中所有其他列对 `price` 列的对数进行建模。换句话说，这是真正的多元线性回归，而不是简单线性回归。
+
+
+  高亮第 202 行并执行它。请注意，变量资源管理器现在显示 `List of 13`，而之前显示的是 `List of 12`，这意味着我们已将 `model`
+  添加到列表中，它现在在数据集中可用。图 4-34 显示了此更新后的值。如果你愿意，可以随时双击 `model` 查看其中包含的数据。
+
+
+  ![A421548_1_En_4_Fig34_HTML.jpg](img/A421548_1_En_4_Fig34_HTML.jpg)
+
+  图 4-34. `model` 值增加
+
+
+  第 204 行显示了模型的摘要；因此高亮这一行并执行它。图 4-35 显示了此操作的结果。
+
+
+  ![A421548_1_En_4_Fig35_HTML.jpg](img/A421548_1_En_4_Fig35_HTML.jpg)
+
+  图 4-35. `summary(model)` 信息
+
+
+  这很重要（一个糟糕的双关语），因为 R 平方值是 98%，这意味着 98% 的数据与回归拟合紧密。不错！
+
+
+  第 211 到 214 行展示了我们如何创建一个数据框（`data.frame`），这是 R 在其模型中组织数据的方式。这些行定义如下：
+
+
+  ```r
+
+  predicted_values <- data.frame(
+
+  actual = diamonds$price,
+
+  predicted = exp(predict(model, diamonds))
+
+  )
+
+  ```
+
+
+  所以，让我们逐步分析，以了解这里的语法在做什么。
+
+
+  *   `predicted_values`: 保存命令结果的对象。
+
+  *   `data.frame`: R 处理结构化数据的方式；类似于表。
+
+  *   `actual = diamonds$price`: 将名为 `actual` 的列变量设置为 `diamonds` 数据集中 `price` 值所表示的值。
+
+  *   `predicted = exp(predict(model, diamonds))`: 将名为 `predicted` 的列变量设置为 `diamonds`
+  数据集中 `model` 线性模型预测值的指数值。
+
+
+  执行第 211 到 214 行。你会看到再次没有任何反应，这是预料之中的。再次查看你的变量资源管理器。你会看到现在有另一个名为 `predicted_values`
+  的数据集可用，这是我们刚刚添加的。图 4-36 显示了你现在应该看到的内容。
+
+
+  ![A421548_1_En_4_Fig36_HTML.jpg](img/A421548_1_En_4_Fig36_HTML.jpg)
+
+  图 4-36. `predicted_values` 数据集
+
+
+  接下来是第 217 行，内容是 `head(predicted_values)`。我们之前见过这个，请回想一下 `head()` 命令允许我们查看数据的前六行。执行它。你应该看到如图
+  4-37 所示的内容。
+
+
+  ![A421548_1_En_4_Fig37_HTML.jpg](img/A421548_1_En_4_Fig37_HTML.jpg)
+
+  图 4-37. `head(predicted_values)`
+
+
+  接下来是重头戏。第 220 到 224 行包含 `ggplot` 命令，为我们绘制所有这些数据。到目前为止，我们已经用 `actual` 和 `predicted`
+  列布置好了 `data.frame` 对象。现在我们看到这些数据可视化后的样子。此命令的 R 代码定义如下：
+
+
+  ```r
+
+  ggplot(predicted_values, aes(x = actual, y = predicted)) +
+
+  geom_point(colour = "blue", alpha = 0.01) +
+
+  geom_smooth(colour = "red") +
+
+  coord_equal(ylim = c(0, 20000)) +
+
+  ggtitle("Linear model of diamonds data")
+
+  ```
+
+
+  我相当确定我们可以读懂并理解这个语法在说什么，但基本上，我们是对 `predicted_values` 数据集运行 `ggplot` 命令。我们使用美学值，将
+  x 轴设置为 `actual` 数据，y 轴设置为 `predicted` 数据。数据点是蓝色的，具有不同的 alpha（透明度），具体取决于数据值，配有一条红色趋势线，y
+  限制为 20000（强制比例），并带有一个标题。
+
+
+  图 4-38 显示了你执行第 220 到 224 行后应该看到的内容。
+
+
+  ![A421548_1_En_4_Fig38_HTML.jpg](img/A421548_1_En_4_Fig38_HTML.jpg)
+
+  图 4-38. `predicted_values` 的 `ggplot` 图
+
+
+  这张图表真的非常有用，你不觉得吗？如果你毫无问题地走到了这一步，做得太棒了！你实际上已经学到了很多关于 R 语法的基础知识，并且已经看到了最常用的 R 绑定包
+  `ggplot2` 在实际中的应用。
+
+
+  ### 总结
+
+
+  我们在本章中做了相当多的工作，包括构建数据模型并验证我们正在将数据返回到对象变量中。我们还研究了如何通过不同类型的图表对这些值进行绘图。接下来，我们将使用适用于
+  Visual Studio 的 R 工具（RTVS）深入研究 R 中更高级的绘图。
+
+
+  '
+- "# 5. 在 RTVS 中绘图\n\n接着我们在第 4 章结束的地方继续，我们可能已经对 R 足够熟悉，可以开始着手创建第 3 章中创建的软件需求文档中指定的报告。请理解，我绝不是在暗示我们是这门语言的专家。实际上恰恰相反。我们已经进展到足以理解一些基础知识，现在我们将通过继续前进来扩展这些知识，同时仍然认识到我们是在爬行而非行走。\n\
+  \n让我们回顾一下我们的软件需求文档中承诺的报告。这些报告是：\n\n*   每个 AirportID 的平均风速\n*   每个 AirportID 的平均温度（°F）\n\
+  \n考虑到这一点，让我们开始在适用于 Visual Studio 的 R 工具（RTVS）中规划解决方案，并看看是否能让它们正常工作。\n\n\n\n### 报告\
+  \ 1：按机场 ID 计算平均风速\n\n在第一部分中，我们将计算每个机场的平均风速。这可以通过为每个`AirportID`累加所有风速值，然后除以记录数来简单实现。R\
+  \ 通过一个名为`data.table`的核心功能为我们提供了快速实现方法。什么是`data.table`？这是一个免费提供的 R 包，拥有许多非常酷的方式来对大量数值数据进行切片和分块处理。如果你想轻松计算`mean`（平均值）、`sum`（总和）或几乎任何\
+  \ R 内置函数，都需要`data.table`包。\n\n打开适用于 Visual Studio 的 R 工具（RTVS）。你应该会看到如图 5-1 所示的界面。请注意，我们正在使用一个全新的\
+  \ RTVS 实例，而不是使用之前章节的旧界面。\n![A421548_1_En_5_Fig1_HTML.jpg](img/A421548_1_En_5_Fig1_HTML.jpg)\n\
+  图 5-1. Visual Studio 的 R 工具\n\n我们之所以在全新环境中工作，是因为我们正在导入数据集并处理这些数据。我不希望有任何机会使用错误的数据并可能导致不正确的结果。\n\
+  \n#### 导入数据集\n\n作为数据科学家，我们要做的第一件事就是收集数据。当你有一个文件位置或 URL 可以获取数据时，这听起来很容易。当你没有现成的数据，必须自己定义时，要确定数据就困难得多了。幸运的是，这次的情况并非如此，因为我们有一套完整的数据可以导入。\n\
+  \n首先，请确保你已经解压了从第 4 章下载的文件`RTVS-docs-master`。在这个`.zip`文件中，导航到`RTVS-docs-master\\\
+  examples\\MRS_and_Machine_Learning\\Datasets`目录。在这个目录中有一个名为`Weather_Sample.csv`的文件。这个文件是本例的数据源，所以你可以把它留在原地，或者复制到你电脑上另一个更容易记住的位置。\n\
+  \n现在，RTVS 已启动并运行，我们依次点击 R Tools ➤ Data ➤ Import Dataset into R Session from Text\
+  \ File... 来将数据导入我们的环境。点击“Import Dataset into R Session from Text File”菜单选项后，会出现一个界面，提示你导航到要导入的文件。我们将使用`Weather_Sample.csv`，所以请导航到你保存该文件的位置，然后单击“打开”按钮。\n\
+  \n你应该会看到如图 5-2 所示的内容。\n![A421548_1_En_5_Fig2_HTML.jpg](img/A421548_1_En_5_Fig2_HTML.jpg)\n\
+  图 5-2. 初始数据视图\n\n相当令人印象深刻！我们可以看到导入了前 19 行数据，这可能是为了让我们对数据类型和长度有一个良好的样本量。\n\n请注意，你可以点击右上角“Input\
+  \ File”和“Data Frame”之间，查看原始数据与格式化数据的对比。\n\n查看完毕后，点击“确定”。然后你会看到如图 5-3 所示的内容。\n![A421548_1_En_5_Fig3_HTML.jpg](img/A421548_1_En_5_Fig3_HTML.jpg)\n\
+  图 5-3. 变量资源管理器\n\n请注意，R 交互窗口也生成了以下代码：\n```\n`Weather_Sample` <- read.csv(file=\"\
+  C:/Users/Bradley Beard/AppData/Local/Temp/Weather_Sample.csv.utf8\", header=TRUE,\
+  \ row.names=NULL, encoding=\"UTF-8\", sep=\",\", dec=\".\", quote=\"\\\"\", comment.char=\"\
+  \")\n```\n这很有趣，因为它从 R 的角度向我们展示了数据是如何导入到当前工作项目中的。\n\n#### 打开脚本窗格\n\n现在我们已经加载了数据集，可以打开一个\
+  \ Visual Studio 窗格来执行 R 脚本，以准备和分析我们的数据。关闭图 5-3 左上角窗格中显示的“起始页”。然后通过按`Ctrl+N`，点击左侧窗格中的“R”，并选择“R\
+  \ Script”来打开一个新的 R 脚本，如图 5-4 所示。\n![A421548_1_En_5_Fig4_HTML.jpg](img/A421548_1_En_5_Fig4_HTML.jpg)\n\
+  图 5-4. 新建 R 脚本\n\n点击“打开”按钮以打开一个空白的脚本窗口。你现在应该有一个类似于图 5-5 所示的界面。\n![A421548_1_En_5_Fig5_HTML.jpg](img/A421548_1_En_5_Fig5_HTML.jpg)\n\
+  图 5-5. 准备工作！\n\n现在我们的数据已正确加载，并且我们有了一个干净的工作界面，我们可以继续下一节了。\n\n#### 准备数据集\n\n到底如何准备数据集？它不是已经准备好了吗？嗯，是也不是：是的，因为数据本身已经是结构良好且有意义的，所以现在我们可以看到它真正想表达什么；不，因为它尚未准备好供\
+  \ R 分析，因为它还是原始数据。我们需要先对数据做一些辅助处理，为分析做好准备。\n\n要让数据准备好进行分析，请在你的`Script1.R`窗口中输入以下代码：\n\
+  ```\ninstall.packages(\"data.table\")\nlibrary(data.table)\nWeather_Sample <- data.table(Weather_Sample)\n\
+  setkey(Weather_Sample, AirportID)\n```\n图 5-6 显示了在输入我刚刚给出的代码后，你的 Visual Studio 窗口应有的样子。\n\
+  ![A421548_1_En_5_Fig6_HTML.jpg](img/A421548_1_En_5_Fig6_HTML.jpg)\n图 5-6. 准备工作\n\
+  \n现在，让我们来回顾一下这段代码实际在做什么。\n\n*   `install.packages(\"data.table\")`：这段代码只是安装`data.table`包。\n\
+  *   `library(data.table)`：这段代码使`data.table`包在当前 R 会话中可用。\n*   `Weather_Sample <-\
+  \ data.table(Weather_Sample)`：这段代码将一个名为`Weather_Sample`的空对象设置为`Weather_Sample`数据集的`data.table`表示形式。\n\
+  *   `setkey(Weather_Sample, AirportID)`：这段代码允许按特定列进行分组。\n\n现在我们理解了这里发生的事情，我们看到实际上没有提供分析的代码。你的这个概括是正确的，因为我们还没有真正开始分析，我们只是开始为分析准备数据集。这是重要的第一步，因为它有点像是我们下一步工作的基础，即创建作为软件需求文档一部分需要生成的报告。\n\
+  \n执行我在图 5-6 中提供的代码行，显示`chron`包也随`data.table`一起被下载了。需要指出的是，任何请求下载的包的依赖包也总是会被一并下载。这消除了因包依赖关系而导致错误的可能性。如果你还没有执行那些代码行，请现在执行。\n\
+  \n\n\n#### 按机场 ID 的平均风速（表格版）\n\n我们即将处理的第一份报告是按机场 ID 的平均风速。该报告利用可用数据，计算每个机场的平均风速，然后在图表中显示这些数值。我们需要关注的列名为\
+  \ `WindSpeed` 和 `AirportID`。我们知道，必须实例化一个对象来保存绘图数据，并且需要将数据作为 `data.frame` 返回给该对象，以便它能被正确地解读为图表。我们可以开始编写代码，如下所示：\n\
+  \n```\navg_windspeed_by_ID <- as.data.frame(Weather_Sample)\n```\n\n**提示**\n\n在\
+  \ `data.frame` 声明前使用 `as` 关键字，表示我们希望强制将引用的数据集作为数据框返回。\n\n这段代码尚未完全实现我们的需求，因为我们还没有计算\
+  \ `WindSpeed` 列的 `mean()`（均值）。为此，我们需要更新代码如下：\n\n```\navg_windspeed_by_ID <- as.data.frame(Weather_Sample[,\
+  \ mean(WindSpeed)])\n```\n\n这段代码看起来更接近我们需要的了，但它还不完整。如果数据中存在空行怎么办？这肯定会影响我们的输出，所以让我们通过更新代码来移除这些值：\n\
+  \n```\navg_windspeed_by_ID <- as.data.frame(Weather_Sample[, mean(WindSpeed, na.rm\
+  \ = TRUE)])\n```\n\n现在我们可以看到，`na.rm = TRUE` 会移除数据集中的“缺失”值。\n\n最后，我们在末尾添加一个排序列。请记住，这与我们之前调用的\
+  \ `setkey()` 函数不同，因为 `setkey()` 函数是对数据进行分组。要按某一列对数据进行排序，请将代码更新为如下形式：\n\n```\navg_windspeed_by_ID\
+  \ <- as.data.frame(Weather_Sample[, mean(WindSpeed, na.rm = TRUE), by = AirportID])\n\
+  ```\n\n现在，高亮显示我们刚写完的命令，然后按 `Ctrl+Enter`。之后，键入 `avg_windspeed_by_ID`，高亮显示你刚写的内容，再按\
+  \ `Ctrl+Enter` 来执行它。此时，你应该在 R 交互窗口中看到以下输出：\n\n```\n> avg_windspeed_by_ID\nAirportID\
+  \        V1\n1      10140  7.594268\n2      10299  6.708183\n3      10397  6.554401\n\
+  4      10423  5-991983\n5      10529  5-377292\n6      10693  4.686593\n7      10713\
+  \  6.993095\n8      10721  8.713368\n9      10800  4.193095\n10     10821  5-095719\n\
+  ```\n\n注意，我向上滚动到了返回数据的顶部，以显示 66 行中的前 10 条结果。以下是生成此结果的完整脚本：\n\n```\ninstall.packages(\"\
+  data.table\")\nlibrary(data.table)\nWeather_Sample <- data.table(Weather_Sample)\n\
+  setkey(Weather_Sample, AirportID)\navg_windspeed_by_ID <- as.data.frame(Weather_Sample[,\
+  \ mean(WindSpeed, na.rm = TRUE), by = AirportID])\navg_windspeed_by_ID\n```\n\n\
+  将你的脚本保存为 `avgWindspeedByAirportID.tabular.R`。这是我们即将生成的报告的第一部分。\n\n#### 按机场 ID 的平均风速（图表版）\n\
+  \n接下来，打开一个新的 R 脚本窗口。在那个新窗口中，你需要输入以下代码：\n\n```\nlibrary(data.table)\nWeather_Sample\
+  \ <- data.table(Weather_Sample)\nchart_by_ID <- as.data.frame(Weather_Sample[, mean(WindSpeed,\
+  \ na.rm = TRUE), by = AirportID])\nlibrary(ggplot2)\nggplot(chart_by_ID, aes(x =\
+  \ AirportID, y = V1)) + geom_point(stat = \"identity\") + geom_smooth(method = \"\
+  lm\", formula = y ∼ splines::bs(x, 3)) + scale_x_continuous(name = \"Airport ID\"\
+  ) + scale_y_continuous(name = \"Average Wind Speed\") +\ngeom_text(aes(label = AirportID),\
+  \ size = 3, vjust = 1.0) +\ngeom_text(aes(label = round(V1, digits = 2)), size =\
+  \ 3, vjust = 2.0)\n```\n\n在我们继续之前，先来看一下这段代码。\n\n- `Weather_Sample <- data.table(Weather_Sample)`：我们使用\
+  \ `Weather_Sample` 作为对象变量名，然后用数据集 `Weather_Sample`（如引用所示）中包含的数据的 `data.table` 表示形式来填充该对象。换句话说，有一个对数据的引用，用于创建分析。\n\
+  - `chart_by_ID <- as.data.frame(Weather_Sample[, mean(WindSpeed, na.rm = TRUE),\
+  \ by = AirportID])`：首先，像之前一样，我们将变量名设为 `chart_by_ID`。然后，我们将这个变量设置为数据集中 `WindSpeed`\
+  \ 列的均值（`na.rm=TRUE` 表示移除 N/A 值）按 `AirportID` 分组后的数据框等价物。这合理吗？理解这个语句的结构至关重要，这样你才能回头基于这些数据创建自定义报告。如果你还没明白，请继续看下去，直到理解为止。\n\
+  - `library(ggplot2)`：这个命令使新安装的 `ggplot2` 包对该项目可用。\n- `ggplot(chart_by_ID, aes(x\
+  \ = AirportID, y = V1)) + geom_point(stat = \"identity\") + geom_smooth(method =\
+  \ \"lm\", formula = y ∼ splines::bs(x, 3)) + scale_x_continuous(name = \"Airport\
+  \ ID\") + scale_y_continuous(name = \"Wind Speed\") + geom_text(aes(label = AirportID),\
+  \ size = 3, vjust = 1.0) + geom_text(aes(label = round(V1, digits = 2)), size =\
+  \ 3, vjust = 2.0)`：这是一个很长的命令。这是一个控制图表外观和渲染的巨大命令。这个语句的各个部分是：\n    - `ggplot(`：这是绘图函数。\n\
+  \    - `chart_by_ID,`：将 Weather_Sample 的 data.frame 输入到这个变量中。\n    - `aes(x = AirportID,\
+  \ y = V1)) +`：`aes` 是 ggplot2 的美学定义。它表示 x 轴（水平）显示 AirportID，y 轴（垂直）显示 V1，在这里指的是平均风速。\n\
+  \    - `geom_point(stat = \"identity\") +`：`geom_point()` 函数让你定义如何定义图上的点。在这里，我们希望它们显示为恒等（identity）。\n\
+  \    - `geom_smooth(method = \"lm\", formula = y ∼ splines::bs(x, 3)) +`：这让我们可以向图表添加一个条件均值（平滑线）。\n\
+  \    - `scale_x_continuous(name = \"Airport ID\") +`：这让我们可以连续缩放 x 轴。\n    - `scale_y_continuous(name\
+  \ = \"Wind Speed\") +`：这让我们可以连续缩放 y 轴。\n    - `geom_text(aes(label = AirportID),\
+  \ size = 3 , vjust = 1.0) +`：这让我们可以标注并偏移 x 轴标签。\n    - `geom_text(aes(label = round(V1,\
+  \ digits = 2)), size = 3 , vjust = 1.0)`：这让我们可以标注并偏移 y 轴标签。\n\n请注意，有些行的末尾有一个加号。这算作一个连续的字符；换句话说，该语句在下一行继续，而不是一个单独的语句。\n\
+  \n一旦你全部输入完毕，按 `Ctrl+A` 全选，然后按 `Ctrl+Enter` 运行。然后你会看到如图 5-7 所示的内容。\n\n![A421548_1_En_5_Fig7_HTML.jpg](img/A421548_1_En_5_Fig7_HTML.jpg)\n\
+  图 5-7. 绘制的信息\n\n因此，我们在 x 轴上放置了机场 ID，在 y 轴上放置了平均风速。将该脚本保存为 `avgWindspeedByAirportID.plot.R`。\n\
+  \n到目前为止非常棒！这完成了第一份报告的基础部分，所以让我们继续处理第二份。\n\n### 报告 2：按机场 ID 的平均温度（°F）\n\n我们的下一个任务是报告按机场\
+  \ ID 的平均温度。所涉及的代码与“按机场 ID 的平均风速”报告非常相似，所以你应该能轻松跟上。\n\n我们将分两步处理我们的任务。首先计算平均温度值。然后在图中绘制它们。这与我们创建第一份报告的方式完全相同。\n\
+  \n\n\n#### 按机场 ID 计算平均温度（表格形式）\n\n请注意，数据仍然已加载并可供我们使用，因此我们可以跳过数据加载的步骤，直接开始计算平均温度。以下是实现此操作的代码：\n\
+  \n```\ninstall.packages(\"data.table\")\nlibrary(data.table)\nWeather_Sample <-\
+  \ data.table(Weather_Sample)\nsetkey(Weather_Sample, AirportID)\navg_temperature_by_ID\
+  \ <- as.data.frame(Weather_Sample[, mean(DryBulbFarenheit, na.rm = TRUE), by = AirportID])\n\
+  avg_temperature_by_ID\n```\n\n输入上述代码，按下 `Ctrl+A` 全选，然后按下 `Ctrl+Enter` 执行。此时，你的 R\
+  \ 交互窗口应显示以下信息：\n\n```\nAirportID       V1\n1      10140 62.76688\n2      10299 45-91877\n\
+  3      10397 68.61980\n4      10423 74.13576\n5      10529 58.44648\n6      10693\
+  \ 65-93558\n7      10713 57.59134\n8      10721 60.77466\n9      10800 71.38043\n\
+  10     10821 62.85850\n```\n\n以上是你应看到的前 10 行数据。\n如果向下滚动，你会看到全部 66 行数据都已返回。现在将此脚本保存为\
+  \ `avgTemperatureByAirportID.tabular.R`。\n\n#### 按机场 ID 计算平均温度（绘图形式）\n\n我们已有所需的数据，现在将其绘制成图表吧。此绘图的代码基于之前的绘图代码，我们先来看一下那段代码：\n\
+  \n```\nWeather_Sample <- data.table(Weather_Sample)\nchart_by_ID <- as.data.frame(Weather_Sample[,\
+  \ mean(DryBulbFarenheit, na.rm = TRUE), by = AirportID])\ninstall.packages(\"ggplot2\"\
+  )\nlibrary(ggplot2)\nggplot(chart_by_ID, aes(x = AirportID, y = V1)) + geom_point(stat\
+  \ = \"identity\") + geom_smooth(method = \"lm\", formula = y ∼ splines::bs(x, 3))\
+  \ + scale_x_continuous(name = \"Airport ID\") + scale_y_continuous(name = \"Average\
+  \ Temperature\") +\ngeom_text(aes(label = AirportID), size = 3, vjust = 1.0) +\n\
+  geom_text(aes(label = round(V1, digits = 2)), size = 3, vjust = 2.0)\n```\n\n这段代码看起来应该很眼熟。我只将\
+  \ `chart_by_ID` 部分中的 `WindSpeed` 文本改为了 `DryBulbFarenheit`，并将 `scale_y_continuous`\
+  \ 的名称从 `Average Wind Speed` 改为了 `Average Temperature`。\n将此代码输入到 RTVS 后，按下 `Ctrl+A`\
+  \ 全选，然后按下 `Ctrl+Enter` 执行。图 5-8 展示了此时你应该看到的内容。\n\n![A421548_1_En_5_Fig8_HTML.jpg](img/A421548_1_En_5_Fig8_HTML.jpg)\n\
+  \n图 5-8. 绘制的数据\n\n太好了！这向我们展示了数据——甚至还附带了一条移动平均线，以增加可读性。\n将此脚本保存为 `avgTemperatureByAirportID.plot.R`。以下是你应该已保存的四个文件：\n\
+  *   `avgTemperatureByAirportID.plot.R`\n*   `avgTemperatureByAirportID.tabular.R`\n\
+  *   `avgWindspeedByAirportID.plot.R`\n*   `avgWindspeedByAirportID.tabular.R`\n\n\
+  ### 本章小结\n\n让我们快速回顾一下本章内容。我们实际上做了很多工作。你应该对自己和日益增长的 R 知识感到相当满意。我们完成的工作如下：\n*   学习了\
+  \ R 中绘图的基础知识\n*   将外部数据源 (`Weather_Sample.csv`) 加载到 Visual Studio 中\n*   根据软件需求文档，基于此数据编写了自定义的\
+  \ R 脚本\n*   基于此数据生成了表格数据和图表\n\n下一章将介绍这些报表交付的 Reporting Services 方面。\n\n"
+- '# 第三部分
+
+  创建与查看报表
+
+
+  ## 6. 配置 SQL Server Reporting Services
+
+
+  回想一下，在第 1 章中，我们在初始 SQL Server 安装过程中安装了 Reporting Services。安装 Reporting Services
+  时，我们选择了“安装并配置”选项。现在，我们需要配置已安装的 Reporting Services 实例。请记住，在 SQL Server 安装时选择“安装并配置”选项时，Reporting
+  Services 就已经安装、配置好（并且可以运行）了。本章的目的是让你熟悉 Reporting Services 配置管理器中可用的选项，以便如果你需要在自己的安装中更改某个设置，你将拥有如何做出所需更改以及从何处寻找解决方案的知识和信心。
+
+  首先，我们将运行 Reporting Services 配置管理器并连接到新安装的实例，然后我们将了解一些可用的配置选项。
+
+
+  ### 连接到实例
+
+
+  转到 Windows“开始”菜单。Reporting Services 配置管理器应显示在“最近添加”框中。如果不在那里，请打开 Windows“开始”菜单，单击“所有应用”，然后向下滚动到
+  Microsoft SQL Server 2016。它应该在该文件夹内。如果还是没有，只需开始键入 Reporting Services，它就会弹出。单击它继续。然后你将看到图
+  6-1 所示的内容。
+
+
+  ![A421548_1_En_6_Fig1_HTML.jpg](img/A421548_1_En_6_Fig1_HTML.jpg)
+
+
+  图 6-1. Reporting Services 配置连接
+
+
+  单击此处的“连接”按钮以连接到你的实例。然后你将看到图 6-2 所示的主页配置页面。
+
+
+  ![A421548_1_En_6_Fig2_HTML.jpg](img/A421548_1_En_6_Fig2_HTML.jpg)
+
+
+  图 6-2. 报表服务器状态
+
+
+  这个主页配置页面（这是我个人的称呼）告诉你有关 Reporting Services 实例的一般信息。最重要的是，请注意服务已启动。否则我们将无法继续。
+
+  在继续之前，让我们快速浏览一下这个界面。我将在以下小节中介绍各个区域，然后我们将返回去更新字段，以便我们的报表服务器能够成功启动和运行。
+
+
+  ### 服务帐户
+
+
+  “服务帐户”区域中的设置实际上可以保持默认值不变。如果你更改了图 6-3 所示的“使用内置帐户”选项，默认设置是“虚拟服务帐户”。这是在安装 Reporting
+  Services 时创建的一个帐户，用于连接到报表服务器。你也可以选择“本地系统”、“本地服务”或“网络服务”。我建议不要这样做，因为这些帐户具有运行报表服务器所不需要的提升权限。
+
+
+  ![A421548_1_En_6_Fig3_HTML.jpg](img/A421548_1_En_6_Fig3_HTML.jpg)
+
+
+  图 6-3. 服务帐户
+
+
+  如果你愿意，也可以指定另一个域帐户来与此服务交互。这是许多专业人士的选择，因为他们可以定制用户帐户以特定于此应用程序的此实例。如果你选择此方法，请继续将此帐户的用户名和密码放入相应的框中。
+
+  请记住，如果你选择自定义服务帐户，出于安全目的并遵守公司策略，该指定帐户很可能需要由你组织中的服务器或域管理员审核。根据我的经验，最好让服务器或域管理员提供一个服务帐户列表，这些帐户可用于数据库或应用服务器中所需的各种目的。
+
+
+  ### Web 服务 URL
+
+
+  图 6-4 显示，此区域允许你配置一个 URL，Reporting Server 生成的报表将通过此 URL 生成并提供给授权用户。此区域已经设置好，除非你想为虚拟目录指定一个不同的名称。如果是这种情况，请继续执行此操作。
+
+
+  ![A421548_1_En_6_Fig4_HTML.jpg](img/A421548_1_En_6_Fig4_HTML.jpg)
+
+
+  图 6-4. Web 服务 URL
+
+
+  请注意，系统已为你预填充了默认值。
+
+  我建议添加的唯一设置是 HTTPS 证书选项。如果你恰好有一个 SSL 证书，并且希望通过 HTTPS 端口 443 运行，请确保在此处提供该证书。
+
+
+
+
+  ### 数据库
+
+
+  图 6-5 显示了此区域，您可以在其中配置报表服务器将要连接以获取数据的数据库。
+
+
+  ![A421548_1_En_6_Fig5_HTML.jpg](img/A421548_1_En_6_Fig5_HTML.jpg)
+
+
+  图 6-5. 数据库
+
+
+  请注意，`当前报表服务器数据库`选项也已填写。这表示托管 SQL Server Reporting Services 数据库的数据库服务器。当我们在第 1 章中选择`安装并配置`选项时，Microsoft
+  已为我们完成了此操作。
+
+
+  接下来，我们设置要将报表服务器指向的数据库。这意味着，报表服务器默认情况下会查看这个特定的数据库。显然，这可以通过单独的安装和报表服务器实例进行更改，但就目前而言，我们只坚持使用这一个，因为这有点超出了本书的范围。这也意味着，除了
+  Reporting Services 数据库之外的其他数据库也可以用作数据源。
+
+
+  ### Web 门户 URL
+
+
+  注意到我们屏幕上现在有一个超链接，内容为 `http://BRADLAPTOP:80/Reports_SQL2016RS` 吗？如果您对这个默认 URL 感到满意，那么此区域的一切就都没问题。图
+  6-6 显示了此区域，您可以在其中定义用于访问 Web 门户的自定义 URL，以防您对默认值不满意。我建议您不要更改`虚拟目录`值，因为默认值运行良好，并且这只是出于评估目的。
+
+
+  ![A421548_1_En_6_Fig6_HTML.jpg](img/A421548_1_En_6_Fig6_HTML.jpg)
+
+
+  图 6-6. Web 门户 URL
+
+
+  请注意，在定义此区域之前，必须先定义`Web 服务 URL`（本章前面已讨论过）。
+
+
+  ### 电子邮件设置
+
+
+  图 6-7 显示了此区域，您可以在其中指定电子邮件设置。显然，如果您想发送附带报表的电子邮件，这将非常有用。默认值未被选中。您必须自己填写这些选项。
+
+
+  ![A421548_1_En_6_Fig7_HTML.jpg](img/A421548_1_En_6_Fig7_HTML.jpg)
+
+
+  图 6-7. 电子邮件设置
+
+
+  如图 6-8 所示，我提供了如何填写所示字段的一般格式。
+
+
+  ![A421548_1_En_6_Fig8_HTML.jpg](img/A421548_1_En_6_Fig8_HTML.jpg)
+
+
+  图 6-8. 电子邮件设置（已更新）
+
+
+  更新设置后，单击`应用`进行保存。
+
+
+  注意
+
+
+  显然，您的设置将与此处显示的不同。
+
+
+  ### 执行账户
+
+
+  图 6-9 显示了此区域，您可以在其中指定一个执行账户。
+
+
+  ![A421548_1_En_6_Fig9_HTML.jpg](img/A421548_1_En_6_Fig9_HTML.jpg)
+
+
+  图 6-9. 执行账户
+
+
+  对于本书，我们无需担心执行账户，因此现在只需绕过此部分。
+
+
+  ### 加密密钥
+
+
+  图 6-10 显示了此区域，您可以在其中备份、还原、更改或删除加密密钥。
+
+
+  ![A421548_1_En_6_Fig10_HTML.jpg](img/A421548_1_En_6_Fig10_HTML.jpg)
+
+
+  图 6-10. 加密密钥
+
+
+  我强烈建议您立即备份加密密钥。没有这些密钥，您将无法解密任何加密的数据库。定期备份密钥并将其安全存储至关重要。
+
+
+  ### 订阅设置
+
+
+  图 6-11 显示了此区域，您可以在其中配置一个账户，供远程用户访问您可用的文件共享订阅。请注意，当不允许电子邮件传递时，文件共享订阅是必需的。
+
+
+  ![A421548_1_En_6_Fig11_HTML.jpg](img/A421548_1_En_6_Fig11_HTML.jpg)
+
+
+  图 6-11. 订阅设置
+
+
+  由于此部署严格用于测试，我们可以忽略此区域。
+
+
+  ### 横向扩展部署
+
+
+  图 6-12 显示了此区域，您可以在其中查看有关横向扩展部署的信息。横向扩展部署本质上是一个负载均衡模型，它提高了服务器集群中的可伸缩性。随着 Reporting
+  Services 实例的更多用户消耗资源，负载可以共享到另一个与原始服务器共享相同加密数据的服务器。目前，`横向扩展部署`选项仅在生产实例的企业版中可用。
+
+
+  ![A421548_1_En_6_Fig12_HTML.jpg](img/A421548_1_En_6_Fig12_HTML.jpg)
+
+
+  图 6-12. 横向扩展部署
+
+
+  ### Power BI 集成
+
+
+  图 6-13 显示了此区域，您可以在其中一键设置与 Power BI 的集成。遗憾的是，Power BI 超出了本书的范围，因此请将这些设置保留为默认值。
+
+
+  ![A421548_1_En_6_Fig13_HTML.jpg](img/A421548_1_En_6_Fig13_HTML.jpg)
+
+
+  图 6-13. Power BI 集成
+
+
+  首先，Power BI 可以直接集成到 Reporting Services 中——而且只需一键操作——这有多酷？
+
+
+  现在，回到 Web 门户 URL 页面，单击页面上显示的超链接。此超链接的位置如图 6-14 所示。
+
+
+  ![A421548_1_En_6_Fig14_HTML.jpg](img/A421548_1_En_6_Fig14_HTML.jpg)
+
+
+  图 6-14. 超链接位置
+
+
+  单击超链接后，您应该看到如图 6-15 所示的内容。
+
+
+  ![A421548_1_En_6_Fig15_HTML.jpg](img/A421548_1_En_6_Fig15_HTML.jpg)
+
+
+  图 6-15. 初始报表界面
+
+
+  如果您看到的不是这个屏幕，那么您的 SQL Server Reporting Services 安装或配置出现了问题。有时，根据您当前使用的操作系统和浏览器设置，您可能会收到错误屏幕。在这种情况下，您可能需要以本地管理员身份运行浏览器实例（如果您在本地计算机上运行）。好消息是，您可能不需要卸载所有内容。如果此时出现错误，建议查看
+  `Reporting Services 错误日志`。
+
+
+  ### 总结
+
+
+  现在是停下来稍作喘息的好时机。在过去的几页中，我们实际上已经做了很多工作，让我们来回顾一下。
+
+
+  *   已验证 Reporting Services 是否正确安装
+
+  *   配置了新安装的 Reporting Services
+
+  *   已验证 Web 门户是否按预期工作
+
+
+  请注意，Web 门户中尚无任何内容。这是可以预料的，因为这是一个全新的安装，而且我们还没有开始编写报表。
+
+
+  在下一章中，我们将安装和配置 Report Builder，我们使用它来创建消耗 R 数据以供我们报表中使用的报表。配置一个账户供订阅用来访问文件共享。使用一个具有尽可能最低权限的账户，并且该账户不同于用于
+  Reporting Services 服务账户的账户。
+
+
+
+
+  '
+- '# 7. Report Builder 安装与数据准备
+
+
+  既然我们已经安装了 `SQL Server Reporting Services`，接下来需要弄清楚如何根据软件需求文档中客户的要求创建并交付报表。创建报表的最佳方式很可能是使用
+  `Report Builder`，这是微软提供的一个免费下载工具。而交付报表的最佳方式，显然就是使用 `SQL Server Reporting Services`
+  的内置功能，正如我们在第 6 章中配置的那样。
+
+
+  请记住，如果客户只需要扁平文件报表（即仅包含数据的文件，如 `CSV` 或 `XML` 格式），我们完全可以通过从 `SQL Server` 直接导出数据来实现，丝毫不需要
+  `SQL Server Reporting Services` 的参与。但本练习的真正目的是展示 `R` 与 `SQL Server` 集成后的强大功能；因此，我们将使用
+  `Report Builder`，把第 5 章中创建的图表整合到一份外观精美的报表中。之后，我们可以处理诸如格式调整之类的细节，但最重要的部分是确保报表能够首先成功构建。
+
+
+  ### 下载 Report Builder
+
+
+  本章开始，我们需要下载 `Report Builder`。下载链接在 [`https://www.microsoft.com/en-us/download/details.aspx?id=52674`](https://www.microsoft.com/en-us/download/details.aspx?id=52674)，但这个链接可能会有变化。记住，`Google`
+  是你的好帮手。
+
+
+  **提示**：你也可以从第 6 章末尾看到的 `SQL Server Reporting Services` Web 门户中下载 `Report Builder`，只需点击右上角的下箭头即可。
+
+
+  图 7-1 展示了可以下载 `Report Builder` 的页面。请注意，此界面未来可能会变化，但 `下载` 按钮应该会保持清晰可见。
+
+
+  ![A421548_1_En_7_Fig1_HTML.jpg](img/A421548_1_En_7_Fig1_HTML.jpg)
+
+
+  图 7-1. Report Builder 下载界面
+
+
+  点击按钮进行下载。你应该会看到如图 7-2 所示的内容。
+
+
+  ![A421548_1_En_7_Fig2_HTML.jpg](img/A421548_1_En_7_Fig2_HTML.jpg)
+
+
+  图 7-2. 下载进行中
+
+
+  一个名为 `ReportBuilder3.msi` 的文件正在后台下载。下载完成后，你应该可以在浏览器栏中点击它来开始安装。如果在这里没有看到已下载的文件，只需转到你的“下载”文件夹并按日期排序，该文件就会出现在那里。
+
+
+  图 7-3 显示了安装程序显示的第一个屏幕。
+
+
+  ![A421548_1_En_7_Fig3_HTML.jpg](img/A421548_1_En_7_Fig3_HTML.jpg)
+
+
+  图 7-3. Microsoft SQL Server 2016 Report Builder 安装
+
+
+  显然，我们点击 `下一步` 继续，进入图 7-4 所示的许可条款页面。
+
+
+  ![A421548_1_En_7_Fig4_HTML.jpg](img/A421548_1_En_7_Fig4_HTML.jpg)
+
+
+  图 7-4. 许可协议
+
+
+  点击 `我接受许可协议中的条款` 单选按钮，然后点击 `下一步`。
+
+
+  接下来，我们选择要安装的功能。图 7-5 显示了默认的功能选择屏幕。
+
+
+  ![A421548_1_En_7_Fig5_HTML.jpg](img/A421548_1_En_7_Fig5_HTML.jpg)
+
+
+  图 7-5. 功能选择
+
+
+  我们为此要安装所有功能，因此在白色区域的磁盘上拉下菜单。选择 `整个功能将安装在本地硬盘驱动器上` 继续。
+
+
+  图 7-6 显示了此处的正确选择。
+
+
+  ![A421548_1_En_7_Fig6_HTML.jpg](img/A421548_1_En_7_Fig6_HTML.jpg)
+
+
+  图 7-6. 正确选择
+
+
+  这确保我们拥有 `Report Builder` 绝对所有可能需要的内容。准备就绪后，点击 `下一步` 继续。
+
+
+  现在，界面会要求我们输入 `默认目标服务器`，如图 7-7 所示。
+
+
+  ![A421548_1_En_7_Fig7_HTML.jpg](img/A421548_1_En_7_Fig7_HTML.jpg)
+
+
+  图 7-7. 默认目标服务器
+
+
+  需要输入到 `默认目标服务器 URL（可选）` 框中的值，是我们在第 6 章中配置的 `Reporting Services 配置管理器` 的 `Web 服务
+  URL` 部分的值，在我的例子中是 `http://bradlaptop/ReportServer_SQL2016RS`，所以请在框中输入你自己的具体 URL。你看到的应该与图
+  7-8 所示类似。
+
+
+  ![A421548_1_En_7_Fig8_HTML.jpg](img/A421548_1_En_7_Fig8_HTML.jpg)
+
+
+  图 7-8. 已更新的默认目标服务器
+
+
+  准备好继续后，点击 `下一步`。然后会显示图 7-9，表明我们已准备好安装。
+
+
+  ![A421548_1_En_7_Fig9_HTML.jpg](img/A421548_1_En_7_Fig9_HTML.jpg)
+
+
+  图 7-9. 准备安装
+
+
+  如果需要做任何更改，请点击 `上一步` 进行修改；否则，点击 `安装`。
+
+
+  `Report Builder` 是一个相当小的安装程序，因此加载得相当快。图 7-10 显示了此时你应看到的安装完成屏幕。
+
+
+  ![A421548_1_En_7_Fig10_HTML.jpg](img/A421548_1_En_7_Fig10_HTML.jpg)
+
+
+  图 7-10. 安装完成
+
+
+  点击 `完成`，大功告成。既然我们已经安装了 `Report Builder`，请在开始菜单中点击 `Report Builder`。最初你应该看到如图 7-11
+  所示的内容。
+
+
+  ![A421548_1_En_7_Fig11_HTML.jpg](img/A421548_1_En_7_Fig11_HTML.jpg)
+
+
+  图 7-11. Report Builder 启动画面
+
+
+  最终，界面加载完成，我们看到 `Report Builder` 正在对之前指定的 `SQL2016RS` 实例进行身份验证。如图 7-12 所示。
+
+
+  ![A421548_1_En_7_Fig12_HTML.jpg](img/A421548_1_En_7_Fig12_HTML.jpg)
+
+
+  图 7-12. Report Builder 登录界面
+
+
+  加载需要一点时间，因为它必须对安装过程中指定的报表服务器进行身份验证。快速看一下初始登录界面的左下角。我在图 7-13 中将其放大显示，以便我们看清楚。
+
+
+  ![A421548_1_En_7_Fig13_HTML.jpg](img/A421548_1_En_7_Fig13_HTML.jpg)
+
+
+  图 7-13. 报表服务器详情
+
+
+  这个快速参考区域立即告诉我们连接到的是哪个实例。它让我们有机会断开与此实例的连接，然后可以重新连接同一个实例，或者，如果我们愿意，也可以连接到另一个 `SQL
+  Server Reporting Services` 实例。
+
+
+
+  ### 设置新数据库和表
+
+
+  现在一切准备就绪，让我们先做一些温习工作。
+
+
+  回顾第 5 章，我们创建了几个需要交付给客户的报告。这些报告基于`Weather_Sample.csv`数据。稍后，我们将把这些数据导入 SQL Server
+  并进行处理。不过，首先让我们粗略看一下这些数据。
+
+
+  在继续之前，让我们先设置一些数据库基础设施。我们需要新建一个数据库，然后创建一个表作为该数据的数据源。
+
+
+  在`SSMS`中，右键单击`数据库`并选择`新建数据库`选项。将出现一个允许创建新数据库的屏幕。如图 7-14 所示的`新建数据库`屏幕左窗格中，初始选项卡名为`常规`。请在此屏幕中进行如下更改。
+
+
+  ![A421548_1_En_7_Fig14_HTML.jpg](img/A421548_1_En_7_Fig14_HTML.jpg)
+
+
+  图 7-14. 新建数据库
+
+
+  完成后点击`确定`按钮。名为`SQL2016RS`的新数据库即被创建。
+
+
+  接下来，打开一个新的`查询`窗口，将活动数据库更改为`SQL2016RS`，然后输入以下内容：
+
+
+  ```sql
+
+  CREATE TABLE [dbo].[chartBinary] (
+
+  [uid] int identity(1,1) PRIMARY KEY,
+
+  [title] varchar(100) NULL,
+
+  [binData] varbinary(max) NULL
+
+  )
+
+  ```
+
+
+  按`F5`执行该代码——瞧！我们的表就创建好了。图 7-15 显示了这个表。
+
+
+  ![A421548_1_En_7_Fig15_HTML.jpg](img/A421548_1_En_7_Fig15_HTML.jpg)
+
+
+  图 7-15. chartBinary 表
+
+
+  现在我们有了一个存储二进制数据和图表标题的表。接下来，我们需要生成实际的二进制数据。虽然我知道有办法将这些二进制数据直接提取到 Reporting Services
+  中，但我认为理解数据如何与`报表服务器`协作以获取生成的二进制数据并创建图表是很重要的。通过这种方式，你肯定能比有些人偏好的点击方法学到更多关于图表创建过程的知识。
+
+
+  回顾第 5 章，我们是如何将`Weather_Sample.csv`文件导入界面然后生成图表的。完成该操作的代码如下：
+
+
+  ```r
+
+  Weather_Sample <- read.csv(file="C:/Users/Bradley Beard/AppData/Local/Temp/Weather_Sample.csv.utf8",
+  header=TRUE, row.names=NULL, encoding="UTF-8", sep=",", dec=".", quote="\"", comment.char="")
+
+  ```
+
+
+  我不再指向`Temp`目录，而是将之前下载的`.zip`文件中的`Weather_Sample.csv`文件复制出来，直接放在`C:`盘根目录下，纯粹是为了让文件路径更短。这是更新后的代码：
+
+
+  ```r
+
+  Weather_Sample <- read.csv(file="C:\\Weather_Sample.csv", header=TRUE, row.names=NULL,
+
+  encoding="UTF-8", sep=",", dec=".", quote="\"", comment.char="")
+
+  ```
+
+
+  请注意，我将单反斜杠改为了双反斜杠，以转义`\W`命令。当存在转义字符时，`R`会报错，因此请确保已将所有单反斜杠转换为双反斜杠。
+
+
+  那么，我假设我们可以将这段代码放入存储过程中，并让数据可用。这个假设正确吗？事实证明……是的！
+
+
+  考虑以下代码。
+
+
+  ```sql
+
+  exec sp_execute_external_script
+
+  @language =N''R'',
+
+  @script=N''Weather_Sample <- read.csv(file="C:\\Weather_Sample.csv",
+
+  header=TRUE, row.names=NULL, encoding="UTF-8", sep=",", dec=".", quote="\"", comment.char="");
+
+  print(unique(Weather_Sample$AirportID) );''
+
+  ```
+
+
+  将其分解来看，我们可以看到`@script`属性包含一个声明，将`Weather_Sample`定义为对位于`C:\Weather_Sample.csv`的`CSV`文件执行`read()`操作的结果，该操作包含`header`信息，不含`row.names`，编码为`UTF-8`，以逗号分隔，根据需要包含小数点，并处理了转义引号和注释。然后，我们只是打印`Weather_Sample`数据集中`AirportID`列的唯一值。在`SSMS`中输入该代码。代码执行后的情况如图
+  7-16 所示。
+
+
+  ![A421548_1_En_7_Fig16_HTML.jpg](img/A421548_1_En_7_Fig16_HTML.jpg)
+
+
+  图 7-16. 脚本执行
+
+
+  这些是数据中唯一的`机场` `ID`。我们也可以对任何其他你想要的列执行此操作。`AdjustedDay`列怎么样？只需将最后一部分从`AirportID`改为`AdjustedDay`即可。你的代码应如下所示。
+
+
+  ```sql
+
+  exec sp_execute_external_script
+
+  @language =N''R'',
+
+  @script=N''Weather_Sample <- read.csv(file="C:\\Weather_Sample.csv",
+
+  header=TRUE, row.names=NULL, encoding="UTF-8", sep=",", dec=".", quote="\"", comment.char="");
+
+  print(unique(Weather_Sample$AdjustedDay));''
+
+  ```
+
+
+  在`SSMS`中运行它。你应该看到如图 7-17 所示的结果。
+
+
+  ![A421548_1_En_7_Fig17_HTML.jpg](img/A421548_1_En_7_Fig17_HTML.jpg)
+
+
+  图 7-17. AdjustedDay 脚本
+
+
+  因此，这实际上表明，我们可以将现有的`CSV`格式数据用作本地报告的一部分。回想一下我之前提到的，我们将把此数据添加到`SQL Server`中；那么现在就开始吧。
+
+
+
+  ### 导入天气数据
+
+
+  我们的目标相当简单：导入数据集以便进行处理。这次的技巧在于，我们将直接把它导入 SQL Server，作为一个名为 `Weather_Sample` 的表。为此，我们需要展开
+  SQL Server Management Studio，直到在 `SQL2016RS` 数据库中看到 "表" 菜单，如图 7-18 所示。
+
+
+  ![A421548_1_En_7_Fig18_HTML.jpg](img/A421548_1_En_7_Fig18_HTML.jpg)
+
+  *图 7-18. 表位置*
+
+
+  右键单击 `SQL2016RS` 并选择 **任务** ➤ **导入数据**。这将打开 `SQL Server 导入和导出向导` 窗口。如果你经常处理手动数据操作，可能对此非常熟悉。如图
+  7-19 所示。
+
+
+  ![A421548_1_En_7_Fig19_HTML.jpg](img/A421548_1_En_7_Fig19_HTML.jpg)
+
+  *图 7-19. 导入/导出数据初始屏幕*
+
+
+  在此处点击 **下一步**。你将看到如图 7-20 所示的内容。
+
+
+  ![A421548_1_En_7_Fig20_HTML.jpg](img/A421548_1_En_7_Fig20_HTML.jpg)
+
+  *图 7-20. 选择数据源*
+
+
+  拉下顶部的 **数据源** 菜单并选择 **平面文件源**。然后你会看到如图 7-21 所示的界面，其中显示了此屏幕的默认值。
+
+
+  ![A421548_1_En_7_Fig21_HTML.jpg](img/A421548_1_En_7_Fig21_HTML.jpg)
+
+  *图 7-21. 平面文件源的默认值*
+
+
+  点击 **浏览...** 按钮，导航到你保存 `Weather_Sample.csv` 文件的位置。你需要拉下文件类型菜单，并将所选选项更改为搜索 `.csv`
+  文件，以便找到我们要找的文件。找到 `Weather_Sample.csv` 文件后，点击 **打开** 按钮，界面将根据所选文件填充信息。我的示例如图 7-22
+  所示。
+
+
+  ![A421548_1_En_7_Fig22_HTML.jpg](img/A421548_1_En_7_Fig22_HTML.jpg)
+
+  *图 7-22. 已填充的值*
+
+
+  请注意，SQL Server 自动获取了这些列的值，因此它知道数据类型和格式。
+
+
+  注意到下方的黄色警告了吗？点击左上角的 **列** 选项卡，然后再点击一次 **常规** 选项卡。图 7-23 显示了我执行此操作后的情况。
+
+
+  ![A421548_1_En_7_Fig23_HTML.jpg](img/A421548_1_En_7_Fig23_HTML.jpg)
+
+  *图 7-23. 消失的警告*
+
+
+  没什么大不了的，执行此操作只是让那个警告消失了，因为一旦选择了 "列" 部分，列就被映射了。其他一切都相同，但我猜界面需要刷新一下。无论如何，这个屏幕已经准备就绪，所以点击
+  **下一步**。图 7-24 显示了你接下来将看到的内容。
+
+
+  ![A421548_1_En_7_Fig24_HTML.jpg](img/A421548_1_En_7_Fig24_HTML.jpg)
+
+  *图 7-24. 字符分隔符部分*
+
+
+  此部分允许你在需要时选择文件的分隔符。我们不需要分隔符，因为默认设置即可正常工作，所以直接点击 **下一步**。
+
+
+  现在我们来到可以选择目标文件的屏幕，如图 7-25 所示。
+
+
+  ![A421548_1_En_7_Fig25_HTML.jpg](img/A421548_1_En_7_Fig25_HTML.jpg)
+
+  *图 7-25. 目标位置*
+
+
+  我们希望在此处将 **目标** 更改为 `SQL Server Native Client 11.0`。这样做的原因是我们不通过其他目标类型（.Net 和 OLE
+  DB）进行连接。这是本机客户端。进行此更改。你应该看到如图 7-26 所示的内容。
+
+
+  ![A421548_1_En_7_Fig26_HTML.jpg](img/A421548_1_En_7_Fig26_HTML.jpg)
+
+  *图 7-26. 更新后的目标*
+
+
+  我们希望保留这些默认值，因此在此屏幕点击 **下一步**。你将看到如图 7-27 所示的源和目标信息。
+
+
+  ![A421548_1_En_7_Fig27_HTML.jpg](img/A421548_1_En_7_Fig27_HTML.jpg)
+
+  *图 7-27. 源和目标信息*
+
+
+  这基本上表示，我们将左边 **源** 列中表示的数据放入右边的目标位置。
+
+
+  源指向我们最初下载的 `Weather_Sample.csv` 文件。
+
+
+  目标指向我们的数据库命名实例。表由 `[dbo].[Weather_Sample]` 指定。
+
+
+  点击 **下一步** 查看图 7-28 所示的 **保存并运行** 选项。
+
+
+  ![A421548_1_En_7_Fig28_HTML.jpg](img/A421548_1_En_7_Fig28_HTML.jpg)
+
+  *图 7-28. 保存并运行*
+
+
+  看到此界面时，直接点击 **完成**。然后会显示一个屏幕，快速回顾我们将要执行的操作，如图 7-29 所示。继续在此处也点击 **完成**。
+
+
+  ![A421548_1_En_7_Fig29_HTML.jpg](img/A421548_1_En_7_Fig29_HTML.jpg)
+
+  *图 7-29. 完成向导*
+
+
+  安装过程会运行几秒钟，但最终，你将看到如图 7-30 所示的内容。
+
+
+  ![A421548_1_En_7_Fig30_HTML.jpg](img/A421548_1_En_7_Fig30_HTML.jpg)
+
+  *图 7-30. 导入成功*
+
+
+  继续点击 **关闭**。我们现在已经将外部数据作为内部数据导入到 SQL Server 中。别担心，我们还没有偏离轨道。我们很快就会生成那个二进制数据，但首先得完成这些准备工作。
+
+
+  回想一下，之前我们是通过机场 ID 获取平均风速的。在 SQL 中，既然我们已将数据存入数据库，查询看起来像这样：
+
+
+  ```sql
+
+  SELECT AirportID, AVG(CONVERT(float, WindSpeed)) as WindSpeed
+
+  FROM [Weather_Sample]
+
+  GROUP BY AirportID
+
+  ORDER BY AirportID
+
+  ```
+
+
+  将其键入一个新的查询窗口，然后按 **F5** 执行代码。你应该会看到如图 7-31 所示的内容。
+
+
+  ![A421548_1_En_7_Fig31_HTML.jpg](img/A421548_1_En_7_Fig31_HTML.jpg)
+
+  *图 7-31. 查询执行*
+
+
+  太好了！这向我们展示了数据已在正确的表中，并且我们可以正常查询它。这对于即将生成图表数据至关重要。
+
+
+
+
+  ### 生成二进制数据
+
+
+  接下来，我们需要弄清楚需要使用哪种存储过程语法来获取我们所需图表的二进制数据。借鉴我们之前创建图表时所做的大量工作，我们可以推断其语法可能与以下内容相似。
+
+
+  ```
+
+  EXEC sp_execute_external_script
+
+  @language = N''R'',
+
+  @script = N''
+
+  library("ggplot2");
+
+  img <- inputDataSet;
+
+  image_file = tempfile();
+
+  png(filename = image_file, width=800, height=600);
+
+  print(ggplot(img, aes(x = AirportID, y = WindSpeed)) +
+
+  labs(x = "Airport ID", y = "Wind Speed") +
+
+  theme(axis.text.x = element_text(angle=90, hjust=1, vjust=0)) +
+
+  geom_point(stat = "identity") +
+
+  geom_smooth(method = "loess", aes(group = 1)) +
+
+  geom_text(aes(label = AirportID), size = 3, vjust = 1.0) +
+
+  geom_text(aes(label = round(WindSpeed, digits = 2)), size = 3, vjust = 2.0));
+
+  dev.off();
+
+  OutputDataset <- data.frame(data=readBin(file(image_file,"rb"),what=raw(),n=1e6));'',
+
+  @input_data_1 = N''SELECT AirportID, AVG(CONVERT(float, WindSpeed)) as WindSpeed
+  FROM [Weather_Sample] GROUP BY AirportID ORDER BY AirportID;'',
+
+  @input_data_1_name = N''inputDataSet'',
+
+  @output_data_1_name = N''OutputDataset''
+
+  WITH RESULT SETS ((plot varbinary(max)));
+
+  ```
+
+
+  注意：我们这里生成的是 `PNG` 图像，而不是 `JPG`。这一点在后续使用 Report Builder 动态生成这些图表时很重要。
+
+
+  将此代码输入一个新的查询窗口并执行，会得到一个二进制数据结果。图 7-32 展示了此时你应在 SSMS 中看到的内容。
+
+
+  ![A421548_1_En_7_Fig32_HTML.jpg](img/A421548_1_En_7_Fig32_HTML.jpg)
+
+
+  图 7-32. 二进制数据
+
+
+  回顾一下，我们已经创建了一个表来存储图表。现在，我们将通过在存储过程中使用以下代码，将这个二进制数据插入到表中。现在，我们只需要重写存储过程来自动插入数据。知道怎么做吗？没错，我们将使用
+  `INSERT INTO ... EXEC`。
+
+
+  那么如何构建查询呢？实际上非常简单。我相信你们中的一些人已经知道如何操作，但对于还不清楚的人来说，它看起来是这样的：
+
+
+  ```
+
+  INSERT INTO chartBinary (binData)
+
+  EXEC sp_execute_external_script
+
+  @language = N''R'',
+
+  @script = N''
+
+  library("ggplot2");
+
+  img <- inputDataSet;
+
+  image_file = tempfile();
+
+  png(filename = image_file, width=800, height=600);
+
+  print(ggplot(img, aes(x = AirportID, y = WindSpeed)) +
+
+  labs(x = "Airport ID", y = "Wind Speed") +
+
+  theme(axis.text.x = element_text(angle=90, hjust=1, vjust=0)) +
+
+  geom_point(stat = "identity") +
+
+  geom_smooth(method = "loess", aes(group = 1)) +
+
+  geom_text(aes(label = AirportID), size = 3, vjust = 1.0) +
+
+  geom_text(aes(label = round(WindSpeed, digits = 2)), size = 3, vjust = 2.0));
+
+  dev.off();
+
+  OutputDataset <- data.frame(data=readBin(file(image_file,"rb"),what=raw(),n=1e6));'',
+
+  @input_data_1 = N''SELECT AirportID, AVG(CONVERT(float, WindSpeed)) as WindSpeed
+  FROM [Weather_Sample] GROUP BY AirportID ORDER BY AirportID;'',
+
+  @input_data_1_name = N''inputDataSet'',
+
+  @output_data_1_name = N''OutputDataset'';
+
+  ```
+
+
+  这更新了我们的 `binData` 列，但 `title` 列没有赋值。由于这是表中的第一条记录，`UID` 被设置为 1；因此请确保你的 `WHERE` 子句指定了这一点。要为此图表更新
+  `title` 值，在运行第一个查询后，运行此 `UPDATE` 查询。
+
+
+  ```
+
+  UPDATE chartBinary
+
+  SET title = ''按机场 ID 分组的平均风速''
+
+  WHERE uid = 1
+
+  ```
+
+
+  这样应该就可以了。要验证，请运行以下查询来查看你的数据。
+
+
+  ```
+
+  SELECT title, binData FROM [dbo].[chartBinary] ORDER BY uid
+
+  ```
+
+
+  结果应如图 7-33 所示。
+
+
+  ![A421548_1_En_7_Fig33_HTML.jpg](img/A421548_1_En_7_Fig33_HTML.jpg)
+
+
+  图 7-33. 查询结果
+
+
+  接下来，我们需要为另一个报表构建查询，但这实际上相当简单，因为我们已经完成了大部分困难的工作。以下是完成此操作所需的代码。
+
+
+  ```
+
+  INSERT INTO chartBinary (binData)
+
+  EXEC sp_execute_external_script
+
+  @language = N''R'',
+
+  @script = N''
+
+  library("ggplot2");
+
+  img <- inputDataSet;
+
+  image_file = tempfile();
+
+  png(filename = image_file, width=800, height=600);
+
+  print(ggplot(img, aes(x = AirportID, y = Temperature)) +
+
+  labs(x = "Airport ID", y = "Temperature") +
+
+  theme(axis.text.x = element_text(angle=90, hjust=1, vjust=0)) +
+
+  geom_point(stat = "identity") +
+
+  geom_smooth(method = "loess", aes(group = 1)) +
+
+  geom_text(aes(label = AirportID), size = 3, vjust = 1.0) +
+
+  geom_text(aes(label = round(Temperature, digits = 2)), size = 3, vjust = 2.0));
+
+  dev.off();
+
+  OutputDataset <- data.frame(data=readBin(file(image_file,"rb"),what=raw(),n=1e6));'',
+
+  @input_data_1 = N''SELECT AirportID, AVG(CONVERT(float, DryBulbFarenheit)) as Temperature
+  FROM [Weather_Sample] GROUP BY AirportID ORDER BY AirportID;'',
+
+  @input_data_1_name = N''inputDataSet'',
+
+  @output_data_1_name = N''OutputDataset'';
+
+  ```
+
+
+  同样，设置 `title` 列：
+
+
+  ```
+
+  UPDATE chartBinary
+
+  SET title = ''按机场 ID 分组的平均温度''
+
+  WHERE uid = 2
+
+  ```
+
+
+  运行那两个代码块，然后运行以下查询来检查并确保所有数据都已正确插入。
+
+
+  ```
+
+  SELECT title, binData FROM [dbo].[chartBinary] ORDER BY uid
+
+  ```
+
+
+  此时，你应该看到如图 7-34 所示的内容。
+
+
+  ![A421548_1_En_7_Fig34_HTML.jpg](img/A421548_1_En_7_Fig34_HTML.jpg)
+
+
+  图 7-34. 查询结果
+
+
+  搞定！两个结果，正如我们所愿。现在这些数据已经正确加载到表中，我们可以开始构建要交付给客户的报表了。别忘了定期对照软件需求文档来验证我们的进度。
+
+
+  ### 总结
+
+
+  让我们回顾一下本章所做的事情，因为内容确实不少。
+
+
+  *   下载并安装了 Report Builder。
+
+  *   将天气数据加载到了 SQL Server 中。
+
+  *   基于这些天气数据生成作为二进制数据的图表。
+
+
+  看起来似乎不多，但其实挺多的。请务必仔细阅读本章内容，因为在下一章中，如果没有这个二进制数据，你将无法取得太大进展。
+
+
+  接下来，我们将把所有这些整合起来，构建成要交付给客户实际报表。如果你在本章过程中没有感到头疼，那你可能做错了。说真的，需要消化的信息量非常大。我强烈建议你回过头去重新阅读在
+  SQL Server 中生成二进制数据的步骤。特别是 `ggplot2` 函数的各个属性，实际上非常有趣。你可以按照你能想到的几乎任何方式自定义图表。互联网上甚至有关于如何创建你自己的
+  `R` 包以供私人使用或分发的信息。
+
+
+  我们快完成了！坚持下去——我们很快就要大功告成了。如果你已经走到了这一步，我祝贺你，并鼓励你再坚持一小会儿。我保证这一切都是值得的！
+
+
+
+
+  '
+- '# 第 8 章 使用报表生成器构建报表
+
+
+  至此，我们在本书中已经处理了大量信息。我们执行了 SQL Server R Services 的新安装、安装了 Visual Studio 的 R Tools、配置了
+  Reporting Services，并安装和配置了 Report Builder。我们对 R 及其工作原理有了相当多的了解，并且总体上获得了许多编写代码的经验。如果你能读到这里，做得很好！这确实是比较高级的内容，因为它基本上是全新的功能。可以相当肯定地假设，R
+  将在未来的 SQL Server 版本中继续作为一部分提供，所以最好现在就开始熟悉它，而不必以后再应对学习曲线。
+
+
+  在本章中，我们将使用在第 7 章中创建的二进制数据来创建一个报表。这些二进制数据将被动态转换为图像。这听起来相当复杂，但幸运的是，Report Builder
+  实际上让这变得相当容易。
+
+
+  以下是我们在本章中要做的事情：
+
+
+  *   构建“按机场 ID 的平均风速”报表。
+
+  *   构建“按机场 ID 的平均温度”报表。
+
+
+  我们只做两件事？没错。与其他更深入的章节相比，本章内容相对简短。因此，本章比其他章节短得多，但希望你仍然能发现这些信息有用。
+
+
+  ### 报表 1：按机场 ID 的平均风速
+
+
+  回想一下，软件需求文档明确要求了客户想要的两份报表。第一份报表就是“按机场 ID 的平均风速”报表。这份特定的报表对客户很重要，因此我们将花点时间进行设置，然后使用相同的格式来创建我们的第二份报表。请记住，一旦编写了第一份报表，创建任何后续报表确实会快得多，因为我们已经对如何操作有了大致的了解。从那时起，我们真正需要做的只是将任何特定格式应用于报表，忽略图像本身，因为图像是使用预编译的二进制数据从数据库生成的。
+
+
+  首先，启动 `Report Builder` 并以 `Administrator` 身份运行。初始界面如图 8-1 所示。
+
+
+  ![A421548_1_En_8_Fig1_HTML.jpg](img/A421548_1_En_8_Fig1_HTML.jpg)
+
+
+  图 8-1. Report Builder 初始界面
+
+
+  回想一下，我们已经逐步介绍了此界面的功能，所以让我们直接开始吧。
+
+
+  #### 设置报表布局
+
+
+  单击“开始使用”屏幕底部的 `空白报表`。重叠窗口应消失，剩下如图 8-2 所示的内容。
+
+
+  ![A421548_1_En_8_Fig2_HTML.jpg](img/A421548_1_En_8_Fig2_HTML.jpg)
+
+
+  图 8-2. 空白报表
+
+
+  单击标有 `单击以添加标题` 的框内部，并键入 `按机场 ID 的平均风速`。然后将该框拉伸到文本的高度和宽度。之后，使用屏幕顶部的控件将文本居中。图 8-3
+  显示了你的报表现在应该的样子。
+
+
+  ![A421548_1_En_8_Fig3_HTML.jpg](img/A421548_1_En_8_Fig3_HTML.jpg)
+
+
+  图 8-3. 标题的基本格式
+
+
+  接下来，我们只想对报表主体做一些非常基本的格式设置，因此在报表中间部分的任意位置右键单击，然后选择 `主体属性`。此选项的位置如图 8-4 所示。
+
+
+  ![A421548_1_En_8_Fig4_HTML.jpg](img/A421548_1_En_8_Fig4_HTML.jpg)
+
+
+  图 8-4. 选项位置
+
+
+  选择该选项会打开另一个屏幕，如图 8-5 所示。
+
+
+  ![A421548_1_En_8_Fig5_HTML.jpg](img/A421548_1_En_8_Fig5_HTML.jpg)
+
+
+  图 8-5. 报表主体属性
+
+
+  现在，我们不希望有填充颜色，除了纯白色，但如果你想尝试一下，请便。我们也不想要背景图像，所以暂时保持空白。就像我说的，如果你想改变这一点，请便。这是你的报表！
+
+
+  单击左侧的 `边框` 选项；你应该会看到如图 8-6 所示的内容。
+
+
+  ![A421548_1_En_8_Fig6_HTML.jpg](img/A421548_1_En_8_Fig6_HTML.jpg)
+
+
+  图 8-6. 边框属性
+
+
+  只需单击右上角的 `轮廓` 选项，然后单击 `确定`。该屏幕关闭。在页面上你可能看不到边框，但它确实存在。当你预览报表时，你就会看到它。
+
+
+
+
+  #### 数据配置
+
+
+  现在我们需要设置数据源和数据集。这两者难道不是一回事吗？在这个上下文中，数据源（连接到数据库中的数据）为数据集（对数据源的查询）提供数据，这与处理这些概念的其他许多例子很相似。
+
+
+  没有数据源就无法拥有数据集，而没有数据集的数据源也是无用的。
+
+
+  首先，我们必须设置数据源。为此，在屏幕左侧右键单击 `Data Sources` 选项，然后选择 `Add Data Source…`。图 8-7 显示了此菜单选项的位置。
+
+
+  ![A421548_1_En_8_Fig7_HTML.jpg](img/A421548_1_En_8_Fig7_HTML.jpg)
+
+
+  图 8-7. 菜单选项
+
+
+  会出现一个屏幕，如图 8-8 所示。
+
+
+  ![A421548_1_En_8_Fig8_HTML.jpg](img/A421548_1_En_8_Fig8_HTML.jpg)
+
+
+  图 8-8. 数据源属性
+
+
+  将该屏幕更新为图 8-9 所示的内容。
+
+
+  ![A421548_1_En_8_Fig9_HTML.jpg](img/A421548_1_En_8_Fig9_HTML.jpg)
+
+
+  图 8-9. 更新后的值
+
+
+  我们需要配置连接字符串，因此单击 `Build…` 按钮；您应该看到如图 8-10 所示的内容。
+
+
+  ![A421548_1_En_8_Fig10_HTML.jpg](img/A421548_1_En_8_Fig10_HTML.jpg)
+
+
+  图 8-10. 连接属性
+
+
+  将该屏幕更新为图 8-11 所示的内容。
+
+
+  ![A421548_1_En_8_Fig11_HTML.jpg](img/A421548_1_En_8_Fig11_HTML.jpg)
+
+
+  图 8-11. 更新后的值
+
+
+  显然，您要记住您的设置可能与我的不同。
+
+
+  到达此处后，您可以单击 `Test Connection` 按钮以验证是否正在连接到数据库。图 8-12 显示了单击此按钮的结果。
+
+
+  ![A421548_1_En_8_Fig12_HTML.jpg](img/A421548_1_En_8_Fig12_HTML.jpg)
+
+
+  图 8-12. 测试连接成功
+
+
+  在此处单击 `OK`，然后再次单击 `OK` 以保存连接信息。图 8-13 显示了您现在应该看到的内容。
+
+
+  ![A421548_1_En_8_Fig13_HTML.jpg](img/A421548_1_En_8_Fig13_HTML.jpg)
+
+
+  图 8-13. 更新后的值
+
+
+  这样我们的连接字符串值就全部完成了。同样，您可以在此处单击 `Test Connection` 按钮来验证连接性，但我认为我们在这方面已经基本完成了。单击 `OK`
+  关闭此窗口。
+
+
+  请注意，图 8-14 显示我们现在有一个可用的数据源。
+
+
+  ![A421548_1_En_8_Fig14_HTML.jpg](img/A421548_1_En_8_Fig14_HTML.jpg)
+
+
+  图 8-14. 数据源已更新
+
+
+  接下来，我们需要添加数据集。为此，在左侧右键单击 `Datasets` 选项，然后选择 `Add Dataset…`，如图 8-15 所示。
+
+
+  ![A421548_1_En_8_Fig15_HTML.jpg](img/A421548_1_En_8_Fig15_HTML.jpg)
+
+
+  图 8-15. 添加数据集
+
+
+  这将打开如图 8-16 所示的界面。
+
+
+  ![A421548_1_En_8_Fig16_HTML.jpg](img/A421548_1_En_8_Fig16_HTML.jpg)
+
+
+  图 8-16. 数据集属性
+
+
+  将该界面更新为与图 8-17 所示内容匹配。
+
+
+  ![A421548_1_En_8_Fig17_HTML.jpg](img/A421548_1_En_8_Fig17_HTML.jpg)
+
+
+  图 8-17. 数据集属性已更新
+
+
+  我为获取此报表数据编写的查询是：
+
+
+  ```sql
+
+  SELECT title, binData
+
+  FROM [dbo].[chartBinary]
+
+  WHERE uid = 1
+
+  ```
+
+
+  超级简单，但很有效。
+
+
+  左侧的选项并不真正适用于本节，但您可以稍后尝试使用它们。单击 `OK` 设置数据集。您应返回到如图 8-18 所示的空白报表屏幕。
+
+
+  ![A421548_1_En_8_Fig18_HTML.jpg](img/A421548_1_En_8_Fig18_HTML.jpg)
+
+
+  图 8-18. 主屏幕
+
+
+  请注意，现在 `Data Sources` 和 `Datasets` 文件夹下分别有条目。
+
+
+  让我们将标题文本更改为您在查询中输入的标题。请继续删除您之前输入的标题（Average Wind Speed by Airport ID）。只需高亮显示文本，然后按
+  `Delete`。您应该看到如图 8-19 所示的内容。
+
+
+  ![A421548_1_En_8_Fig19_HTML.jpg](img/A421548_1_En_8_Fig19_HTML.jpg)
+
+
+  图 8-19. 已删除初始标题值
+
+
+  接下来，单击并将左侧 `AvgWS_DS` 选项下的标题值拖到主屏幕上的标题框中。图 8-20 显示了您现在应该看到的内容。
+
+
+  ![A421548_1_En_8_Fig20_HTML.jpg](img/A421548_1_En_8_Fig20_HTML.jpg)
+
+
+  图 8-20. 标题添加
+
+
+  完美！这样，当运行报表时，就会显示标题的值。
+
+
+  #### 添加动态图像
+
+
+  接下来，我们需要添加图像。在正文中的任意位置右键单击，并将鼠标悬停在 `Insert…` 选项上，直到出现子菜单。此子菜单包含一个 `Image` 选项。图 8-21
+  显示了此菜单选项的位置。
+
+
+  ![A421548_1_En_8_Fig21_HTML.jpg](img/A421548_1_En_8_Fig21_HTML.jpg)
+
+
+  图 8-21. 图像选项
+
+
+  因此，您也可以单击窗口顶部的 `Insert` 菜单选项，然后单击 `Image` 选项。哪种方式对您来说更舒适都可以，因为它们都能完成相同的任务。
+
+
+  选择将图像放入报表后，会出现一个界面，如图 8-22 所示。
+
+
+  ![A421548_1_En_8_Fig22_HTML.jpg](img/A421548_1_En_8_Fig22_HTML.jpg)
+
+
+  图 8-22. 图像属性
+
+
+  我们需要将这些值更新为与图 8-23 所示内容匹配。请注意，我只更新了 `Name`、`ToolTip` 和图像源字段。
+
+
+  ![A421548_1_En_8_Fig23_HTML.jpg](img/A421548_1_En_8_Fig23_HTML.jpg)
+
+
+  图 8-23. 已更新的图像属性屏幕
+
+
+  下拉 `Use this field` 菜单选项并选择值 `=First(Fields!binData.Value, "AvgWS_DS")`。很容易选错值，因此请确保您选择的是
+  `binData.value` 选项。
+
+
+  对于 `MIME type`，我们希望选择 `image/png`。
+
+
+  最终产品如图 8-24 所示。
+
+
+  ![A421548_1_En_8_Fig24_HTML.jpg](img/A421548_1_En_8_Fig24_HTML.jpg)
+
+
+  图 8-24. 更新后的值
+
+
+  接下来，单击左侧的 `Size` 选项。图 8-25 显示了此界面。
+
+
+  ![A421548_1_En_8_Fig25_HTML.jpg](img/A421548_1_En_8_Fig25_HTML.jpg)
+
+
+  图 8-25. 大小选项
+
+
+  在此处选择 `Fit to size` 选项。这会将图像保持在可打印区域内。单击 `OK`。您应该看到与图 8-26 所示内容非常相似的内容。
+
+
+  ![A421548_1_En_8_Fig26_HTML.jpg](img/A421548_1_En_8_Fig26_HTML.jpg)
+
+
+  图 8-26. 主屏幕，已更新
+
+
+  此时，我们只看到图像占位符，因为图像是从数据库动态生成的。一旦运行报表，图像就会如预期那样显示出来。
+
+
+  在继续之前，只需在屏幕上抓取图像并将其手动对齐到屏幕左侧的空白区域内。图 8-27 显示了此操作的结果。
+
+
+  ![A421548_1_En_8_Fig27_HTML.jpg](img/A421548_1_En_8_Fig27_HTML.jpg)
+
+
+  图 8-27. 图像左对齐
+
+
+
+  '
+- '# 9. 在报表服务器中查看报表
+
+
+  我们已经在报表生成器中构建了所需的报表，现在可以通过报表服务器的 Web 门户来查看它们。本章后面会介绍报表服务器的其他方面，现在先来看看我们的报表。
+
+
+  ### 查看报表
+
+
+  回顾第 6 章，我们设置报表服务器时，将 URL 指定为`http://bradlaptop:80/Reports_SQL2016RS`。将你的 Web 门户地址输入浏览器并点击回车。你应该会看到与图
+  9-1 所示类似的内容。
+
+
+  ![A421548_1_En_9_Fig1_HTML.jpg](img/A421548_1_En_9_Fig1_HTML.jpg)
+
+  图 9-1. Web 门户
+
+
+  点击左侧的 AverageWSbyID 报表，会显示你在图 9-2 中看到的内容。
+
+
+  ![A421548_1_En_9_Fig2_HTML.jpg](img/A421548_1_En_9_Fig2_HTML.jpg)
+
+  图 9-2. 生成的报表
+
+
+  在主页上点击 AvgTempByID 链接时，也会发生同样的事情。图 9-3 显示了这一点。
+
+
+  ![A421548_1_En_9_Fig3_HTML.jpg](img/A421548_1_En_9_Fig3_HTML.jpg)
+
+  图 9-3. 生成的报表
+
+
+  所以，你得到了……一个使用二进制数据从原始 R 代码生成图像的完整报表。
+
+
+  ### 管理报表
+
+
+  与之前的版本一样，此版本的报表服务器也提供了通过其界面管理报表的功能。在报表服务器中管理报表要求用户是管理员（我们应该是），并属于内容管理器组。报表服务器中提供以下安全角色：
+
+
+  *   **浏览器**：此角色可以查看指定文件夹中的文件夹和报表，并且可以订阅报表。但此角色不能创建报表。这将是常规的只读用户角色。
+
+  *   **内容管理器**：此角色管理报表服务器中的内容。这是报表服务器的管理员账户，可以在报表服务器的权限范围内执行任何操作。
+
+  *   **我的报表**：此角色可以发布报表，并管理他们被特别指派访问的用户文件夹。这将是常规的读/写“高级用户”账户类型。
+
+  *   **发布者**：此角色只能将报表和链接报表发布到报表服务器。这将是只写用户角色。
+
+  *   **报表生成器**：此角色可以管理和查看报表定义及属性。此角色保留给需要配置报表但不需要成为完全管理员（即内容管理器角色）的特定用户。
+
+
+  请记住，内容管理器角色可以完成此实例中我们需要做的任何事情，因此最小权限原则在这里确实被忽视了。
+
+
+  点击省略号，如图 9-4 所示。从弹出菜单中选择“管理”选项。
+
+
+  ![A421548_1_En_9_Fig4_HTML.jpg](img/A421548_1_En_9_Fig4_HTML.jpg)
+
+  图 9-4. 管理菜单
+
+
+  会出现一个页面，如图 9-5 所示，它允许你编辑报表的部分属性。
+
+
+  ![A421548_1_En_9_Fig5_HTML.jpg](img/A421548_1_En_9_Fig5_HTML.jpg)
+
+  图 9-5. 属性
+
+
+  ## 报表正文属性
+
+
+  回想一下，我们创建的图像是 800×600，所以让我们更新报表的样式。右键单击灰色区域，从菜单中选择“报表属性…”。图 8-28 显示了此操作。
+
+
+  ![A421548_1_En_8_Fig28_HTML.jpg](img/A421548_1_En_8_Fig28_HTML.jpg)
+
+  图 8-28. 报表属性位置
+
+
+  这将打开图 8-29 所示的界面。
+
+
+  ![A421548_1_En_8_Fig29_HTML.jpg](img/A421548_1_En_8_Fig29_HTML.jpg)
+
+  图 8-29. 报表属性
+
+
+  我们需要做的就是将“方向”值更改为“横向”，然后点击“确定”。我们需要检查页面大小以调整图像。稍作尝试会发现，我们希望舞台尺寸大约为 9×5（只需点击并拖动到该大小），图
+  8-30 显示了其应有的样子。
+
+
+  ![A421548_1_En_8_Fig30_HTML.jpg](img/A421548_1_En_8_Fig30_HTML.jpg)
+
+  图 8-30. 舞台大小调整
+
+
+  我将页脚设为蓝色背景配白色文字，但你可以根据自己的喜好进行样式设计，让这份报表成为你自己的作品。
+
+
+  ### 运行报表
+
+
+  继续点击左上角的“运行”按钮。准备好迎接一个大惊喜。图 8-31 显示了发生此事后你应该看到的内容。
+
+
+  ![A421548_1_En_8_Fig31_HTML.jpg](img/A421548_1_En_8_Fig31_HTML.jpg)
+
+  图 8-31. 完成的报表
+
+
+  不错！现在点击菜单栏中的“打印布局”按钮。图 8-32 显示了这个结果。
+
+
+  ![A421548_1_En_8_Fig32_HTML.jpg](img/A421548_1_En_8_Fig32_HTML.jpg)
+
+  图 8-32. 打印布局视图
+
+
+  它就在那里，整齐地布局在一页上，我们的渲染时间显示在蓝色页脚中。
+
+
+  点击左上角的“设计”按钮，然后按 Ctrl+S 保存报表。默认位置和值如图 8-33 所示。
+
+
+  ![A421548_1_En_8_Fig33_HTML.jpg](img/A421548_1_En_8_Fig33_HTML.jpg)
+
+  图 8-33. 默认报表位置
+
+
+  我们可以看到默认位置在我们的报表服务器上，这很完美。将文件的“名称”更新为 AverageWSbyID.rdl，如图 8-34 所示。
+
+
+  ![A421548_1_En_8_Fig34_HTML.jpg](img/A421548_1_En_8_Fig34_HTML.jpg)
+
+  图 8-34. 更新后的名称信息
+
+
+  点击此处的“保存”按钮以保存报表。
+
+
+  此报表现已保存到报表服务器。我们处理完另一份报表后，就会查看它。
+
+
+  ### 报表 2：按机场 ID 的平均温度
+
+
+  看看创建第二份报表是多么容易。我希望你开始看到这项技术带给你的灵活性！
+
+
+  按 Ctrl+N 打开一份新报表（请务必保存旧的）。你会立即看到一份空白报表，就像之前一样。你也可以转到“文件”菜单并选择“新建…”来选择不同的类型。
+
+
+  我们需要基本上遵循与之前完全相同的说明，只是这次，在创建数据集时，我们需要将`WHERE`子句更改为显示 UID 等于 2 而不是 1 的地方。我将把进行此更改作为练习留给你自己完成。这是一个微不足道的更改。
+
+
+  完成设置后，你的屏幕应与图 8-35 类似。
+
+
+  ![A421548_1_En_8_Fig35_HTML.jpg](img/A421548_1_En_8_Fig35_HTML.jpg)
+
+  图 8-35. 平均温度报表布局
+
+
+  而你的报表应该与图 8-36 所示非常相似。
+
+
+  ![A421548_1_En_8_Fig36_HTML.jpg](img/A421548_1_En_8_Fig36_HTML.jpg)
+
+  图 8-36. 第二份报表
+
+
+  干得漂亮！务必将该报表保存为`AvgTempByID.rdl`。
+
+
+  ### 小结
+
+
+  我希望你从本章中学到了很多。我鼓励你通过尽可能多地学习 R 和商业智能知识，继续你作为数据科学家的旅程。这保证在未来是一个非常有“钱”途的领域，我非常激动能成为其中的一员。
+
+
+  如果本章的任何部分没有弄明白，正如我在前面章节中所说，请务必回头重新做一遍示例。
+
+
+  第 9 章将向你展示如何从报表服务器访问这些报表。这将是一个有趣的章节，不仅因为它是最后一章，而且因为它是我们本书工作的结晶。
+
+
+
+  ### 属性
+
+
+  请注意，我们现在位于左侧的 **“属性”** 部分。顶部有以下几个选项：**“在报表生成器中编辑”**、**“下载”**、**“替换”**、**“移动”**、**“删除”**
+  和 **“创建链接报表”**。除了 **“创建链接报表”** 之外，其他选项的含义都很直观。**“创建链接报表”** 选项允许你创建一个报表，该报表保留现有报表的布局和数据源信息，但仍允许编辑报表的其他参数，例如订阅和报表参数。可以将其理解为一种模板创建器。你本质上是为一个报表创建了一个模板，然后从该报表的基本框架（数据源和报表布局）创建一个全新的报表，但随后你可以用完全不同的报表信息填充这个框架的主体。
+
+
+  在此页面上，我们可以在图 9-5 所示的 **“描述”** 框中为报表添加描述。如果向下滚动，你会看到另一个标题为 **“高级”** 的区域。此区域允许你更改报表超时时间，但由于这是一个动态生成的报表，我将保持原样。可能存在网络流量导致我的报表无法快速生成的情况。我不希望仅仅因为这个原因导致报表失败。
+
+
+  #### 数据源
+
+
+  左侧菜单显示的下一节是 **“数据源”**。此部分允许我们更新或更改现有的数据源。这里的关键词是 **“现有”**。我们无法在报表服务器中创建新的数据源；它们必须首先在报表生成器中创建。
+
+
+  图 9-6 显示了此屏幕的顶部部分，其中包含我们之前在报表生成器中指定的数据源信息。请注意，我们在这里有更改任何内容的选项，因为我们处于 **“内容管理器”**
+  角色。
+
+
+  ![A421548_1_En_9_Fig6_HTML.jpg](img/A421548_1_En_9_Fig6_HTML.jpg)
+
+
+  图 9-6.
+
+  数据源信息
+
+
+  此屏幕的底部部分如图 9-7 所示。此部分允许我们定义或编辑连接到数据源所需的凭据。显然，这个 **“凭据”** 部分已经按设置工作了，否则我们将无法在此报表服务器界面中看到我们创建的报表。图
+  9-7 显示了我们这里的选项。
+
+
+  ![A421548_1_En_9_Fig7_HTML.jpg](img/A421548_1_En_9_Fig7_HTML.jpg)
+
+
+  图 9-7.
+
+  凭据信息
+
+
+  请注意，我们可以从四种不同的登录类型中选择。
+
+
+  > 注意
+
+  > 此选项可能会根据你的具体安装和个别要求而有所不同。
+
+
+  在 **“凭据”** 屏幕上，我们需要滚动到底部并单击 **“测试连接”** 按钮。图 9-8 显示了此时你应该看到的内容。
+
+
+  ![A421548_1_En_9_Fig8_HTML.jpg](img/A421548_1_En_9_Fig8_HTML.jpg)
+
+
+  图 9-8.
+
+  测试连接不成功
+
+
+  此外，一条错误消息出现在 **“测试连接”** 按钮旁边，如图 9-9 所示。
+
+
+  ![A421548_1_En_9_Fig9_HTML.jpg](img/A421548_1_En_9_Fig9_HTML.jpg)
+
+
+  图 9-9.
+
+  错误消息
+
+
+  接下来，我们需要单击 **“使用以下凭据”** 单选按钮，并将界面更新为如图 9-10 所示。你的信息很可能与图中所示的信息不同。
+
+
+  ![A421548_1_En_9_Fig10_HTML.jpg](img/A421548_1_En_9_Fig10_HTML.jpg)
+
+
+  图 9-10.
+
+  更新后的凭据信息
+
+
+  请注意，屏幕上显示的复选框未被选中；这对于在下一节中创建订阅至关重要。更新信息后，单击屏幕底部的 **“测试连接”** 按钮。图 9-11 显示了此操作的结果。
+
+
+  ![A421548_1_En_9_Fig11_HTML.jpg](img/A421548_1_En_9_Fig11_HTML.jpg)
+
+
+  图 9-11.
+
+  连接成功
+
+
+  最后我们需要做的是单击 **“保存”** 按钮，这会更新报表。
+
+
+  > 注意
+
+  > 此时，你可能需要再次运行报表，并确保它仍能正确呈现。
+
+
+  一旦连接信息被保存，它会立即对订阅了该报表的用户可用。
+
+
+  #### 订阅
+
+
+  单击左侧菜单中的 **“订阅”** 链接。将打开一个界面，如图 9-12 所示；它可用于创建报表订阅。
+
+
+  ![A421548_1_En_9_Fig12_HTML.jpg](img/A421548_1_En_9_Fig12_HTML.jpg)
+
+
+  图 9-12.
+
+  订阅
+
+
+  请注意，有一个标有 **“新建订阅”** 的按钮，文本左侧带有一个加号。请单击 **“新建订阅”** 按钮。你应该看到如图 9-13 所示的内容。
+
+
+  ![A421548_1_En_9_Fig13_HTML.jpg](img/A421548_1_En_9_Fig13_HTML.jpg)
+
+
+  图 9-13.
+
+  新建订阅
+
+
+  首先，我们希望将 **“描述”** 字段更新为 **“风速报告”**。接下来，我们将编辑计划，但保持订阅类型不变。单击蓝色的 **“编辑计划”** 链接可以更改当前计划。图
+  9-14 显示了单击 **“编辑计划”** 选项时的初始界面。
+
+
+  ![A421548_1_En_9_Fig14_HTML.jpg](img/A421548_1_En_9_Fig14_HTML.jpg)
+
+
+  图 9-14.
+
+  编辑计划（顶部）
+
+
+  请注意，这是 **“编辑计划”** 界面的顶部部分。单击 **“一次”** 单选按钮，然后输入一个距离你当前时间仅几分钟的时间。
+
+
+  此界面的底部部分如图 9-15 所示。在此区域中，我们只需要单击 **“应用”** 按钮。
+
+
+  ![A421548_1_En_9_Fig15_HTML.jpg](img/A421548_1_En_9_Fig15_HTML.jpg)
+
+
+  图 9-15.
+
+  编辑计划（底部）
+
+
+  此时，订阅界面更新以显示新的计划信息。图 9-16 显示了此更新后的计划信息，以及我们需要更新的下一部分。
+
+
+  ![A421548_1_En_9_Fig16_HTML.jpg](img/A421548_1_En_9_Fig16_HTML.jpg)
+
+
+  图 9-16.
+
+  目标和电子邮件选项
+
+
+  我们希望将目标保留为 **“电子邮件”**，并更新其余信息，如图 9-17 所示。
+
+
+  ![A421548_1_En_9_Fig17_HTML.jpg](img/A421548_1_En_9_Fig17_HTML.jpg)
+
+
+  图 9-17.
+
+  更新后的目标和电子邮件选项
+
+
+  请注意，我在 **“收件人:”** 字段中输入了我的实际电子邮件地址，并将 **“呈现格式”** 更改为 PDF。
+
+
+  > 注意
+
+  > 当前可用的呈现格式包括 Word、Excel、PowerPoint、PDF、TIFF、MHTML、CSV、XML 和数据提要。
+
+
+  接下来，只需在 **“注释”** 字段中添加一些文本，如图 9-18 所示。
+
+
+  ![A421548_1_En_9_Fig18_HTML.jpg](img/A421548_1_En_9_Fig18_HTML.jpg)
+
+
+  图 9-18.
+
+  添加的注释信息
+
+
+  单击 **“创建订阅”** 按钮，我们就完成了此区域的操作。等待几分钟。你应该会在收件箱中看到一封电子邮件。打开它会显示与图 9-19 所示类似的内容。
+
+
+  ![A421548_1_En_9_Fig19_HTML.jpg](img/A421548_1_En_9_Fig19_HTML.jpg)
+
+
+  图 9-19.
+
+  收到的电子邮件
+
+
+  你已成功为此报表创建了电子邮件订阅。
+
+
+  #### 依赖项
+
+
+  **“依赖项”** 部分没有可配置的区域，因此我们将保持此区域不变。
+
+
+
+  #### 缓存
+
+
+  “缓存”部分允许您选择是否要缓存您的报表。图 9-20 显示了“缓存”部分的初始界面。
+
+
+  ![A421548_1_En_9_Fig20_HTML.jpg](img/A421548_1_En_9_Fig20_HTML.jpg)
+
+
+  图 9-20. 缓存界面
+
+
+  我个人会选择 `始终使用最新数据运行此报表` 选项，以防报表未按顺序运行或在正常计划运行时间之外运行（对于订阅而言）。在某些情况下，`缓存此报表的副本并在可用时使用它们`
+  选项可能是更好的选择；例如，如果这严格来说是一个基于订阅的服务器，并且没有允许用户随意运行报表的应急方案，那么生成一次报表，然后服务器在收到请求时提供缓存的报表副本是合理的。最后一个选项
+  `始终针对预生成的快照运行此报表`，意味着报表是从一个特定时间点生成的，该时间点称为快照，这将在下一节中讨论。
+
+
+  #### 历史快照
+
+
+  此部分允许您生成报表的快照。这使得前面讨论的选项在此上下文中可用。点击图 9-21 中所示的 `新建历史快照` 按钮，会基于当前日期和时间的数据创建报表的快照。
+
+
+  ![A421548_1_En_9_Fig21_HTML.jpg](img/A421548_1_En_9_Fig21_HTML.jpg)
+
+
+  图 9-21. 历史快照
+
+
+  回顾“缓存”部分，如果您在生成快照后选择 `始终针对预生成的快照运行此报表` 选项，那么随后生成的任何报表都将基于此快照运行。
+
+
+  注意：如果您在此处创建了快照，请继续删除它，除非您计划将来使用它。
+
+
+  #### 安全性
+
+
+  “安全性”部分允许您自定义用户和角色。`组或用户` 信息来自 Windows 子系统。`角色` 基于 SQL Server Reporting Services。
+
+
+  ![A421548_1_En_9_Fig22_HTML.jpg](img/A421548_1_En_9_Fig22_HTML.jpg)
+
+
+  图 9-22. 安全性选项
+
+
+  请注意，我们同样不需要在此处更改任何内容。
+
+
+  ### 保存报表
+
+
+  除了订阅之外，还有另一种方法可以在 Reporting Services 中保存已生成的报表。为此，只需在主屏幕上点击报表的名称来运行报表，如图 9-23 所示。
+
+
+  ![A421548_1_En_9_Fig23_HTML.jpg](img/A421548_1_En_9_Fig23_HTML.jpg)
+
+
+  图 9-23. 主屏幕
+
+
+  这将打开我们之前见过的报表。图 9-24 显示了“保存”对话框，通过点击报表工具栏中的磁盘图标调出。
+
+
+  ![A421548_1_En_9_Fig24_HTML.jpg](img/A421548_1_En_9_Fig24_HTML.jpg)
+
+
+  图 9-24. 保存选项
+
+
+  因此，再次说明，我们拥有与之前配置电子邮件设置时相同的呈现选项。此时，您可以将报表保存为任何您希望的格式。
+
+
+  至此，我们就完成了。
+
+
+  ### 总结
+
+
+  恭喜！我们已完成了这段数据科学入门之旅。请理解，就 R 所能实现的功能而言，这仅仅是冰山一角。这本书远非您在 R 环境中工作所需了解的全部知识；恰恰相反，本书旨在将您引入
+  R 与 SQL Server 融合的当下世界，如果您尚未开始，希望您能继续您的探索之旅。我鼓励您继续前进，并通过更广泛的社区参与，让未来版本的 SQL Server
+  R Services 变得更好。
+
+
+  下次再见，非常感谢您花时间阅读本书。希望您阅读本书的乐趣与我撰写本书的乐趣一样多！
+
+
+  '
+- '# 第四部分 附录
+
+
+  '
+- '# 在 SQL Server 2014 安装中安装 SQL Server 2016 实例
+
+
+  这些说明与第 1 章中的说明非常相似，但我们不是在一台服务器上单独安装 SQL Server 2016 实例，而是在现有的 SQL Server 2014 安装之上安装一个
+  SQL Server 2016 实例。
+
+
+  我们也不会像第 1 章那样安装所有组件。相反，我们只安装 `R Services`、SQL Server 2016 数据库引擎和 SQL Server 2016
+  Reporting Services。我们需要 Reporting Services 以便后续为我们提供 R 内容。
+
+
+  如果您选择在 SQL Server 2014 之上安装 SQL Server 2016，请理解这会带来一些影响，例如依赖旧版本的 Analysis Services
+  或 Integration Services。如果您可以接受这一点，那么这就是创建此附录的原因。
+
+
+  ### 开始
+
+
+  让我们开始安装。双击下载文件夹中的 `setup.exe` 文件。您应该会看到图 A-1。
+
+
+  ![A421548_1_En_10_Fig1_HTML.jpg](img/A421548_1_En_10_Fig1_HTML.jpg)
+
+
+  图 A-1. SQL Server 2016 初始安装屏幕
+
+
+  如果看到要求对系统进行更改的屏幕，请点击“是”。
+
+
+  图 A-1 显示了您启动安装后应该看到的第一个屏幕。这个屏幕对您来说应该相当熟悉。点击左侧的 `安装` 链接，查看图 A-2 所示的内容。
+
+
+  ![A421548_1_En_10_Fig2_HTML.jpg](img/A421548_1_En_10_Fig2_HTML.jpg)
+
+
+  图 A-2. SQL Server 2016 安装选项
+
+
+  到达此处后，点击顶部的 `新建 SQL Server 独立安装或向现有安装添加功能` 链接。
+
+
+  请注意，最底部的选项是新的。它写着 `新建 R 服务器（独立）安装`。如果您只想将 R Server 安装为服务器（独立的、自包含的数据分析服务器）或客户端（操作来自远程
+  SQL Server R Services 安装的数据），则应选择此选项。请注意，您还需要 SQL Server 2016 服务正在运行，因此这相当于向现有的
+  SQL Server 2016 安装添加 R 服务。换句话说，它不能添加到以前版本的 SQL Server。
+
+
+  ### 产品密钥
+
+
+  现在是输入产品密钥或选择安装产品的免费版本的时候了。换句话说，如果您碰巧拥有许可的 SQL Server 副本，您会获得一个 25 个字符的许可密钥，因此您可以在此处输入。否则，您始终可以选择免费版本。本书的目的是用于评估，因此请从下拉菜单中选择
+  `Evaluation`。图 A-3 显示了在独立安装过程中从图 A-2 继续后您看到的屏幕。
+
+
+  ![A421548_1_En_10_Fig3_HTML.jpg](img/A421548_1_En_10_Fig3_HTML.jpg)
+
+
+  图 A-3. 产品密钥屏幕
+
+
+  SQL Server 2016 可以安装在以下三种免费版本之一：
+
+
+  - `Evaluation`：全套功能，基本上是 SQL Server 2016 的企业版，但有效期仅为 180 天。
+
+  - `Developer`：全套功能，但不能用于生产数据库工作。
+
+  - `Express`：最小的、最基本的 SQL Server 2016 安装，不会过期，可用于生产用途。
+
+
+  如果您想选择 `Evaluation` 以外的选项，请直接选择。只需理解选择该选项的影响。对于我们所需的功能，`Evaluation` 版本是完美的，因为我们肯定会在
+  180 天内决定是否要将此新功能永久包含在我们的 SQL Server 安装中。
+
+
+  选择您最习惯的版本后，点击 `下一步` 继续。
+
+
+
+  ### 许可条款
+
+
+  下一个屏幕，如图 A-4 所示，将要求你接受许可条款。
+
+
+  ![A421548_1_En_10_Fig4_HTML.jpg](img/A421548_1_En_10_Fig4_HTML.jpg)
+
+
+  图 A-4.
+
+
+  许可条款
+
+
+  说实话，我从未完整阅读过这份许可条款，我敢说我认识的人里也没有谁读过。显然，只需勾选“我接受许可条款”复选框，然后单击“下一步”继续。
+
+
+  ### 安装规则
+
+
+  我的屏幕闪烁了几次，最终停留在如图 A-5 所示的屏幕上。
+
+
+  ![A421548_1_En_10_Fig5_HTML.jpg](img/A421548_1_En_10_Fig5_HTML.jpg)
+
+
+  图 A-5.
+
+
+  安装规则
+
+
+  值得注意的是，此步骤可能会下载并安装 SQL Server 2016 的更新；因此，如果出现相关提示信息，请直接安装它。
+
+
+  除了我的 .NET 应用程序安全设置和防火墙规则外，其他一切看起来都很好。这应该没问题，所以我将单击“下一步”继续。
+
+
+  ### 功能选择
+
+
+  现在进入正题。图 A-6 显示了我们一直在等待的屏幕。
+
+
+  ![A421548_1_En_10_Fig6_HTML.jpg](img/A421548_1_En_10_Fig6_HTML.jpg)
+
+
+  图 A-6.
+
+
+  功能选择
+
+
+  此时，我们可以直接按“全选”就完事了。但如果你仔细查看选项，就会明白它们的含义。我们肯定要选择 `R Services (In-Database)`；否则，你就可以停止阅读本文了。选择该项后，我们会看到
+  `Database Engine Services` 也被自动选中。我们还需要选择 `Reporting Services – Native`，我们将在第 7
+  章中使用它。然而，除了这三项，我们不想选择其他任何内容。图 A-7 显示了此时你应该看到的选定项。
+
+
+  ![A421548_1_En_10_Fig7_HTML.jpg](img/A421548_1_En_10_Fig7_HTML.jpg)
+
+
+  图 A-7.
+
+
+  选定选项后的功能选择
+
+
+  请注意底部显示的默认实例根目录和共享功能目录都指向我的 E 盘。那是我存放 SQL Server 相关内容以便于检索的位置。
+
+
+  在此处单击“下一步”继续。
+
+
+  ### 实例配置
+
+
+  系统会思考一小会儿，但最终，你会看到如图 A-8 所示的“实例配置”屏幕。
+
+
+  ![A421548_1_En_10_Fig8_HTML.jpg](img/A421548_1_En_10_Fig8_HTML.jpg)
+
+
+  图 A-8.
+
+
+  实例配置
+
+
+  此时，我们需要定义新实例。如果查看“已安装的实例”部分，你会看到已经安装了一个 SQL Server 2014 版本。我们不想通过覆盖安装来破坏它，因此我们选择“命名实例”选项，并将其命名为
+  `SQL2016RSVCS`，以代表 SQL Server 2016 R Services。
+
+
+  请注意，此值与第 1 章中给出的实例名称不同。这是为了区分两个实例。
+
+
+  为“命名实例”字段输入该值。你会看到如图 A-9 所示的内容。
+
+
+  ![A421548_1_En_10_Fig9_HTML.jpg](img/A421548_1_En_10_Fig9_HTML.jpg)
+
+
+  图 A-9.
+
+
+  更新后的实例配置屏幕
+
+
+  请注意此屏幕上列出的“命名实例”字段、“实例 ID”字段、SQL Server 目录位置和 Reporting Services 目录位置。这些位置都需要引用
+  `SQL2016RSVCS`。一旦你确信一切设置正确，请单击“下一步”继续。
+
+
+  #### 服务器配置
+
+
+  下一个屏幕是我们定义服务的服务账户和启动类型的地方。该屏幕如图 A-10 所示。
+
+
+  ![A421548_1_En_10_Fig10_HTML.jpg](img/A421548_1_En_10_Fig10_HTML.jpg)
+
+
+  图 A-10.
+
+
+  服务器配置
+
+
+  以下是 SQL Server 2016 创建的服务账户：
+
+
+  *   `NT Service\SQLAgent$SQL2016RSVCS`：启动和管理 SQL Server Agent 服务。
+
+  *   `NT Service\MSSQL$SQL2016RSVCS`：启动和管理 SQL Server 服务。
+
+  *   `NT Service\ReportServer$SQL2016RSVCS`：启动和管理 Reporting Services 服务。
+
+  *   `NT Service\MSSQLLaunchpad$SQL2016RSVCS`：启动和管理 R Services 服务。
+
+
+  SQL Browser 服务在“本地服务”上下文中运行，因此这不是新创建的服务账户。换句话说，我们不用担心那个。
+
+
+  这些是默认服务，但如果你有自己的服务账户，总是可以更改为你自己的。如果你没有自己的服务账户，可以保留这些建议的服务账户。我认识许多服务器管理员，他们坚持对服务采用最小权限原则，如果这是你特定环境的情况，那么你需要从服务器管理员那里获取服务名称和登录信息才能继续。另一种方法是复制这些服务名称，并在给你的系统管理员的安装摘要中包含这些账户信息，以便系统管理员可以根据需要审计此用户的权限。这里需要重点注意的是，我在这里提到的“系统管理员”是一个独立的个人或实体，不是数据库管理员，而是
+  Windows 级别的管理员。换句话说，是负责操作系统层、应用层之上一层的人。
+
+
+  我们只想在这里更改一小部分；具体来说，将 `SQL Server Agent` 服务的“启动类型”设置为“自动”。这是我们需要做的唯一更改。图 A-11 显示了你此时应该看到的内容。
+
+
+  ![A421548_1_En_10_Fig11_HTML.jpg](img/A421548_1_En_10_Fig11_HTML.jpg)
+
+
+  图 A-11.
+
+
+  更新后的服务器配置
+
+
+  请注意，我们无法为这些账户中的任何一个设置密码。这与我见过的每个 SQL Server 安装都是一样的。如果你将“账户名”框从默认值更改为自定义的服务账户名称，那么“密码”框将被激活并接受输入；否则，密码由
+  SQL Server 控制。
+
+
+  还要注意，在默认列出的服务下方，有一个新的“向 SQL Server 数据库引擎服务授予‘执行卷维护任务’特权”复选框。对于我们在本书中所做的操作，勾选此框不是必需的。在未来的安装或生产环境中，启用此功能可能是个好主意。
+
+
+  此时，我们所有的服务都设置为“自动”。请注意，我们不会去管“排序规则”选项卡。默认情况下，此选项卡应指定为 `SQL_Latin1_General_CP1_CI_AS`。就是这样。继续单击“下一步”继续。
+
+
+  ### 数据库引擎配置
+
+
+  下一个是图 A-12 所示的“数据库引擎配置”屏幕。它允许你在四个不同的选项卡中为引擎设置选项。
+
+
+  ![A421548_1_En_10_Fig12_HTML.jpg](img/A421548_1_En_10_Fig12_HTML.jpg)
+
+
+  图 A-12.
+
+
+  初始数据库引擎配置屏幕
+
+
+  #### 服务器配置
+
+
+  此选项卡允许你指定此数据库引擎实例的身份验证模式和管理员。由于这只是用于测试和评估，我将通过选择“Windows 身份验证模式”并单击屏幕底部的“添加当前用户”按钮，将我自己添加为管理员。图
+  A-13 显示了选定这些选项后的界面。
+
+
+  ![A421548_1_En_10_Fig13_HTML.jpg](img/A421548_1_En_10_Fig13_HTML.jpg)
+
+
+  图 A-13.
+
+
+  选定选项后的服务器配置选项卡
+
+
+
+
+  ### 数据目录
+
+
+  回顾我设置文件系统的方式。这里就派上用场了。图 A-14 展示了此屏幕的初始外观，图 A-15 则展示了我选择的配置选项。你可以按喜好设置这些，但我个人的偏好是不将所需文件放在默认的、如迷宫般的文件夹结构中。
+
+
+  ![A421548_1_En_10_Fig15_HTML.jpg](img/A421548_1_En_10_Fig15_HTML.jpg)
+
+
+  图 A-15.
+
+  更新后的数据目录选项卡
+
+
+  ![A421548_1_En_10_Fig14_HTML.jpg](img/A421548_1_En_10_Fig14_HTML.jpg)
+
+
+  图 A-14.
+
+  初始数据目录选项卡
+
+
+  ### TempDB
+
+
+  通常，我会保持此选项不变。但在这里，我将选项设置为镜像我已启用的文件系统。图 A-16 显示了默认设置，图 A-17 显示了更新后的设置。
+
+
+  ![A421548_1_En_10_Fig17_HTML.jpg](img/A421548_1_En_10_Fig17_HTML.jpg)
+
+
+  图 A-17.
+
+  TempDB 更新后的设置
+
+
+  ![A421548_1_En_10_Fig16_HTML.jpg](img/A421548_1_En_10_Fig16_HTML.jpg)
+
+
+  图 A-16.
+
+  TempDB 默认设置
+
+
+  我所做的改动很小。首先，我在 `数据目录` 字段中选中了现有选项，然后点击了 `删除` 按钮。接着，我点击了 `添加` 按钮，并添加了 `E:\SQL Server\Data`。该位置在
+  `日志目录` 字段中被镜像，因此我将其改为 `E:\SQL Server\Logs`。这个选项卡的配置就到此为止。
+
+
+  ### FILESTREAM
+
+
+  保持 FILESTREAM 选项卡不变即可。本书中不会使用 FILESTREAM。
+
+
+  ### Reporting Services 配置
+
+
+  当你将所有这些选项卡都填写完毕后，点击 `下一步`。图 A-18 展示了你现在应该看到的界面。
+
+
+  ![A421548_1_En_10_Fig18_HTML.jpg](img/A421548_1_En_10_Fig18_HTML.jpg)
+
+
+  图 A-18.
+
+  Reporting Services 配置
+
+
+  这里是我们配置 Reporting Services 的地方。我们将在第 7 章及之后进一步配置它，所以我们现在就使用默认选中的 `安装并配置` 选项来安装它。
+
+
+  顺便提一下；如果以后你想添加 Reporting Services，因为你安装数据库引擎时没有安装它，你将只有 `仅安装` 选项可用。这是因为必须使用 `Reporting
+  Services 配置管理器` 才能将 Reporting Services 添加到现有的数据库引擎实例中。理想情况下，你应该遵循 **最小安装原则**，这个概念指出，安装新软件时，只应安装需要的部分，忽略不需要的部分。特别是在这种情况下，这非常合理，也正是我们现在不安装整个
+  SQL Server 2016 的原因。在其他某些情况下，安装功能齐全的豪华版软件是完全合理的，但请记住，并非总是如此。
+
+
+  在 Reporting Services 配置屏幕，确保选中了 `安装并配置` 选项，然后点击 `下一步` 继续。
+
+
+  ### 同意安装 Microsoft R Open
+
+
+  你现在应该看到如图 A-19 所示的界面。
+
+
+  ![A421548_1_En_10_Fig19_HTML.jpg](img/A421548_1_En_10_Fig19_HTML.jpg)
+
+
+  图 A-19.
+
+  同意安装 Microsoft R Open
+
+
+  这非常酷。在 SQL Server 2016 完整版之前，你必须下载 R 的单独组件，然后分别安装。在这个版本中，你只需在此授权下载即可。点击 `接受` 按钮。`下一步`
+  按钮将变为可用。继续点击 `下一步` 以继续。
+
+
+  ### 准备安装
+
+
+  图 A-20 显示了你现在应该看到的“准备安装”屏幕。在继续之前（如果你打算按照本书的练习操作），请仔细阅读并确保你的设置与此匹配。
+
+
+  ![A421548_1_En_10_Fig20_HTML.jpg](img/A421548_1_En_10_Fig20_HTML.jpg)
+
+
+  图 A-20.
+
+  准备安装
+
+
+  一旦你准备好了，祈祷一下，然后点击 `安装`。在加载和安装所需组件时，你的屏幕会闪烁几次。图 A-21 显示了安装开始运行时你应该看到的内容。
+
+
+  ![A421548_1_En_10_Fig21_HTML.jpg](img/A421548_1_En_10_Fig21_HTML.jpg)
+
+
+  图 A-21.
+
+  安装进度
+
+
+  此时，安装正常进行。这需要一点时间，但最终会完成，并显示如图 A-22 所示的界面。
+
+
+  ![A421548_1_En_10_Fig22_HTML.jpg](img/A421548_1_En_10_Fig22_HTML.jpg)
+
+
+  图 A-22.
+
+  完成
+
+
+
+
+  ### 完成
+
+
+  此刻你最希望看到的屏幕就是这个。如果你没有看到此屏幕，反而看到一个错误提示，那么说明出现了问题。如果你遵循了本附录中的说明进行操作，那么很可能是与现有的 SQL
+  Server 2014 安装发生了冲突。
+
+
+  我的安装大约用了 10 分钟才完成。向下滚动查看是否所有组件都已正确安装，然后点击“关闭”。
+
+
+  恭喜！你已经安装了 SQL Server 2016 R Services。不过，根据微软的说法，我们还需要做一些工作。
+
+
+  打开 SQL Server Management Studio（是的，就是 2014 版那个），并连接到你新安装的实例。图 A-23 展示了如何连接到实例。
+
+
+  ![A421548_1_En_10_Fig23_HTML.jpg](img/A421548_1_En_10_Fig23_HTML.jpg)
+
+
+  图 A-23.
+
+
+  连接到新实例
+
+
+  回想一下，我将新的 SQL Server 2016 实例命名为 `SQL2016RSVCS`，所以我将连接到这个实例。服务器名称字段的格式是 `服务器名\实例名`，所以我按照这个格式填写了连接信息。你也可以下拉菜单并从那里导航到一个实例。无论你更习惯哪种方式都可以，只要能连上就行。点击“连接”登录到你的实例。
+
+
+  初始屏幕类似于图 A-24。
+
+
+  ![A421548_1_En_10_Fig24_HTML.jpg](img/A421548_1_En_10_Fig24_HTML.jpg)
+
+
+  图 A-24.
+
+
+  SQL Server Management Studio 已连接到 SQL Server 2016 实例
+
+
+  注意查看命名实例和显示的 SQL Server 版本。这意味着我们已成功连接到新实例，可以开始下一步了。
+
+
+  微软发布了一个安装后配置步骤，我们需要先运行这个步骤。我完全预期这个步骤在未来会被移除并整合到安装程序中，但就目前而言，请按照以下步骤完成安装。
+
+
+  在 SQL Server Management Studio 中打开一个“新建查询”窗口，并键入以下命令：
+
+
+  ```
+
+  Exec sp_configure ''external scripts enabled'', 1
+
+  Reconfigure with override
+
+  ```
+
+
+  图 A-25 展示了此操作。
+
+
+  ![A421548_1_En_10_Fig25_HTML.jpg](img/A421548_1_En_10_Fig25_HTML.jpg)
+
+
+  图 A-25.
+
+
+  准备执行的命令
+
+
+  注意，我们是在针对 `master` 数据库执行此命令。
+
+
+  运行它。你应该会看到图 A-26，它告诉我们执行成功了。
+
+
+  ![A421548_1_En_10_Fig26_HTML.jpg](img/A421548_1_En_10_Fig26_HTML.jpg)
+
+
+  图 A-26.
+
+
+  成功
+
+
+  接下来，我们需要验证 R 是否确实在运行。为此，微软要求重启 SQL Server 实例并运行以下脚本。先重启实例。然后打开一个“新建查询”窗口并键入以下内容：
+
+
+  ```
+
+  exec sp_execute_external_script
+
+  @language =N''R'',
+
+  @script=N''OutputDataSet<-InputDataSet'',
+
+  @input_data_1 =N''select 1 as hello''
+
+  with result sets (([hello] int not null));
+
+  go
+
+  ```
+
+
+  对于那些还没背下每一个系统存储过程的人来说，你可能不认识 `sp_execute_external_script`，这是一个用于执行外部脚本的全新存储过程。可以使用以下参数调用此存储过程：
+
+
+  *   `@language`：支持的编程语言名称。
+
+  *   `@script`：要执行的脚本（你可以将全部内容输入到存储过程中，或将其作为变量引用）。
+
+  *   `@input_data_1`：用于从数据库收集数据的 SQL 查询放在这里。
+
+  *   `@input_data_1_name`：作为 `@input_data_1` 查询结果集的 data frame。此属性是可选的。
+
+  *   `@output_data_1_name`：`@script` 中保存输出数据的 data frame 变量。此属性是可选的。
+
+
+  按 F5 执行脚本。预期结果如图 A-27 所示。
+
+
+  ![A421548_1_En_10_Fig27_HTML.jpg](img/A421548_1_En_10_Fig27_HTML.jpg)
+
+
+  图 A-27.
+
+
+  R 存活了！
+
+
+  太好了！R 运行正常，并且与 SQL Server 实例通信顺畅。
+
+
+  ### 总结
+
+
+  让我们简要回顾一下本附录涵盖的内容。
+
+
+  1.  在现有的 SQL Server 2014 默认实例之上安装了一个 SQL Server 2016 命名实例。
+
+  2.  安装后配置了 R。
+
+  3.  通过运行前面指定的脚本验证了 R 已正确安装。
+
+
+  因此，本质上，这就是如何在 SQL Server 2014 之上安装 SQL Server 2016。
+
+
+  请记住，正如我之前提到的，实例的配置方式可能仍然存在一些冲突。直接将你的实例升级到 2016 版本可能更好，但你永远、永远不应该仅仅因为某个应用程序发布了最新、最强大的版本就去升级一个关键任务服务器。你总是需要检查并做好功课，以确保操作系统是受支持的，并且升级的版本之间没有巨大差异。这就是为什么本书的主要重点是在新服务器上安装，而不是在已有
+  SQL Server 安装的服务器上安装。
+
+
+  如果你对这个安装感到满意并准备继续，那么现在就可以开始第 2 章。你仍然应该能够完成本书中的练习和示例，但你需要遵循这些说明来正确安装和配置 R Tools for
+  Visual Studio 和 Reporting Services。
+
+
+  '
+- "# 软件需求文档\n\n### 项目\n\nSQL Server R Services 入门\n\n### 作者\n\nBradley Beard，首席开发工程师，We\
+  \ R Pros, LLC\n\n### 接受方\n\nR. Customer，首席信息官，PleaseGiveUs-R-AnalysisData.com\n\n\
+  ### 问题\n\nPleaseGiveUs-R-AnalysisData.com（“客户”）向 We R Pros, LLC（“供应商”）提出了一个独特的请求。\n\
+  \n客户拥有有限数量的天气相关数据，但客户没有分析这些数据的方法。客户希望供应商能够建议哪些产品和服务可以从这些数据集的分析中提炼出来。\n\n本质上，客户并不确切知道自己想要什么，但知道自己想要点什么，并且依赖供应商的专业知识和经验为客户提供一个或一套解决方案。这些数据相当宝贵，其中无疑隐藏着不少“璞玉”。\n\
+  \n### 解决方案\n\n在初步检查客户的数据后，收集到以下信息：\n\n*   数据文件是 1 个 Microsoft Excel 文件。\n*   文件大小约为\
+  \ 5.5MB。\n*   文件长度正好是 113,333 行（减去一行标题行）。\n*   文件包含以下标题行：\n    *   `Year`\n    *\
+  \   `AdjustedMonth`\n    *   `AdjustedDay`\n    *   `AirportID`\n    *   `AdjustedHour`\n\
+  \    *   `Timezone`\n    *   `Visibility`\n    *   `DryBulbFarenheit`\n    *   `DryBulbCelsius`\n\
+  \    *   `DewPointFarenheit`\n    *   `DewPointCelsius`\n    *   `RelativeHumidity`\n\
+  \    *   `WindSpeed`\n    *   `Altimeter`\n\n根据这些列，确定将创建以下报告：\n\n*   每个 `AirportID`\
+  \ 的平均风速\n*   每个 `AirportID` 的平均温度（°F）\n\n需要注意的是，可以生成更多报告，但客户特别要求创建这些报告。\n\n### 语言/平台\n\
+  \n本解决方案将使用 SQL Server 2016 收集和存储数据，使用 R 分析数据，并使用 SQL Server Reporting Services 提供基于数据的报告。\n\
+  \n### 交付媒介\n\n报告的交付媒介将按客户要求确定；报告可以图像格式、Excel 格式或 PDF 格式交付。具体格式可以在日后确定，因为通过 SQL Server\
+  \ Reporting Services 的交付方式允许以多种格式导出报告。\n\n\n"
+- '# R 绘图与表格代码（适用于 Visual Studio 的 R 工具）
+
+
+  首先，关于本附录的几点说明：
+
+
+  *   本附录提供了第 5 章中示例的完整代码，但你仍然需要从 `Weather_Sample.csv` 文件将数据导入 RTVS，才能实际运行。
+
+  *   你可能不需要运行 `install.packages()` 引用，但它们已列出以备不时之需。如果已经安装过相应的包，则无需再次安装。
+
+
+  ### 按机场 ID 的平均温度（绘图）
+
+
+  此代码以图形格式给出按机场 ID 的平均温度。请注意，`mean()` 函数包含了 `DryBulbFarenheit` 属性，表明关键字段是温度而非风速。另外，`ggplot2`
+  的引用表明这是绘图代码，而非表格代码。
+
+
+  ```r
+
+  install.packages("data.table")
+
+  library(data.table)
+
+  Weather_Sample <- data.table(Weather_Sample)
+
+  chart_by_ID <- as.data.frame(Weather_Sample[, mean(DryBulbFarenheit, na.rm = TRUE),
+  by = AirportID])
+
+  install.packages("ggplot2")
+
+  library(ggplot2)
+
+  ggplot(chart_by_ID, aes(x = AirportID, y = V1)) + geom_point(stat = "identity")
+  + geom_smooth(method = "lm", formula = y ∼ splines::bs(x, 3)) + scale_x_continuous(name
+  = "Airport ID") + scale_y_continuous(name = "Average Temperature") +
+
+  geom_text(aes(label = AirportID), size = 3, vjust = 1.0) +
+
+  geom_text(aes(label = round(V1, digits = 2)), size = 3, vjust = 2.0)
+
+  ```
+
+
+  ### 按机场 ID 的平均温度（表格）
+
+
+  此代码以表格格式给出按机场 ID 的平均温度。请注意，`mean()` 函数包含了 `DryBulbFarenheit` 属性，表明关键字段是温度而非风速。另外，没有
+  `ggplot2` 的引用表明这是表格代码，而非绘图代码。
+
+
+  ```r
+
+  install.packages("data.table")
+
+  library(data.table)
+
+  Weather_Sample <- data.table(Weather_Sample)
+
+  setkey(Weather_Sample, AirportID)
+
+  avg_temperature_by_ID <- as.data.frame(Weather_Sample[, mean(DryBulbFarenheit, na.rm
+  = TRUE), by = AirportID])
+
+  avg_temperature_by_ID
+
+  ```
+
+
+  ### 按机场 ID 的平均风速（绘图）
+
+
+  此代码以图形格式给出按机场 ID 的平均风速。请注意，`mean()` 函数包含了 `WindSpeed` 属性，表明关键字段是风速而非温度。另外，`ggplot2`
+  的引用表明这是绘图代码，而非表格代码。
+
+
+  ```r
+
+  install.packages("data.table")
+
+  library(data.table)
+
+  Weather_Sample <- data.table(Weather_Sample)
+
+  chart_by_ID <- as.data.frame(Weather_Sample[, mean(WindSpeed, na.rm = TRUE), by
+  = AirportID])
+
+  install.packages("ggplot2")
+
+  library(ggplot2)
+
+  ggplot(chart_by_ID, aes(x = AirportID, y = V1)) + geom_point(stat = "identity")
+  + geom_smooth(method = "lm", formula = y ∼ splines::bs(x, 3)) + scale_x_continuous(name
+  = "Airport ID") + scale_y_continuous(name = "Average Wind Speed") +
+
+  geom_text(aes(label = AirportID), size = 3, vjust = 1.0) +
+
+  geom_text(aes(label = round(V1, digits = 2)), size = 3, vjust = 2.0)
+
+  ```
+
+
+  ### 按机场 ID 的平均风速（表格）
+
+
+  此代码以表格格式给出按机场 ID 的平均风速。请注意，`mean()` 函数包含了 `WindSpeed` 属性，表明关键字段是风速而非温度。另外，没有 `ggplot2`
+  的引用表明这是表格代码，而非绘图代码。
+
+
+  ```r
+
+  install.packages("data.table")
+
+  library(data.table)
+
+  Weather_Sample <- data.table(Weather_Sample)
+
+  setkey(Weather_Sample, AirportID)
+
+  # OBJECT NAME          DATA FRAME    DATASET NAME          DATA COLUMN REMOVE N/A    GROUP
+  BY COLUMN
+
+  avg_windspeed_by_ID <- as.data.frame(Weather_Sample[, mean(WindSpeed, na.rm = TRUE),
+  by = AirportID])
+
+  avg_windspeed_by_ID
+
+  ```
+
+
+  ## 索引
+
+
+  **A, B, C**
+
+  *   验收测试
+
+
+  **D**
+
+  *   数据库
+
+  *   数据库引擎配置
+
+  *   数据目录
+
+  *   FILESTREAM
+
+  *   TempDB
+
+  *   数据配置（报表生成器）
+
+  *   连接属性
+
+  *   数据集属性
+
+  *   数据源属性
+
+  *   已更新的数据源
+
+  *   标题值
+
+  *   数据目录
+
+  *   下载 Microsoft R Open
+
+  *   目标位置
+
+  *   安装
+
+  *   安装数学内核库 (Intel© MKL)
+
+  *   MKL 许可信息
+
+
+  **E, F, G, H**
+
+  *   电子邮件设置
+
+  *   加密密钥
+
+  *   执行账户
+
+
+  **I, J, K**
+
+  *   初始界面设计
+
+  *   安装（请参阅 设置和安装）
+
+
+  **L**
+
+  *   线性回归
+
+  *   数据集
+
+  *   模型
+
+  *   predicted_values 的 ggplot 图
+
+  *   模型系数
+
+  *   语法
+
+
+  **M, N, O**
+
+  *   Microsoft R Open 安装
+
+  *   模型对象
+
+  *   系数
+
+  *   `head(predicted_values)`
+
+  *   predicted_values 数据集
+
+  *   `$residuals`
+
+
+  **P, Q**
+
+  *   包管理器
+
+  *   可用包
+
+  *   已安装包
+
+  *   已加载包
+
+  *   RUnit
+
+  *   绘图
+
+  *   diamonds 数据集
+
+  *   ggplot2
+
+  *   对数尺度
+
+  *   按机场 ID 的温度
+
+  *   按机场 ID 的风速
+
+  *   数据集，导入
+
+  *   数据集准备
+
+  *   已绘制的信息
+
+  *   脚本窗格
+
+  *   Power BI 集成
+
+  *   项目定义阶段
+
+  *   ggplot2
+
+  *   初始界面设计
+
+  *   包管理器
+
+  *   README 文件
+
+  *   需求收集
+
+  *   软件变更请求流程
+
+  *   解决方案资源管理器
+
+  *   螺旋式开发
+
+
+  **R**
+
+  *   回归诊断
+
+  *   报表生成器
+
+  *   数据配置（请参阅 数据配置，报表生成器）
+
+  *   动态图像属性
+
+  *   尺寸选项
+
+  *   已更新的值
+
+  *   按机场 ID 的温度
+
+  *   按机场 ID 的风速
+
+  *   空白报表
+
+  *   边框属性
+
+  *   属性
+
+  *   报表生成器安装
+
+  *   二进制数据
+
+  *   数据库和表
+
+  *   天气数据
+
+  *   字符分隔符部分
+
+  *   数据源
+
+  *   目标位置
+
+  *   消失的警告
+
+  *   平面文件源
+
+  *   导入/导出数据
+
+  *   已填充的值
+
+  *   查询执行
+
+  *   保存并运行
+
+  *   源和目标信息
+
+  *   已更新的目标
+
+  *   Reporting Services 配置
+
+  *   报表服务器
+
+  *   管理缓存界面
+
+  *   数据源
+
+  *   依赖项
+
+  *   属性
+
+  *   安全性
+
+  *   快照
+
+  *   订阅
+
+  *   保存视图
+
+  *   R 模型执行
+
+  *   foreign 库
+
+  *   ggplot2 包
+
+  *   readme 文件
+
+  *   R 交互窗口
+
+  *   适用于 Visual Studio 的 R 工具 (RTVS)
+
+  *   将 R 更改为 Microsoft R 客户端
+
+  *   数据
+
+  *   数据科学设置
+
+  *   文档和示例
+
+  *   下载 Community 2015
+
+  *   下载 Microsoft R Open
+
+  *   编辑器选项
+
+  *   反馈
+
+  *   免费 Visual Studio
+
+  *   安装 Microsoft R Client
+
+  *   Microsoft R 产品
+
+  *   图
+
+  *   R 文档
+
+  *   readme 文件
+
+  *   diamonds 数据集
+
+  *   执行
+
+  *   foreign 库
+
+  *   ggplot2 包
+
+  *   对数尺度
+
+  *   模型数据集
+
+  *   predicted_values 数据集
+
+  *   R 交互会话
+
+  *   调查/新闻
+
+  *   表格代码
+
+  *   Visual Studio Community
+
+  *   Windows
+
+  *   工作目录
+
+
+  **S**
+
+  *   横向部署
+
+  *   服务账户
+
+  *   服务验证
+
+  *   设置和安装
+
+  *   配置
+
+  *   数据库引擎实例
+
+  *   Reporting Services 服务器
+
+  *   数据目录
+
+  *   功能选择
+
+  *   文件夹结构
+
+  *   安装窗口
+
+  *   安装规则
+
+  *   许可条款
+
+  *   Microsoft R Open
+
+  *   选项
+
+  *   产品密钥
+
+  *   准备安装界面
+
+  *   RTVS（请参阅 适用于 Visual Studio 的 R 工具 (RTVS)）
+
+  *   SQL Server 2016（请参阅 SQL Server 2016）
+
+  *   TempDB
+
+  *   软件变更请求流程
+
+  *   验收测试
+
+  *   管理员批准
+
+  *   归档
+
+  *   代码设计文档
+
+  *   安装
+
+  *   回归测试
+
+  *   请求提交
+
+  *   单元测试
+
+  *   软件需求文档
+
+  *   螺旋式开发流程
+
+  *   SQLRUserGroupSQL 2016RS
+
+  *   SQL Server
+
+  *   SQL Server 安装完成
+
+  *   同意安装
+
+  *   Microsoft R Open
+
+  *   数据库引擎配置
+
+  *   数据目录
+
+  *   FILESTREAM
+
+  *   TempDB
+
+  *   功能选择
+
+  *   安装规则
+
+  *   实例配置
+
+  *   许可条款
+
+  *   产品密钥
+
+  *   准备安装
+
+  *   Reporting Services 配置
+
+  *   服务器配置
+
+  *   SQL Server Data Tools (SSDT)
+
+  *   SQL Server 管理工具
+
+  *   连接到服务器
+
+  *   安装中心
+
+  *   安装界面
+
+  *   行号设置
+
+  *   本地用户和组
+
+  *   R 安装和通信
+
+  *   SQLRUserGroupSQL2016RS 详细信息
+
+  *   SSMS 下载
+
+  *   SSMS 安装
+
+  *   SSDT（请参阅 SQL Server Data Tools (SSDT)）
+
+  *   订阅设置
+
+
+  **T**
+
+  *   TempDB
+
+
+  **U, V**
+
+  *   单元测试
+
+
+  **W, X, Y, Z**
+
+  *   Web 门户 URL
+
+  *   Web 服务 URL'
