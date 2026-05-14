@@ -1,0 +1,6 @@
++   [重构遗留 T-SQL 以提高性能](README.md)
++   [引言](refactoring-legacy-t-sql-for-improved-performance_1.md)
++   [第一部分 万物皆慢](refactoring-legacy-t-sql-for-improved-performance_2.md)
++   [2. 文档](refactoring-legacy-t-sql-for-improved-performance_3.md)
++   [第二部分：数据库结构](refactoring-legacy-t-sql-for-improved-performance_4.md)
++   [第三部分 CRUD 对象](refactoring-legacy-t-sql-for-improved-performance_5.md)
