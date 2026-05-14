@@ -1,0 +1,634 @@
+name: Pro SQL Server 2019 Wait Statistics
+name_cn: SQL Server 2019 等待统计高级指南
+slug: pro-sql-server-2019-wait-statistics
+toc:
+- - '#'
+  - 修复后的目录
+- - '#'
+  - 引言
+- - '#'
+  - 书籍布局
+- - '#'
+  - 第一部分：等待统计分析基础
+- - '#'
+  - 第二部分：等待类型
+- - '#'
+  - 警告
+- - '#'
+  - 致谢
+- - '##'
+  - 关于作者和关于技术审校者
+- - '###'
+  - 关于作者
+- - '###'
+  - 关于技术审校者
+- - '#'
+  - 第一部分：等待统计分析基础
+- - '#'
+  - 1. 等待统计详解
+- - '##'
+  - 等待统计简史
+- - '##'
+  - SQLOS
+- - '##'
+  - 调度器、任务和工作线程
+- - '###'
+  - 会话
+- - '###'
+  - 请求
+- - '###'
+  - 任务
+- - '###'
+  - 工作线程
+- - '###'
+  - 调度器
+- - '###'
+  - 综合概述
+- - '##'
+  - 等待统计
+- - '##'
+  - 总结
+- - '#'
+  - 2. 查询 SQL Server 等待统计信息
+- - '##'
+  - Sys.dm_os_wait_stats
+- - '##'
+  - Sys.dm_os_waiting_tasks
+- - '###'
+  - 理解 sys.dm_os_waiting_tasks
+- - '###'
+  - 查询 sys.dm_os_waiting_tasks
+- - '##'
+  - Sys.dm_exec_requests
+- - '###'
+  - 理解 sys.dm_exec_requests
+- - '###'
+  - 查询 sys.dm_exec_requests
+- - '##'
+  - sys.dm_exec_session_wait_stats
+- - '##'
+  - 结合 DMV 检测当前等待
+- - '#'
+  - 3. 使用 DMV 和 Perfmon 分析等待统计信息
+- - '##'
+  - 查询会话信息并解决阻塞程序
+- - '##'
+  - 使用 Perfmon 查看等待统计信息
+- - '##'
+  - 使用扩展事件捕获等待统计信息
+- - '###'
+  - 捕获特定查询的等待统计信息
+- - '###'
+  - 启动扩展事件会话
+- - '###'
+  - 基于执行计划按查询分析等待统计信息
+- - '##'
+  - 本章小结
+- - '#'
+  - 4. 查询存储
+- - '##'
+  - 什么是查询存储？
+- - '##'
+  - 查询存储架构
+- - '##'
+  - 等待统计信息在查询存储中如何处理
+- - '##'
+  - 等待类别与等待类型对照表
+- - '##'
+  - 通过查询存储报告访问等待统计
+- - '##'
+  - 通过查询存储 DMV 访问等待统计
+- - '##'
+  - 本章小结
+- - '#'
+  - 5. 构建稳固的基线
+- - '##'
+  - 何为基线？
+- - '###'
+  - 可视化你的基线
+- - '###'
+  - 基线类型与统计
+- - '##'
+  - 基线陷阱
+- - '###'
+  - 信息过载
+- - '###'
+  - 了解你的指标
+- - '###'
+  - 关注大幅测量变化
+- - '###'
+  - 使用固定间隔
+- - '##'
+  - 为等待统计分析建立基线
+- - '###'
+  - 重置捕获法
+- - '###'
+  - 增量捕获方法
+- - '###'
+  - 使用 SQL Server Agent 安排测量
+- - '##'
+  - 等待统计基线分析
+- - '##'
+  - 总结
+- - '#'
+  - 第二部分：等待类型
+- - '#'
+  - 6. 与 CPU 相关的等待类型
+- - '##'
+  - CXPACKET
+- - '###'
+  - 什么是 CXPACKET 等待类型？
+- - '###'
+  - 配置并行度设置
+- - '###'
+  - 数据库作用域配置
+- - '###'
+  - 通过调整并行度配置降低 CXPACKET 等待时间
+- - '###'
+  - 通过解决倾斜的工作负载来降低 CXPACKET 等待时间
+- - '###'
+  - SQL Server 2016 SP2 和 2017 CU3 中 CXCONSUMER 等待类型简介
+- - '###'
+  - CXPACKET 概述
+- - '##'
+  - SOS_SCHEDULER_YIELD
+- - '###'
+  - SOS_SCHEDULER_YIELD 等待类型是什么？
+- - '###'
+  - 降低 SOS_SCHEDULER_YIELD 等待
+- - '###'
+  - SOS_SCHEDULER_YIELD 总结
+- - '##'
+  - THREADPOOL
+- - '###'
+  - 什么是 THREADPOOL 等待类型？
+- - '###'
+  - THREADPOOL 示例
+- - '###'
+  - 线程池等待：诊断与解决
+- - '###'
+  - 在发生线程池等待时访问我们的 SQL Server
+- - '###'
+  - 降低由并行度引起的线程池等待
+- - '###'
+  - 降低由用户连接引起的 THREADPOOL 等待
+- - '###'
+  - THREADPOOL 总结
+- - '#'
+  - 7. 与 IO 相关的等待类型
+- - '##'
+  - ASYNC_IO_COMPLETION
+- - '###'
+  - 什么是 ASYNC_IO_COMPLETION 等待类型？
+- - '###'
+  - ASYNC_IO_COMPLETION 示例
+- - '###'
+  - 降低 ASYNC_IO_COMPLETION 等待
+- - '###'
+  - ASYNC_IO_COMPLETION 总结
+- - '##'
+  - ASYNC_NETWORK_IO
+- - '###'
+  - 什么是 ASYNC_NETWORK_IO 等待类型？
+- - '###'
+  - ASYNC_NETWORK_IO 示例
+- - '###'
+  - 降低 ASYNC_NETWORK_IO 等待
+- - '###'
+  - ASYNC_NETWORK_IO 总结
+- - '##'
+  - CMEMTHREAD
+- - '###'
+  - 什么是 CMEMTHREAD 等待类型？
+- - '###'
+  - 降低 CMEMTHREAD 等待
+- - '###'
+  - CMEMTHREAD 总结
+- - '##'
+  - IO_COMPLETION
+- - '###'
+  - IO_COMPLETION 等待类型是什么？
+- - '###'
+  - IO_COMPLETION 示例
+- - '###'
+  - 降低 IO_COMPLETION 等待
+- - '###'
+  - IO_COMPLETION 总结
+- - '##'
+  - LOGBUFFER 和 WRITELOG
+- - '###'
+  - 什么是 LOGBUFFER 和 WRITELOG 等待类型？
+- - '###'
+  - LOGBUFFER 和 WRITELOG 示例
+- - '###'
+  - 降低 LOGBUFFER 和 WRITELOG 等待
+- - '###'
+  - LOGBUFFER 和 WRITELOG 总结
+- - '##'
+  - RESOURCE_SEMAPHORE
+- - '###'
+  - RESOURCE_SEMAPHORE 等待类型是什么？
+- - '###'
+  - 资源信号量示例
+- - '###'
+  - 降低 RESOURCE_SEMAPHORE 等待
+- - '###'
+  - RESOURCE_SEMAPHORE 总结
+- - '##'
+  - RESOURCE_SEMAPHORE_QUERY_COMPILE
+- - '###'
+  - 什么是 RESOURCE_SEMAPHORE_QUERY_COMPILE 等待类型？
+- - '###'
+  - RESOURCE_SEMAPHORE_QUERY_COMPILE 示例
+- - '###'
+  - 降低 RESOURCE_SEMAPHORE_QUERY_COMPILE 等待时间
+- - '###'
+  - RESOURCE_SEMAPHORE_QUERY_COMPILE 总结
+- - '##'
+  - SLEEP_BPOOL_FLUSH
+- - '###'
+  - 什么是 SLEEP_BPOOL_FLUSH 等待类型？
+- - '###'
+  - SLEEP_BPOOL_FLUSH 示例
+- - '###'
+  - 降低 SLEEP_BPOOL_FLUSH 等待
+- - '###'
+  - SLEEP_BPOOL_FLUSH 总结
+- - '##'
+  - WRITE_COMPLETION
+- - '###'
+  - 什么是 WRITE_COMPLETION 等待类型？
+- - '###'
+  - WRITE_COMPLETION 等待示例
+- - '###'
+  - 降低 WRITE_COMPLETION 等待
+- - '###'
+  - WRITE_COMPLETION 总结
+- - '#'
+  - 8. 与备份相关的等待类型
+- - '##'
+  - BACKUPBUFFER
+- - '###'
+  - 什么是 BACKUPBUFFER 等待类型？
+- - '###'
+  - BACKUPBUFFER 示例
+- - '###'
+  - 降低 BACKUPBUFFER 等待
+- - '###'
+  - BACKUPBUFFER 等待类型概述
+- - '##'
+  - BACKUPIO
+- - '###'
+  - 什么是 BACKUPIO 等待类型？
+- - '###'
+  - BACKUPIO 示例
+- - '###'
+  - 减少 BACKUPIO 等待
+- - '###'
+  - BACKUPIO 概述
+- - '##'
+  - BACKUPTHREAD
+- - '###'
+  - 什么是 BACKUPTHREAD 等待类型？
+- - '###'
+  - BACKUPTHREAD 示例
+- - '###'
+  - 降低 BACKUPTHREAD 等待
+- - '###'
+  - BACKUPTHREAD 总结
+- - '#'
+  - 9. 与锁相关的等待类型
+- - '##'
+  - 锁与阻塞简介
+- - '###'
+  - 锁模式与兼容性
+- - '###'
+  - 锁层次结构
+- - '###'
+  - 隔离级别
+- - '####'
+  - Read Uncommitted（未提交读）
+- - '####'
+  - Read Committed（已提交读）
+- - '####'
+  - Repeatable Read（可重复读）
+- - '####'
+  - Serializable（可序列化）
+- - '###'
+  - 查询锁信息
+- - '##'
+  - LCK_M_S
+- - '###'
+  - 什么是 LCK_M_S 等待类型？
+- - '###'
+  - LCK_M_S 示例
+- - '###'
+  - 减少 LCK_M_S 等待
+- - '###'
+  - LCK_M_S 总结
+- - '##'
+  - LCK_M_U
+- - '###'
+  - 什么是 LCK_M_U 等待类型？
+- - '###'
+  - LCK_M_U 示例
+- - '###'
+  - 降低 LCK_M_U 等待
+- - '###'
+  - LCK_M_U 总结
+- - '##'
+  - LCK_M_X
+- - '###'
+  - 什么是 LCK_M_X 等待类型？
+- - '###'
+  - LCK_M_X 示例
+- - '###'
+  - 降低 LCK_M_X 等待
+- - '###'
+  - LCK_M_X 总结
+- - '##'
+  - LCK_M_I[xx]
+- - '###'
+  - LCK_M_I[xx] 等待类型是什么？
+- - '###'
+  - LCK_M_I[xx] 示例
+- - '###'
+  - 降低 LCK_M_I[xx] 等待
+- - '###'
+  - LCK_M_I[xx] 总结
+- - '##'
+  - LCK_M_SCH_S 和 LCK_M_SCH_M
+- - '###'
+  - 什么是 LCK_M_SCH_S 和 LCK_M_SCH_M 等待类型？
+- - '###'
+  - LCK_M_SCH_S 与 LCK_M_SCH_M 示例
+- - '###'
+  - 降低 LCK_M_SCH_S 和 LCK_M_SCH_M 等待
+- - '###'
+  - LCK_M_SCH_S 与 LCK_M_SCH_M 总结
+- - '#'
+  - 10. 闩锁相关等待类型
+- - '##'
+  - 锁存器（Latch）简介
+- - '###'
+  - 锁存器模式
+- - '###'
+  - 锁存器等待
+- - '##'
+  - sys.dm_os_latch_stats
+- - '##'
+  - Page-Latch Contention
+- - '##'
+  - PAGELATCH_[xx]
+- - '###'
+  - 什么是 PAGELATCH_[xx] 等待类型？
+- - '###'
+  - PAGELATCH_[xx] 示例
+- - '####'
+  - 理解最后一页插入争用
+- - '####'
+  - 演示争用
+- - '####'
+  - 验证热点页
+- - '###'
+  - 降低 PAGELATCH_[xx] 等待
+- - '###'
+  - PAGELATCH_[xx] 总结
+- - '##'
+  - LATCH_[xx]
+- - '###'
+  - 什么是 LATCH_[xx] 等待类型？
+- - '###'
+  - LATCH_[xx] 示例
+- - '###'
+  - B 树结构与闩锁等待
+- - '###'
+  - 降低 LATCH_[xx]等待
+- - '###'
+  - LATCH_[xx] 概述
+- - '##'
+  - PAGEIOLATCH_[xx]
+- - '###'
+  - PAGEIOLATCH_[xx] 等待类型是什么？
+- - '###'
+  - PAGEIOLATCH_[xx] 示例
+- - '###'
+  - 降低 PAGEIOLATCH_[xx] 等待
+- - '###'
+  - PAGEIOLATCH_[xx] 总结
+- - '#'
+  - 11. 高可用性与灾难恢复等待类型
+- - '##'
+  - DBMIRROR_SEND
+- - '###'
+  - 什么是 DBMIRROR_SEND 等待类型？
+- - '###'
+  - DBMIRROR_SEND 示例
+- - '###'
+  - 降低 DBMIRROR_SEND 等待
+- - '###'
+  - DBMIRROR_SEND 总结
+- - '##'
+  - HADR_LOGCAPTURE_WAIT 和 HADR_WORK_QUEUE
+- - '###'
+  - 什么是 HADR_LOGCAPTURE_WAIT 和 HADR_WORK_QUEUE 等待类型？
+- - '###'
+  - HADR_LOGCAPTURE_WAIT 和 HADR_WORK_QUEUE 总结
+- - '##'
+  - HADR_SYNC_COMMIT
+- - '###'
+  - 什么是 HADR_SYNC_COMMIT 等待类型？
+- - '###'
+  - HADR_SYNC_COMMIT 示例
+- - '###'
+  - 降低 HADR_SYNC_COMMIT 等待
+- - '###'
+  - HADR_SYNC_COMMIT 总结
+- - '##'
+  - REDO_THREAD_PENDING_WORK
+- - '###'
+  - 什么是 REDO_THREAD_PENDING_WORK 等待类型？
+- - '###'
+  - REDO_THREAD_PENDING_WORK 等待类型概述
+- - '#'
+  - 12. 抢占式等待类型
+- - '##'
+  - SQL Server on Linux
+- - '##'
+  - PREEMPTIVE_OS_ENCRYPTMESSAGE 和 PREEMPTIVE_OS_DECRYPTMESSAGE
+- - '###'
+  - PREEMPTIVE_OS_ENCRYPTMESSAGE 和 PREEMPTIVE_OS_DECRYPTMESSAGE 等待类型是什么？
+- - '###'
+  - PREEMPTIVE_OS_ENCRYPTMESSAGE 和 PREEMPTIVE_OS_DECRYPTMESSAGE 示例
+- - '###'
+  - 配置 SQL Server 使用自签名证书加密连接
+- - '###'
+  - 降低 PREEMPTIVE_OS_ENCRYPTMESSAGE 和 PREEMPTIVE_OS_DECRYPTMESSAGE 等待
+- - '###'
+  - PREEMPTIVE_OS_ENCRYPTMESSAGE 和 PREEMPTIVE_OS_DECRYPTMESSAGE 总结
+- - '##'
+  - PREEMPTIVE_OS_WRITEFILEGATHER
+- - '###'
+  - 什么是 PREEMPTIVE_OS_WRITEFILEGATHER 等待类型？
+- - '###'
+  - PREEMPTIVE_OS_WRITEFILEGATHER 示例
+- - '###'
+  - 降低 PREEMPTIVE_OS_WRITEFILEGATHER 等待
+- - '###'
+  - PREEMPTIVE_OS_WRITEFILEGATHER 总结
+- - '##'
+  - PREEMPTIVE_OS_AUTHENTICATIONOPS
+- - '###'
+  - 什么是 PREEMPTIVE_OS_AUTHENTICATIONOPS 等待类型？
+- - '###'
+  - PREEMPTIVE_OS_AUTHENTICATIONOPS 示例
+- - '###'
+  - 降低 PREEMPTIVE_OS_AUTHENTICATIONOPS 等待
+- - '###'
+  - PREEMPTIVE_OS_AUTHENTICATIONOPS 总结
+- - '##'
+  - PREEMPTIVE_OS_GETPROCADDRESS
+- - '###'
+  - 什么是 PREEMPTIVE_OS_GETPROCADDRESS 等待类型？
+- - '###'
+  - PREEMPTIVE_OS_GETPROCADDRESS 示例
+- - '###'
+  - 降低 PREEMPTIVE_OS_GETPROCADDRESS 等待
+- - '###'
+  - PREEMPTIVE_OS_GETPROCADDRESS 总结
+- - '#'
+  - 13. 背景与其他等待类型
+- - '##'
+  - CHECKPOINT_QUEUE
+- - '###'
+  - CHECKPOINT_QUEUE 等待类型是什么？
+- - '###'
+  - CHECKPOINT_QUEUE 概述
+- - '##'
+  - DIRTY_PAGE_POLL
+- - '###'
+  - 什么是 DIRTY_PAGE_POLL 等待类型？
+- - '###'
+  - DIRTY_PAGE_POLL 概述
+- - '##'
+  - LAZYWRITER_SLEEP
+- - '###'
+  - 什么是 LAZYWRITER_SLEEP 等待类型？
+- - '###'
+  - LAZYWRITER_SLEEP 总结
+- - '##'
+  - MSQL_XP
+- - '###'
+  - 什么是 MSQL_XP 等待类型？
+- - '###'
+  - MSQL_XP 示例
+- - '###'
+  - 降低 MSQL_XP 等待
+- - '###'
+  - MSQL_XP 总结
+- - '##'
+  - OLEDB
+- - '###'
+  - OLEDB 等待类型是什么？
+- - '###'
+  - OLEDB 示例
+- - '###'
+  - 降低 OLEDB 等待
+- - '###'
+  - OLEDB 总结
+- - '##'
+  - TRACEWRITE
+- - '###'
+  - TRACEWRITE 等待类型是什么？
+- - '###'
+  - TRACEWRITE 示例
+- - '###'
+  - 降低 TRACEWRITE 等待
+- - '###'
+  - TRACEWRITE 总结
+- - '##'
+  - WAITFOR
+- - '###'
+  - WAITFOR 等待类型是什么？
+- - '###'
+  - WAITFOR 示例
+- - '###'
+  - WAITFOR 总结
+- - '#'
+  - 14. 与内存 OLTP 相关的等待类型
+- - '##'
+  - 内存 OLTP 简介
+- - '###'
+  - CFPs（检查点文件对）
+- - '###'
+  - 隔离
+- - '###'
+  - 事务日志更改
+- - '##'
+  - WAIT_XTP_HOST_WAIT
+- - '###'
+  - WAIT_XTP_HOST_WAIT 等待类型是什么？
+- - '###'
+  - WAIT_XTP_HOST_WAIT 总结
+- - '##'
+  - WAIT_XTP_CKPT_CLOSE
+- - '###'
+  - 什么是 WAIT_XTP_CKPT_CLOSE 等待类型？
+- - '###'
+  - WAIT_XTP_CKPT_CLOSE 总结
+- - '##'
+  - WAIT_XTP_OFFLINE_CKPT_NEW_LOG
+- - '###'
+  - 什么是 WAIT_XTP_OFFLINE_CKPT_NEW_LOG 等待类型？
+- - '###'
+  - WAIT_XTP_OFFLINE_CKPT_NEW_LOG 总结
+- - '#'
+  - 附录
+- - '##'
+  - SQL Server 机器配置示例
+- - '###'
+  - 默认测试机
+- - '###'
+  - HA/DR 测试机
+- - '##'
+  - 自旋锁
+- - '##'
+  - 锁存器类
+- - '##'
+  - SQL Server 等待类型参考
+- - '##'
+  - 索引
+- - '###'
+  - A
+- - '###'
+  - B
+- - '###'
+  - C
+- - '###'
+  - D, E, F, G
+- - '###'
+  - H
+- - '###'
+  - I, J, K
+- - '###'
+  - L
+- - '###'
+  - M
+- - '###'
+  - N
+- - '###'
+  - O
+- - '###'
+  - P
+- - '###'
+  - Q
+- - '###'
+  - R
+- - '###'
+  - S
+- - '###'
+  - T
+- - '###'
+  - U, V
+- - '###'
+  - W, X, Y, Z
