@@ -1,4 +1,4 @@
-# Oracle 身份与访问管理套件 高级指南
+# Oracle Identity and Access Management Suite 高级指南
 
 > 原文：[Pro Oracle Identity and Access Management Suite]()
 > 
