@@ -1,0 +1,7 @@
+# 第 3 章：使用 T-SQL 构建 XML
+14. 使用 FOR XML RAW
+15. 使用 FOR XML AUTO
+16. 使用 FOR XML PATH
+17. 使用 FOR XML EXPLICIT
+18. 总结
+
