@@ -1,0 +1,31 @@
+# C
+-   `content()` 方法
+-   Couchbase 与 MongoDB
+    -   `catalog1 ID JSON` 文档
+    -   `catalog2 Document JSON`
+    -   `catalog_view`
+    -   `couchbase server community`
+    -   `CreateCouchbaseDocument.java` 应用程序
+    -   开发视图
+    -   空 Couchbase 存储桶
+    -   函数映射
+    -   `getString(String fieldName)` 方法
+    -   `insertOne(TDocument document)` 方法
+    -   JAR 文件
+    -   Java 类
+    -   `Java Class Wizard`
+    -   Java ![image Java 类](img/#part0013.xhtml#cXXX.k22)
+    -   `Package Explorer`
+    -   `JsonObject` 类
+    -   `map` 函数
+    -   `Maven` 依赖项
+    -   `Maven` ! [image `Maven` 项目](#part0013.xhtml#cXXX.k23)
+    -   `Maven` 项目构件
+    -   `MigrateCouchbaseToMongoDB` 应用程序
+    -   `Mongo Shell`
+    -   `openBucket()` 方法
+    -   `Package Explorer`
+    -   `createEntityManager()` 方法
+    -   `create()` 方法
+-   CRUD 操作。*参见*. App.java 方法
+    ![images](img/image00482.jpeg)  D

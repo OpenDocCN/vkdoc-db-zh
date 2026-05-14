@@ -1,0 +1,1 @@
+# cd /proc/`pidof mysqld`

@@ -1,0 +1,35 @@
+# D
+-   数据存储
+    -   添加对象
+    -   命令
+    -   创建 MongoDB Java 项目
+    -   Eclipse 安装
+    -   Java 类创建
+    -   Java 驱动程序
+    -   Java 项目创建
+    -   `MongoClient` 类
+    -   输出文件夹
+    -   属性选择
+    -   运行 Java 应用程序
+    -   选择 Java 类
+    -   选择 Java 项目
+    -   源文件夹
+-   `delete()` 方法
+-   `disconnect()` 方法
+-   文档
+    -   `bulkWrite` 方法
+    -   `catalog` 集合
+    -   `createCollection()` 方法
+    -   游标类方法
+    -   `deleteMany()` 方法
+    -   `findAndModify()` 方法
+    -   `findAndRemove()` 方法
+    -   `findOneAndDelete()` 方法
+    -   `findOneAndReplace()` 方法
+    -   `findOneAndUpdate()` 方法
+    -   `findOne()` 方法
+    -   `insertMany` 方法
+    -   `insertOne()` 方法
+    -   子集文档
+    -   `updateMany()` 方法
+    ![images](img/image00482.jpeg)  E, F
