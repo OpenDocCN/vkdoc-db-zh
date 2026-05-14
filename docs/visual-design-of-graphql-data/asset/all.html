@@ -1,0 +1,4305 @@
+<p><img src="images/978-1-4842-3904-9_CoverFigure.jpg"/></p>
+<p></p>
+
+
+
+
+
+<aside class="ArticleNote ArticleNoteESMHint BookFrontmatterArticleNote">
+<p>Any source code or other supplementary material referenced by the
+author in this book is available to readers on GitHub via the book's
+product page, located at <a href="http://www.apress.com/9781484239032">www.​apress.​com/​9781484239032</a> . For
+more detailed information, please visit <a href="http://www.apress.com/source-code">http://​www.​apress.​com/​source-code</a>
+.</p>
+</aside>
+
+ ISBN 978-1-4842-3903-2e-ISBN 978-1-4842-3904-9
+
+
+<a href="https://doi.org/10.1007/978-1-4842-3904-9">https://doi.org/10.1007/978-1-4842-3904-9</a>
+
+
+Library of Congress Control Number: 2018956408
+
+
+© Thomas Frisendal 2018
+
+
+This work is subject to copyright. All rights are reserved by the
+Publisher, whether the whole or part of the material is concerned,
+specifically the rights of translation, reprinting, reuse of
+illustrations, recitation, broadcasting, reproduction on microfilms or
+in any other physical way, and transmission or information storage and
+retrieval, electronic adaptation, computer software, or by similar or
+dissimilar methodology now known or hereafter developed.
+
+
+Trademarked names, logos, and images may appear in this book. Rather
+than use a trademark symbol with every occurrence of a trademarked name,
+logo, or image we use the names, logos, and images only in an editorial
+fashion and to the benefit of the trademark owner, with no intention of
+infringement of the trademark. The use in this publication of trade
+names, trademarks, service marks, and similar terms, even if they are
+not identified as such, is not to be taken as an expression of opinion
+as to whether or not they are subject to proprietary rights.
+
+
+While the advice and information in this book are believed to be true
+and accurate at the date of publication, neither the authors nor the
+editors nor the publisher can accept any legal responsibility for any
+errors or omissions that may be made. The publisher makes no warranty,
+express or implied, with respect to the material contained herein.
+
+
+Distributed to the book trade worldwide by Springer Science+Business
+Media New York, 233 Spring Street, 6th Floor, New York, NY 10013. Phone
+1-800-SPRINGER, fax (201) 348-4505, e-mail orders-ny@springer-sbm.com,
+or visit www.springeronline.com. Apress Media, LLC is a California LLC
+and the sole member (owner) is Springer Science + Business Media Finance
+Inc (SSBM Finance Inc). SSBM Finance Inc is a Delaware corporation.
+
+
+
+<p><em>My wonderful wife, Ellen-Margrethe Soelberg, has again
+experienced a period of having an author in the house, yet she has at
+the same time undertaken the proof-reading job in her usual,
+professional manner. Thank You!.</em></p>
+
+
+
+Introduction
+
+
+<p><em>You know the basics of GraphQL, but you are still uncertain about
+how to get business content and API structures right in
+GraphQL?</em></p>
+<p>GraphQL is indeed an attractive data API for applications (and
+people).</p>
+<p>The GraphQL Schema is pivotal to the success of a GraphQL API. Most
+development projects involve many stakeholders. There are the
+developers, of course, and there are business experts as well as
+application owners, who are to consume the content of the API. This
+means that the schema is not only a scope contract, but also the
+authoritative source of structure and meaning of the context covered by
+the API. There are many other contexts, where complex structures and
+semantics must be communicated effecetively between a number of people
+with various backgrounds. And the trick invariably turns out to be:
+<em>Use good visualizations!</em></p>
+<p>The main proposition of this book is graph visualization: GraphQL
+Schema structure and meaning must be visualized, and the book shows you
+how. Since the schema is a “ <strong>data graph</strong> ” containing
+related concepts in a network organized as a directed graph, the
+increasingly popular <em>property graph paradigm</em> is very
+appropriate for visualizing GraphQL structures and semantics.</p>
+<p>The second theme of this book is that of quality. GraphQL APIs can be
+used in many constellations possibly including legacy data and/or
+externally sourced data. Quality must be ensured in all cases. Both on
+the definitional level (business terminology etc.) and on the data
+content level (meaningful presentation of the data in business-friendly
+formats). The book summarizes the top 10 most important focal areas of
+such quality assurance remedies.</p>
+<p>
+In this edition of the book, the following was added:
+
+</p>
+
+<ul>
+<li><p>Catching up with the latest version of the GraphQL specifikation
+(minor adjustments)</p></li>
+<li><p>Brief explanation of “schema stitching” etc. and the impact of it
+on development style</p></li>
+<li><p>Discussion of resolver requirements, in particular vis-a-vis
+legacy SQL data</p></li>
+<li><p>Explanation of the Neo4j-GraphQL integration and a look at
+applying GraphQL to both existing and new Neo4j graph
+databases.</p></li>
+</ul>
+
+<p>In this manner, the (data and metadata quality) challenges of
+front-ending old and new databases with a GraphQL API is the third theme
+of this book.</p>
+<p>The book contains simple guidelines based on lessons learned from
+real life data discovery and unification. This helps developers and
+architects to get good quality in the resulting API designs. And the
+visual techniques helps in producing convincing visual communication
+about the structure of the API designs.</p>
+<p>Spending time on schema quality means that developers work from sharp
+definitions, which in turn leads to greater productivity and
+well-structured applications.</p>
+
+
+
+
+Acknowledgments
+
+
+<p>Named relationships is one of the fundamental recommendations of this
+book. The importance of this was made originally by Prof. Joseph D.
+Novak, who was one of the fathers of Concept Mapping in the development
+of the psychology of learning.</p>
+<p>GraphQL is designed by Facebook, Copyright © 2015-2016. It is now an
+open source project, where the software is available under a BSD 3
+license. Refer to <a href="http://www.graphql.org">www.​graphQL.​org</a> <sup><a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></sup> for more information.</p>
+<p>The GraphQL @relation schema directive originated at Graphcool, refer
+to <a href="http://www.graph.cool">www.​graph.​cool</a> <sup><a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></sup> for more information.</p>
+<p>The chapter about using GraphQL with a new graph database draws
+heavily on a blogpost <a href="https://blog.grandstack.io/five-common-graphql-problems-and-how-neo4j-graphql-aims-to-solve-them-e9a8999c8d43">Five</a> <a href="https://blog.grandstack.io/five-common-graphql-problems-and-how-neo4j-graphql-aims-to-solve-them-e9a8999c8d43">Common GraphQL Problems and How Neo4j-GraphQL Aims To
+Solve Them</a> <sup><a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a></sup> written by Will
+Lyon of <a href="https://neo4j.com/">Neo4j</a> <sup><a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a></sup> . I am quoting from it with
+the author’s kind permission. Thank you!</p>
+
+
+
+
+<h3 class="Heading">About the Author and About the Technical
+Reviewer</h3>
+
+
+
+
+<h3 class="Heading">About the Author</h3>
+
+
+
+
+
+<h3 class="Heading">About the Technical Reviewer</h3>
+
+
+
+
+
+
+
+Footnotes
+
+
+<a href="#471428_1_En_BookFrontmatter_OnlinePDF.xhtml#Fn1_source">1</a>
+
+ 
+
+
+
+<a href="#471428_1_En_BookFrontmatter_OnlinePDF.xhtml#Fn2_source">2</a>
+
+ 
+
+
+
+<a href="#471428_1_En_BookFrontmatter_OnlinePDF.xhtml#Fn3_source">3</a>
+
+ 
+
+
+
+<a href="#471428_1_En_BookFrontmatter_OnlinePDF.xhtml#Fn4_source">4</a>
+
+ 
+
+
+
+<a href="#471428_1_En_BookFrontmatter_OnlinePDF.xhtml#Fn5_source">5</a>
+
+ 
+
+
+
+<a href="#471428_1_En_BookFrontmatter_OnlinePDF.xhtml#Fn6_source">6</a>
+
+ 
+
+
+
+
+<p></p>
+
+<!--Begin Abstract-->
+
+<h1 class="ChapterTitle" lang="en">1. Visual Design of GraphQL Data</h1>
+
+
+<!--End Abstract-->
+
+
+<h2 class="Heading">What Is GraphQL and Why Is Design Important?</h2>
+<p>GraphQL is getting a lot of interest. GraphQL is a Facebook open
+source project that has its primary information site at <a href="http://graphql.org/"> <code>http://graphql.org/</code>
+</a>.<sup><a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a></sup></p>
+<p>
+My interest is the relationship between GraphQL and design. That relationship
+is certainly very real. In <code>graphql.org</code>’s own
+words:
+<blockquote>
+<p><em>“Describe what’s possible with a type system. GraphQL APIs are
+organized in terms of types and fields, not endpoints. Access the full
+capabilities of your data from a single endpoint. GraphQL uses types to
+ensure apps only ask for what’s possible and provide clear and helpful
+errors. Apps can use types to avoid writing manual parsing
+code.”</em></p>
+</blockquote>
+</p>
+<p>
+The gist of GraphQL can be seen in the example in Figure <a href="#471428_1_En_1_Chapter.xhtml#Fig1">1-1</a>, from <code>graphql.org</code>.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_1_Chapter/471428_1_En_1_Fig1_HTML.jpg" style="height:21.05em" alt="../images/471428_1_En_1_Chapter/471428_1_En_1_Fig1_HTML.jpg"/>
+</p>
+
+<p>Figure 1-1</p>
+<p>GraphQL simple example</p>
+
+
+<p>The context of Figure <a href="#471428_1_En_1_Chapter.xhtml#Fig1">1-1</a> is <em>Star
+Wars</em> metadata. And what you see to the right is actually part of a
+GraphQL Schema. What you see on the left could well be a query to the
+API, and the resulting set of data will share exactly that (data)
+structure.</p>
+<p>The open GraphQL project started in 2012 and belongs in the software
+architecture universe talked about as APIs these days. In Facebook’s own
+terms: “… GraphQL [is] a query language created by Facebook in 2012 for
+describing the capabilities and requirements of data models for
+client-server applications” (GraphQL on GitHub<sup><a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a></sup>).</p>
+<p>The <code>graphql.org</code> site does
+a nice job of explaining, so I will not repeat all of that here.
+Graphcool has a nice blog post called “GraphQL Server Basics: The
+Schema”,<sup><a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a></sup> which includes a good
+introduction to structure and behavior of GraphQL. William Lyon of Neo4j
+(<a href="http://www.neo4j.com/"> <code>http://www.neo4j.com/</code>
+</a><sup><a href="#fn10" class="footnote-ref" id="fnref10" role="doc-noteref"><sup>10</sup></a></sup>) has made an excellent
+overview of GraphQL, which is available as a “refcard” from Dzone at
+GraphQL Refcard<sup><a href="#fn11" class="footnote-ref" id="fnref11" role="doc-noteref"><sup>11</sup></a></sup> (login is required).</p>
+<p>The best tool for getting structure and meaning right is
+visualization of the graphs. The property graph approach is very
+powerful for database design across many different data stores. And it
+is equally well suited for design of data-level APIs, as you will see in
+this book.</p>
+<p>Also notice that the most developers today only have indented bracket
+displays with “prettify” functionality available. Type completion,
+driven by the GraphQL Schema, is also available.</p>
+
+<h3 class="Heading">Note</h3>
+<p>There are a few “boxes and arrows” POC-level diagramming tools on the
+web. See for example GraphQL Voyager,<sup><a href="#fn12" class="footnote-ref" id="fnref12" role="doc-noteref"><sup>12</sup></a></sup> GraphQL Visualizer GraphQL
+Visualizer,<sup><a href="#fn13" class="footnote-ref" id="fnref13" role="doc-noteref"><sup>13</sup></a></sup> or GraphQL Rover.<sup><a href="#fn14" class="footnote-ref" id="fnref14" role="doc-noteref"><sup>14</sup></a></sup> All of them are “after the
+fact” in the sense that they visualize from the schema definition. (And
+they are, to my regret, in the legacy boxes-and-arrows style.)</p>
+
+<p>High-quality data designs are possible only if you get the structure
+and the meaning right, and that is what this book is about.</p>
+
+
+<h2 class="Heading">Issues with Defining Data Structures  in GraphQL</h2>
+<p>As you know, GraphQL is not a database, but it is an API of data,
+which is described in (and produced from) a set of <em>GraphQL
+schema(s).</em> Since so much relies on the schema, you need to ensure
+it has high quality.</p>
+<p>You are also looking at servers producing data from many different
+sources, legacy or new. Whatever kind of source, there may be quality
+issues. <em>Garbage in equals garbage out</em>. For that reason, GraphQL
+API design may take you into having to resolve data discovery and
+unification issues, such as quality, metadata, and business
+acceptance.</p>
+<p>The focus should always be on the application or business-facing
+aspects of the interface exposed by the GraphQL server, based on the
+definitions in the server-side schema.</p>
+<p>
+Consider these guidelines and issues for a GraphQL API:
+
+</p>
+
+<ul>
+<li><p>Structural mistakes (many-to-many et al.) should be
+avoided.</p></li>
+<li><p>Meaning must be provided and preserved in business terms—in the
+end, business people will meet the model through the tools.</p></li>
+<li><p>Uniqueness must be provided.</p></li>
+<li><p>Identity should also be nurtured, just like in a data
+model.</p></li>
+<li><p>The presentation of the data through the API should present
+(“prettify”, if you will) the data in business-and developer-friendly
+manners—including handling missing or bad data.</p></li>
+<li><p>The model should essentially be hierarchical, so care should be
+spent on nursing the hierarchies and their levels, just like one would
+do in a multidimensional model.</p></li>
+<li><p>In particular, the traversal of many-to-many data structures in
+the underlying data model should be carefully understood when the API
+structures that span such relationships are set up.</p></li>
+</ul>
+
+<p>The major value proposition of this book is to illustrate how issues
+like these are handled in the GraphQL environment by way of adding
+visualizations in the property graph style.</p>
+
+
+<h2 class="Heading">Issues with Data Content  in GraphQL</h2>
+<p>
+Handling the garbage-in/garbage-out dilemma is a matter of:
+
+</p>
+
+<ul>
+<li><p>Getting to know the data better (a.k.a. data discovery)</p></li>
+<li><p>Unifying data from disparate sources (a.k.a. data
+unification).</p></li>
+</ul>
+
+<p>
+There is (too) much information about data preparation and ETL on the
+Internet and in books (including one of mine). In the GraphQL context,
+you should be observant of these 10 most important issues:
+
+</p>
+
+<ul>
+<li><p>Including business names in the API</p></li>
+<li><p>Providing identity and uniqueness</p></li>
+<li><p>Presenting the keys</p></li>
+<li><p>Presenting state changes</p></li>
+<li><p>Presenting versions of data</p></li>
+<li><p>Presenting dates and times</p></li>
+<li><p>Presenting relationships and missing references</p></li>
+<li><p>Determining which objects and which relationships</p></li>
+<li><p>Presenting the right level of detail</p></li>
+<li><p>Developing good relationships</p></li>
+</ul>
+
+<p>
+How much work is necessary on the resolver side really depends on these
+issues, most of which are partly out of your control:
+
+</p>
+
+<ul>
+<li><p>The quality of the data sources by themselves (structure,
+meaning, and content)</p></li>
+<li><p>Conflicts arising from unification of data from multiple sources
+(both upstream and down-stream)</p></li>
+</ul>
+
+<p>We will look at these issues in later chapters of this book.</p>
+<p>First, we need to deconstruct the GraphQL language.</p>
+
+
+
+Footnotes
+
+
+<a href="#471428_1_En_1_Chapter.xhtml#Fn1_source">1</a>
+
+ 
+
+
+
+<a href="#471428_1_En_1_Chapter.xhtml#Fn2_source">2</a>
+
+ 
+
+
+
+<a href="#471428_1_En_1_Chapter.xhtml#Fn3_source">3</a>
+
+ 
+
+
+
+<a href="#471428_1_En_1_Chapter.xhtml#Fn4_source">4</a>
+
+ 
+
+
+
+<a href="#471428_1_En_1_Chapter.xhtml#Fn5_source">5</a>
+
+ 
+
+
+
+<a href="#471428_1_En_1_Chapter.xhtml#Fn6_source">6</a>
+
+ 
+
+
+
+<a href="#471428_1_En_1_Chapter.xhtml#Fn7_source">7</a>
+
+ 
+
+
+
+<a href="#471428_1_En_1_Chapter.xhtml#Fn8_source">8</a>
+
+ 
+
+
+
+
+<p></p>
+
+<!--Begin Abstract-->
+
+<h1 class="ChapterTitle" lang="en">2. GraphQL Concepts</h1>
+
+
+<!--End Abstract-->
+
+<p>
+There are a number of concepts defined in the GraphQL context. The
+concept model shown in Figure <a href="#471428_1_En_2_Chapter.xhtml#Fig1">2-1</a> lays out all the
+important ones.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_2_Chapter/471428_1_En_2_Fig1_HTML.jpg" style="height:32.8em" alt="../images/471428_1_En_2_Chapter/471428_1_En_2_Fig1_HTML.jpg"/>
+</p>
+
+<p>Figure 2-1</p>
+<p>GraphQL concepts</p>
+
+
+<p>
+(Refer to the GraphQL Schema introduction at <a href="http://graphql.org/learn/schema/"> <code>http://graphql.org/learn/schema/</code>
+</a> for all the schema details.<sup><a href="#fn15" class="footnote-ref" id="fnref15" role="doc-noteref"><sup>15</sup></a></sup>) A few words on the diagram
+style shown in Figure <a href="#471428_1_En_2_Chapter.xhtml#Fig1">2-1</a>:
+
+</p>
+
+<ul>
+<li><p>It is a directed graph (of the concept map category)</p></li>
+<li><p>Relationships are named</p></li>
+<li>
+Relationships may be:
+
+
+<ul>
+<li><p>One-to-one (no arrows)</p></li>
+<li><p>One-to-many (arrow)</p></li>
+<li><p>Many-to-many (double-sided arrow and not found Figure <a href="#471428_1_En_2_Chapter.xhtml#Fig1">2-1</a>).</p></li>
+</ul>
+
+</li>
+</ul>
+
+<p>You can learn more about this diagramming style in my
+book entitled <em>Graph Data Modeling for NoSQL and SQL</em>,<sup><a href="#fn16" class="footnote-ref" id="fnref16" role="doc-noteref"><sup>16</sup></a></sup> 2016, Technics Publications
+(visit <a href="https://technicspub.com/graph-data-modeling/"> <code>https://technicspub.com/graph-data-modeling/</code>
+</a>).</p>
+<p>Some concepts, such as Mutation, Input, Function, and Subscription,
+are application/server construction services (updates, inserts, DB
+mapping, and push services), which also are part of the schema. However,
+since my focus is on the structure and meaning of the exposed model in
+its own right, I disregard all of them in the following discussion.</p>
+<p>
+The rest of the concepts are pretty much what their names imply. Here
+are some one-liner
+explanations:
+
+</p>
+
+<table style="border-collapse: collapse;border-top: 0.5pt solid ; border-bottom: 0.5pt solid ; border-left: 0.5pt solid ; border-right: 0.5pt solid ; ">
+<thead>
+<tr class="header">
+<th style="text-align: left; border-right: 0.5pt solid; border-bottom: 0.5pt solid;"><p>Concept</p></th>
+<th style="text-align: left; border-bottom: 0.5pt solid;"><p>Explanation</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left; border-right: 0.5pt solid; border-bottom: 0.5pt solid;"><p>GraphQL
+Schema</p></td>
+<td style="text-align: left; border-bottom: 0.5pt solid;"><p>Defines the
+structure and the meaning of the exposed data model (as well as the
+data-manipulation functions, which we do not look at here).</p></td>
+</tr>
+<tr class="even">
+<td style="text-align: left; border-right: 0.5pt solid; border-bottom: 0.5pt solid;"><p>Enum</p></td>
+<td style="text-align: left; border-bottom: 0.5pt solid;"><p>Basically a
+list of values, which can be applied to a field.</p></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left; border-right: 0.5pt solid; border-bottom: 0.5pt solid;"><p>Query</p></td>
+<td style="text-align: left; border-bottom: 0.5pt solid;"><p>The root
+query defines the anchor point of the application graph (tree) and
+shapes the result sets.</p></td>
+</tr>
+<tr class="even">
+<td style="text-align: left; border-right: 0.5pt solid; border-bottom: 0.5pt solid;"><p>Interface </p></td>
+<td style="text-align: left; border-bottom: 0.5pt solid;"><p>Essentially
+a “view” of an object (or query); it is frequently used for
+“subtyping”.</p></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left; border-right: 0.5pt solid; border-bottom: 0.5pt solid;"><p>Union</p></td>
+<td style="text-align: left; border-bottom: 0.5pt solid;"><p>A
+concatenation of results sub-graphs sharing related content. For example
+various types of persons, as in users, actors, etc.</p></td>
+</tr>
+<tr class="even">
+<td style="text-align: left; border-right: 0.5pt solid; border-bottom: 0.5pt solid;"><p>Object</p></td>
+<td style="text-align: left; border-bottom: 0.5pt solid;"><p>A business
+object (think Movie or Starship in the <em>Star Wars</em>
+example).</p></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left; border-right: 0.5pt solid; border-bottom: 0.5pt solid;"><p>Fragment</p></td>
+<td style="text-align: left; border-bottom: 0.5pt solid;"><p>A subset of
+a sub-graph. Inline fragments are typically used with
+union-constructs.</p></td>
+</tr>
+<tr class="even">
+<td style="text-align: left; border-right: 0.5pt solid; border-bottom: 0.5pt solid;"><p>Field</p></td>
+<td style="text-align: left; border-bottom: 0.5pt solid;"><p>The
+data-bearing things. Can be scalars or lists (yes, like in repeating
+groups).</p></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left; border-right: 0.5pt solid;"><p>Directive </p></td>
+<td style="text-align: left;"><p>User-definable extensions to the
+GraphQL syntax.</p></td>
+</tr>
+</tbody>
+</table>
+
+<p><code>@relation</code> is
+a good example of a GraphQL directive. It is introduced by
+Graphcool<sup><a href="#fn17" class="footnote-ref" id="fnref17" role="doc-noteref"><sup>17</sup></a></sup> (see <a href="http://www.graph.cool/"> <code>http://www.graph.cool/</code>
+</a>).
+I like it very much, because it names the relationships.</p>
+<p>
+Otherwise you just connect object types like this:
+
+</p>
+<pre>Type Movie { ..... actors: [Actor] } )</pre>
+<p>
+In general, reusable GraphQL schema directives can be used for a variety of purposes:
+
+</p>
+
+<ul>
+<li><p>Enforcing access permissions</p></li>
+<li><p>Formatting date strings</p></li>
+<li><p>Auto-generating resolver functions for a particular
+backend</p></li>
+<li><p>Marking strings for internationalization</p></li>
+<li><p>Synthesizing globally unique identifiers</p></li>
+<li><p>Specifying caching behavior</p></li>
+<li><p>Skipping, including, or deprecating fields</p></li>
+<li><p>And much more</p></li>
+</ul>
+
+<p>See the blog post from Ben Newman<sup><a href="#fn18" class="footnote-ref" id="fnref18" role="doc-noteref"><sup>18</sup></a></sup> at <a href="https://dev-blog.apollodata.com/reusable-graphql-schema-directives-131fb3a177d1"> <code>https://dev-blog.apollodata.com/reusable-graphql-schema-directives-131fb3a177d1</code>
+</a> for all the details.</p>
+<p>Note that in the latest working draft of the GraphQL
+specification<sup><a href="#fn19" class="footnote-ref" id="fnref19" role="doc-noteref"><sup>19</sup></a></sup> (see <a href="https://github.com/facebook/graphql/blob/master/spec/GraphQL.md"> <code>https://github.com/facebook/graphql/blob/master/spec/GraphQL.md</code>
+</a>), the following types can be extended by user-defined extensions:
+Scalars, Objects, Interfaces, Unions, Enums, and InputObjects. This
+might be used, for example, by a local service to represent data a
+GraphQL client only accesses locally, or by a GraphQL service that is
+itself an extension of another GraphQL service. The extensions can be
+constants, directives, or field definitions.</p>
+<p>
+The syntax graph of the schema parts , which we are
+interested in, looks like Figure <a href="#471428_1_En_2_Chapter.xhtml#Fig2">2-2</a> on the meta
+level.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_2_Chapter/471428_1_En_2_Fig2_HTML.jpg" style="height:33.8em" alt="../images/471428_1_En_2_Chapter/471428_1_En_2_Fig2_HTML.jpg"/>
+</p>
+
+<p>Figure 2-2</p>
+<p>GraphQL syntax
+elements</p>
+
+
+<p>The rounded rectangles signify properties of the concepts (object
+types) they are connected to.</p>
+<p>Let’s look at data design issues in general and determine which of
+those are relevant in the GraphQL API context.</p>
+
+
+Footnotes
+
+
+<a href="#471428_1_En_2_Chapter.xhtml#Fn1_source">1</a>
+
+ 
+
+
+
+<a href="#471428_1_En_2_Chapter.xhtml#Fn2_source">2</a>
+
+ 
+
+
+
+<a href="#471428_1_En_2_Chapter.xhtml#Fn3_source">3</a>
+
+ 
+
+
+
+<a href="#471428_1_En_2_Chapter.xhtml#Fn4_source">4</a>
+
+ 
+
+
+
+<a href="#471428_1_En_2_Chapter.xhtml#Fn5_source">5</a>
+
+ 
+
+
+
+
+<p></p>
+
+<!--Begin Abstract-->
+
+<h1 class="ChapterTitle" lang="en">3. Getting Started</h1>
+
+
+<!--End Abstract-->
+
+
+<h2 class="Heading">Which Design Levels?</h2>
+<p>Classical data
+modeling failed in a number of ways. We have to do better than
+that. What did not work well was conceptual modeling, which has faded
+away in favor of what one could call “The Great Pragmatic and Quick,
+Unified Data Modeling Practice”.</p>
+<p>
+Today many development organizations have a one-step approach to
+modeling, which is performed when necessary in the development process.
+Logical and physical
+models have come together. The driving force is time to delivery,
+and what the unified process is trying to answer are two aspects of
+developing a good solution:
+
+</p>
+
+<ul>
+<li><p>Describing the “what” in terms of a logical data model</p></li>
+<li><p>Describing some aspects of the “how,” e.g., physical access
+optimization for better performance</p></li>
+</ul>
+
+<p>In the GraphQL context, the aim is complete independence between
+applications (or users) and data stores. Since we (in this book) are
+only interested in the schema(s) and queries, we should focus on the
+“what” question.</p>
+<p>In other words, we need a fresh take on the conceptual level. It
+still adds business value, because it is a tool to communicate
+effectively with business folks about things like terminology,
+relationships, and the like. This is why visualization techniques must
+play a dominant role.</p>
+<p>Secondly, we should also nurse the “logical level,” since it (the
+schema) is a designed artifact encompassing design decisions  about scope,
+generalizations, abstractions and aggregations, relationships and
+presentation. Again, visualization is a great tool for understanding and
+for communication.</p>
+<p>For the physical level we have various use cases of the resolver
+functions. We look at some of the requirements in chapters toward the
+end of the book. We describe some considerations, which can influence
+the resolver functionality, but we are not giving specific code
+examples, such as JavaScript or similar.</p>
+<p>But let us start at the top. A good way to get going is to try to
+understand and scope the subject area.</p>
+
+
+<h2 class="Heading">Getting an Overview</h2>
+<p>If you don’t know the scope already, you need to get an overview of a
+subject area that you are creating a schema for.</p>
+<p>
+Figure <a href="#471428_1_En_3_Chapter.xhtml#Fig1">3-1</a> shows an
+overview of some business concepts  in a car dealership.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_3_Chapter/471428_1_En_3_Fig1_HTML.jpg" style="height:35.52em" alt="../images/471428_1_En_3_Chapter/471428_1_En_3_Fig1_HTML.jpg"/>
+</p>
+
+<p>Figure 3-1</p>
+<p>Car dealership concepts
+overview</p>
+
+
+<p>Notice how the upper levels tend to be classifications and other
+hierarchies. The levels in the middle are the core business objects
+engaged in the business
+processes.</p>
+<p>The concepts at the lowest level are, interestingly enough, all
+business events or other records, some of which are the snapshot type
+(like inventory on a given date).</p>
+<p>Such an overview will give you a head start on the API, so spend a
+few hours on creating one on a whiteboard, have other business people
+review it, and let it guide the rest of your schema-definition
+activities.</p>
+<p>You can also consider building an overview bottom up from the data
+sources. Frequently a combination of top down and bottom up gives you
+what you need.</p>
+<p>Note that the concepts on the lowest level are actually the value
+chain of the business—starting with budget morphing  into procurement and
+then to inventory and sales. (And later to maintenance and to
+profitability calculations.)</p>
+<p>Obviously, there should be no “islands”—everything should be
+connected to something.</p>
+<p>You can learn a lot more about concept-level analysis and design in
+my book entitled <em>Graph Data Modeling for</em> <a href="https://technicspub.com/graph-data-modeling/"> <em>NoSQL and SQL</em> </a>,<sup><a href="#fn20" class="footnote-ref" id="fnref20" role="doc-noteref"><sup>20</sup></a></sup> 2016, Technics Publications
+(visit <a href="https://technicspub.com/graph-data-modeling/"> <code>https://technicspub.com/graph-data-modeling/</code>
+</a>).</p>
+<p>Notice the high degree of connectedness of even a simple business
+operation such as a car dealership. Clearly graph representation is the
+way to go, and GraphQL developers can learn a lot from such high-level
+maps, which today are called “enterprise knowledge graphs”.</p>
+<p><em>Once you get into looking at field properties, the schema data
+design will become clearly visible, because concepts, which carry
+properties, are business objects, whereas concepts without properties
+are probably just abstractions, which you may wish to get rid of, or
+describe with properties, as appropriate.</em></p>
+<p>Note that even though you should try to map the enterprise (on a
+high-level concept map), you should not take too many, or too big,
+steps. In fact, recent developments in the GraphQL community encourage a
+stepwise approach and reuse of existing schema parts together with
+freshly developed schema parts. We will return briefly to this (schema
+stitching and schema binding) in a later chapter.</p>
+<p>We are looking at defining GraphQL schemas and APIs. The physical
+gofers are hidden in resolver functions and we will mention them in the
+last part of this book.</p>
+<p>Our focus is on both the business aspects of meaning of content and
+also on the structural aspects of related data.</p>
+<p>
+To be precise, what we are looking for is:
+
+</p>
+
+<ul>
+<li><p>Meaning</p></li>
+<li><p>Structure</p></li>
+</ul>
+
+<p><em>This is why graph visualization is the universal key to looking
+at structured information.</em></p>
+<p>It is fair to say that the visual parts of this book propose the
+property graph modeling style as the best design pattern for GraphQL
+schemas.</p>
+
+
+
+Footnotes
+
+
+<a href="#471428_1_En_3_Chapter.xhtml#Fn1_source">1</a>
+
+ 
+
+
+
+
+<p></p>
+
+<!--Begin Abstract-->
+
+<h1 class="ChapterTitle" lang="en">4. An Email Example</h1>
+
+
+<!--End Abstract-->
+
+<p>The GraphQL Schema is a  <em>data graph</em> 
+containing related concepts in a network, organized as a directed graph.
+In a way, you could say that the GraphQL approach makes everything look
+like a graph! (Which is actually the case, anyway.)</p>
+<p>This makes the so-called property graph approach
+to graph visualization a powerful opportunity for the GraphQL Schema
+designer.</p>
+<p>
+We will work from a simple email graph data model. First let’s get an
+overview of the basic concepts of email (as defined in the Internet
+Message Format standard called RFC 5322). See Figure <a href="#471428_1_En_4_Chapter.xhtml#Fig1">4-1</a>.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_4_Chapter/471428_1_En_4_Fig1_HTML.jpg" style="height:21.62em" alt="../images/471428_1_En_4_Chapter/471428_1_En_4_Fig1_HTML.jpg"/>
+</p>
+
+<p>Figure 4-1</p>
+<p>Email concepts overview</p>
+
+
+<p>Figure <a href="#471428_1_En_4_Chapter.xhtml#Fig1">4-1</a> is loyal to the
+terminology actually used in the Internet standard. This
+gives rise to issues, if you try to build a classic, normalized data
+model from this, which we discuss shortly.</p>
+<p>Notice that some relationships are
+one-to-one (for example, Originator from Address), whereas other are
+many-to-many (e.g., Keyword tags Message). There are also some
+one-to-many relationships. We will come back to this issue, but please
+make a mental note of this:</p>
+<p><em>**Caveat: Relationship cardinalities matter, because although
+GraphQL is a directed graph paradigm, the set of possible queries within
+a GraphQL Schema is a subset of sub-graphs all originating as sub-trees
+from the root query. **</em></p>
+<p>Descoping a little bit: This email subject area is a bit complex, so
+let’s skip the business of resending messages for now.</p>
+<p>
+Let’s move on to describe the scope of the GraphQL data scope in the
+form of a detailed property graph, as shown in Figure <a href="#471428_1_En_4_Chapter.xhtml#Fig2">4-2</a>.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_4_Chapter/471428_1_En_4_Fig2_HTML.jpg" style="height:24.85em" alt="../images/471428_1_En_4_Chapter/471428_1_En_4_Fig2_HTML.jpg"/>
+</p>
+
+<p>Figure 4-2</p>
+<p>Email as a property
+graph </p>
+
+
+<p>Notice that Figure <a href="#471428_1_En_4_Chapter.xhtml#Fig2">4-2</a> adds little
+property boxes to the concept model. This is a compact way of describing
+structure and content in the same diagram. This makes the diagram a true
+property graph
+model . (You
+can learn much more about property graphs in my <em>book entitled</em>
+<a href="https://technicspub.com/graph-data-modeling/"> <em>Graph</em> </a> <em>Data Modeling
+for NoSQL and SQL</em>,<sup><a href="#fn21" class="footnote-ref" id="fnref21" role="doc-noteref"><sup>21</sup></a></sup> 2016, Technics
+Publications. See <a href="https://technicspub.com/graph-data-modeling"> <code>https://technicspub.com/graph-data-modeling/</code>
+</a>.)</p>
+<p>To recap, the circles are <em>concepts</em>, which are the  <em>nodes</em>  of the
+graph. A message, for example, is a concept, and it is part of several
+relationships, such as the originator (who sent the message) or “in
+reply to” (which other message is replying to). The properties can be
+attached to concepts (nodes) and/or relationships (edges of the
+graph).</p>
+<p>The notation uses arrowheads for cardinalities. In Figure <a href="#471428_1_En_4_Chapter.xhtml#Fig2">4-2</a>, you find
+one-to-one, one-to-many, and many-to-many relationships. For a brief
+explanation of property graphs,<sup><a href="#fn22" class="footnote-ref" id="fnref22" role="doc-noteref"><sup>22</sup></a></sup> see <a href="http://bit.ly/2hMNYvE"> <code>http://bit.ly/2hMNYvE</code>
+</a>.</p>
+<p>
+In the GraphQL context, the property graph is useful for representing
+the structure of the schema:
+
+
+</p>
+
+<p>
+<img src="images/471428_1_En_4_Chapter/471428_1_En_4_Fig3_HTML.jpg" style="height:21.2em" alt="../images/471428_1_En_4_Chapter/471428_1_En_4_Fig3_HTML.jpg"/>
+</p>
+
+<p>Figure 4-3</p>
+<p>Email property graph simplified</p>
+
+
+
+<ul>
+<li><p><em>Nodes are types (object types, interface types, and union
+types)</em></p></li>
+<li><p><em>Relationships represent the connections between
+types</em></p></li>
+<li><p><em>Properties are the fields of the types (scalars or
+lists)</em></p>
+<p><strong>Note</strong> As a matter of fact, if you are willing to
+“forget” some of the business concepts (like “Originator” and
+“Destination,” you can reduce the model to be more compact. See Figure
+<a href="#471428_1_En_4_Chapter.xhtml#Fig3">4-3</a>.</p>
+<p>Notice that in the compact version shown in Figure <a href="#471428_1_En_4_Chapter.xhtml#Fig3">4-3</a>, there are more
+M:M relationships. A logical model like that (yes, logical models may
+include M:M) is problematic with SQL source, but makes good sense in a
+graph database.</p></li>
+</ul>
+
+<p>Note that in property
+graphs ,
+the relationships are named. This is important because those names are
+part of the business semantics, and by visualizing them, it is much
+easier to review and discuss the meaning imposed by the structure.
+Graphcool offers a <code>@relation</code> directive
+for getting the names of the relationships into the schema. This is a
+very good idea.</p>
+<p>The property graph representation is considerably more compact than
+the “boxes and arrows” method found in most diagramming approaches. In
+the GraphQL space, there is a tool called GraphQL Voyager<sup><a href="#fn23" class="footnote-ref" id="fnref23" role="doc-noteref"><sup>23</sup></a></sup> (<a href="https://apis.guru/graphql-voyager"> <code>https://apis.guru/graphql-voyager/</code>
+</a>). The Voyager is based on a standard data model
+diagramming library, which is in the “boxes and arrows” style. Getting a
+solid grip on the structure across, say, five or eight object types is
+not easy. The property graph representation is much more compact and has
+been successful over the last 15 years, and it comes out of the Nordics. Neo4J,<sup><a href="#fn24" class="footnote-ref" id="fnref24" role="doc-noteref"><sup>24</sup></a></sup> based in Malmö, invented the
+property graph model as a data model, and they are now a leading player
+in the graph database segment worldwide. The property graph style
+proposed here was designed by the author in his 2016 book on <em>Graph
+Data</em> <a href="https://technicspub.com/graph-data-modeling/"> <em>Modeling for SQL and NoSQL</em>
+</a>.<sup><a href="#fn25" class="footnote-ref" id="fnref25" role="doc-noteref"><sup>25</sup></a></sup></p>
+<p>
+At this point, we have dealt with schema visualization, and that makes
+GraphQL pretty and good:
+
+</p>
+
+<ul>
+<li><p>Alignment with business terminology and definitions (structure
+and content fields)</p></li>
+<li><p>Understanding complex schemas, structured as graphs</p></li>
+</ul>
+
+<p>
+Expressed in the GraphQL Schema Definition Language
+(SDL), the (non-compacted) email data model could be specified
+along these lines:
+
+</p>
+<pre>1   #
+2   # Email Graph Data Model
+3   #
+4   # GraphQL Schema
+5   #
+6   # Based on Internet Message Format RFC5322, but simplified somewhat
+7   #
+8   # Copyright Thomas Frisendal, 2017
+9   #
+10
+11   scalar Datetime
+12   scalar AddrSpec
+13   enum destination_role {
+14     To
+15     Cc
+16     Bcc
+17   }
+18
+19   enum originator_role {
+20     From
+21     Sender
+22     Reply to
+23   }
+24
+25   type Address {
+26     id: ID!
+27     display_name: String
+28     address_spec: AddrSpec!
+29     address_from: Originator! @relation(name: "From")
+30     address_sender: Originator @relation(name: "Sender")
+31     address_reply_to: Originator @relation(name: "ReplyTo")
+32     destination_to: [Destination] @relation(name: "To")
+33     destination_cc: [Destination] @relation(name: "Cc")
+34     destination_bcc: [Destination] @relation(name: "Bcc")
+35   }
+36
+37   type Originator {
+38     id: ID!
+39     origin_date: Datetime!
+40     originator_role: originator_role!
+41     message: [Message!] @relation(name: "Originator")
+42     address_from: Address! @relation(name: "From")
+43     address_sender: Address @relation(name: "Sender")
+44     address_reply_to: Address @relation(name: "ReplyTo")
+45   }
+46
+47   type Destination {
+48     id: ID!
+49     destination_role: destination_role!
+50     received_date: Datetime!
+51     message: Message! @relation(name: "Destination")
+52     address_to: [Address]! @relation(name: "To")
+53     address_cc: [Address] @relation(name: "Cc")
+54     address_bcc: [Address] @relation(name: "Bcc")
+55   }
+56
+57   type Message {
+58     id: ID!
+59     subject: String
+60     comments: String
+61     originator: Originator! @relation(name: "Originator")
+62     destinations: [Destination]! @relation(name: "HasDestination")
+63     referencing: [Message] @relation(name: "Referencing")
+64     in_reply_to: [Message] @relation(name: "InReplyTo")
+65     keywords: [Keyword] @relation(name: "Tags")
+66   }
+67
+68   type Keyword {
+69     id: ID!
+70     keyword: String! @isUnique
+71     messages: [Message] @relation(name: "Tags")
+72   }
+73
+74   type Query {
+75     messages(limit: Int = 20): [Message]!
+76   }
+77
+78   schema {
+79     query: Query
+80   }</pre>
+<p>Note that this example uses the Graphcool-invented schema directive
+<code>@relation</code>,
+which, not the least, names the relationships. This is a feature that I
+strongly recommend.</p>
+<p>Also note that the schema code is not complete and will probably give
+syntax errors if you try to use it directly. GraphQL platforms do have
+extensions of their own. This example, when used on Graphcool , has issues with
+underscores and missing <code>@model</code> directives,
+for example. On the other hand, a subset of this example was used with
+Neo4j as a basis for a new graph database, without problems.</p>
+<p><em>Also note that the property graph diagram is many times easier to
+read and understand than the schema definition syntax!</em></p>
+<p>Let’s see what kinds of issues this design could contain.</p>
+
+
+Footnotes
+
+
+<a href="#471428_1_En_4_Chapter.xhtml#Fn1_source">1</a>
+
+ 
+
+
+
+<a href="#471428_1_En_4_Chapter.xhtml#Fn2_source">2</a>
+
+ 
+
+
+
+<a href="#471428_1_En_4_Chapter.xhtml#Fn3_source">3</a>
+
+ 
+
+
+
+<a href="#471428_1_En_4_Chapter.xhtml#Fn4_source">4</a>
+
+ 
+
+
+
+<a href="#471428_1_En_4_Chapter.xhtml#Fn5_source">5</a>
+
+ 
+
+
+
+
+<p></p>
+
+<!--Begin Abstract-->
+
+<h1 class="ChapterTitle" lang="en">5. Business Meaning</h1>
+
+
+<!--End Abstract-->
+
+<p>The meaning part is really owned by the business. The business folks
+have the privilege of deciding on their terminology. Applications or
+microservices  are
+business facing and should talk the language of the business. That goes
+for the data content as well.</p>
+
+<h2 class="Heading">Data Names in the API Matter</h2>
+<p>Since many physical data stores   may be schema-free or
+schema-on-read, where the “schema” is inferred when reading the data, we
+need a layer of presentation to business users, using business terms.
+That layer is our GraphQL API.</p>
+<p>Even more challenging is that much of the (big) data that people want
+to analyze is more or less machine generated or system generated. Again,
+this calls for a user-facing data terminology layer toward the business
+environment. Finally, even in integration projects, standardizing
+business names is necessary to obtain acceptance in the business user
+community.</p>
+<p>Names include object type names (e.g., originator), property names
+(e.g., display name of the address), and relationship names (e.g.,
+cc).</p>
+<p>Relationship names are important because they are also used to infer
+the type of the relationship (dependency). Action verbs indicate
+activity on business objects, whereas weak verbs like “has” etc.
+indicate ordinary functional dependencies between an identifier of a
+business object type and its properties.</p>
+<p>
+Relationships are bidirectional, as shown in Figure <a href="#471428_1_En_5_Chapter.xhtml#Fig1">5-1</a>.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_5_Chapter/471428_1_En_5_Fig1_HTML.jpg" style="height:5.22em" alt="../images/471428_1_En_5_Chapter/471428_1_En_5_Fig1_HTML.jpg"/>
+</p>
+
+<p>Figure 5-1</p>
+<p>Read from right to left or vice versa</p>
+
+
+<p>For those reasons, names matter. However, I tend only to write the
+name coming from the parent. That is the “originator” in this case,
+since left-to-right ordering is applied (Western cultural
+conventions).</p>
+<p>What is important is that some linking phrases (the names of
+relationships) contain verbs, and verbs imply that an “actor” makes
+something happen. In other words, the relationship denotes something,
+which is more than a plain property depending on the identity of
+something. This makes the target a candidate for being identified as a
+business object type.</p>
+<p>Names should be backed up by solid definitions (as comments or
+descriptions) wherever there is risk of ambiguity. Definitions of core
+business concepts last a long time and reach many people. This means
+that they should not only be precise and to the point, they should also
+communicate well and be easy to remember.</p>
+<p>Names should be as specific as they can get. For example, avoid using
+Address if what you are talking about is Destination Address.</p>
+<p>Note that GraphQL has a nice, simple way to support subtyping by way
+of defined interfaces. In the email example, we could consider setting
+up <code>Originator</code>
+and <code>Destination</code>
+as interfaces, both implementing a Contact type. It would look like the
+following.</p>
+<p>
+First as the two types:
+
+</p>
+<pre>1   type Originator {
+2     id: ID!
+3     origin_date: Datetime!
+4     message: : [Message!]  @relation(name: "Originator")
+5     address_from: Address! @relation(name: "From")
+6     address_sender: Address @relation(name: "Sender")
+7     address_reply_to: Address @relation(name: "ReplyTo")
+8   }
+9
+10   type Destination {
+11     id: ID!
+12     destination_role: destination_role!
+13     received_date: Datetime!
+14     message: Message! @relation(name: "Destination")
+15     address_to: [Address]! @relation(name: "To")
+16     address_cc: [Address] @relation(name: "Cc")
+17     address_bcc: [Address] @relation(name: "Bcc")
+18   }</pre>
+<p>
+And here is an interface construct:
+
+</p>
+<pre>1   interface Contact {
+2     id: ID!
+3   }
+4
+5   type Originator implements Contact {
+6   origin_date: Datetime!
+7     message: [Message!] @relation(name: "Originator")
+8     address_from: Address! @relation(name: "From")
+9     address_sender: Address @relation(name: "Sender")
+10     address_reply_to: Address @relation(name: "ReplyTo")
+11   }
+12
+13   type Destination implements Contact {
+14   destination_role: destination_role!
+15     received_date: Datetime!
+16     message: Message! @relation(name: "Destination")
+17     address_to: [Address]! @relation(name: "To")
+18     address_cc: [Address] @relation(name: "Cc")
+19     address_bcc: [Address] @relation(name: "Bcc")
+20   }</pre>
+<p>We did not use interfaces in our email design, because the overlap
+between the two are minimal. However, interface names should also be
+valid business names.</p>
+<p>The quality of the content of the API results depends on the business
+semantics and on the actual data delivered by the API. We dealt with the
+structure and the terminology in the property graphs, so next we need to
+handle the actual data content properly. However, remember that meaning
+and content go together. If you change the semantics, then you may have
+to refactor the data.</p>
+
+<h3 class="Heading">Note</h3>
+<p>Do name checks of the content of the property graph(s) together with
+some subject area experts to get the semantics sorted out.</p>
+
+<p>In cases of mismatch between business terminology and the data names
+in the databases, somebody will have to do something at the resolver
+level. More about that later.</p>
+
+
+<h2 class="Heading">Finding Standard Data Structures</h2>
+<p>Another thing to think about before you set up the schema is standard
+patterns. Many areas of various kinds of business activities  and ditto objects have
+already been defined as best practice data models.</p>
+<p>For example, a <code>Company Location</code>
+property  seems to
+be a bit under-designed. Locations are geographical addresses, which are
+business addresses. There are several best practices out there for many
+general object types. See for example <code>schema.org</code> or various
+national or international standards.</p>
+<p>How can we detect that something is missing about, for example,
+company locations? One indicator could be that the precise linking
+phrase contains an action verb: <code>located at</code>. Action
+verbs tend to denote relationships between object types, not between
+objects and their properties.</p>
+<p>So, looking for standard patterns is another check to do before
+releasing your schema.</p>
+
+
+<h2 class="Heading">Establishing Identity and Uniqueness</h2>
+<p>The days of analyzing functional dependencies , looking for candidate
+keys, and so on, are now behind us. But we still need to deal with
+identity and uniqueness. Since the GraphQL schema is a directed graph,
+identity and uniqueness of nodes must happen at the schema level.</p>
+<p>What is the issue? The trouble is that we—as humans—do not really
+care a lot about uniqueness. What is in a name, anyway? We all know that
+James Brown can refer to a large number of individuals. The trick that
+we use, is to add context like “Yes, you know, James Brown, the singer,
+the godfather of soul”. So, when it really matters, context is the
+definite answer. But if a node represents a person called James Brown,
+we will look at the context to try to infer who we are talking
+about.</p>
+<p>Fortunately, we are in a connected graph (the schema), which means
+that we should look at the immediate vicinity and infer identity and
+uniqueness from there.</p>
+<p>Identity is functionally derived from uniqueness, which sets the
+context.</p>
+<p>
+Another way of putting it is that identity is really the scope of what
+the properties apply to (see Figure <a href="#471428_1_En_5_Chapter.xhtml#Fig2">5-2</a>).
+
+</p>
+
+<p>
+<img src="images/471428_1_En_5_Chapter/471428_1_En_5_Fig2_HTML.jpg" style="height:27.55em" alt="../images/471428_1_En_5_Chapter/471428_1_En_5_Fig2_HTML.jpg"/>
+</p>
+
+<p>Figure 5-2</p>
+<p>Identity is driven by uniqueness</p>
+
+
+<p>Received Date shares scope with Destination Role and both are driven
+by the identity of Destination. For now, it suffices to say that we need
+to establish a reliable identity of Destination. (This used to be called
+“finding the primary key”.)</p>
+<p>Uniqueness is the matter of identifying what, on the business level,
+makes an identity unique.</p>
+<p>Yes, the Destination is uniquely defined by the combination of
+Message and Address (whatever their identities are defined as).
+Enforcing uniqueness is also an important task in the design of an API
+schema. (Previously this was the realm of “foreign keys”.)</p>
+<p>There are no good reasons for adding visual icons or special markers,
+because the uniqueness is implied by the structure. But I did highlight
+in bold Address Spec, Message ID, and Keyword (the property) since they
+are, by a business definition, unique.</p>
+<p>In conclusion, identity determines the scope of a property (e.g.,
+Received Date applies to Destination) and uniqueness determines the
+business-level criteria for ensuring uniqueness in the interface (e.g.,
+Destinations must be unique across the combination of the identities of
+Address and Message). Note that so far we are talking business level. In
+most cases, these issues are likely to have been solved by way of
+IT-generated “surrogate keys” in the databases.</p>
+<p>At least in northern Europe (where I am from), using assigned
+identification numbers such as social security numbers is not generally
+advisable. They are not guaranteed to stay unique and to persist.
+Inventing new “natural identities” can be very practical for us in IT,
+right? We have been the ones driving that trend over the years. Business
+people do not object too much, and at times they can see why such keys
+are practical.</p>
+<p>
+Here are some rules for finding uniqueness and identities in the
+diagrams:
+
+</p>
+
+<ul>
+<li><p>The uniqueness of an object is determined by the relationships
+coming to it from the concepts that are higher up.</p></li>
+<li><p>The identity of an object is thus the combined identities of the
+referencing concepts.</p></li>
+<li><p>Properties, on the other hand, share the identity of the object
+that they are depending on, which is the defining criteria of a
+property.</p></li>
+</ul>
+
+<p>
+So, using these simple, visual inspection methods, we can conclude the
+context and hence the uniqueness of each object type, at the business
+level:
+
+</p>
+
+<table style="border-collapse: collapse;border-top: 0.5pt solid ; border-bottom: 0.5pt solid ; border-left: 0.5pt solid ; border-right: 0.5pt solid ; ">
+<thead>
+<tr class="header">
+<th style="text-align: left; border-right: 0.5pt solid; border-bottom: 0.5pt solid;"><p>Object
+Type</p></th>
+<th style="text-align: left; border-bottom: 0.5pt solid;"><p>Uniqueness</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left; border-right: 0.5pt solid; border-bottom: 0.5pt solid;"><p>Address</p></td>
+<td style="text-align: left; border-bottom: 0.5pt solid;"><p>Address
+Spec</p></td>
+</tr>
+<tr class="even">
+<td style="text-align: left; border-right: 0.5pt solid; border-bottom: 0.5pt solid;"><p>Originator</p></td>
+<td style="text-align: left; border-bottom: 0.5pt solid;"><p>Address
+Spec, Message ID, originator_role</p></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left; border-right: 0.5pt solid; border-bottom: 0.5pt solid;"><p>Destination</p></td>
+<td style="text-align: left; border-bottom: 0.5pt solid;"><p>Address
+Spec, Message ID, destination_role</p></td>
+</tr>
+<tr class="even">
+<td style="text-align: left; border-right: 0.5pt solid; border-bottom: 0.5pt solid;"><p>Message</p></td>
+<td style="text-align: left; border-bottom: 0.5pt solid;"><p>Message
+ID</p></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left; border-right: 0.5pt solid;"><p>Keyword</p></td>
+<td style="text-align: left;"><p>Keyword ID, Message ID</p></td>
+</tr>
+</tbody>
+</table>
+
+<p>Let’s recap the identity and uniqueness issues:</p>
+<p><em>Uniqueness</em> is the business-level rules to determine the
+uniqueness of the instance of data. Frequently, this is a combination of
+business-level “keys” such as ticket number, line number, employee
+number, postal code, product number, and so forth. Identity is the
+combined result of the uniqueness of participating types. An order line,
+for example, is unique for the combination of order number (from the
+Order type) and order line number (from the Order Line type). In most IT
+systems, identity is ensured by way of a unique ID field (the primary
+key in relational databases) or other kinds of surrogate keys.
+Obviously, ID conflicts across multiple source databases must be
+resolved. Also note that the downstream requirements of the GraphQL API
+data may set distinct requirements of the API’s delivery of identity and
+uniqueness.</p>
+<p>Mismatches may be fixed at the resolver layer. More about that later
+on when we look at connecting the database to the API.</p>
+<p>Establishing the business meaning and its rules is obviously
+important. Equally important is to design good ways to facilitate
+navigation of the business flow, which is what we look at next.</p>
+
+
+<p></p>
+
+<!--Begin Abstract-->
+
+<h1 class="ChapterTitle" lang="en">6. Presenting the Business Flow</h1>
+
+
+<!--End Abstract-->
+
+
+<h2 class="Heading">Presenting the Keys</h2>
+<p>In order for applications and business users to get easy access to
+the network of objects and
+events that mirror the business flow, we need to think in terms
+of navigation of the network. This starts with the issue of making
+identification easy.</p>
+<p>Clearly the many concatenated identity components on the business
+side (uniqueness rules) are not practical. As API designers, we are
+allowed to invent things. One category of creatable things is known as
+“keys”.</p>
+<p>Working with large concatenated keys, for example, is really not very
+practical. We much prefer the preciseness of unique, simple (one
+variable) fields. This was first established in 1976 (in an early object
+oriented context). It soon came to rule the world of primary and foreign
+keys under the name “surrogate key”. It turns out that business-level keys
+seldom are single-level fields, unless developers building IT solutions
+define them. Think account numbers, item numbers, postal codes, and the
+like. And even if reasonably precisely defined concepts were used, they
+were not always guaranteed to stay unique over a longer period of time.
+Item numbers, for instance, could be reused over time.</p>
+
+<h3 class="Heading">Note</h3>
+<p>There are some important scope considerations in the discussion of
+keys and IDs.</p>
+<p>Many database
+designs include system-generated keys of the surrogate key kind.
+These can most likely be reused as “Xxxxxx ID” identity fields in your
+API design, which is good. The scope of such keys are at the
+database-instance level, but the surrogate keys may well have been
+carried over into data warehouse tables and the like.</p>
+<p>GraphQL supports “ID” as a scalar type. The scope of such an ID field
+is within that object type within that application (server), and the ID
+is mainly for getting data out of the cache. They are unique within that
+scope, but not more than that.</p>
+<p>How will a solution-level data design of email enhanced with
+system-assigned keys look?</p>
+<p>Figure <a href="#471428_1_En_6_Chapter.xhtml#Fig1">6-1</a> is a
+solution-level property graph and it includes an identifier (<code>Xxxxxxx**Id</code>) in
+italics for each object type. The purpose of the identifier is to serve
+as a simple, persistent, unique identifier of the instances of the
+object. (That is the nature of a surrogate key.) Note that “Message ID”
+was already in the system (by definition, in the Internet Message Format
+standard).</p>
+<p>If there is no surrogate key scheme in place, and if the data scope
+needs to be larger than the application, such as for data-level
+integration purposes downstream, then you are looking at a data
+architecture design issue.</p>
+<p>Keys can be dealt with at the resolver level. More about that
+later.</p>
+
+
+<p>
+<img src="images/471428_1_En_6_Chapter/471428_1_En_6_Fig1_HTML.jpg" style="height:24.3em" alt="../images/471428_1_En_6_Chapter/471428_1_En_6_Fig1_HTML.jpg"/>
+</p>
+
+<p>Figure 6-1</p>
+<p>Identities added as key
+fields (ID)</p>
+
+
+
+
+<h2 class="Heading">Presenting State Changes</h2>
+<p>
+Sometimes you have to handle state changes in the
+interface. Here we are talking about business state changes. In the
+financial world, for example, buy/sell transactions in securities are
+being raised up through a hierarchy that looks something like this:
+
+</p>
+
+<ul>
+<li><p>Considered</p></li>
+<li><p>Planned</p></li>
+<li><p>Agreed (done deal)</p></li>
+<li><p>Preliminarily booked</p></li>
+<li><p>Settled</p></li>
+<li><p>Finally accounted for</p></li>
+</ul>
+
+<p>(This is a bit more complex in real life.) The issue is that the same
+transaction exists in different versions throughout its lifecycle. Date
+and time are necessary to keep track of that.</p>
+<p>In our email example, we would probably have to materialize (in the
+API) whether the message was resent (and when).</p>
+<p>“Making data look pretty” is clearly something that can be done at
+the resolver level. More about that later.</p>
+
+
+<h2 class="Heading">Presenting Versions of Data</h2>
+<p>This brings us to versions  on the data level. (And
+not on the metadata level, such as schema changes.)</p>
+<p>
+Not only in data warehouses, but certainly also in other kinds of
+applications, version control is a requirement. Generally the
+requirements are on the level of these:
+
+</p>
+
+<ul>
+<li><p>Which version is the current one?</p></li>
+<li><p>What is the starting point and ending point of a given version
+(with date and or time precision)?</p></li>
+<li><p>When did this version come into existence?</p></li>
+</ul>
+
+<p>Sometimes backdated corrections are necessary. It could be, for
+example, correcting a price, which was found to be wrong, at a later
+point in time.</p>
+<p>Keeping two versions depends on accounting practices and possibly
+also legislative requirements. Be sure to understand what the situation
+is in your context.</p>
+<p>If you are into versioning, you should consider chains of events.
+(The <em>next</em> event following this version of this transaction is
+<code>XXXXX</code> on date
+<code>YYYYMMDD</code>, for
+example.) Graphs are excellent for modeling and implementing that. You
+might also be interested in prior event chains. (The event that
+<em>preceded</em> this version of this transaction is <code>XXXXX</code> on date <code>YYYYMMDD</code>, for
+example.) See the discussion about resolving this in a later
+chapter.</p>
+
+
+<p></p>
+
+<!--Begin Abstract-->
+
+<h1 class="ChapterTitle" lang="en">7. Content Matters</h1>
+
+
+<!--End Abstract-->
+
+
+<h2 class="Heading">Housekeeping Proper</h2>
+<p>A recommended best practice is to keep order in your housekeeping—the
+accountant way, of course. Keep track of who did what and when.</p>
+<p>
+It is a good idea to keep track of things like the following for all
+object types:
+
+</p>
+
+<ul>
+<li><p>Who created this record?</p></li>
+<li><p>When was the record created?</p></li>
+<li><p>Who changed this record the last time?</p></li>
+<li><p>When was the date and time of the last change?</p></li>
+<li><p>How was this record loaded?</p></li>
+<li><p>When was the record loaded?</p></li>
+<li><p>What was the source system of the record?</p></li>
+<li><p>What are the versioning control dates (from and to)?</p></li>
+<li><p>And more…</p></li>
+</ul>
+
+<p>If such metadata is available in the data sources, I am sure that
+there are many people out there who would benefit greatly from having
+them available in the API. Some of this information  may be added at the
+resolver level.</p>
+
+
+<h2 class="Heading">Scalar Data Types </h2>
+<p>When should we worry about data types?</p>
+<p>If you have not done so already, now is the time to think about the
+<em>API-level</em> data types. The GraphQL simple scalar types are given
+beforehand. Just prepare yourself for surprises. You want to consider
+precision and representation of large numbers needing high precision.
+With regard to dates and timestamps, you have to define your own custom
+types. If there are advanced business needs, you need to know this.
+Refer to the following section on handling time.</p>
+<p>The physical data types are not likely going to be the same, but
+hopefully they are compatible (and mappable in resolver functions). The
+same goes for type conversions.</p>
+
+
+<h2 class="Heading">Presenting Dates and Times</h2>
+<p>Date and time
+are some of the tough challenges in databases, and indeed also in
+GraphQL. GraphQL is a relatively new framework and it is evolving. At
+the time of writing, Date can be implemented as a custom scalar type
+(<code>DIY</code>). There
+are a number of GitHub projects developing good stuff in this area. See
+for example GraphQL ISO Date<sup><a href="#fn26" class="footnote-ref" id="fnref26" role="doc-noteref"><sup>26</sup></a></sup> at <a href="https://github.com/excitement-engineer/graphql-iso-date"> <code>https://github.com/excitement-engineer/graphql-iso-date</code>
+</a>.</p>
+<p>Dates and times obey some slightly irregular international rules set
+for the management of time zones, as you know. They are not systematic
+in the sense that they can be easily derived from the value of the
+field.</p>
+<p>Time zones are indeed difficult to handle. Calendars  are somewhat easier,
+but still subject to a lot of national and cultural variations. If you
+take a plain vanilla U.S. calendar from the month of February, you will
+notice that there are two special days that do not apply outside of the
+United States. Valentine’s Day is slowly finding its way into Europe,
+but there is no Presidents’ Day.</p>
+<p>
+If your data model is required to support global operations, you might
+need at least four variables on everything:
+
+</p>
+
+<ul>
+<li><p>Local date (pure)</p></li>
+<li><p>Local time (no date involved)</p></li>
+<li><p>Global date (pure)</p></li>
+<li><p>Global time (set to GMT, for example)</p></li>
+</ul>
+
+<p>See more details about resolving date and time in the resolver
+chapters.</p>
+
+
+<h2 class="Heading">Using Custom Schema Directives</h2>
+<p>Date formatting is a good use case for custom schema directives.
+Ben Newman has a good blog post entitled “Reusable GraphQL Schema
+Directives<sup><a href="#fn27" class="footnote-ref" id="fnref27" role="doc-noteref"><sup>27</sup></a></sup>,” (<a href="https://dev-blog.apollodata.com/reusable-graphql-schema-directives-131fb3a177d1"> <code>https://dev-blog.apollodata.com/reusable-graphql-schema-directives-131fb3a177d1</code>
+</a>), which goes into quite some detail about how to
+implement those.</p>
+<p>Here I will just give you a feel for what it looks like (in Ben
+Newman’s blog post).</p>
+<p>
+First, define a directive with a default format and an argument:
+
+</p>
+<pre>1   directive @formattableDate(
+2     defaultFormat: String = "mmmm d, yyyy"
+3   ) on FIELD_DEFINITION
+4
+5   scalar Date
+6
+7   type Query {
+8     today: Date @formattableDate
+9   }</pre>
+<p>
+The directive can be incorporated into a schema and used with different
+formats:
+
+</p>
+<pre>1   import { graphql } from "graphql";
+2   import { makeExecutableSchema } from "graphql-tools";
+3
+4...const schema = makeExecutableSchema({
+5     typeDefs,
+6     schemaDirectives: {
+7       formattableDate: FormattableDateDirective
+8     }
+9   });
+10
+11   graphql(schema, `query { today }`).then(result =&gt; {
+12     // Logs with the default "mmmm d, yyyy" format:
+13     console.log(result.data.today);
+14   });
+15
+16   graphql(schema, `query {
+17     today(format: "d mmm yyyy")
+18   }`).then(result =&gt; {
+19     // Logs with the requested "d mmm yyyy" format:
+20     console.log(result.data.today);
+21   });</pre>
+<p>As said, Ben Newman’s blog post has all the details that you need to
+implement this.</p>
+
+
+<h2 class="Heading">Design Is Decisions</h2>
+<p>
+Never forget that API schema modeling is about <em>design</em>! Design means making
+decisions that impact the <em>business quality</em> of the solution.
+Obviously there is a dilemma between:
+
+</p>
+
+<ul>
+<li><p>Supporting the business processes at hand/the business questions
+in demand (now and in the future)</p></li>
+<li><p>Keeping it simple</p></li>
+</ul>
+
+<p>Strive for a balanced solution between scope and simplicity.
+Visualizing the design decisions will make your world more simple.</p>
+<p><em>Since we design for the business, in the end, the decisions are
+up to the business!</em></p>
+<p>Let’s move on to the structural matters.</p>
+
+
+
+Footnotes
+
+
+<a href="#471428_1_En_7_Chapter.xhtml#Fn1_source">1</a>
+
+ 
+
+
+
+<a href="#471428_1_En_7_Chapter.xhtml#Fn2_source">2</a>
+
+ 
+
+
+
+
+<p></p>
+
+<!--Begin Abstract-->
+
+<h1 class="ChapterTitle" lang="en">8. Getting the Structure Right</h1>
+
+
+<!--End Abstract-->
+
+
+<h2 class="Heading">Which Objects and Which Relationships?</h2>
+<p>The structure of the data model is, of course, built on the object
+types and the relationships, which we have already discussed.</p>
+<p>But more general issues arise from picking the right objects.</p>
+<p>
+We do have some generally applicable tools in our tool belt,
+as follows:
+
+</p>
+
+<ul>
+<li><p>Abstraction, generalization, and specialization (aka
+aggregation)</p></li>
+<li><p>Classification and typing</p></li>
+<li><p>Lifecycle dependencies and versioning</p></li>
+<li><p>Recognizing hierarchies</p></li>
+</ul>
+
+<p>
+There are also some problem areas to be aware of:
+
+</p>
+
+<ul>
+<li><p>One-to-one relationships</p></li>
+<li><p>Many-to-many relationships and nested object types</p></li>
+<li><p>Trees (hierarchies of different kinds)</p></li>
+</ul>
+
+<p>One of your best helpers is a good concept model with meaningful
+linking phrases (names of the dependencies). Creating the model on a
+whiteboard is often enough. Remember that concepts relate to other
+concepts in a sentence-like (subject/predicate/object) manner, such as
+ <code>Customer-places-Order</code>
+.</p>
+<p>The verbs in those little sentences tell you a lot about the
+structure. Is the target just a property or not? The inclusion of “is”
+or “has” indicate a property. Or is it a full-blown relationship between
+business objects? “Places” indicates a full-blown relationship, because
+it implies a process that transforms one state of the business to
+another state.</p>
+
+
+<h2 class="Heading">GraphQL Schema Stitching, Making a Patchwork</h2>
+<p>
+GraphQL is moving toward becoming a patchwork of federated
+servers working together. The new capabilities are called:
+
+</p>
+
+<ul>
+<li><p>Schema stitching</p></li>
+<li><p>Schema delegation</p></li>
+<li><p>Schema binding</p></li>
+</ul>
+
+<p>The discussion quickly becomes technical. Instead, let’s focus on the
+overall consequences.</p>
+<p>
+Basically those new features allow you to:
+
+</p>
+
+<ul>
+<li><p>Make distributed queries, which get consolidated results from a
+set of GraphQL schemas/servers.</p></li>
+<li><p>Make integrations between your own schema and somebody else’s
+schemas, either at the schema level or at the level of
+resolvers.</p></li>
+</ul>
+
+<p>GraphQL has a high level of “self consciousness” thanks to its
+introspection functionality, and it is strongly typed. This means that
+the integrations can benefit from having remote servers introspecting
+one another to determine who can answer what within a query. This also
+opens up the possibility for publicly available GraphQL APIs (and there
+are already some of those). So, GraphQL aspires to take the lead in the
+open data space, which has been dominated by the W3C stack and SPARQL
+endpoints.</p>
+<p>
+Sashko Stubailo has a nice blog post<sup><a href="#fn28" class="footnote-ref" id="fnref28" role="doc-noteref"><sup>28</sup></a></sup> at <a href="https://dev-blog.apollodata.com/graphql-schema-stitching-8af23354ac37"> <code>https://dev-blog.apollodata.com/graphql-schema-stitching-8af23354ac37</code>
+</a> and a GitHub repository for the most simple level,
+<a href="https://github.com/stubailo/schema-stitching-demo">schema</a> stitching,<sup><a href="#fn29" class="footnote-ref" id="fnref29" role="doc-noteref"><sup>29</sup></a></sup> as shown in Figure <a href="#471428_1_En_8_Chapter.xhtml#Fig1">8-1</a>.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_8_Chapter/471428_1_En_8_Fig1_HTML.jpg" style="height:14.88em" alt="../images/471428_1_En_8_Chapter/471428_1_En_8_Fig1_HTML.jpg"/>
+</p>
+
+<p>Figure 8-1</p>
+<p>Schema stitching demo from Stubailo</p>
+
+
+<p>
+What happens in this patchwork is that two queries are being stitched
+together:
+
+</p>
+
+<ul>
+<li><p>The event</p></li>
+<li><p>The weather forecast</p></li>
+</ul>
+
+<p>They are in two separate servers, but they know each other’s URLs.
+That way they can do the integration.</p>
+<p>See the Apollo documentation<sup><a href="#fn30" class="footnote-ref" id="fnref30" role="doc-noteref"><sup>30</sup></a></sup> (<a href="https://www.apollographql.com/docs/graphql-tools/schema-stitching.html"> <code>https://www.apollographql.com/docs/graphql-tools/schema-stitching.html</code>
+</a>) for more details.</p>
+<p>
+The consequences are clear:
+
+</p>
+
+<ul>
+<li><p>You should investigate whether someone else already created
+(parts of) an API, which you can take advantage of.</p></li>
+<li><p>You should not try to solve everything at the same time. Instead,
+take a patchworking approach.</p></li>
+<li><p>You should cooperate and share within your working scope so that
+everybody contributes to the GraphQL API space of which you are a
+part.</p></li>
+</ul>
+
+<p>Combined with the fact that there are also tools for generating
+mockup data from a GraphQL schema, you have rich possibilities for
+applying iterative development and parallel development of frontend and
+backend. But, having a roadmap and having a high-level concept map of
+the major anticipated object types is a great help.</p>
+
+
+<h2 class="Heading">Presenting Relationships and Missing References</h2>
+<p>
+You need to know whether the type of a relationship  is that of:
+
+</p>
+
+<ul>
+<li><p>One-to-one or zero/one to zero/one</p></li>
+<li><p>Zero/one to zero/many</p></li>
+<li><p>Zero/many to zero/many</p></li>
+</ul>
+
+<p>
+The first alternative can be visualized as connections without
+arrowheads, as shown in Figure <a href="#471428_1_En_8_Chapter.xhtml#Fig2">8-2</a>.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_8_Chapter/471428_1_En_8_Fig2_HTML.jpg" style="height:5.3em" alt="../images/471428_1_En_8_Chapter/471428_1_En_8_Fig2_HTML.jpg"/>
+</p>
+
+<p>Figure 8-2</p>
+<p>One/zero to one</p>
+
+
+<p>
+The second alternative can be visualized as connections with an
+arrowhead in the “many” end, as shown in Figure <a href="#471428_1_En_8_Chapter.xhtml#Fig3">8-3</a>.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_8_Chapter/471428_1_En_8_Fig3_HTML.jpg" style="height:5.3em" alt="../images/471428_1_En_8_Chapter/471428_1_En_8_Fig3_HTML.jpg"/>
+</p>
+
+<p>Figure 8-3</p>
+<p>One/zero to zero/many</p>
+
+
+<p>
+The third type of relationship (many-to-many) can be visualized as a
+connection with arrowheads in both ends, as shown in Figure <a href="#471428_1_En_8_Chapter.xhtml#Fig4">8-4</a>.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_8_Chapter/471428_1_En_8_Fig4_HTML.jpg" style="height:5.3em" alt="../images/471428_1_En_8_Chapter/471428_1_En_8_Fig4_HTML.jpg"/>
+</p>
+
+<p>Figure 8-4</p>
+<p>Many to many</p>
+
+
+<p>I do not recommend visualizing the starting or ending point as being
+capable of being “empty,” simply because this functionality varies
+across data stores. Nevertheless, missing references do occur. Look at
+tags, for example. Some messages are not tagged and some keywords are
+not used to tag anything.</p>
+<p>Resolving missing information, such as outer join situations, must be
+handled at the resolver level.</p>
+
+
+<h2 class="Heading">Presenting the Right Level of Detail</h2>
+<p>
+Abstraction is the strongest weapon in your arsenal. Abstraction works
+like layers, as shown in Figure <a href="#471428_1_En_8_Chapter.xhtml#Fig5">8-5</a>.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_8_Chapter/471428_1_En_8_Fig5_HTML.jpg" style="height:16.62em" alt="../images/471428_1_En_8_Chapter/471428_1_En_8_Fig5_HTML.jpg"/>
+</p>
+
+<p>Figure 8-5</p>
+<p>Generalization versus specialization </p>
+
+
+<p>So you can generalize originator addresses and destination addresses
+to be just addresses. Or you can specialize addresses into being
+originators and destinations.</p>
+
+<h3 class="Heading">Note</h3>
+<p>Moving up a to a higher level layer is generalization; specialization
+is working your way down into more and more detail.</p>
+
+<p>Generalization make things more broadly useful while at the same time
+losing some details.</p>
+<p>Specialization, on the other hand, gets you more detail,
+and—consequently—more complexity. Ask your business experts what they
+really want and need. (Normally they want a bit more than they need,
+because they fear that this is the only chance of getting it.)</p>
+<p>
+In fact, the compacted version of the email property graph was a
+generalization, as shown in Figure <a href="#471428_1_En_8_Chapter.xhtml#Fig6">8-6</a>.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_8_Chapter/471428_1_En_8_Fig6_HTML.jpg" style="height:21.2em" alt="../images/471428_1_En_8_Chapter/471428_1_En_8_Fig6_HTML.jpg"/>
+</p>
+
+<p>Figure 8-6</p>
+<p>Generalization for simplification</p>
+
+
+<p>We have generalized <code>Originator</code> and <code>Destination</code> out of
+explicit existence. However, the roles they play—“from” “to” and so
+on—are maintained as relationships in the schema.</p>
+<p>
+Another useful way to reduce referential complexity is to use
+classification, which is related to specialization. We could have had a
+concept of “message type” to indicate whether a message is high
+priority, as shown in Figure <a href="#471428_1_En_8_Chapter.xhtml#Fig7">8-7</a>.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_8_Chapter/471428_1_En_8_Fig7_HTML.jpg" style="height:16.58em" alt="../images/471428_1_En_8_Chapter/471428_1_En_8_Fig7_HTML.jpg"/>
+</p>
+
+<p>Figure 8-7</p>
+<p>Priority as a type or a property</p>
+
+
+<p>Obviously this can be simplified  by pushing the <code>Priority</code> property
+down to the <code>Message</code> level.</p>
+<p>Sometimes you may run into unusual data structures, which can be
+handled in different manners.</p>
+
+<h3 class="Heading">Remember</h3>
+<p>Always aim at keeping complexity down.</p>
+
+<p>One of the problems with the normalization approach in relational
+data modeling is that it leads to a plentitude of tables. Some of the
+tables only serve as placeholders for relationships.</p>
+<p>One such scenario is multiple type relationships, which, at times,
+seem to be logical.</p>
+<p>Let us have a look at a 3-way relationship.</p>
+<p>Addresses can be used as destinations and destinations can be
+described as of three roles: to, cc, and bcc. Basically this is a
+ternary relationship with three participating concepts.</p>
+<p>
+In fact, there is almost always a real business object behind a many-to-many
+relationship. In multidimensional (data warehouse) modeling,
+there is a construct called the “factless fact,” meaning a fact table
+without any information other than the foreign keys to the dimensions.
+Such a table is the mother of all relationships, and in fact (pun
+intended), even factless facts most often have properties (measures),
+once you start looking for them. See Figure <a href="#471428_1_En_8_Chapter.xhtml#Fig8">8-8</a>.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_8_Chapter/471428_1_En_8_Fig8_HTML.jpg" style="height:12.82em" alt="../images/471428_1_En_8_Chapter/471428_1_En_8_Fig8_HTML.jpg"/>
+</p>
+
+<p>Figure 8-8</p>
+<p>Resolving a 3-way relationship using a “bridge object type”</p>
+
+
+<p>Another good way to visualize this ternary relationship is
+using the property graph models’ capability of having properties on
+relationships.</p>
+<p>
+This works well if your final destination is a property graph database
+such as Neo4J<sup><a href="#fn31" class="footnote-ref" id="fnref31" role="doc-noteref"><sup>31</sup></a></sup> or the like. See Figure <a href="#471428_1_En_8_Chapter.xhtml#Fig9">8-9</a>.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_8_Chapter/471428_1_En_8_Fig9_HTML.jpg" style="height:12.88em" alt="../images/471428_1_En_8_Chapter/471428_1_En_8_Fig9_HTML.jpg"/>
+</p>
+
+<p>Figure 8-9</p>
+<p>Role as a property of the relationship </p>
+
+
+<p>However, if your data store is a SQL database, you will most likely
+have the three business object types implemented as three tables. In my
+opinion the representation of three object types is fair and to the
+point. Roles do exist and using such classifications on “bridge tables”
+in a many-to-many
+relationship is a good idea.</p>
+<p>Come to think of it, another common use of properties on the
+relationship level is “weight”. It signifies, for instance,
+participation or part-ownership or similar partial measures. That can
+certainly be implemented as a property on the edge in a property graph,
+but in most peoples’ minds, a “participation” business object type would
+make a lot of sense. This brings us back to finding something
+substantial more often than not in a many-to-many relationship, as in
+the previous example.</p>
+
+<h3 class="Heading">Note</h3>
+<p>In GraphQL schemas, relationships—either simple name-name references
+or the Graphcool schema directive <code>@relation</code>—are
+non-information bearing. This leaves you with the option of using a
+specialized object type to carry the properties, which describe the
+relationship. This is a resolver issue.</p>
+
+<p>
+Another odd fellow is the one-to-one relationship. Between object types
+and their properties there are always one-to-one relationships, also
+known as <em>dependencies</em>. But one-to-one relationships
+do happen between business object types. Not that often, however. The
+examples all tend to be more in the business rules space than in the
+data model realm. Figure <a href="#471428_1_En_8_Chapter.xhtml#Fig10">8-10</a> shows one,
+which we have seen before.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_8_Chapter/471428_1_En_8_Fig10_HTML.jpg" style="height:5.3em" alt="../images/471428_1_En_8_Chapter/471428_1_En_8_Fig10_HTML.jpg"/>
+</p>
+
+<p>Figure 8-10</p>
+<p>Only one from originator</p>
+
+
+<p>Having only one “from” address per originator seems to me
+to be a business decision made in the the legacy design of Internet
+email messages. A message where the originator is a group of “from”
+addresses is perfectly conceivable.</p>
+<p>However, it is worth checking whether the relationship is information
+bearing. That could be the case, like in the previous example. It is
+conceivable that “in reply to” carries a date, and that the resulting
+API design should be different.</p>
+<p>This, by the way, once again confirms the assumption that most of the
+time many-to-many relationships are information bearing constructs.</p>
+<p>In general, both nodes and relationships can (should) have “names”
+(formally called labels for nodes and types for relationships), just
+like concepts and their relationships have in Figure <a href="#471428_1_En_8_Chapter.xhtml#Fig10">8-10</a>.</p>
+<p>Relationships are directed, which is visualized by the
+arrowheads.</p>
+<p>Both nodes and relationships may be associated with properties, which
+are key/value pairs, such as Color:Red. On the data model level, we call
+the key a property name.</p>
+
+<h3 class="Heading">Note</h3>
+<p>The labeled property graph model is the most flexible general purpose
+data model paradigm that we have today.</p>
+
+<p>The important things are the names and the structure (the nodes and
+the relationships). The properties supplement the solution structure by
+way of adding content. Properties are also
+basically just labels, but they can signify “identity” (the general idea
+of a key on the data model level).</p>
+<p>
+Finally, self-references are also
+visiting data models from time to time. Figure <a href="#471428_1_En_8_Chapter.xhtml#Fig11">8-11</a> shows a double
+example. Messages may refer to another message, either in reference to
+or in reply to.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_8_Chapter/471428_1_En_8_Fig11_HTML.jpg" style="height:7.27em" alt="../images/471428_1_En_8_Chapter/471428_1_En_8_Fig11_HTML.jpg"/>
+</p>
+
+<p>Figure 8-11</p>
+<p>Two self-references</p>
+
+
+<p>When you later traverse such self-references with a
+GraphQL query, you should understand the resulting tree structure. It is
+probably best to use GraphiQL<sup><a href="#fn32" class="footnote-ref" id="fnref32" role="doc-noteref"><sup>32</sup></a></sup> to get a feel
+for it, by playing with the schema.</p>
+<p>You should also be quite certain that a self-reference is not really
+information bearing in any way. Quite frequently relationships like that
+carry a start date and an end date. This could call for a separate
+little object type, having a name that reflects the periodicity of the
+relationship, having the two dates as properties. More about this on the
+resolver level in a later chapter.</p>
+<p>Are you struggling with understanding data structures? Draw a little
+property graph—that will help!</p>
+
+
+<h2 class="Heading">Good Relationships</h2>
+<p>Relationships are key to getting the structure right. Even simple
+(one-to-many) relationships have some considerations. Part of the idea
+of using concepts and relationships analysis is that you should pay
+attention to <em>the</em>  <em>linking phrase</em>
+ between concepts (the label on the relationship arrow). If you
+get those names right, the structure and meaning are bound to be more
+correct.</p>
+<p>
+Look at the property
+graph (with named relationships) in Figure <a href="#471428_1_En_8_Chapter.xhtml#Fig12">8-12</a>.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_8_Chapter/471428_1_En_8_Fig12_HTML.jpg" style="height:30.67em" alt="../images/471428_1_En_8_Chapter/471428_1_En_8_Fig12_HTML.jpg"/>
+</p>
+
+<p>Figure 8-12</p>
+<p>Named relationships</p>
+
+
+<p>
+Good, inter-object
+relationships are based on action verbs. In this example, the
+verbs represent localization (<code>City</code> is the location
+of <code>Supplier</code>)
+and supply chain (<code>Supplier</code> supplies
+<code>SupplierPart</code>
+and <code>Part</code> is to
+be supplied by <code>SupplierPart</code>). <code>SupplierPart</code> is
+really an instance of a many-to-many relationship between <code>Suppliers</code> and <code>Parts</code>. The name <code>SupplierPart</code> seems a
+bit constructed and not really coming straight from business
+terminology. The challenge is that we have information on the
+relationship. <code>SupplierPart</code> carries
+a <code>Qty</code> (and in
+reality at least a date of the supply). Figure <a href="#471428_1_En_8_Chapter.xhtml#Fig13">8-13</a> shows it as a
+many-to-many
+design.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_8_Chapter/471428_1_En_8_Fig13_HTML.jpg" style="height:19.65em" alt="../images/471428_1_En_8_Chapter/471428_1_En_8_Fig13_HTML.jpg"/>
+</p>
+
+<p>Figure 8-13</p>
+<p>Supplier parts many:many model</p>
+
+
+<p>In general, things and events should not be placed on relationships.
+In some (most) graph databases, it is permitted. This works well with
+properties, which characterize the relationship, such as weight,
+ownership percentage, and so on.</p>
+<p>One might argue that ownership percentage, for example, is a property
+of an entity called ownership part, which is a relational “bridge” table
+helping to implement a M:M relationship between owners and properties.
+This is mostly a business decision. If the business folks do not
+recognize the concept of an ownership part, the story ends there.</p>
+<p>Frequently (not always), a “bridging thing” can be named, and it
+will, most often, carry information, as in the supplier-parts example.
+Be careful here—constructed object types must have meaningful names and
+definitions, which the business can relate to. On the other hand, if you
+do not have a graph database, you are forced (at least in SQL) to
+materialize the “bridge table” and place the information owned by the
+relationship there.</p>
+<p>In graph database sources, M:M is perfectly fine. We discuss that in
+the resolver discussions later.</p>
+<p>
+What are the consequences for the GraphQL API? The results are tree
+structures. In the simple supplier parts example, there are basically
+two ways the tree can be constructed, as shown in Figure <a href="#471428_1_En_8_Chapter.xhtml#Fig14">8-14</a>.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_8_Chapter/471428_1_En_8_Fig14_HTML.jpg" style="height:38.68em" alt="../images/471428_1_En_8_Chapter/471428_1_En_8_Fig14_HTML.jpg"/>
+</p>
+
+<p>Figure 8-14</p>
+<p>Supplier parts
+possible trees</p>
+
+
+<p>The question is, which resolver function should produce the
+information on the M:M relationship? In this case it is QTY, and it can
+be produced either together with <code>Supplier</code> or together
+with <code>Part</code>. That
+is not very flexible across the board. It you choose to materialize the
+M:M <code>SupplierPart</code> as an
+object type of its own at the schema level, you have the highest
+possible degree of flexibility.</p>
+<p>Objects/events
+are always nodes, which may be role-playing and state-changing. Are new
+states new nodes? It depends on the type of business. Sometimes a new
+state introduces new information about the object type/event, and in
+that case the choice is between two object types versus additional
+properties. Ask the business experts what they think is the most natural
+way to represent this.</p>
+<p>In general, M:M relationships are a challenge and must be handled,
+because what GraphQL queries expose are tree structures (hierarchical)
+with no information on the relationships as such.</p>
+<p>Be careful with information residing on a relationship. You cannot do
+that in GraphQL, so you may have to invent a new object type for that
+purpose. The same goes for many-to-many. Be careful when you traverse
+them in the queries. If the schema is not correct, or if the data has
+redundancies, you risk creating Cartesian products and “queries from
+hell”. This is further discussed under resolvers, later.</p>
+<p>Remember: Visualization is your competent servant when you’re
+exploring “strange” data.</p>
+
+
+
+Footnotes
+
+
+<a href="#471428_1_En_8_Chapter.xhtml#Fn1_source">1</a>
+
+ 
+
+
+
+<a href="#471428_1_En_8_Chapter.xhtml#Fn2_source">2</a>
+
+ 
+
+
+
+<a href="#471428_1_En_8_Chapter.xhtml#Fn3_source">3</a>
+
+ 
+
+
+
+<a href="#471428_1_En_8_Chapter.xhtml#Fn4_source">4</a>
+
+ 
+
+
+
+<a href="#471428_1_En_8_Chapter.xhtml#Fn5_source">5</a>
+
+ 
+
+
+
+
+<p></p>
+
+<!--Begin Abstract-->
+
+<h1 class="ChapterTitle" lang="en">9. From Graph to Trees</h1>
+
+
+<!--End Abstract-->
+
+
+<h2 class="Heading">Structure Design at the API Level</h2>
+<p>The schema definitions are on the server side. What you see at the
+application side is being exposed as a result of the schema design.</p>
+<p>
+The GraphQL list
+modifier is an easy way to generate a sub-branch of the result
+tree. In our Email example, we have plenty of lists. For example, the
+keywords tagging a
+message:
+
+</p>
+<pre>keywords: [Keyword] @relation(name: "Tags")</pre>
+<p>
+Lists can handle nulls, which are syntactically visualized in GraphQL:
+
+</p>
+
+<ul>
+<li><p>The data can be null: <code>[Keyword]</code></p></li>
+<li><p>The data cannot be null: <code>[Keyword!]</code></p></li>
+<li><p>The list cannot be null: <code>[Keyword!]!</code></p></li>
+</ul>
+
+<p>Another GraphQL construct that can be useful in complex situations is
+the <em>union</em>.</p>
+<p>
+Remember the design challenge about contacts having interfaces versus
+not having a contact as a type? Unions can help build a consolidated
+list of contacts
+(originators and destinations):
+
+</p>
+<pre>Union Contacts = Originator | Destination</pre>
+<p>
+However, since the contributing object types may not be completely
+compatible, you may need to use inline fragments in the
+query:
+
+</p>
+<pre>1   {
+2     SearchResult {
+3       ... on Originator {
+4         origin_date
+5       }
+6       ... on Destination {
+7         received_date
+8       }
+9     }
+10   }</pre>
+<p>Refer to the GraphQL documentation<sup><a href="#fn33" class="footnote-ref" id="fnref33" role="doc-noteref"><sup>33</sup></a></sup> at <a href="http://graphql.org/learn"> <code>http://graphql.org/learn/</code>
+</a> for more information.</p>
+<p>In the context of this book, you must remember that we are building a
+scope for result trees sharing a root query (per schema) in the GraphQL
+API.</p>
+
+
+<h2 class="Heading">Positioning the Graph for Generation of Trees</h2>
+<p>
+Figure <a href="#471428_1_En_9_Chapter.xhtml#Fig1">9-1</a> shows the email data model from
+before.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_9_Chapter/471428_1_En_9_Fig1_HTML.jpg" style="height:27.55em" alt="../images/471428_1_En_9_Chapter/471428_1_En_9_Fig1_HTML.jpg"/>
+</p>
+
+<p>Figure 9-1</p>
+<p>Our email property graph once  again</p>
+
+
+<p>This data model is a directed graph, and it can be traversed in any
+direction (using graph technologies, but not GraphQL). GraphQL must
+result in a tree for each and every <em>query</em>.</p>
+<p>Note that the graph shown in Figure <a href="#471428_1_En_9_Chapter.xhtml#Fig2">9-2</a> is also a property graph—now just a
+“Banzai” version of the schema graph, and a twisted one at that.</p>
+<p>Much depends on what your root query looks like. It determines the
+perspective of the possible queries. A schema should be serving a
+particular application’s needs.</p>
+<p>You can have multiple fields in your root query. You can also have
+multiple schemas in your configuration. The schema-stitching possibility
+enables you to merge schemas, essentially bringing the root fields
+together in the combined root query. Refer to the GraphQL documentation
+for more information.</p>
+<p>
+If queries in a particular schema should all start at the originator
+level, because that is what the application needs, then we can construct
+API query result trees according to this pattern, as shown in Figure
+<a href="#471428_1_En_9_Chapter.xhtml#Fig2">9-2</a>.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_9_Chapter/471428_1_En_9_Fig2_HTML.jpg" style="height:31.55em" alt="../images/471428_1_En_9_Chapter/471428_1_En_9_Fig2_HTML.jpg"/>
+</p>
+
+<p>Figure 9-2</p>
+<p>Having originator as the root of
+a query</p>
+
+
+<p>This implies that address-level or keyword-level properties , for example, will be
+redundantly available in the trees, since they must be denormalized into
+a lower level or, alternatively, into a GraphQL list construct.</p>
+<p>Property graphs
+are highly relevant to GraphQL developers. They ease the analysis of the
+data at hand significantly, and they help organize the resulting API
+schema and query structures.</p>
+<p>
+Having done this, we have also dealt with:
+
+</p>
+
+<ul>
+<li><p>Correct exposure of the structure of the relationships inherent
+in the exposed data (query result).</p></li>
+<li><p>Handling traversals of many-to-many relationships in order to
+produce a result tree (both schema and query result).</p></li>
+</ul>
+
+<p>The visualization is an intuitively understandable (pretty good)
+representation of business and application terminology that can be
+discussed with business folks.</p>
+<p>
+An easy way to get an overview of the query scope is to turn and twist
+the application graph data model so that it visualizes the result tree
+scope in a top-down, left-to-right manner (see Figure <a href="#471428_1_En_9_Chapter.xhtml#Fig3">9-3</a>).
+
+</p>
+
+<p>
+<img src="images/471428_1_En_9_Chapter/471428_1_En_9_Fig3_HTML.jpg" style="height:34.88em" alt="../images/471428_1_En_9_Chapter/471428_1_En_9_Fig3_HTML.jpg"/>
+</p>
+
+<p>Figure 9-3</p>
+<p>Pulling originator to the
+top</p>
+
+
+<p>Note that a branch of the tree can traverse the M:M relationship in
+one direction only.</p>
+<p>
+If another application perspective should be on messages with certain
+tags sent by someone to certain destinations, the result tree
+visualization could look like Figure <a href="#471428_1_En_9_Chapter.xhtml#Fig4">9-4</a>.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_9_Chapter/471428_1_En_9_Fig4_HTML.jpg" style="height:31.13em" alt="../images/471428_1_En_9_Chapter/471428_1_En_9_Fig4_HTML.jpg"/>
+</p>
+
+<p>Figure 9-4</p>
+<p>Result tree having keyword as root</p>
+
+
+<p>The tree, which can be derived, is rooted in the keyword and will
+deliver, keyword after keyword, all the messages having been tagged with
+that keyword. For each such message, all originators will be listed with
+their respective addresses and all destinations.</p>
+<p>Navigating the graph data model can also be eased by way of visually
+“lassoing” individual sub-trees (hierarchies). This will give you a feel
+for which result trees can be constructed.</p>
+<p>In other words, denormalization and duplication are your good
+friends. In the case of GraphQL, the data lives in the API, i.e., in the
+cache at runtime.</p>
+
+<h3 class="Heading">Note</h3>
+<p>One the strong points of GraphQL is based on just that: Having a
+tree-structure carefully self-defined and available in the caches of a
+distributed application leads to better performance and less
+blocking.</p>
+
+<p>
+So, no problems in exposing redundant data, and for some physical data
+stores, it is a necessity. Obviously the tree-based
+denormalization result could contain the following:
+
+</p>
+
+<ul>
+<li><p><em>Data</em>: The selected leaf-node data (selected properties
+in the schema design).</p></li>
+<li><p><em>Navigation fields</em>: The intermediate and top-level node
+properties, which include identity keys and intermediate levels of
+classification hierarchies and the like. This is for
+convenience.</p></li>
+</ul>
+
+<p>It is important that you include all the necessary intermediate and
+top-level keys. Otherwise, you will not be able to uniquely identify
+each level in the result.</p>
+<p>Mapping already denormalized structures (in NoSQL stores, for
+example) to GraphQL should normally be possible and relatively easy to
+do in most cases, but changing the serialization order is not for the
+faint-hearted.</p>
+<p>You can also consider using repeating groups of columns. Sometimes
+there are not too many in a 1:M relationship, so repeating fields could
+work well and are supported by GraphQL lists.</p>
+<p>In general, mapping from a solution data model expressed as a graph
+to query results expressed as trees is pretty straightforward. Your
+visualizations will help you get good at doing that, which you will
+appreciate once your schema graph is large.</p>
+<p>Producing correct result trees is a big part of the resolver
+requirements, which is what we look at in the next chapter.</p>
+
+
+
+Footnotes
+
+
+<a href="#471428_1_En_9_Chapter.xhtml#Fn1_source">1</a>
+
+ 
+
+
+
+
+<p></p>
+
+<!--Begin Abstract-->
+
+<h1 class="ChapterTitle" lang="en">10. Resolving Legacy SQL Data
+Issues</h1>
+
+
+<!--End Abstract-->
+
+<p>Using GraphQL with a new, empty data store is the easy way. In many
+cases, the database schema and resolvers (if needed) can be generated or
+inferred from the GraphQL schema.</p>
+<p>
+If you plan to use GraphQL with existing databases, you should mind your
+steps, as illustrated in Figure <a href="#471428_1_En_10_Chapter.xhtml#Fig1">10-1</a>.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_10_Chapter/471428_1_En_10_Fig1_HTML.jpg" style="height:36.68em" alt="../images/471428_1_En_10_Chapter/471428_1_En_10_Fig1_HTML.jpg"/>
+</p>
+
+<p>Figure 10-1</p>
+<p>The bridge to GraphQL crossing river legacy</p>
+
+
+<p>Having been active in the data warehouse community
+for years, I know the SQL database “jungle” well. Applying GraphQL to
+this bewildering legacy of SQL data is the context for this chapter.
+Expect some surprises as you cross the bridge.</p>
+<p>
+There are additional tools you may use, such
+as:
+
+</p>
+
+<ul>
+<li><p>Object-relational
+mappers (ORMs) (such as Sequelize at <a href="http://docs.sequelizejs.com/"> <code>http://docs.sequelizejs.com/</code>
+</a>, for example<sup><a href="#fn34" class="footnote-ref" id="fnref34" role="doc-noteref"><sup>34</sup></a></sup>)</p></li>
+<li><p>SQL generators
+ (such as join-monster, at <a href="https://github.com/stems/join-monster/blob/master/README.md"> <code>https://github.com/stems/join-monster/blob/master/README.md</code>
+</a> for example<sup><a href="#fn35" class="footnote-ref" id="fnref35" role="doc-noteref"><sup>35</sup></a></sup>)</p></li>
+</ul>
+
+<p>I do not have practical experience with any of them; you will have to
+build your own. Both of them look good from their websites, and they do
+have some customers. I am bit skeptical about the ORMs. Seems to me that
+you have to build another schema, just for the sake of the mapping. That
+can potentially amount to quite a few hours spent, I think.</p>
+<p>In the following example, I expect that your platform can build
+resolver functions, which can contain or issue (almost unrestricted) SQL
+commands.</p>
+<p>Let’s walk through the specific legacy issues in the same order as we
+presented the general issues earlier.</p>
+
+<h2 class="Heading">Data Names </h2>
+<p>More often than not, you will have to map the physical column and
+table names to the business facing terminology of the GraphQL types.
+This is annoying and takes some time.</p>
+<p>Wait! Maybe somebody has already done parts of that work? It could be
+in reporting or data warehouse contexts, and it could be SQL views
+and/or ETL-jobs that contain the mappings. Look around. I am a fan of
+SQL views, so if you need the mapping, do it in views, which are
+reusable. If the underlying database schema changes, you can, to some
+extent, continue to support the views’ result sets without impacting the
+GraphQL schemas. Using views may also give you a better opportunity to
+exploit “automatic mapping” between GraphQL and the source views.</p>
+<p>Using <code>Select *</code> is not a good idea, because data models do change, and they are
+typically extended with new columns and occasional changes in physical
+data types. So this is actually another good argument for using views to
+insulate your API even more from the physical data.</p>
+
+
+<h2 class="Heading">Identity, Uniqueness, and Keys</h2>
+
+<h3 class="Heading">Note</h3>
+<p>Many SQL database designs  include
+system-generated keys of the surrogate key kind. These can most likely
+be reused as <code>Xxxxxx ID</code> identity fields in your API design, which is good. The scope
+of such keys is typically at the database instance level, but the
+surrogate keys may have been carried over into data warehouse tables and
+the like. GraphQL supports “ID” as a scalar type. The scope of such a
+GraphQL ID field is within that object type within that application
+(server), and the ID is mainly for getting data out of the cache. They
+are unique within that scope, but not more than that.</p>
+
+<p>Uniqueness in the databases is not controlled in the same way as the
+business-level uniqueness rules are defined. Typically a row in a table
+should be unique across several components in a concatenated string of
+business keys. The keys, in turn, frequently represent a hierarchy such
+as Customer/Order/Orderline/Product and more.</p>
+<p>Identity is the matter of what controls the uniqueness in the
+database. Most often it is a single “surrogate key” field guaranteeing
+the uniqueness of the orderline, for example. In principle, surrogate
+keys should not carry information other than the identity of the row.
+But that is not always the case.</p>
+<p>
+In mainstream data modeling the last 20-30 years, the use of surrogate
+keys is widespread. Clever people have added another purpose to them:
+The issue of identifying the nonexistent! (I am not going to get into a
+SQL <code>NULL</code>-discussion,
+because SQL <code>NULL</code>s are generally
+no good.) What many applications nowadays rely on is that the ID (the
+key) equaling 0 (zero, not null) is the representation of the
+nonexistent instance at the other end of the join. That means, of
+course, that there should exist a row in the database table referred to
+in the join, which has <code>"Id" = 0</code>. Those rows
+typically contain default values. The issue here is to avoid the use of
+SQL outer joins, which would otherwise be required. Look out for “zero
+records”. See Figure <a href="#471428_1_En_10_Chapter.xhtml#Fig2">10-2</a>.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_10_Chapter/471428_1_En_10_Fig2_HTML.png" style="height:21.12em" alt="../images/471428_1_En_10_Chapter/471428_1_En_10_Fig2_HTML.png"/>
+</p>
+
+<p>Figure 10-2</p>
+<p>A first in class zero record</p>
+
+
+<p>If there is no surrogate key in a table, then the primary key must be
+examined. Often primary keys are information bearing, which is to be
+avoided. Even social security numbers and the ilk may change over time.
+Some item numbers may be reused after some time of inactivity and so
+forth.</p>
+<p>Using a GraphQL schema directive might be a good way to generate
+globally unique object identifiers, if you need to do so.</p>
+
+
+<h2 class="Heading">States, Versions, and Housekeeping</h2>
+<p>States (business states, for example Planned, Ordered, Delivered, and
+Archived) are not always modeled explicitly in elderly data models . They can be rather
+easy to generate by way of a SQL <code>CASE</code> construct,
+either in a resolver function or in an underlying view. Business people
+love them because they are looking for state information all the
+time.</p>
+<p>
+Versions are the same story, really. Ideally, most business needs can be
+met with the simple construct of three new concepts:
+
+</p>
+
+<ul>
+<li><p>Valid From Date (could be 1900-01-01 for unknown historic
+dates)</p></li>
+<li><p>Valid To Date (could be 2099-12-31 for unknown future
+dates)</p></li>
+<li><p>Current Version (a flag string containing “Yes” or “No” for
+example).</p></li>
+</ul>
+
+<p>But, if the legacy data are not persisted with versions, you will
+have to look for old versions in a data warehouse or a data vault
+database. If they are not there, you cannot satisfy that business need
+without further ado. If you can get the funding for that, you could look
+at time series paradigms, including key/value stores and graph databases
+for solving the persistence of versioned data.</p>
+<p>
+Other housekeeping data can include (where applicable):
+
+</p>
+
+<ul>
+<li><p><code>UserId</code>
+of the user who created the record</p></li>
+<li><p><code>CreationDate</code> of the
+record</p></li>
+<li><p><code>UserId</code>
+of the user who changed this record the last time</p></li>
+<li><p><code>ChangeTimeStamp</code> of
+the date and time of the last change</p></li>
+<li><p>Identification of the batch process that loaded this
+record</p></li>
+<li><p><code>LoadTimeStamp</code> when
+the record was loaded</p></li>
+<li><p>Name of the source system of the record (if this record is not
+the golden record)</p></li>
+<li><p>And more</p></li>
+</ul>
+
+<p>Look for states, versions, and other housekeeping data in the
+reporting and data warehouse parts of your organization. Somebody may
+have done the hard work already.</p>
+
+
+<h2 class="Heading">Scalar Data Types</h2>
+<p>The type system of GraphQL  is meant to be
+coercive, and the server will do its best to deliver according to the
+specified data type in the schema. That could involve truncating a
+floating point value to an integer value, if that is what it takes to
+stay “within the contract”. But there will still be a need for
+transformations at the resolver level. Check your data.</p>
+<p>Another issue is the matter of “prettifying” your data. A three-digit
+integer can be a product category code, but it must be accompanied by a
+textual description. Many users will not know the code values by
+heart.</p>
+<p>The GraphQL type system is extensible in the newest working draft of
+the GraphQL schema specification. It is going to be interesting to see
+how it develops in the next year or so.</p>
+
+
+<h2 class="Heading">Date and Time</h2>
+<p>IT has struggled with date  and time since the
+1960s.</p>
+<p>
+Let’s start at the bottom. Date and time are mixed into a variety of
+data types in many data stores and DBMS products. Some of the types can
+be:
+
+</p>
+
+<ul>
+<li><p>Pure date</p></li>
+<li><p>Date and time in one property</p></li>
+<li><p>Time in its own property</p></li>
+</ul>
+
+<p>Be careful about which server you pull the date and time information.
+Much depends on the settings of those servers and database
+instances.</p>
+<p>Another issue is handling missing dates. If you want to avoid <code>SQL_NULLs</code> (and who
+doesn’t?), you could define default low and high dates, which are
+supplied whenever a date (or time-of-day) is missing. Sometimes we
+record future dates on records, which have happened now, but where the
+future event is still to happen in a couple of years’ time (budgets, for
+example). Not very elegant modeling, but it happens. You may end up
+having to define a “future undefined date” (a default high date that you
+choose).</p>
+<p>In the data warehousing world, a date/calendar dimension is a given
+requirement. But for the same reasons as the reporting and analytics
+need to know about calendars (such as public holidays or banking days),
+ordinary applications need to keep track of several properties of dates
+and sometimes also of time of days. Be prepared.</p>
+
+
+<h2 class="Heading">Naming Relationships</h2>
+<p>As pointed out earlier in this book, the relationship  names are important
+for conveying the meaning of the structure of the data. So, at the
+GraphQL Schema level, I recommend that you use the Graphcool <code>@relation</code> directive
+to convey that structural information.</p>
+<p>At the resolver level, you have the job of figuring out how to do a
+join that satisfies the relationship. This could be a foreign key
+constraint (if you are lucky). It could also be two columns in two
+distinct tables with the same name. Or it could be inferred from an
+index on the target table (one or more columns). Or, you just either
+have to know or you have to use data profiling to find inter-table
+dependencies in the data.</p>
+
+
+<h2 class="Heading">Relationship Types</h2>
+
+<h3 class="Heading">One-to-One Relationships </h3>
+<p>These are sometimes one-to-none relationships and sometimes
+one-to-one. In the first case, the default properties of the missing
+instance should be handled by the resolver. There are normally good
+business reasons for maintaining the divide between the two, and if the
+resolver can produce that, then that is what you must do.</p>
+
+
+<h3 class="Heading">One/Zero to Zero/Many Relationships </h3>
+<p>Again, if the relationship is empty (for example, a customer without
+orders), the tree stops here. I think it might be prettier to stop with
+“Not available” instead of nothing (a null).</p>
+
+
+<h3 class="Heading">Self References </h3>
+<p>
+Let’s take the example of <code>Manager is</code> and <code>Manages</code> (the view
+from the manager side).
+
+</p>
+
+<ul>
+<li><p><code>Manager is</code> is a one-to-one relationship where the upper end may be empty
+(employees without a manager).</p></li>
+<li><p><code>Manages</code>
+is a one/zero to zero/many relationship (remember that a manager may not
+have any employees at this time, and no, this does not support matrix
+organizations).</p></li>
+</ul>
+
+<p>Depending on the root, you may have to generate redundant data for
+the <code>Manager is</code>
+relationship.</p>
+
+
+<h3 class="Heading">Many-to-Many Relationships</h3>
+<p>
+This is where you need a large cache . You have to
+duplicate redundant information such that the tree structure of the
+result set is maintained. Recall the supplier/parts, as shown in Figure
+<a href="#471428_1_En_10_Chapter.xhtml#Fig3">10-3</a>.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_10_Chapter/471428_1_En_10_Fig3_HTML.jpg" style="height:17.48em" alt="../images/471428_1_En_10_Chapter/471428_1_En_10_Fig3_HTML.jpg"/>
+</p>
+
+<p>Figure 10-3</p>
+<p>Supplier/parts many:many model</p>
+
+
+<p>
+What are the consequences for the GraphQL API? The results are tree
+structures. In the simple supplier parts example, there are basically
+two ways the tree can be constructed, as shown in Figure <a href="#471428_1_En_10_Chapter.xhtml#Fig4">10-4</a>.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_10_Chapter/471428_1_En_10_Fig4_HTML.jpg" style="height:34.98em" alt="../images/471428_1_En_10_Chapter/471428_1_En_10_Fig4_HTML.jpg"/>
+</p>
+
+<p>Figure 10-4</p>
+<p>Supplier parts possible trees</p>
+
+
+<p>The question is, which resolver function should produce the
+information on the M:M relationship?</p>
+<p>In this case it is <code>QTY</code>, and it can be
+produced together with <code>Supplier</code> or together
+with <code>Part</code>. That
+is not very flexible across the board. If you choose to materialize the
+M:M <code>SupplierPart</code> as an
+object type of its own at the schema level, you have the highest
+possible degree of flexibility.</p>
+
+
+
+<h2 class="Heading">Missing Information</h2>
+<p>Handling missing information things is close to being business rules
+driven. I generally prefer to treat such things in a functional layer (like
+a resolver function) on top of the source data model. The resolvers need
+to resolve the missing information.</p>
+<p>At this level, the matters should be handled in a way that matches
+the capabilities of the platform.</p>
+<p>
+But on the business facing (API) side, I prefer default value schemes
+over using NULLs. There are many articles about this, not the least from
+the Kimball
+Group. Basic stuff like the following:
+
+</p>
+
+<ul>
+<li><p>Keep “dummy” records available and let them participate in
+hierarchies and other joins. (If you report numbers on unknown levels,
+you will need the <code>Unknown</code> instance in
+your aggregate.)</p></li>
+<li><p>Use at least the Unknown or Not Specified approach for missing
+information.</p></li>
+<li><p>Use default low and high dates for missing dates.</p></li>
+<li><p>Etc.</p></li>
+</ul>
+
+
+
+<h2 class="Heading">Properties on Relationships </h2>
+<p>This is not supported in SQL. The closest thing is a helper/bridge
+table, which should also materialize as a type on the GraphQL level.</p>
+
+
+
+Footnotes
+
+
+<a href="#471428_1_En_10_Chapter.xhtml#Fn1_source">1</a>
+
+ 
+
+
+
+<a href="#471428_1_En_10_Chapter.xhtml#Fn2_source">2</a>
+
+ 
+
+
+
+
+<p></p>
+
+<!--Begin Abstract-->
+
+<h1 class="ChapterTitle" lang="en">11. Using GraphQL with an Existing
+Graph Database</h1>
+
+
+<!--End Abstract-->
+
+<p>It is of course a relevant question to ask that, since GraphQL is
+based on graph thinking, how can we use GraphQL on top of a graph
+database? To answer that, we first look at the use case in which an
+existing graph database is supported from a GraphQL API. Later we look
+at a common use case, whereby a GraphQL API will be used with a new
+graph database.</p>
+<p>Since transformations are
+based on the language of the DBMS, I use the language of the
+Neo4j<sup><a href="#fn36" class="footnote-ref" id="fnref36" role="doc-noteref"><sup>36</sup></a></sup> graph platform (see <a href="https://neo4j.com/"> <code>https://neo4j.com/</code>
+</a>).
+It is called Cypher, and it is a very
+powerful, declarative language. While Neo4j uses Cypher, the language
+has been open sourced through the openCypher project and there are now a
+number of other projects using Cypher<sup><a href="#fn37" class="footnote-ref" id="fnref37" role="doc-noteref"><sup>37</sup></a></sup> (see <a href="http://www.opencypher.org/"> <code>http://www.opencypher.org/</code>
+</a>).</p>
+
+<h2 class="Heading">The Neo4j GraphQL Plugin</h2>
+<p>Neo4j has done a great job of integrating GraphQL  into the Neo4j
+platform. The easiest way to use it is to use a plugin installed in the
+Neo4j Desktop interface.</p>
+<p>Will Lyon (working in developer relations at Neo4j) has made an
+excellent video explaining everything. It’s called “Using The
+Neo4j-GraphQL Plugin With Neo4j Desktop”<sup><a href="#fn38" class="footnote-ref" id="fnref38" role="doc-noteref"><sup>38</sup></a></sup> (see <a href="https://youtu.be/J-J90uwugb4"> <code>https://youtu.be/J-J90uwugb4</code>
+</a>).</p>
+<p>
+Basically the plugin enables you to serve a GraphQL endpoint directly
+from Neo4j by:
+
+</p>
+
+<ul>
+<li><p>Generating a GraphQL schema from existing Neo4j data</p></li>
+<li><p>Serving a GraphQL endpoint based on a GraphQL schema that you
+supply</p></li>
+<li><p>Translating GraphQL to Cypher (on the fly)</p></li>
+<li><p>Automatically generating query types for querying with
+GraphQL</p></li>
+<li><p>Automatically generating mutation types for write operations from
+GraphQL</p></li>
+<li><p>Exposing Cypher through GraphQL as a <code>@cypher</code> schema
+directive</p></li>
+</ul>
+
+<p>You can also find more information about the plugin in Will Lyon’s
+blog post called “<a href="https://blog.grandstack.io/using-the-neo4j-graphql-plugin-in-neo4j-desktop-c8a60aa014d9">Using The Neo4j</a>-GraphQL Plugin In
+Neo4j Desktop”<sup><a href="#fn39" class="footnote-ref" id="fnref39" role="doc-noteref"><sup>39</sup></a></sup> (see <a href="https://blog.grandstack.io/using-the-neo4j-graphql-plugin-in-neo4j-desktop-c8a60aa014d9"> <code>https://blog.grandstack.io/using-the-neo4j-graphql-plugin-in-neo4j-desktop-c8a60aa014d9</code>
+</a>).</p>
+
+
+<h2 class="Heading">Generating Your First GraphQL Schema</h2>
+<p>
+It really is very simple. You install the plugin from the Neo4j Desktop,
+as shown in Figure <a href="#471428_1_En_11_Chapter.xhtml#Fig1">11-1</a>.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_11_Chapter/471428_1_En_11_Fig1_HTML.jpg" style="height:23.02em" alt="../images/471428_1_En_11_Chapter/471428_1_En_11_Fig1_HTML.jpg"/>
+</p>
+
+<p>Figure 11-1</p>
+<p>Plugin installation from the Neo4j Desktop</p>
+
+
+<p>Having installed the plugin, you will want to install the Electron
+version of the GraphiQL app<sup><a href="#fn40" class="footnote-ref" id="fnref40" role="doc-noteref"><sup>40</sup></a></sup> for browsing and
+testing. Refer to the video and the blog post for details about setting
+up the endpoint and authorization headers to make the connection (not a
+big deal).</p>
+<p>
+To generate the schema from the data in the Neo4j database, issue this
+command to the Neo4j Desktop:
+
+</p>
+<pre>CALL graphql.idl(null);</pre>
+<p>
+You may have to transform the existing data to make it fit for
+presentation through GraphQL. This depends on the quality of the data
+and likewise of the metadata (labels, property names, and relationship
+types). In the following sections, we will go through the potential
+issues. If you need to do transformations, it is nice to know that the
+Neo4j-GraphQL integration includes an <code>@cypher</code> directive,
+which enables you to do some graphical things inside the GraphQL schema.
+Take a look at this example having embedded <code>@cypher</code>
+statements  as
+well as type extensions:
+
+</p>
+<pre>1   type Movie {
+2       title: ID!
+3       released: Int
+4       tagline: String
+5
+6       actors: [Person] @relation(name:"ACTED_IN", direction:IN)
+7       director: Person @relation(name:"DIRECTED", direction:IN)
+8       recommendation(first:Int = 3): [Movie]
+9         @cypher(statement:
+10           "MATCH (this)(reco:Movie)
+11                            WHERE 3 (m)")
+36   }
+37   schema {
+38      mutations: Mutations
+39   }</pre>
+<p>Note that fields annotated with the <code>@cypher</code> schema
+directive then become “computed” fields. This technique allows for some
+transformation between how the data is stored in Neo4j and how it is
+presented in the GraphQL layer.</p>
+<p>The video and the blog post cited in this chapter cover the how-tos
+of using GraphQL on top of an existing graph database, as well as on top
+of a blank graph database, which is the last subject of this book.</p>
+<p>Let’s recast the legacy SQL issues and see how they apply in the
+context of an existing Neo4j database.</p>
+
+
+<h2 class="Heading">Data Names</h2>
+<p>The Neo4j-GraphQL plugin  will derive a GraphQL
+schema from the existing graph data. By way of sampling, the integration
+adds a type for each <code>Node-Label</code> with all
+the properties and their types found as fields.</p>
+<p>This gives you a much better starting point than a blank slate.
+However, much depends on the quality of the existing data model, of
+course. So, being a bit cynical, you should expect to spend some time on
+mapping not-so-good names to something business facing. The mapping will
+be done by way of editing the generated GraphQL schema, e.g., <code>@cypher</code> extensions.
+Just as with SQL, you may spend time here, but the time spent should be
+less than what would need to be done in SQL. Some SQL databases that I
+have seen almost needed an archeologist in order to establish data
+identities.</p>
+
+
+<h2 class="Heading">Identity, Uniqueness, and Keys</h2>
+<p>Neo4j can live without constraints , but you can also have
+them. Data profiling<sup><a href="#fn41" class="footnote-ref" id="fnref41" role="doc-noteref"><sup>41</sup></a></sup> (see <a href="https://neo4j.com/blog/data-profiling-holistic-view-neo4j/"> <code>https://neo4j.com/blog/data-profiling-holistic-view-neo4j/</code>
+</a>) is rather easy, and you should spend some time
+double-checking candidate keys. So, just as with SQL, you may have to
+spend some time here.</p>
+<p>The Neo4j node ID is internal use only. Don’t use internal Neo4j IDs
+for long-term entity identification. Future versions of Neo4j might
+shift these IDs around for performance purposes. Create your own unique
+ID property (ideally with a <em>constraint</em>) for tracking
+entities.</p>
+
+
+<h2 class="Heading">States, Versions, and Housekeeping</h2>
+<p>As with SQL, you might want to spend  some time here. One
+benefit, though: Neo4j is schema-free, so refactoring the database is
+much easier than in SQL.</p>
+
+
+<h2 class="Heading">Scalar Data Types</h2>
+<p>Neo4j does not have explicit types , but the
+Neo4j-GraphQL is coercive, and the proper types will be transmitted by
+default in most cases. Type conversion functions are available, though.
+There might be issues with string-encoded information, which should be
+something else (a float, for example). This may take some time to
+identify and fix.</p>
+
+
+<h2 class="Heading">Date and Time</h2>
+<p>Neo4j does not have any date  and time types per
+se. However, in Neo4j 3.x, APOC procedure support was added, including
+procedures for date/time support<sup><a href="#fn42" class="footnote-ref" id="fnref42" role="doc-noteref"><sup>42</sup></a></sup> (see <a href="https://neo4j-contrib.github.io/neo4j-apoc-procedures/#_date_and_time_conversions"> <code>https://neo4j-contrib.github.io/neo4j-apoc-procedures/#_date_and_time_conversions</code>
+</a>).
+This enables you to handle most conversions from Cypher commands.</p>
+<p>Support of temporal functions in Cypher per se arrived in release
+3.4.</p>
+<p>
+GraphAware has a library called TimeTree<sup><a href="#fn43" class="footnote-ref" id="fnref43" role="doc-noteref"><sup>43</sup></a></sup>, which looks interesting, as
+shown in Figure <a href="#471428_1_En_11_Chapter.xhtml#Fig2">11-2</a>. See <a href="https://graphaware.com/neo4j/2014/08/20/graphaware-neo4j-timetree.html"> <code>https://graphaware.com/neo4j/2014/08/20/graphaware-neo4j-timetree.html</code>
+</a>.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_11_Chapter/471428_1_En_11_Fig2_HTML.jpg" style="height:25.28em" alt="../images/471428_1_En_11_Chapter/471428_1_En_11_Fig2_HTML.jpg"/>
+</p>
+
+<p>Figure 11-2</p>
+<p>TimeTree from GraphAware</p>
+
+
+
+
+<h2 class="Heading">Naming Relationships</h2>
+<p>
+The Neo4j-GraphQL plugin<sup><a href="#fn44" class="footnote-ref" id="fnref44" role="doc-noteref"><sup>44</sup></a></sup> will generate
+GraphQL schema 
+code using the <code>@relation</code> directive.
+It looks like this for the <code>ACTED_IN</code> relationship
+in the <code>Movie</code>
+database:
+
+</p>
+<pre>1   type Person { name: String, movies : Movie @relation(name:"ACTED_IN", direction:OUT)\
+2    }</pre>
+<p>As you can see, the Neo4j-GraphQL plugin uses the <code>@relation</code> directive
+to encode a relationship type, but also a direction since graphs are
+directed in the property graph model.</p>
+<p>Again, the quality (business-facing) of the relationship type names
+will depend on whodunnit.</p>
+
+
+<h2 class="Heading">Relationship Types</h2>
+<p>The Neo4j-GraphQL integration  will catch most of
+what you need.</p>
+<p>
+In a Neo4j graph database, M:M is perfectly fine. However, you will have
+to split them into two. If you recall in the <code>Movie</code> example, there
+is a M:M in the <code>ACTED_IN</code>
+relationship. That will give you two relationships (<code>@relation</code> in
+GraphQL):
+
+</p>
+
+<ul>
+<li><p><code>Movies</code>
+are the movies that an <code>Actor</code> acted
+in</p></li>
+<li><p><code>Actors</code>
+lists the actors in a <code>Movie</code></p></li>
+</ul>
+
+<p>
+You can easily check the cardinalities in Cypher:
+
+</p>
+<pre>1   MATCH (p:Person)-[:WROTE]-&gt;(m)&lt;-[:WROTE]-(coPersons:Person)
+2   RETURN p, m, coPersons</pre>
+<p>
+The path query returns some data, which shows that even the <code>WROTE</code> relationship
+(and, as it happens, the <code>DIRECTED</code>
+relationship) is many-to-many, as shown in Figure <a href="#471428_1_En_11_Chapter.xhtml#Fig3">11-3</a>.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_11_Chapter/471428_1_En_11_Fig3_HTML.jpg" style="height:33.2em" alt="../images/471428_1_En_11_Chapter/471428_1_En_11_Fig3_HTML.jpg"/>
+</p>
+
+<p>Figure 11-3</p>
+<p>Finding many to many</p>
+
+
+<p>The data is just for demo purposes. Obviously, in real life, there
+are many more cases like these of M:M relationships in the movie
+context.</p>
+
+
+<h2 class="Heading">Missing Information</h2>
+<p>Missing information
+ is handled differently in Neo4j when compared to SQL. In SQL you
+use <code>NULL</code>
+values, but in Neo4j (and most other NoSQL data types), missing
+information is simply not there. Take the age of a person, for example.
+Age is a property, and if a <code>Person</code> node has no
+known age, the <code>Age</code> property is
+missing on that node.</p>
+<p>In GraphQL on the user-facing side, you can have non-nullable fields,
+which means that you may have to handle the generation of default values
+yourself. Fortunately the <code>@cypher</code> extension can
+be used for that, as shown in the sample GraphQL schema.</p>
+<p>I do think that <code>NULL</code>s should be
+avoided and that they can be replaced by default values according to
+business specifications.</p>
+
+
+<h2 class="Heading">Properties on Relationships</h2>
+<p>In my honest opinion, things and events should not be placed  on relationships. In
+some (most) graph databases, it is permitted. However, it works well
+with properties, which characterize the relationship, such as weight,
+ownership percentage, and so on.</p>
+<p>One might argue that ownership percentage, for example, is a property
+of an entity called ownership share, which is a relational bridge table
+helping to implement a M:M relationship between owners and properties.
+This is mostly a business decision. If the business folks do not
+recognize the concept of an ownership share, the story ends there.</p>
+<p>If the introduction of a new business level concept like ownership
+share is acceptable, then the relationship surfaces as a new GraphQL
+object type having a scalar field representing the percentage. Two new
+relationships will emerge. The API designer will have to decide the
+traversal path, obviously. Given that the restriction is on the GraphQL
+concepts side, this is an acceptable solution.</p>
+
+
+
+Footnotes
+
+
+<a href="#471428_1_En_11_Chapter.xhtml#Fn1_source">1</a>
+
+ 
+
+
+
+<a href="#471428_1_En_11_Chapter.xhtml#Fn2_source">2</a>
+
+ 
+
+
+
+<a href="#471428_1_En_11_Chapter.xhtml#Fn3_source">3</a>
+
+ 
+
+
+
+<a href="#471428_1_En_11_Chapter.xhtml#Fn4_source">4</a>
+
+ 
+
+
+
+<a href="#471428_1_En_11_Chapter.xhtml#Fn5_source">5</a>
+
+ 
+
+
+
+<a href="#471428_1_En_11_Chapter.xhtml#Fn6_source">6</a>
+
+ 
+
+
+
+<a href="#471428_1_En_11_Chapter.xhtml#Fn7_source">7</a>
+
+ 
+
+
+
+<a href="#471428_1_En_11_Chapter.xhtml#Fn8_source">8</a>
+
+ 
+
+
+
+<a href="#471428_1_En_11_Chapter.xhtml#Fn9_source">9</a>
+
+ 
+
+
+
+
+<p></p>
+
+<!--Begin Abstract-->
+
+<h1 class="ChapterTitle" lang="en">12. Using GraphQL with a New Graph
+Database</h1>
+
+
+<!--End Abstract-->
+
+
+<h2 class="Heading">Design Goals of the Neo4j-GraphQL Integration</h2>
+<p>What does a graph solution for a GraphQL API  look like?</p>
+<p>I can best answer this question by looking at the Neo4j-GraphQL
+plugin. Instead of repeating what Will Lyon says in his video, I have
+decided to briefly summarize a recent blog post from March 2018, also by
+Will Lyon of Neo4j. It’s entitled “Five Common GraphQL Problems and How
+Neo4j-GraphQL Aims To Solve Them<sup><a href="#fn45" class="footnote-ref" id="fnref45" role="doc-noteref"><sup>45</sup></a></sup>” (see <a href="https://blog.grandstack.io/five-common-graphql-problems-and-how-neo4j-graphql-aims-to-solve-them-e9a8999c8d43"> <code>https://blog.grandstack.io/five-common-graphql-problems-and-how-neo4j-graphql-aims-to-solve-them-e9a8999c8d43</code>
+</a>).</p>
+<p>
+Obviously, there are advantages to using a graph database as a store for
+a GraphQL API, as you will see. In the following, Will explains the
+ambitions of the GraphQL Neo4j integration:
+
+</p>
+
+<ul>
+<li><p>A few weeks ago, I came across an article from Sacha Greif<sup><a href="#fn46" class="footnote-ref" id="fnref46" role="doc-noteref"><sup>46</sup></a></sup> on freeCodeCamp titled “Five
+Common Problems in GraphQL Apps  (And How to Fix
+Them)”.<sup><a href="#fn47" class="footnote-ref" id="fnref47" role="doc-noteref"><sup>47</sup></a></sup> I thought this was a good
+overview of some of problems developers encounter when adopting
+GraphQL.</p></li>
+<li><p>As I read through the list of common problems, I realized these
+were some of the same issues that users had complained about when we
+were researching how a Neo4j-GraphQL integration would look<sup><a href="#fn48" class="footnote-ref" id="fnref48" role="doc-noteref"><sup>48</sup></a></sup> (see <a href="https://neo4j.com/developer/graphql/"> <code>https://neo4j.com/developer/graphql/</code>
+</a>).
+Ultimately, the design of our integration aimed to help developers be
+more productive when building GraphQL services backed by Neo4j.</p></li>
+<li><p>In this post, I would like to revisit each of the five problems
+that Sacha points out and show how Neo4j-GraphQL addresses each of those
+issues.</p></li>
+</ul>
+
+
+<h3 class="Heading">Problem 1: Schema Duplication</h3>
+<p>
+<blockquote>
+<p><em>Namely, you need</em> <em>one schema for your database</em>   <em>, and another one
+for your GraphQL endpoint. —Sacha Greif</em></p>
+</blockquote>
+
+</p>
+
+<ul>
+<li><p>GraphQL uses a strictly defined schema, which defines the types
+available and the entry points for the API. This schema acts as the
+specification for the GraphQL API, and with introspection enables
+powerful developer tools such as query completion, mocking, and
+documentation generation. However, standard GraphQL implementations
+often require working with a schema for your database and a schema for
+your GraphQL API.</p></li>
+<li><p>To simplify the process of building GraphQL applications backed
+by Neo4j, the Neo4j-GraphQL integration uses the GraphQL schema to infer
+what the Neo4j data model should be.</p></li>
+</ul>
+
+<p><em>Solution: Use the GraphQL</em> <em>schema to drive the Neo4j
+database model.</em></p>
+
+
+<h3 class="Heading">Problem 2: Server/Client Data Mismatch</h3>
+<p>
+<blockquote>
+<p><em>Your</em> <em>database and GraphQL API will have different
+schemas, which translate into different document shapes. —Sacha
+Greif</em></p>
+</blockquote>
+
+</p>
+
+<ul>
+<li><p>If the backend for your GraphQL service is not a graph  database, then there
+is some mapping and translation that must occur to transform the data
+from how you model it at the data persistence layer to the shape of a
+graph for GraphQL. By using a graph database as the data layer for our
+GraphQL service, we preempt this problem.</p></li>
+<li><p>The Neo4j-GraphQL integration translates any arbitrary GraphQL
+request to Cypher,<sup><a href="#fn49" class="footnote-ref" id="fnref49" role="doc-noteref"><sup>49</sup></a></sup> the query language for
+graphs, and handles the database call as part of the GraphQL
+resolver.</p></li>
+</ul>
+
+<p><em>Solution: Translate GraphQL to Cypher. (Note: This is done
+automaticall</em> <em>y.)</em></p>
+
+
+<h3 class="Heading">Problem 3: Superfluous Database Calls</h3>
+<p>
+<blockquote>
+<p><em>Imagine a list of posts, each of which has a user attached to it.
+You now want to display 10 of these posts, along with the name of their
+author. —</em>Sacha Greif</p>
+</blockquote>
+
+</p>
+
+<ul>
+<li><p>As Sacha points out, for the example above, a typical  GraphQL implementation
+makes one database query for the list of posts, then one query per post
+to fetch the user. This results in 11 round-trip requests to the
+database! This is known as the n+1 query problem and the common solution
+is to use a tool like Dataloader.</p></li>
+<li><p>We can certainly use Dataloader<sup><a href="#fn50" class="footnote-ref" id="fnref50" role="doc-noteref"><sup>50</sup></a></sup> with Neo4j—it is designed to
+be data layer agnostic, but with Neo4j-GraphQL we have the advantage of
+generating a <em>single</em> Cypher query for any arbitrary GraphQL
+request. This means for any GraphQL request we make only a single
+request to the database.</p></li>
+</ul>
+
+<p><em>Solution: Translate GraphQL to a single Cypher query. (Note: This
+is done automatically.)</em></p>
+
+
+<h3 class="Heading">Problem 4: Poor Performance</h3>
+<p>
+<blockquote>
+<p><em>On one hand you want to take full advantage of GraphQL’s graph
+traversal features (“show me the authors of the comments of the author
+of the post of …” etc.). But on the other hand, you don’t want your app
+to become slow and unresponsive. —</em>Sacha Greif</p>
+</blockquote>
+
+</p>
+
+<ul>
+<li><p>While it is true that GraphQL enables the expression  of graph traversals
+like the example above, many of the database systems responsible for
+resolving the data are not optimized for these workloads. Graph
+databases like Neo4j are optimized for graph traversal queries like
+this. By translating GraphQL to Cypher, we can take advantage of the
+powerful performance benefits of using a graph database execution engine
+like Neo4j. Furthermore, GraphQL lacks the semantics of a database query
+language for expressing things like filtering, projects, or
+aggregations. Through the use of GraphQL schema directives, we can use
+the power of Cypher with GraphQL to map a GraphQL field to the result of
+an arbitrary Cypher query.</p></li>
+</ul>
+
+<p><em>Solution: Expose the power of Cypher in GraphQL.</em></p>
+
+
+<h3 class="Heading">Problem 5: Boilerplate Overdose</h3>
+<p>
+<blockquote>
+<p><em>This is by no means an issue exclusive</em> <em>to GraphQL apps,
+but it’s true that they generally require you to write a lot of similar
+boilerplate code. —</em>Sacha Greif</p>
+</blockquote>
+
+</p>
+
+<ul>
+<li><p>Implementing a typical GraphQL service involves writing  a schema for the
+GraphQL service, a schema for the database, resolver functions to fetch
+the data, AND mutations for creating and updating data. Much of this is
+boilerplate code that can be generated by inspecting the GraphQL
+schema.</p></li>
+</ul>
+
+<p>
+<em>Solution: Auto-generate Query and Mutation types from GraphQL
+schema. See</em> <em>Figure</em>  <a href="#471428_1_En_12_Chapter.xhtml#Fig1"><em>12-1</em></a> 
+<em>.</em>
+
+
+</p>
+
+<p>
+<img src="images/471428_1_En_12_Chapter/471428_1_En_12_Fig1_HTML.png" style="height:28.45em" alt="../images/471428_1_En_12_Chapter/471428_1_En_12_Fig1_HTML.png"/>
+</p>
+
+<p>Figure 12-1</p>
+<p>Query and Mutation types are generated automatically when using
+Neo4j-GraphQL</p>
+
+
+
+<ul>
+<li><p>We mentioned previously that resolvers are implemented
+automatically by inferring the database schema from the GraphQL schema,
+translating GraphQL to Cypher, and handling the database call.
+Additionally, the entry points for the GraphQL service (Query and
+Mutation types) are auto-generated as well, reducing the boilerplate
+code necessary to implement a GraphQL service backed by Neo4j. In
+addition, first, offset, filter-fields, ordering for both top-level
+queries and fields pointing to other entities are generated.</p></li>
+</ul>
+
+<p>This concludes the post by Will Lyon about the design goals of
+Neo4j-GraphQL.</p>
+<p>Let’s see it in action!</p>
+
+
+
+<h2 class="Heading">Generating Your Neo4j Database from the GraphQL
+Schema</h2>
+<p>Let’s use the email example, which I introduced in earlier chapters
+of this book, in Neo4j.</p>
+<p>
+To generate the Neo4j side from the GraphQL schema , you simply pass the
+type definitions from the schema to the interface by issuing a command
+like this in the Neo4j desktop:
+
+</p>
+<pre>1   CALL graphql.idl(
+2   'type Address {
+3     id: ID!
+4     display_name: String
+5     address_spec: String!
+6     address_from: Originator! @relation(name: "From")
+7     address_sender: Originator @relation(name: "Sender")
+8     address_reply_to: Originator @relation(name: "ReplyTo")
+9     destination_to: [Destination] @relation(name: "To")
+10     destination_cc: [Destination] @relation(name: "Cc")
+11     destination_bcc: [Destination] @relation(name: "Bcc")
+12   }
+13
+14   type Originator {
+15     id: ID!
+16     origin_date: String!
+17     originator_role: String!
+18     message: [Message!] @relation(name: "Originator")
+19     address_from: Address! @relation(name: "From", direction:"IN")
+20     address_sender: Address @relation(name: "Sender", direction:"IN")
+21     address_reply_to: Address @relation(name: "ReplyTo", direction:"IN")
+22   }
+23
+24   type Destination {
+25     id: ID!
+26     destination_role: String!
+27     received_date: String!
+28     message: Message! @relation(name: "Destination", direction:"IN")
+29     address_to: [Address]! @relation(name: "To", direction:"IN")
+30     address_cc: [Address] @relation(name: "Cc", direction:"IN")
+31     address_bcc: [Address] @relation(name: "Bcc", direction:"IN")
+32   }
+33
+34   type Message {
+35     id: ID!
+36     subject: String
+37     comments: String
+38     originator: Originator! @relation(name: "Originator", direction:"IN")
+39      destinations: [Destination]! @relation(name: "HasDestination")
+40      referencing: [Message] @relation(name: "Referencing")
+41      in_reply_to: [Message] @relation(name: "InReplyTo")
+42      keywords: [Keyword] @relation(name: "Tags")
+43   }
+44
+45   type Keyword {
+46     id: ID!
+47     keyword: String!
+48     messages: [Message] @relation(name: "Tags", direction:"IN")
+49   }
+50   ');</pre>
+<p>Note that I have added directions to the <code>@relation</code>s, since
+Neo4j needs to know the semantics.</p>
+<p>In the Neo4j desktop workbench the result is the display of an
+internal-use only metadata document, which describes the GraphQL
+schema.</p>
+<p>
+The Neo4j-GraphQL plugin contains some useful procedures for working
+with GraphQL in Neo4j. One of the important ones is about visualizing
+the GraphQL schema as a graph data model, as shown in Figure <a href="#471428_1_En_12_Chapter.xhtml#Fig2">12-2</a>.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_12_Chapter/471428_1_En_12_Fig2_HTML.jpg" style="height:34.42em" alt="../images/471428_1_En_12_Chapter/471428_1_En_12_Fig2_HTML.jpg"/>
+</p>
+
+<p>Figure 12-2</p>
+<p>Visualizing the GraphQL schema as a graph data model</p>
+
+
+<p>This lets you review the structure of the physical graph model.
+Corrections can be made on the GraphQL level, and the schema can be
+reprocessed.</p>
+<p>
+Finally, by opening the GraphiQL GraphQL browser, we can see the GraphQL
+schema documentation. So, by now we are ready to query and mutate the
+data in the Neo4j graph database via the GraphQL API, as shown in Figure
+<a href="#471428_1_En_12_Chapter.xhtml#Fig3">12-3</a>.
+
+</p>
+
+<p>
+<img src="images/471428_1_En_12_Chapter/471428_1_En_12_Fig3_HTML.jpg" style="height:35.52em" alt="../images/471428_1_En_12_Chapter/471428_1_En_12_Fig3_HTML.jpg"/>
+</p>
+
+<p>Figure 12-3</p>
+<p>Using GraphiQL to query and manipulate the graph data in Neo4j</p>
+
+
+<p>Using a Neo4j graph database as the underlying data store gives you a
+head start on your GraphQL project. Write your schema, tell it to Neo4j,
+and you are ready to enter data and query it by way of GraphQL.</p>
+
+
+<h2 class="Heading">Neo4j-GraphQL Resources</h2>
+<p>A good place to start getting involved with GraphQL  and Neo4j is this
+previously cited article (by Will Lyon), entitled “Using The
+Neo4j-GraphQL Plugin In Neo4j Desktop”.<sup><a href="#fn51" class="footnote-ref" id="fnref51" role="doc-noteref"><sup>51</sup></a></sup> It guides you through all
+necessary steps.</p>
+<p>There is a JavaScript variant of the Neo4j-GraphQL integration. The
+<a href="https://www.npmjs.com/package/neo4j-graphql-js">neo4j</a>-graphql-js NPM package<sup><a href="#fn52" class="footnote-ref" id="fnref52" role="doc-noteref"><sup>52</sup></a></sup> is available at <a href="https://www.npmjs.com/package/neo4j-graphql-js"> <code>https://www.npmjs.com/package/neo4j-graphql-js</code>
+</a>. The JavaScript version of the Neo4j-GraphQL
+integration is designed to work with all JavaScript GraphQL server
+implementations.</p>
+<p>
+You can learn more about the neo4j-graphql and GRANDstack projects here:
+
+</p>
+
+<ul>
+<li><p><em>GRANDstack.io</em>:<sup><a href="#fn53" class="footnote-ref" id="fnref53" role="doc-noteref"><sup>53</sup></a></sup> All things
+related to building applications using GRANDstack (GraphQL, React,
+Apollo, and Neo4j Database). See <a href="http://grandstack.io"> <code>http://grandstack.io</code>
+</a><code>/</code>.</p></li>
+<li><p><em>Neo4j and GraphQL developer page</em>:<sup><a href="#fn54" class="footnote-ref" id="fnref54" role="doc-noteref"><sup>54</sup></a></sup> Overview of ways to use
+GraphQL with Neo4j. See <a href="https://neo4j.com/developer/graphql">
+<code>https://neo4j.com/developer/graphql/</code>
+</a>.</p></li>
+<li><p><em>Using Neo4j-GraphQL Procedures</em>:<sup><a href="#fn55" class="footnote-ref" id="fnref55" role="doc-noteref"><sup>55</sup></a></sup> Interacting with the
+Neo4j-GraphQL plugin. See <a href="https://github.com/neo4j-graphql/neo4j-graphql#procedures"> <code>https://github.com/neo4j-graphql/neo4j-graphql#procedures</code>
+</a>.</p></li>
+<li><p><em>Neo4j-GraphQL GitHub organization</em>:<sup><a href="#fn56" class="footnote-ref" id="fnref56" role="doc-noteref"><sup>56</sup></a></sup> Find the code and docs for
+Neo4j-GraphQL integrations here. See <a href="https://github.com/neo4j-graphql"> <code>https://github.com/neo4j-graphql</code>
+</a>.</p></li>
+<li><p><em>neo4j-graphql-cli</em>:<sup><a href="#fn57" class="footnote-ref" id="fnref57" role="doc-noteref"><sup>57</sup></a></sup> A command-line tool for
+quickly spinning up a GraphQL API using Neo4j-GraphQL on Neo4j Sandbox.
+See <a href="https://www.npmjs.com/package/neo4j-graphql-cli"> <code>https://www.npmjs.com/package/neo4j-graphql-cli</code>
+</a>.</p></li>
+<li><p><em>The Neo4j Slack Channel</em>:<sup><a href="#fn58" class="footnote-ref" id="fnref58" role="doc-noteref"><sup>58</sup></a></sup> A command-line tool for
+quickly spinning up a GraphQL API using Neo4j-GraphQL on Neo4j Sandbox.
+See <a href="https://www.neo4j.com/slack"> <code>https://www.neo4j.com/slack</code>
+</a>.</p></li>
+</ul>
+
+
+
+
+Footnotes
+
+
+<a href="#471428_1_En_12_Chapter.xhtml#Fn1_source">1</a>
+
+ 
+
+
+
+<a href="#471428_1_En_12_Chapter.xhtml#Fn2_source">2</a>
+
+ 
+
+
+
+<a href="#471428_1_En_12_Chapter.xhtml#Fn3_source">3</a>
+
+ 
+
+
+
+<a href="#471428_1_En_12_Chapter.xhtml#Fn4_source">4</a>
+
+ 
+
+
+
+<a href="#471428_1_En_12_Chapter.xhtml#Fn5_source">5</a>
+
+ 
+
+
+
+<a href="#471428_1_En_12_Chapter.xhtml#Fn6_source">6</a>
+
+ 
+
+
+
+<a href="#471428_1_En_12_Chapter.xhtml#Fn7_source">7</a>
+
+ 
+
+
+
+<a href="#471428_1_En_12_Chapter.xhtml#Fn8_source">8</a>
+
+ 
+
+
+
+<a href="#471428_1_En_12_Chapter.xhtml#Fn9_source">9</a>
+
+ 
+
+
+
+<a href="#471428_1_En_12_Chapter.xhtml#Fn10_source">10</a>
+
+ 
+
+
+
+<a href="#471428_1_En_12_Chapter.xhtml#Fn11_source">11</a>
+
+ 
+
+
+
+<a href="#471428_1_En_12_Chapter.xhtml#Fn12_source">12</a>
+
+ 
+
+
+
+<a href="#471428_1_En_12_Chapter.xhtml#Fn13_source">13</a>
+
+ 
+
+
+
+<a href="#471428_1_En_12_Chapter.xhtml#Fn14_source">14</a>
+
+ 
+
+
+
+
+<p></p>
+
+<aside class="Appendix" epub:type="appendix" id="App1">
+
+<h2 class="Heading">Afterword: Summary</h2>
+<p>
+Delivering high-quality APIs with good business value is perfectly
+possible and repeatable, provided you keep these 10 pieces of advice in
+mind:
+
+</p>
+
+<ul>
+<li><p>Design for the business—stay within its scope and
+definitions</p></li>
+<li><p>Understand the business concepts and their properties</p></li>
+<li><p>Name all relationships</p></li>
+<li><p>Understand all relationships and design the schema
+accordingly</p></li>
+<li><p>Pay special attention to cardinalities</p></li>
+<li><p>Get identities and uniqueness right</p></li>
+<li><p>Realize that design is a series of decisions, so you need to talk
+with the stakeholders</p></li>
+<li><p>Be very careful with many-to-many relationships</p></li>
+<li><p>Consider using data profiling or similar machine assistance in
+understanding the data</p></li>
+<li><p>Draw those concept and property graph diagrams!</p></li>
+</ul>
+
+<p>The GraphQL approach has many benefits that seasoned data
+professionals will admire. It has a good potential of being a
+long-lasting thing; self-describing, structured result sets are good for
+everybody. The legacy technologies for interfacing with data were as
+good as they could be at the time they came about, but that is not good
+enough today. GraphQL is still young, but maturing, and everyone can
+benefit from having graph visualizations in there. The same goes for a
+visual, interactive version of GraphIQL, for end-users!</p>
+<p>Oh, and remember: <em>Information is based on trust, and if business
+people do not trust or understand the data presented to them, they will
+stop using it!</em></p>
+<p>Be prepared to do the additional work, if necessary, based on
+circumstances. Make sure that what you deliver is visual and pretty.
+Then you are good to go.</p>
+<p>This book is an ongoing project. Feedback is appreciated. Send an
+email to the author <sup><a href="#fn59" class="footnote-ref" id="fnref59" role="doc-noteref"><sup>59</sup></a></sup> at
+info@graphdatamodeling.com.</p>
+
+</aside>
+
+
+<h3 class="Heading">Index</h3>
+
+
+
+<h3 class="Heading">A, B</h3>
+
+
+
+Business flow
+
+
+API designers
+
+
+business-level keys
+
+
+database designs
+
+
+key fields
+
+
+network of objects and events
+
+
+state changes
+
+
+versions
+
+
+
+
+Business meaning
+
+
+API matter
+
+
+applications/microservices
+
+
+data names
+
+
+establishing identity and uniqueness
+
+
+finding standard data structures
+
+
+
+
+
+<h3 class="Heading">C</h3>
+
+
+
+Company Location property
+
+
+
+
+Content matters
+
+
+custom schema directives
+
+
+date and time
+
+
+design
+
+
+housekeeping
+
+
+scalar data types
+
+
+
+
+Cypher
+
+
+
+
+
+<h3 class="Heading">D</h3>
+
+
+
+Data model structure
+
+
+Customer-places-Order
+
+
+generalization <em>vs</em> . specialization
+
+
+inter-object relationships
+
+
+linking phrase
+
+
+many-to-many relationship
+
+
+objects/events
+
+
+one-to-one relationships
+
+
+originator
+
+
+patchwork
+
+
+properties
+
+
+property graph
+
+
+property of relationship
+
+
+self-references
+
+
+supplier parts
+
+
+ternary relationship
+
+
+tools
+
+
+type of relationship
+
+
+use of properties
+
+
+
+
+
+<h3 class="Heading">E, F</h3>
+
+
+
+Email
+
+
+data graph
+
+
+Graphcool
+
+
+Internet standard
+
+
+nodes
+
+
+overview
+
+
+property graph
+
+
+relationships
+
+
+
+
+
+<h3 class="Heading">G, H, I, J, K, L, M</h3>
+
+
+
+GitHub
+
+
+
+
+Graph
+
+
+GraphQL list modifier
+
+
+inline fragments
+
+
+keywords
+
+
+list of contacts
+
+
+
+
+Graphcool
+
+
+
+
+Graph database
+
+
+boilerplate overdose
+
+
+@cypher statements
+
+
+data names
+
+
+date and time
+
+
+identity, uniqueness and keys
+
+
+missing information
+
+
+naming relationships
+
+
+Neo4j database
+
+
+Neo4j desktop
+
+
+Neo4j-GraphQL integration
+
+
+Neo4j GraphQL plugin
+
+
+Neo4j-GraphQL resources
+
+
+poor performance
+
+
+properties on relationships
+
+
+relationship types
+
+
+scalar data types
+
+
+schema duplication
+
+
+server/client data mismatch
+
+
+states, versions and housekeeping
+
+
+superfluous database calls
+
+
+transformations
+
+
+
+
+GraphQL data
+
+
+business processes
+
+
+car dealership concepts
+
+
+concepts
+
+
+data content
+
+
+data modeling
+
+
+data structures
+
+
+design
+
+
+diagramming style
+
+
+logical and physical models
+
+
+meaning of content
+
+
+one-liner explanations
+
+
+one-step approach
+
+
+syntax elements
+
+
+user-defined extensions
+
+
+variety of purposes
+
+
+
+
+GraphQL Voyager
+
+
+
+
+
+<h3 class="Heading">N</h3>
+
+
+
+Nordics
+
+
+
+
+
+<h3 class="Heading">O</h3>
+
+
+
+Object-relational mappers (ORMs)
+
+
+
+
+
+<h3 class="Heading">P, Q, R</h3>
+
+
+
+Property graph
+
+
+
+
+
+<h3 class="Heading">S</h3>
+
+
+
+Schema Definition Language (SDL)
+
+
+
+
+SQL data issues
+
+
+data names
+
+
+data warehouse community
+
+
+date and time
+
+
+functional layer
+
+
+identity, uniqueness and keys
+
+
+Kimball Group
+
+
+naming relationships
+
+
+properties on relationships
+
+
+relationship types
+
+
+many-to-many relationships
+
+
+one-to-one relationships
+
+
+one/zero to zero/many relationships
+
+
+self references
+
+
+scalar data types
+
+
+states, versions and housekeeping
+
+
+tools
+
+
+
+
+
+<h3 class="Heading">T, U, V, W, X, Y, Z</h3>
+
+
+
+Trees
+
+
+address-level/keyword-level properties
+
+
+email data model
+
+
+originator
+
+
+property graph
+
+
+root
+
+
+tree-based denormalization
+
+
+
+
+
+
+Footnotes
+
+
+<a href="#471428_1_En_BookBackmatter_OnlinePDF.xhtml#Fn1_source">1</a>
+
+ 
+
+
+
+
+<aside id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
+<hr/>
+<ol>
+<li id="fn1"><p><a href="http://www.graphql.org"> <code>http://www.graphQL.org</code>
+</a><a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p><a href="http://www.graph.cool"> <code>http://www.graph.cool</code>
+</a><a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p><a href="https://blog.grandstack.io/five-common-graphql-problems-and-how-neo4j-graphql-aims-to-solve-them-e9a8999c8d43"> <code>https://blog.grandstack.io/five-common-graphql-problems-and-how-neo4j-graphql-aims-to-solve-them-e9a8999c8d43</code>
+</a><a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p><a href="https://neo4j.com"> <code>https://neo4j.com</code>
+</a><a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p><a href="https://twitter.com/VizDataModeler"> <code>https://twitter.com/VizDataModeler</code>
+</a><a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p><a href="https://technicspub.com/graph-data-modeling/"> <code>https://technicspub.com/graph-data-modeling/</code>
+</a><a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p><a href="http://graphql.org/"> <code>http://graphql.org/</code>
+</a><a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p><a href="http://facebook.github.io/graphql/October2016/"> <code>http://facebook.github.io/graphql/October2016/</code>
+</a><a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p><a href="https://blog.graph.cool/graphql-server-basics-the-schema-ac5e2950214e"> <code>https://blog.graph.cool/graphql-server-basics-the-schema-ac5e2950214e</code>
+</a><a href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn10"><p><a href="http://www.neo4j.com/"> <code>http://www.neo4j.com/</code>
+</a><a href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn11"><p><a href="https://dzone.com/refcardz/an-overview-of-graphql"> <code>https://dzone.com/refcardz/an-overview-of-graphql</code>
+</a><a href="#fnref11" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn12"><p><a href="https://apis.guru/graphql-voyager/"> <code>https://apis.guru/graphql-voyager/</code>
+</a><a href="#fnref12" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn13"><p><a href="http://nathanrandal.com/graphql-visualizer/"> <code>http://nathanrandal.com/graphql-visualizer/</code>
+</a><a href="#fnref13" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn14"><p><a href="https://brbb.github.io/graphql-rover/">
+<code>https://brbb.github.io/graphql-rover/</code>
+</a><a href="#fnref14" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn15"><p><a href="http://graphql.org/learn/schema/"> <code>http://graphql.org/learn/schema/</code>
+</a><a href="#fnref15" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn16"><p><a href="https://technicspub.com/graph-data-modeling/"> <code>https://technicspub.com/graph-data-modeling/</code>
+</a><a href="#fnref16" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn17"><p><a href="http://www.graph.cool"> <code>http://www.graph.cool</code>
+</a><a href="#fnref17" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn18"><p><a href="https://dev-blog.apollodata.com/reusable-graphql-schema-directives-131fb3a177d1"> <code>https://dev-blog.apollodata.com/reusable-graphql-schema-directives-131fb3a177d1</code>
+</a><a href="#fnref18" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn19"><p><a href="https://github.com/facebook/graphql/blob/master/spec/GraphQL.md"> <code>https://github.com/facebook/graphql/blob/master/spec/GraphQL.md</code>
+</a><a href="#fnref19" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn20"><p><a href="https://technicspub.com/graph-data-modeling/"> <code>https://technicspub.com/graph-data-modeling/</code>
+</a><a href="#fnref20" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn21"><p><a href="https://technicspub.com/graph-data-modeling/"> <code>https://technicspub.com/graph-data-modeling/</code>
+</a><a href="#fnref21" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn22"><p><a href="http://bit.ly/2hMNYvE"> <code>http://bit.ly/2hMNYvE</code>
+</a><a href="#fnref22" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn23"><p><a href="https://apis.guru/graphql-voyager/"> <code>https://apis.guru/graphql-voyager/</code>
+</a><a href="#fnref23" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn24"><p><a href="https://neo4j.com/"> <code>https://neo4j.com/</code>
+</a><a href="#fnref24" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn25"><p><a href="https://technicspub.com/graph-data-modeling/"> <code>https://technicspub.com/graph-data-modeling/</code>
+</a><a href="#fnref25" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn26"><p><a href="https://github.com/excitement-engineer/graphql-iso-date"> <code>https://github.com/excitement-engineer/graphql-iso-date</code>
+</a><a href="#fnref26" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn27"><p><a href="https://dev-blog.apollodata.com/reusable-graphql-schema-directives-131fb3a177d1"> <code>https://dev-blog.apollodata.com/reusable-graphql-schema-directives-131fb3a177d1</code>
+</a><a href="#fnref27" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn28"><p><a href="https://dev-blog.apollodata.com/graphql-schema-stitching-8af23354ac37"> <code>https://dev-blog.apollodata.com/graphql-schema-stitching-8af23354ac37</code>
+</a><a href="#fnref28" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn29"><p><a href="https://github.com/stubailo/schema-stitching-demo"> <code>https://github.com/stubailo/schema-stitching-demo</code>
+</a><a href="#fnref29" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn30"><p><a href="https://www.apollographql.com/docs/graphql-tools/schema-stitching.html"> <code>https://www.apollographql.com/docs/graphql-tools/schema-stitching.html</code>
+</a><a href="#fnref30" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn31"><p><a href="http://www.neo4j.com"> <code>http://www.neo4j.com</code>
+</a><a href="#fnref31" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn32"><p><a href="https://github.com/graphql/graphiql">
+<code>https://github.com/graphql/graphiql</code>
+</a><a href="#fnref32" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn33"><p><a href="http://graphql.org/learn/"> <code>http://graphql.org/learn/</code>
+</a><a href="#fnref33" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn34"><p><a href="http://docs.sequelizejs.com"> <code>http://docs.sequelizejs.com</code>
+</a><a href="#fnref34" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn35"><p><a href="https://github.com/stems/join-monster/blob/master/README.md"> <code>https://github.com/stems/join-monster/blob/master/README.md</code>
+</a><a href="#fnref35" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn36"><p><a href="https://neo4j.com"> <code>https://neo4j.com</code>
+</a><a href="#fnref36" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn37"><p><a href="http://www.opencypher.org"> <code>http://www.opencypher.org</code>
+</a><a href="#fnref37" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn38"><p><a href="https://youtu.be/J-J90uwugb4"> <code>https://youtu.be/J-J90uwugb4</code>
+</a><a href="#fnref38" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn39"><p><a href="https://blog.grandstack.io/using-the-neo4j-graphql-plugin-in-neo4j-desktop-c8a60aa014d9"> <code>https://blog.grandstack.io/using-the-neo4j-graphql-plugin-in-neo4j-desktop-c8a60aa014d9</code>
+</a><a href="#fnref39" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn40"><p><a href="https://electronjs.org/apps/graphiql">
+<code>https://electronjs.org/apps/graphiql</code>
+</a><a href="#fnref40" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn41"><p><a href="https://neo4j.com/blog/data-profiling-holistic-view-neo4j/"> <code>https://neo4j.com/blog/data-profiling-holistic-view-neo4j/</code>
+</a><a href="#fnref41" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn42"><p><a href="https://neo4j-contrib.github.io/neo4j-apoc-procedures/#_date_and_time_conversions"> <code>https://neo4j-contrib.github.io/neo4j-apoc-procedures/#_date_and_time_conversions</code>
+</a><a href="#fnref42" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn43"><p><a href="https://graphaware.com/neo4j/2014/08/20/graphaware-neo4j-timetree.html"> <code>https://graphaware.com/neo4j/2014/08/20/graphaware-neo4j-timetree.html</code>
+</a><a href="#fnref43" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn44"><p><a href="https://github.com/neo4j-graphql/neo4j-graphql#schema-from-graph"> <code>https://github.com/neo4j-graphql/neo4j-graphql#schema-from-graph</code>
+</a><a href="#fnref44" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn45"><p><a href="https://blog.grandstack.io/five-common-graphql-problems-and-how-neo4j-graphql-aims-to-solve-them-e9a8999c8d43"> <code>https://blog.grandstack.io/five-common-graphql-problems-and-how-neo4j-graphql-aims-to-solve-them-e9a8999c8d43</code>
+</a><a href="#fnref45" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn46"><p><a href="https://medium.com/%2540sachagreif"> <code>https://medium.com/@sachagreif</code>
+</a><a href="#fnref46" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn47"><p><a href="https://medium.freecodecamp.org/five-common-problems-in-graphql-apps-and-how-to-fix-them-ac74d37a293c"> <code>https://medium.freecodecamp.org/five-common-problems-in-graphql-apps-and-how-to-fix-them-ac74d37a293c</code>
+</a><a href="#fnref47" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn48"><p><a href="https://neo4j.com/developer/graphql/">
+<code>https://neo4j.com/developer/graphql/</code>
+</a><a href="#fnref48" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn49"><p><a href="http://www.opencypher.org"> <code>http://www.opencypher.org</code>
+</a><a href="#fnref49" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn50"><p><a href="https://github.com/facebook/dataloader">
+<code>https://github.com/facebook/dataloader</code>
+</a><a href="#fnref50" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn51"><p><a href="https://blog.grandstack.io/using-the-neo4j-graphql-plugin-in-neo4j-desktop-c8a60aa014d9"> <code>https://blog.grandstack.io/using-the-neo4j-graphql-plugin-in-neo4j-desktop-c8a60aa014d9</code>
+</a><a href="#fnref51" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn52"><p><a href="https://www.npmjs.com/package/neo4j-graphql-js"> <code>https://www.npmjs.com/package/neo4j-graphql-js</code>
+</a><a href="#fnref52" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn53"><p><a href="http://grandstack.io"> <code>http://grandstack.io</code>
+</a><a href="#fnref53" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn54"><p><a href="https://neo4j.com/developer/graphql/">
+<code>https://neo4j.com/developer/graphql/</code>
+</a><a href="#fnref54" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn55"><p><a href="https://github.com/neo4j-graphql/neo4j-graphql#procedures"> <code>https://github.com/neo4j-graphql/neo4j-graphql#procedures</code>
+</a><a href="#fnref55" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn56"><p><a href="https://github.com/neo4j-graphql"> <code>https://github.com/neo4j-graphql</code>
+</a><a href="#fnref56" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn57"><p><a href="https://www.npmjs.com/package/neo4j-graphql-cli"> <code>https://www.npmjs.com/package/neo4j-graphql-cli</code>
+</a><a href="#fnref57" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn58"><p><a href="https://www.neo4j.com/slack"> <code>https://www.neo4j.com/slack</code>
+</a><a href="#fnref58" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn59"><p><code>mailto:info@graphdatamodeling.com</code><a href="#fnref59" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</aside>
