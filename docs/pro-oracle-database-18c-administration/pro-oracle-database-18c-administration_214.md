@@ -1,0 +1,2 @@
+# NVARCHAR2 和 NCHAR 数据类型
+

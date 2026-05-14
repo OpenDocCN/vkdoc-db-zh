@@ -1,0 +1,2 @@
+# INDEX_STATS 视图
+

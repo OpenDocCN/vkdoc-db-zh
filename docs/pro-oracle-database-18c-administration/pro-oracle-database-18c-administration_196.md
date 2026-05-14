@@ -1,0 +1,2 @@
+# MESSAGE_TEXT LIKE 命令
+
