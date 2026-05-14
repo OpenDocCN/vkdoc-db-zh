@@ -1,0 +1,84 @@
+# 索引
+
+- `Production.Product` 表，111–112
+- `BIT` 数据类型列，162
+- `StandardCost` 顺序，112
+- 计算列，162
+- `UPDATE` 语句，116
+- `CREATE INDEX` 语句，162
+- 索引碎片
+- 数据库引擎优化顾问 (`Database Engine Tuning Advisor`)，163
+- `ALTER INDEX REBUILD` 语句
+- 不同的列排序顺序，162
+- `CREATE INDEX` 和 `DROP_EXISTING`
+- 在线索引创建，163
+- 子句，253–254
+- 并行索引创建，163
+- 碎片整理技术，255
+- 列存储索引 (`columnstore index`)，143, 158–160
+- 内部和外部
+- 压缩，143, 156–158
+- 碎片，254–255
+- 覆盖索引 (`covering index`)，143
+- `PAD_INDEX` 设置，255
+- 优势，145
+- `sys.dm_db_index_physical_stats`，254
+- `INCLUDE` 操作符，144–145
+- `ALTER INDEX REORGANIZE` 语句，255
+- `Index Seek` 操作，145
+- 自动维护
+- I/O 和执行时间，144
+- 数据库分析，260–262
+- 伪聚集索引 (`pseudoclustered index`)，145
+- 文件名输出，264–265
+- 查询，144
+- `FragmentationOutput.txt` 文件，266–267
+- [www.it-ebooks.info](http://www.it-ebooks.info/)
+- ■ 索引
+- 索引碎片 (`续`)
+- „ **L**
+- „
+- „
+- 功能脚本 (`functional script`)，261
+- 作业名称和详细信息，262–263
+- 前导边缘列 (`Leading edge column`)，124, 126–127
+- 作业计划，265–266
+- 锁管理器 (`Lock manager`)
+- 用户数据库，263–264
+- 批量更新锁模式，414
+- 聚集索引，245–246
+- 聚集索引，428
+- 碎片整理和分区，257
+- 连接，410–411
+- 磁盘和随机 I/O 操作，245
+- 排他模式 (`exclusive mode`)，413
+- `DROP_EXISTING` 子句，252
+- 意向排他模式 (`intent exclusive mode`)，413–414
+- 删除和重新创建，252
+- 意向共享模式 (`intent shared mode`)，413–414
+- 区切换 (`extent switch`)，238–239
+- 隔离级别 (`isolation level`)
+- 外部碎片，239, 245
+- 定义，415
+- 填充因子 (`fill factor`)
+- 读已提交级别 (`Read Committed level`)，416–417
+- 平均页面密度 (满)，260
+- 读未提交级别 (`Read Uncommitted level`)，416
+- `avg_page_space_used_in_percent`，259
+- 可重复读级别 (`Repeatable Read level`)，417–420
+- 聚集索引，258
+- 行版本控制 (`row versioning`)，415
+- 默认填充因子，258
+- `INSERT` 和 `UPDATE`
+- 键范围模式 (`key-range mode`)，415
+- 操作，259
+- 锁兼容性 (`lock compatibility`)，415
+- OLTP 应用程序，260
+- 锁升级 (`lock escalation`)，408
+- 小型测试表，258
+- 锁粒度 (`lock granularity`)
+- 事务表 (`transactional table`)，258
+- 数据库级锁，407
+- `INSERT` 语句
+
+

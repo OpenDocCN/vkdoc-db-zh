@@ -1,0 +1,1960 @@
+- '
+
+  ![](img/978-1-4842-7192-6_CoverFigure.jpg)
+
+
+  `ISBN 978-1-4842-7191-9` 电子`ISBN 978-1-4842-7192-6` [`https://doi.org/10.1007/978-1-4842-7192-6`](https://doi.org/10.1007/978-1-4842-7192-6)
+  © Anthony E. Nocentino, Ben Weissman 2021
+
+
+  Apress Media LLC 董事总经理：Welmoed Spahr
+
+
+  策划编辑：Steve Anglin
+
+
+  组稿编辑：Matthew Moodie
+
+
+  协调编辑：Mark Powers
+
+
+  封面设计：eStudioCalamar
+
+
+  全球图书贸易发行：Apress Media, LLC, 1 New York Plaza, New York, NY 10004, U.S.A. 电话 1-800-SPRINGER,
+  传真 (201) 348-4505, 电子邮件 `orders-ny@springer-sbm.com`, 或访问 `www.springeronline.com`。Apress
+  Media, LLC 是一家位于加利福尼亚州的有限责任公司，其唯一成员（所有者）是 Springer Science + Business Media Finance
+  Inc (SSBM Finance Inc)。SSBM Finance Inc 是一家特拉华州公司。
+
+
+  如需翻译信息，请发送电子邮件至 `booktranslations@springernature.com`；如需重印、平装本或音频版权，请发送电子邮件至 `bookpermissions@springernature.com`。
+
+
+  Apress 图书可批量购买用于学术、企业或促销用途。大多数图书也提供电子书版本和许可。更多信息，请参考我们的印刷版和电子书批量销售网页：`http://www.apress.com/bulk-sales`。
+
+
+  本作品受版权保护。出版者保留所有权利，无论涉及材料的全部或部分，具体包括翻译权、重印权、插图再利用权、朗诵权、广播权、缩微胶片或其他任何物理方式的复制权，以及信息存储与检索、电子改编、计算机软件方面的传播权，或目前已知或未来开发的任何类似或不同的方法。本书中使用的通用描述性名称、注册商标、服务标志等，即使未作特别声明，也不意味着这些名称可免于相关保护性法律法规的约束而自由使用。出版者、作者和编辑可安全地假设本书中的建议和信息在出版时是真实准确的。出版者、作者或编辑均不就本文所含材料或任何可能存在的错误或遗漏提供明示或暗示的保证。出版者对于已出版地图中的管辖权主张以及机构从属关系保持中立。
+
+
+  此 Apress 印记由 Springer Nature 旗下注册公司 APress Media, LLC 出版。
+
+
+  注册公司地址为：1 New York Plaza, New York, NY 10004, U.S.A.
+
+
+  `献给我的女孩们。我爱你们。`
+
+
+  —Anthony
+
+
+  `给 Gwendolyn 和 Franzie。`
+
+
+  —Ben
+
+
+  '
+- '# 前言
+
+
+  几十年来，SQL Server 一直是数据库行业的重要力量，服务于开发者、企业和小型企业。多年来，Windows Server 是 SQL Server 发展壮大的主要平台。2017
+  年，我们推出了在 Linux 操作系统上运行 SQL Server 的功能，这对我们和数据库社区来说都是一个改变游戏规则的举措。
+
+
+  SQL Server 对 Linux 的支持向我们的社区敞开了容器技术的大门。容器为可移植性、灵活性、效率和优化开启了新的可能性。SQL Server 现已成为这个世界和生态系统的一部分。随着对容器的支持而来的是
+  Kubernetes 的自然扩展，这是一个用于大规模部署和管理像 SQL Server 这样的容器化应用程序的系统。
+
+
+  本书由两位行业专家 Anthony Nocentino 和 Ben Weissman 撰写，是您学习 SQL Server 和 Kubernetes 的最佳资源。我曾与
+  Anthony 和 Ben 都有过合作，我想不出还有谁能比他们更适合撰写这个主题。
+
+
+  我喜欢这本书为读者精心设计的结构。您将从容器基础知识、Kubernetes 架构以及部署 `k8s` 的细节开始构建您的知识。（是的，您需要学会这样称呼它。谁愿意每次都输入全名呢？）掌握了
+  `k8s` 基础知识，例如如何使用著名的 `kubectl` 工具以及存储概念后，您将学习在 `k8s` 上部署、交互和监控 SQL Server 的所有方面。在每一章的学习旅程中，都有许多分步示例和图表，让您能够直观地确认自己在
+  SQL 和 `k8s` 上的实践体验。
+
+
+  本书最后提供了 SQL Server 容器在 `k8s` 上实际生产场景中的精彩示例，包括 Azure Arc 和 SQL Server 大数据集群（BDC）。SQL
+  Server 无处不在，而学习 SQL Server 容器如何在 `k8s` 上运行，就是关于在全新平台、新挑战和新技能上的创新。这本书将帮助您迎接这些挑战，它由
+  SQL Server 和平台行业及社区中的两位专家撰写。
+
+
+  —Bob Ward
+
+
+  Microsoft
+
+
+  '
+- '# 致谢
+
+
+  首先，我必须感谢我的妻子 Heather。您是我最好的朋友和伴侣。今年我们庆祝了 21 周年结婚纪念日。与您在一起的每一天都比前一天更美好。我爱您，感谢您多年来坚定不移的支持、给予我的灵感，并倾听我喋喋不休地谈论技术话题。我想感谢我两个可爱的女儿
+  Gabby 和 Charlotte，感谢你们的 `SQL Server, SQL Server, SQL Server…`、`Kubernetes 是一种花式饮料`
+  和 `Sassy Sausage`。我爱你们，姑娘们。你们是我无尽的快乐和骄傲之源。
+
+
+  其次，感谢 SQL 和数据平台 MVP 社区。你们中的许多人都对造就了今天的我——无论是作为个人还是技术专家——做出了贡献。我要特别提到我的合著者 Ben Weissman，感谢您的友谊以及帮助我推动这本书的完成——谢谢您。我还要感谢我的“容器伙伴”
+  Andrew Pruski，他来自威尔士，现居都柏林。Andrew 和我经常讨论关于 SQL Server、容器和 Kubernetes 的一切。感谢您审阅这本书。
+
+
+  感谢我在过去几年中结识的 SQL Server 工程团队的众多朋友，感谢你们无尽的技术创新、参与 SQL Server 社区以及回复我的邮件。你们将 SQL Server
+  放在 Linux 上，然后放入容器中，接着又放到了 Kubernetes 上……这是一项了不起的成就。
+
+
+  感谢 Bob Ward，感谢您撰写了精彩的前言，感谢您成为 SQL Server 社区如此重要的一部分，并感谢您向世界传授 SQL Server 在底层的工作原理。
+
+
+  感谢 Apress 团队的 Jonathan、Jill 和 Laura，你们真的让这个过程变得轻松。没有你们的支持，我们无法完成这项工作。
+
+
+  —Anthony
+
+
+  `谢谢你，Franzie！为了过去 11 年（以及未来的岁月！）。感谢你支持我所做的一切。为了我们美丽的女儿。我爱你们俩——最爱最爱。`
+
+
+  `谢谢你，Solisyon 团队！感谢你们每一天都追求卓越——即使在像这样的充满挑战的时期！`
+
+
+  `谢谢你，#sqlsaturdaycambridge！这是 Anthony 和我当年相遇的地方。`
+
+
+  `谢谢你，Anthony！这又是一个有趣的项目——我们接下来要做什么？在我们想清楚的同时，感谢你做你自己，也感谢你成为一位很棒的朋友！`
+
+
+  `谢谢你，#sqlfamily。我可能以前说过：我从未见过像我们这样的社区，能成为其中的一员是我的荣幸。人数太多，无法一一列举——但你们知道自己是谁。`
+
+
+  `谢谢你，Andrew！感谢你在 Twitter 上定期进行的有趣对话，感谢你在我每次打扰你时都出手相助，也感谢你成为本书出色的技术审阅者！`
+
+
+  `最后但同样重要的是，谢谢你，Bob——感谢你对这本书的支持，更重要的是，感谢你为我们社区所做的一切！`
+
+
+  —Ben
+
+
+  '
+- '# 关于作者 关于技术审阅者
+
+
+  '
+- "# 第一部分：容器与 Kubernetes 基础\n\n\n\n## 开始使用\n\n欢迎来到**Kubernetes 上的 SQL Server**！本章将介绍实验环境的架构以及执行本书实验所需的技术要求。第一批实验基于在\
+  \ Docker 主机上的容器中部署 SQL Server。之后，我们将进展到将 SQL Server 和其他应用程序部署到一个 Kubernetes 集群中，我们将在本书后面的部分帮助你构建这个集群。\n\
+  \n### 安装 Docker\n\n在第 2 章，我们将介绍容器以及将 SQL Server 部署为容器。要执行该章的实验，你需要在一台计算机上安装 Docker\
+  \ 和`sqlcmd`实用工具。如果你更喜欢使用其他基于命令行的 SQL 客户端，如`mssql-cli`，那也没问题。但为了简便起见，我们的演示将坚持使用`sqlcmd`。\n\
+  \nDocker 可用于 Windows、MacOS 和 Linux 平台，每个平台都有独特的安装方法。虽然你可以在这些平台中的任何一个上安装 Docker，并且第\
+  \ 2 章的演示也能运行，但我们建议为本课程创建一个拥有 2 个 vCPU、8GB RAM 和 150GB 磁盘空间的虚拟机，并安装 Ubuntu 18.04\
+  \ 作为基础操作系统。\n\n以下是 Docker 在各平台上的安装说明链接。请查阅在每个平台上安装 Docker 的要求。如果你想复现第 2 章的演示，你需要首先准备好此环境：\n\
+  \n*   **Docker Desktop for Windows：** [*https://docs.docker.com/docker-for-windows/install/*](https://docs.docker.com/docker-for-windows/install/)\n\
+  *   **Docker Desktop for Mac：** [*https://docs.docker.com/docker-for-mac/install/*](https://docs.docker.com/docker-for-mac/install/)\n\
+  *   **Docker Engine – Community (Ubuntu)：** [*https://docs.docker.com/install/linux/docker-ce/ubuntu/*](https://docs.docker.com/install/linux/docker-ce/ubuntu/)\n\
+  \n在继续之前，请确保你能在你的环境中成功运行一个容器。在命令行执行清单 1-1。\n\n`docker run hello-world`\n\n清单 1-1：运行你的第一个\
+  \ Docker 容器\n\n如果容器成功运行，你将看到如清单 1-2 所示的输出。\n\n```\nUnable to find image 'hello-world:latest'\
+  \ locally\nlatest: Pulling from library/hello-world\n1b930d010525: Pull complete\n\
+  Digest: sha256:9572f7cdcee8591948c2963463447a53466950b3fc15a247fcad1917ca215a2f\n\
+  Status: Downloaded newer image for hello-world:latest\nHello from Docker!\nThis\
+  \ message shows that your installation appears to be working correctly.\nTo generate\
+  \ this message, Docker took the following steps:\n1. The Docker client contacted\
+  \ the Docker daemon.\n2. The Docker daemon pulled the \"hello-world\" image from\
+  \ the Docker Hub. (amd64)\n3. The Docker daemon created a new container from that\
+  \ image which runs the executable that produces the output you are currently reading.\n\
+  4. The Docker daemon streamed that output to the Docker client, which sent it to\
+  \ your terminal.\nTo try something more ambitious, you can run an Ubuntu container\
+  \ with:\n$ docker run -it ubuntu bash\nShare images, automate workflows, and more\
+  \ with a free Docker ID:\nhttps://hub.docker.com/\nFor more examples and ideas,\
+  \ visit:\nhttps://docs.docker.com/get-started/\n```\n\n清单 1-2：你的第一个 Docker 容器的输出\n\
+  \n除了 Docker，第 2 章的演示还需要`sqlcmd`实用工具。你可以从以下位置下载它：\n\n*   **SQL Server 命令行实用工具：**\
+  \ [*https://docs.microsoft.com/en-us/sql/tools/sqlcmd-utility*](https://docs.microsoft.com/en-us/sql/tools/sqlcmd-utility)\n\
+  \n### 基于虚拟机的 Kubernetes 集群要求\n\n随着我们进入本书关于 Kubernetes 的章节，我们将在第 4 章一起构建一个 Kubernetes\
+  \ 集群。为此，我们将需要一些计算和存储资源。对于我们的实验，我们将使用一组五台 Linux 虚拟机。我们实验中的每台虚拟机都需要 2 个 vCPU、2GB RAM\
+  \ 和 150GB 磁盘空间，运行 Ubuntu Server 16.04+作为操作系统。我们已在 Ubuntu 16.04 和 Ubuntu 18.04 上测试了本书的代码。Kubernetes\
+  \ 支持多种操作系统。更多详情请查阅[*https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/*](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/)。\n\
+  \n#### 在 Azure 中运行虚拟机\n\n如果你没有支持运行这些虚拟机的系统，另一个选择是在 Azure 中设置它们。我们为你提供了一个脚本，可以为你设置整个环境。这将需要一个有效的\
+  \ Azure 订阅以及`Azure CLI（命令行界面）`。你可以从[*https://docs.microsoft.com/en-us/cli/azure/*](https://docs.microsoft.com/en-us/cli/azure/)下载`Azure\
+  \ CLI`，我们也将在“安装工具”部分向你展示一种从命令行轻松安装它的方法。如果你没有 Azure 订阅，可以在[*https://azure.microsoft.com/en-us/free/*](https://azure.microsoft.com/en-us/free/)注册一个试用账户。这将为你提供\
+  \ 200 美元的额度，有效期 30 天，可用于任何 Azure 服务。\n\n在我们能通过`Azure CLI`与 Azure 交互之前，我们需要登录，这通过清单\
+  \ 1-3 所示的命令完成。\n\n`az login`\n\n清单 1-3：使用 Azure CLI 登录你的 Azure 账户的脚本\n\n这将在 Windows\
+  \ 和 Mac 上打开一个网页浏览器，或在 Linux 上指向一个 URL 以确认你的凭据。\n\n如果你有权访问多个 Azure 订阅，请使用清单 1-4 中的命令确保你正在使用正确的那个。如果提示你为\
+  \ Azure CLI 安装任何扩展，请照做。\n\n`az account set -s`\n\n清单 1-4：设置 Azure CLI 的活动订阅\n\n\
+  现在你可以运行清单 1-5 中的脚本，它将创建一个资源组、一个虚拟网络、允许来自任何 IP 地址的入站 RDP 和 SSH 连接的网络安全规则，以及前一节中描述的虚拟机。这还将生成公共\
+  \ DNS 条目，这些条目本质上必须是唯一的，因此请根据你的要求修改脚本中的以下变量：\n\n*   `Username`\n*   `PW`（要使用的密码）\n\
+  *   `Region`（将创建所有资源的 Azure 区域）\n*   `dnsPrefix`（添加到所有公共 DNS 名称前的前缀）\n*   `RG`（资源组名称）\n\
+  \n注意\n\n不建议让你的机器可以从任何公共 IP 地址访问，因此请不要在此实验环境中使用任何敏感数据。`dnsPrefix`必须是全局唯一的，因此请将其更改为包含你的姓名首字母和/或随机数字的内容。\n\
+  \n\n\n## 使用 Azure 和 Azure Kubernetes Service 搭建实验室环境\n\n### PowerShell 脚本：创建 Azure\
+  \ 实验室环境\n\n```powershell\n# 根据需要修改这些变量\n$Region=\"EastUS\"\n$RG=\"KubernetesLabs\"\
+  \n$Username=\"labuser\"\n$PW=\"Str@ngPassw0rd\"\n$dnsPrefix=\"k8slab\"\n$VMSize=\"\
+  Standard_B2s\"\n$Linux_Image=\"Canonical:UbuntuServer:18.04-LTS:latest\"\n$Windows_Image=\"\
+  Win2016datacenter\"\n# 定义机器\n$machines = ConvertFrom-Csv @'\nHostname,IP,OS\nstorage,172.16.94.5,Linux\n\
+  control,172.16.94.10,Linux\nnode1,172.16.94.11,Linux\nnode2,172.16.94.12,Linux\n\
+  node3,172.16.94.13,Linux\nworkstation,172.16.94.100,Windows\n'@\n# 创建资源组\naz group\
+  \ create -l $Region -n $RG\n# 创建虚拟网络和网络安全组\naz network vnet create --name LABVnet\
+  \ --resource-group $RG --address-prefixes 172.16.94.0/24\naz network vnet subnet\
+  \ create --name LabSubnet --address-prefixes 172.16.94.0/24 `\n--resource-group\
+  \ $RG --vnet-name LABVnet\naz network nsg create --name LABNSG --resource-group\
+  \ $RG\naz network nsg rule create --name SSH --nsg-name LABNSG --priority 1000 `\n\
+  --resource-group $RG --destination-port-ranges 22 --access \"Allow\" `\n--protocol\
+  \ TCP --direction Inbound\naz network nsg rule create --name RDP --nsg-name LABNSG\
+  \ --priority 1001 `\n--resource-group $RG --destination-port-ranges 3389 --access\
+  \ \"Allow\" `\n--protocol TCP --direction Inbound\n# 创建虚拟机\nforeach($vm in $machines)\
+  \ {\n$hostname=$vm.Hostname\n$DNSName=\"$dnsPrefix-$hostname\"\n$image=$Windows_Image\n\
+  if ($vm.OS -eq \"Linux\") { $image=$Linux_Image }\naz network public-ip create --name\
+  \ PIP-$hostname --resource-group $RG --dns-name $DNSName\naz network nic create\
+  \ --name NIC-$hostname --resource-group $RG --subnet LabSubnet `\n--vnet-name LABVnet\
+  \ --private-ip-address $vm.IP --public-ip-address PIP-$hostname\naz vm create --name\
+  \ $hostname --resource-group $RG --nics NIC-$hostname --os-disk-size-gb 150 `\n\
+  --os-disk-name Disk-$hostname --image $image --authentication-type password `\n\
+  --admin-username $Username --admin-password $PW --size $VMSize\n}\n```\n\n除了 Linux\
+  \ 虚拟机外，此脚本还创建了一个 Windows 虚拟机，如本章后面所述，可用作您的管理工作站。\n\n注意\n> 当您不再需要这些资源时，请务必删除或停止并释放它们，以避免产生任何不必要的费用。\n\
+  \n### 虚拟机网络配置\n\n按照表 1-1 中的指定配置实验虚拟机的 IP 地址。您可以在实验中自由使用不同的 IP 地址，但在构建集群的几个实验中需要考虑到这一点。如果您在上一节中选择了\
+  \ Azure 虚拟机方法，那么这些机器将已经以这种方式设置。\n\n表 1-1\n虚拟机配置\n\n| 名称 | IP 地址 | 功能 |\n| --- |\
+  \ --- | --- |\n| control | 172.16.94.10 | 控制平面节点 |\n| node1 | 172.16.94.11 | 工作节点\
+  \ |\n| node2 | 172.16.94.12 | 工作节点 |\n| node3 | 172.16.94.13 | 工作节点 |\n| storage\
+  \ | 172.16.94.5 | NFS 存储服务器 |\n| workstation (optional) | 172.16.94.100 | 管理工作站\
+  \ (Windows) |\n\n接下来，在 IT 领域有句话，永远是 DNS 的问题。因此，对于我们的实验，我们将向每个系统上的`/etc/hosts`文件添加主机条目，以确保我们能够在实验中通过名称访问所有系统。在清单\
+  \ 1-6 中，您将找到我们`/etc/hosts`文件的内容。您的`hosts`文件可能包含 localhost 的条目以及可能的其他配置。\n\n```\n\
+  172.16.94.5    storage\n172.16.94.10   control\n172.16.94.11   node1\n172.16.94.12\
+  \   node2\n172.16.94.13   node3\n```\n\n如果您不知道如何在 Linux 系统上手动编辑文件，可以在每个 Linux 节点上运行清单\
+  \ 1-7 中的脚本。\n\n```bash\necho 172.16.94.5 storage > tmphosts\necho 172.16.94.10 control\
+  \ >> tmphosts\necho 172.16.94.11 node1 >> tmphosts\necho 172.16.94.12 node2 >> tmphosts\n\
+  echo 172.16.94.13 node3 >> tmphosts\nsudo -- sh -c \"cat tmphosts >> /etc/hosts\"\
+  \n```\n\n在 Windows 机器上，您会在 `C:\\Windows\\System32\\drivers\\etc\\hosts` 找到该文件。\n\
+  \n注意\n> 要在 Windows 上编辑 hosts 文件，请确保以管理员身份运行您的编辑器。\n\n继续之前，请确保您拥有对所有这些虚拟机的控制台或 SSH\
+  \ 访问权限（通过使用主机名），并且它们能够通过您的网络相互连接。\n\n### Azure Kubernetes Service\n\n我们的大部分演示将基于本地基于虚拟机的\
+  \ Kubernetes 集群，但由于 Kubernetes 的云原生特性，本书中的一些实验需要 Azure Kubernetes Service（AKS）集群的服务，以便我们突出显示某些\
+  \ Kubernetes 功能。这还需要一个 Azure 订阅。我们将在第 4 章中一起构建一个 AKS 集群。\n\n如果您更喜欢使用其他托管的 Kubernetes\
+  \ 服务，如 Amazon EKS，那也可以。但是，同样为了简单起见，我们将坚持使用这一个示例。\n\n### 安装工具\n\n除了我们将要部署演示应用程序和\
+  \ SQL Server 的集群之外，我们还需要一些工具来操作我们部署的应用程序和数据库。您可以在管理工作站上安装这些工具，并通过网络访问应用程序和数据库。如果是这样，您需要确保拥有我们在集群节点上指定的`/etc/hosts`文件条目。出于实验目的，您可以考虑将它们安装在控制平面节点上。对于生产系统，不建议这样做。\n\
+  \n我们需要：\n*   基本工具 (`curl`, `grep`, `wget`, SSH 客户端)\n*   `kubectl`\n*   Azure CLI\n\
+  *   `azdata`\n*   SQL Server 命令行实用工具，提供 `sqlcmd` – [*https://docs.microsoft.com/en-us/sql/tools/sqlcmd-utility*](https://docs.microsoft.com/en-us/sql/tools/sqlcmd-utility)\n\
+  \n#### 使用 Linux 机器作为管理工作站\n\n如果您更喜欢使用其中一台 Linux 机器作为管理工作站，我们需要使用清单 1-8 中的代码将 Microsoft\
+  \ 存储库设为受信任源，并将 Microsoft 存储库添加到已知的软件包安装源列表中。\n\n```bash\nsudo apt-get update\nsudo\
+  \ apt-get install gnupg ca-certificates curl wget software-properties-common apt-transport-https\
+  \ lsb-release -y\ncurl -sL https://packages.microsoft.com/keys/microsoft.asc |\n\
+  gpg --dearmor |\nsudo tee /etc/apt/trusted.gpg.d/microsoft.asc.gpg > /dev/null\n\
+  curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -\nsudo\
+  \ add-apt-repository \"$(wget -qO- https://packages.microsoft.com/config/ubuntu/18.04/prod.list)\"\
+  \nsudo apt-get update\n```\n\n现在我们准备好使用清单 1-9 中的代码安装 `azdata`、Azure 命令行界面和 `kubectl`。\n\
+  \n```bash\nsudo apt-get install -y azdata-cli\nsudo apt-get install -y azure-cli\n\
+  sudo apt-get install -y kubectl\nsudo apt-get install -y mssql-tools\n```\n\n就这样\
+  \ – 您的 Ubuntu 机器已准备好进行接下来的实验。\n\n#### 使用 Windows 机器作为管理工作站\n\n我们中的许多人都是 Windows\
+  \ 用户，因此更喜欢从 Windows 客户端进行部署。虽然实验中的某些任务必须在 Linux 环境中运行，但许多任务也可以从 Windows 客户端执行。\n\
+  \n如果您选择在 Azure 中运行虚拟机，建议您也将管理工作站放在那里，以便它位于同一虚拟网络上，从而可以无缝访问 Linux 机器。我们之前为此创建了一个名为\
+  \ `workstation` 的 Windows 虚拟机。\n\n\n\n### Windows 用户的小助手：Chocolatey\n\n如果你更喜欢使用\
+  \ Windows 客户端作为你的管理工作站，我们也建议你使用一个包管理器来自动化安装过程。\n\n我们想请你注意 `chocolatey` 或 `choco`。如果你没听说过它，`choco`\
+  \ 是一个免费的 Windows 包管理器，它将允许我们通过 PowerShell 或命令提示符中的一行命令安装许多先决条件。鉴于 Windows Server\
+  \ 没有自带一个易于使用的内置包管理器，这确实让生活轻松多了。你可以在 [`chocolatey.org`](http://chocolatey.org) 上找到更多信息，你甚至可以在那里创建账户并提供你自己的软件包。\n\
+  \n不过，从一个简单的用户角度来看，你没有必要创建账户或下载任何安装程序。\n\n要让你的系统可以使用 `choco`，请以管理员模式打开一个 PowerShell\
+  \ 窗口，并运行清单 1-10 中所示的脚本。\n\n```\n[Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol\
+  \ -bor [Net.SecurityProtocolType]::Tls12\nSet-ExecutionPolicy Bypass -Scope Process\
+  \ -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))\n\
+  清单 1-10\n在 PowerShell 中安装 Chocolatey 的脚本\n```\n\n相应的命令执行完成后，`choco` 就安装好并可以使用了。\n\
+  \n### Windows 上的工具\n\n既然我们已经有一个工作站并在其上安装了 `choco`，让我们从一些在 Linux 中默认自带的小工具开始，这些工具在\
+  \ Windows 上默认要么缺失，要么功能受限。通过运行清单 1-11 中的代码，我们将安装 `curl`（用于与网站交互）、`grep`（用于在命令行上过滤输出）和\
+  \ `putty`（它也附带了 `pscp`，一个允许我们从 Linux 机器复制数据并同时作为我们 SSH 客户端的工具）。\n\n我们还将安装 Chrome，因为\
+  \ Internet Explorer（Windows Server 默认自带）不被我们将使用的一些仪表板所支持。\n\n```\nchoco install\
+  \ curl -y\nchoco install grep -y\nchoco install putty -y\nchoco install googlechrome\
+  \ -y\n清单 1-11\n安装推荐工具的脚本\n```\n\n接下来是 `kubernetes-cli`、`sql command line tools`\
+  \ 和 `Azure CLI`，它们可以通过清单 1-12 中的命令安装。\n\n```\nchoco install kubernetes-cli -y\n\
+  choco install sqlserver-cmdlineutils -y\nchoco install azure-cli -y\n清单 1-12\n安装\
+  \ kubectl、sqlcmd 和 Azure CLI 的脚本\n```\n\n**注意**\n\n这将安装最新版本的 Kubernetes CLI。对于本书中的示例来说，这没问题，也是我们想要的。只是要注意，当与较旧的\
+  \ Kubernetes 集群一起工作时，这可能会导致潜在问题。\n\n我们的最后一个需求是 `azdata`。虽然目前它无法通过 `choco` 安装，但微软提供了一个永久链接，使得自动化安装变得足够简单，如清单\
+  \ 1-13 所示。\n\n```\ncurl -o azdata.msi https://aka.ms/azdata-msi\nmsiexec /i azdata.msi\
+  \ /passive\n清单 1-13\n安装 azdata 的脚本\n```\n\n根据你将要复现的实验，其中一些工具可能不是必需的。鉴于它们都相当轻量级，我们还是建议你全部安装。\n\
+  \n### NFS\n\n因为我们希望我们的存储节点充当 NFS 服务器，所以我们需要安装这个服务。为了易于使用，我们选择单节点 NFS。生产集群应使用企业级存储。\n\
+  \n通过 SSH 登录到 `storage` 节点，并将清单 1-14 的内容保存到一个名为 `enable-nfs.sh` 的文件中。\n\n```\n#!/bin/bash\n\
+  apt install -y nfs-kernel-server\ngroupadd mssql -g 10001\nuseradd -u 10001 mssql\
+  \ -g mssql\naddgroup --gid 472 grafana\nuseradd -g 472 -u 472 grafana\nmkdir -p\
+  \ /srv/exports/volumes/\nchown -R mssql:mssql /srv/exports/volumes/\necho '/srv/exports\
+  \ 172.16.94.0/24(rw,sync,no_subtree_check,no_root_squash)' > exports\nchmod 644\
+  \ exports\nmv exports /etc/exports\nexportfs -a\nsystemctl restart nfs-kernel-server\n\
+  mkdir /srv/exports/volumes/sql-instance-1\nchown -R mssql:mssql /srv/exports/volumes/\n\
+  mkdir /srv/exports/volumes/influxdb\nmkdir /srv/exports/volumes/grafana\nchown 472:472\
+  \ /srv/exports/volumes/grafana\nmkdir /srv/exports/volumes/webcontent\necho \"Hello\
+  \ World!!!\" >  /srv/exports/volumes/webcontent/index.html\n清单 1-14\nenable-nfs.sh\n\
+  ```\n\n这个脚本将安装 NFS 服务器，为其内容创建一个目录（以及一些我们稍后将用于第一个 SQL Server 部署的目录），并启动服务。要运行此脚本，你需要使其可执行并以\
+  \ root 身份运行，如清单 1-15 所示。\n\n```\nchmod +x enable-nfs.sh\nsudo ./enable-nfs.sh\n\
+  清单 1-15\n运行 enable-nfs.sh\n```\n\n你的 NFS 服务器现在已经准备就绪并可访问。\n\n在其他机器上，使用清单 1-16 中的命令安装\
+  \ NFS 工具。这需要在每个其他虚拟机上单独执行。\n\n```\nsudo apt install -y nfs-common\n清单 1-16\n在 NFS\
+  \ 客户端上安装 NFS 工具\n```\n\n通过从任何客户端机器挂载 NFS 共享并列出其内容来测试连接，使用清单 1-17 中的代码。\n\n```\n\
+  sudo mount -t nfs storage:/srv/exports /mnt\nls -al /mnt/volumes\n清单 1-17\n在 NFS\
+  \ 客户端上验证 NFS 连接\n```\n\n清单 1-17 的结果应该类似于我们在图 1-1 中看到的内容。\n\n![../images/494804_1_En_1_Chapter/494804_1_En_1_Fig1_HTML.jpg](img/494804_1_En_1_Fig1_HTML.jpg)\n\
+  \n图 1-1\n从 node1 进行的 NFS 测试\n\n### 系统交换空间设置\n\n作为最后一步，让我们确保在我们的控制平面以及三个节点上都禁用了交换空间，因为这是\
+  \ `kubelet` 的要求。\n\n通过 SSH 分别连接到它们每一个，并运行清单 1-18 中的命令。\n\n```\nswapoff -a\n清单 1-18\n\
+  禁用交换空间\n```\n\n同时从 `/etc/fstab` 中删除任何交换分区。如果你使用我们脚本在 Azure 中创建了虚拟机，则不需要这一步。\n\n\
+  ### 总结\n\n在本章中，我们为将在本书中一起进行的实验奠定了基础。我们将从在 Docker 中将 SQL Server 部署为容器开始。然后，我们将一起构建\
+  \ Kubernetes 集群，并在该集群中部署 SQL Server 以及演示应用程序和数据库。除了集群之外，我们还重点介绍了与我们将在集群中部署的应用程序和数据库进行交互所需的工具。\n\
+  \n## 2. 容器基础\n\n容器正在改变应用程序的部署方式。在本章中，我们将从基于容器的应用部署的优势开始，并介绍容器基础操作，如创建和运行容器、持久化数据，从而为容器基础知识打下坚实的技术基础。本章最后将讨论容器编排器的必要性，并介绍\
+  \ Kubernetes 及其优势。本章的目标是，如果你从未见过容器，那么在继续学习使用 Kubernetes 进行容器编排之前，让你精通容器基础知识。\n\n\
+  \n\n### 基于容器的应用部署\n\n一个`容器`是一种操作系统虚拟化形式。多年来，数据库专业人员已经熟悉了机器虚拟化的概念，即操作系统对我们物理服务器的硬件资源（CPU、内存和磁盘）进行多路复用。在容器中，底层操作系统、其内核和资源正被运行在该系统上的应用程序进行多路复用或共享。每个容器都认为自己是操作系统上运行的唯一进程。反过来，操作系统则照常控制对底层硬件的访问。我们很快将更详细地探讨这种隔离概念。负责协调这项工作与底层操作系统的软件被称为`容器运行时`。\n\
+  \n容器是一个运行的`容器镜像`。一个`容器镜像`包含了运行我们应用程序所需的二进制文件、库和文件系统组件。因此，当容器启动时，它将开始执行其内部定义的可执行文件，然后可以访问操作系统的资源，包括创建额外的进程、执行磁盘或网络\
+  \ I/O 等。图 2-1 展示了容器与其应用程序之间的关系。\n\n![../images/494804_1_En_2_Chapter/494804_1_En_2_Fig1_HTML.jpg](img/494804_1_En_2_Fig1_HTML.jpg)\n\
+  图 2-1：容器化的应用程序\n\n传统上，一个容器内只有一个应用程序，因为应用程序是工作单元，也是我们的扩展单元。当容器启动时，它将开始执行其内部定义的应用程序。在某些情况下，如果应用程序之间有非常紧密的关系（例如，应用服务器和指标数据收集器），你可以将多个应用程序放入一个容器中。\n\
+  \n容器提供`隔离`。在容器内运行的进程无法看到操作系统上运行的任何其他进程，甚至无法看到其他容器内运行的进程。这个概念是容器可移植性、可用性乃至其成功的关键。\n\
+  \n容器还可以将特定的库与应用程序绑定，帮助你解决应用程序库冲突。你是否曾经遇到过需要安装在专用服务器上的应用程序？因为它需要特定版本的 DLL 或库，而该版本可能与支持另一个应用程序的另一版本冲突。容器可以让你免于这样做。如果容器镜像内部有所需的库可用，当加载时，它们会被隔离到该运行容器中。可以启动带有潜在冲突库的额外容器，这些基于容器的应用程序将彼此隔离地愉快运行。\n\
+  \n使用容器带来的隔离性在升级时提供了可移植性。你可以在不影响系统上其他运行容器中的应用程序的情况下升级容器内的库。在图 2-2 中，你可以看到多个应用程序容器运行在物理或虚拟机上，共享基础操作系统。这些容器的执行是完全相互隔离的。如果它们需要通信，则必须通过网络进行。\n\
+  \n![../images/494804_1_En_2_Chapter/494804_1_En_2_Fig2_HTML.jpg](img/494804_1_En_2_Fig2_HTML.jpg)\n\
+  图 2-2：基于容器的应用部署\n\n容器是`短暂的`，而这种短暂性是容器的超能力之一。当容器启动并运行时，容器在实际程序状态和内部更改的任何文件数据方面具有状态。容器也可以被删除，删除时，容器内的任何程序状态和文件数据也会被删除。\n\
+  \n容器的短暂性是理解基于容器的应用程序如何部署和维护的概念关键。将配置和状态与容器生命周期本身解耦，是容器和容器编排的核心基础。本章稍后将介绍通过环境变量和卷来实现容器配置和状态解耦的技术，并在本书后面介绍使用\
+  \ Kubernetes 结构来帮助我们实现相同的目标。\n\n### 虚拟机有何难点？\n\n在过去的 20 年里，虚拟机作为首选平台已在企业 IT 中牢牢扎根。我们挑战你，读者，去思考一下，硬件虚拟化在你的数据中心中为你带来了什么。你获得了更好的硬件利用率……这很好。但数据中心里最便宜的东西是什么？你的硬件。数据中心里最昂贵的东西是什么？你！你的时间是最昂贵的资源。当使用虚拟机作为我们的平台时，几乎没有为我们的组织增加运营效率，因为虚拟机并没有帮助优化组织最昂贵的资源——人员。\n\
+  \n图 2-3 展示了数据中心中传统的虚拟机实现。运维团队构建基础设施，安装客户操作系统，并在这些操作系统之上安装所有应用程序，这就是生产环境。运维团队投入了巨大的努力来保持该架构中的系统和应用程序正常运行。\n\
+  \n![../images/494804_1_En_2_Chapter/494804_1_En_2_Fig3_HTML.jpg](img/494804_1_En_2_Fig3_HTML.jpg)\n\
+  图 2-3：企业数据中心中虚拟机及其应用程序的传统实现\n\n以下是使用基于虚拟机的平台部署应用程序的一些挑战：\n\n*   **操作系统资源开销：** 运行虚拟机存在固有的\
+  \ CPU 和内存开销。这些 CPU 时间和内存本可以更好地用于支持应用程序，而不是操作系统。\n*   **操作系统补丁管理：** 更新操作系统为组织增加的业务价值非常有限。它确实是维护适当安全态势所必需的，但并不能推动业务发展。\n\
+  *   **故障排除：** 多年来，系统被构建、投入生产，然后就被搁置了。如果出了什么问题，IT 运维必须挺身而出修复系统。\n*   **操作系统升级：**\
+  \ 我们认为 IT 中最难做的事情就是升级操作系统，因为如果你升级了操作系统，你需要测试什么？所有东西！应用程序与操作系统的紧密耦合意味着每次对基础操作系统进行更改，都会给我们的系统注入风险。\n\
+  *   **部署：** 在企业 IT 中，端到端自动化部署虚拟机及其应用程序的情况很少见。此外，这些解决方案通常是定制的、点解决方案，可能难以维护。\n\n以上提到的运行基于虚拟机的平台的任何挑战，是否推动了你的业务发展？使用虚拟机获得了什么吗？我们认为没有……或许有更好的方法。\n\
+  \n\n\n### 容器\n\n当使用基于容器的应用部署时，容器直接解决了在基于虚拟机的平台上部署应用时所面临的一些挑战。让我们看看容器带来了哪些优势：\n\n\
+  *   **速度：** 与虚拟机相比，容器体积要小得多。例如，一个在 Windows 上安装了`SQL Server`的虚拟机，在包含任何用户数据库之前，最低限度也会超过\
+  \ 60GB。而当前的`SQL Server`容器镜像大小约为 1.5GB。在现代数据中心内传输一个 1.5GB 的容器镜像是相对轻松的。而部署一个超过 60GB\
+  \ 的虚拟机则可能需要相当长的时间。\n\n*   **修补：** 就应用程序的修补而言，修补是一个与部署分离的独立过程。你很可能需要额外的工具来完成。利用容器，你可以通过简单地拉取应用程序的新容器镜像并基于该新版本启动一个新容器，从而非常快速地更新应用程序。如果配置和状态与容器正确解耦，我们的应用程序就可以在新版本上恢复并开始运行，对应用程序用户的影响微乎其微甚至为零。\n\
+  \n*   **故障排除：** 由于容器的短暂性，基于容器的应用程序的一个主要故障排除技术是终止并重新部署容器。由于容器镜像是我们程序状态的一个已知良好起点，因此只需重新启动容器即可恢复到良好状态。\n\
+  \n*   **操作系统升级：** 在不同版本的操作系统之间迁移时，可以删除容器并在较新版本的操作系统上重新创建。由于应用程序所需的库都包含在容器内，因此在操作系统版本之间迁移的风险降低了。\n\
+  \n*   **快速且一致的部署：** 当使用基于容器的应用部署时，部署是以代码编写的。在应用部署和维护的效率上有所提升。在速度方面，不再依赖人力来完成工作；同时在一致性方面，由于有代表系统状态的代码，可以在部署过程中重复使用。这些代码被置于源代码控制中，是系统期望状态的配置产物。\n\
+  \n部署自动化将不再是企业 IT 的事后考虑或追求的目标；它将成为部署应用程序的主要方式——使用定义系统期望状态的、受源代码控制的代码。基于容器的部署技术使 IT\
+  \ 组织能够更快速、更一致地为业务提供服务，并使 IT 能够更轻松地维护基础设施和应用程序，从而提升组织的运营效率。应用程序的部署和维护可以更快、更自信地完成。\n\
+  \n`Docker` 和 `Kubernetes` 都使 IT 组织能够编写代表系统期望状态的代码。然后可以更新这些代码，对应用程序、平台和系统进行所需的更改。可以编写代码用于初始部署、应用更新和修补基于容器的应用程序。这些技术还可用于实现更高效的故障排除，并在需要时构建自修复应用程序。这些概念中的每一个都将在本书后面更详细地探讨。\n\
+  \n#### 容器领域\n\n好了，既然你已经熟悉了容器的定义以及它如何融入现代应用部署流程，现在让我们来看看容器领域。这里涌现了许多新兴的技术和技巧，我们希望花点时间让你熟悉这个领域的名称和参与者。\n\
+  \n以下列表展示了容器领域的一些名称和参与者：\n\n*   **Docker：** 在当今的容器领域，`Docker` 首先是一种技术。它是一个容器运行时和工具集合，使你能够在操作系统上创建和运行容器镜像及容器，并共享该操作系统的资源。\n\
+  \n*   **Docker Inc.：** 这是构建工具并推动技术以实现容器的公司。`Docker Inc.` 已将其容器运行时背后的核心技术开源，并衍生出几个开源项目，如\
+  \ `containerd` ([`containerd.io/`](https://containerd.io/))、`Open Container Initiative`\
+  \ ([www.opencontainers.org/](http://www.opencontainers.org/)) 等。\n\n*   **containerd：**\
+  \ 是一个容器运行时，负责协调容器的生命周期功能，如拉取容器镜像、创建、启动和停止容器。`Docker` 和 `Kubernetes` 等都使用 `containerd`\
+  \ 来协调容器生命周期功能。在 `Kubernetes` 中，容器运行时是一个可插拔的组件。`containerd` 是事实上的标准。\n\n*   **其他容器运行时：**\
+  \ 容器的世界并非只有 Linux 上的 `Docker`。游戏中还有一些其他参与者。以下仅是可用其他容器运行时的一小部分示例：\n    *   **Container\
+  \ Linux/CoreOS (rkt)：** 一个专门构建的操作系统，强调使用名为 `rkt`（发音为 rocket，[`coreos.com/`](http://coreos.com/)）的应用容器运行时进行基于容器的应用部署。\n\
+  \n    *   **Podman：** 一个用于在基于 Red Hat 的操作系统上运行 Linux 容器的容器运行时。更多信息，请访问 [`github.com/containers/libpod`](https://github.com/containers/libpod)。\n\
+  \n    *   **Windows Server 2016：** 使你能够运行 Windows 和 Linux 容器。更多信息，请访问 [`docs.microsoft.com/en-us/virtualization/windowscontainers/`](https://docs.microsoft.com/en-us/virtualization/windowscontainers/)。\n\
+  \n注意\n\n在本章中，我们将在单容器部署场景中使用 `Docker` 作为容器运行时。在后面的章节中，我们将在 `Kubernetes 集群` 中使用 `containerd`\
+  \ 作为容器运行时。\n\n#### 获取和运行容器\n\n让我们来谈谈什么是*容器镜像*、容器镜像如何定义以及容器镜像存储在哪里。\n\n以下列表强调了容器镜像的关键要素：\n\
+  \n*   **容器镜像：** 包含运行我们的应用程序所需的代码、应用程序二进制文件、库和环境变量。用最基本的术语来说，这些就是运行我们的应用程序所需的东西。一个正在运行的容器镜像称为容器。\n\
+  \n*   **Dockerfile：** 定义容器镜像的要素。它告诉容器运行时在容器启动时启动哪个二进制文件、要暴露哪些网络端口，以及关于要构建的容器镜像的其他关键信息。\n\
+  \n*   **容器注册库：** 这是存储镜像的地方。`Docker Hub` 是众多容器注册库之一，是存储和交换容器镜像的主要场所。仓库是在容器注册库内组织容器镜像的方式。\n\
+  \n\n#### 容器生命周期\n\n参考图 2-4，你可以看到一个基于容器的应用程序的生命周期。当开发者准备就绪，他们会在常规的应用程序开发平台中构建应用。然后，他们会为该应用程序编写一个\
+  \ *Docker 文件*。这个 Docker 文件包含了构建该应用程序容器镜像所需的信息。它会包含诸如容器启动时应运行哪个二进制文件、应用程序使用哪个网络端口等信息，以及其他许多可能的配置属性和构建镜像的指令。一旦\
+  \ Docker 文件准备就绪，开发者会告诉 Docker *构建*一个镜像。这将从 Docker 文件中获取定义好的信息，并在开发者的本地工作站上创建一个容器镜像。该容器镜像随后被\
+  \ *推送*（上传）到一个 *容器注册表* 中，直到有人准备好使用该容器镜像。当用户想要从该容器镜像启动一个容器时，他们会将该容器镜像 *拉取* 到他们的操作系统，该操作系统上的容器运行时随后会从容器镜像创建（运行）一个运行中的容器，然后应用程序就在该操作系统的容器中启动并运行了。\n\
+  \n![../images/494804_1_En_2_Chapter/494804_1_En_2_Fig4_HTML.jpg](img/494804_1_En_2_Fig4_HTML.jpg)\n\
+  \n图 2-4\n\n容器生命周期\n\n好了，理论说得够多了。让我们看看如何在 Docker 上以容器方式部署 SQL Server。在本书中，你不会构建容器镜像。你将使用公共容器注册表中可用的镜像。在本章中，你将操作\
+  \ SQL Server 容器，这些镜像可从 Microsoft 容器注册表 (`mcr.microsoft.com`) 获取。\n\n#### 操作容器镜像\n\
+  \n要拉取一个容器，执行 `docker pull` 命令并指定你想要拉取的容器镜像。在以下示例中，容器镜像来自容器注册表 `mcr.microsoft.com`\
+  \ 中的 `mssql/server` 仓库，要请求一个特定的容器，你需要指定 *镜像标签*，这里是 `2019-latest`。代码清单 2-1 展示了此命令。\n\
+  \n```\ndocker pull mcr.microsoft.com/mssql/server:2019-latest\n代码清单 2-1\n用于拉取最新\
+  \ SQL Server 2019 镜像的 docker pull 命令\n```\n\n图 2-5 显示了代码清单 2-1 中命令的输出结果。\n\n![../images/494804_1_En_2_Chapter/494804_1_En_2_Fig5_HTML.jpg](img/494804_1_En_2_Fig5_HTML.jpg)\n\
+  \n图 2-5\n\ndocker pull 命令的输出\n\n在前面的示例中，按照惯例正在拉取一个标签为 `2019-latest` 的容器镜像。容器镜像仓库的维护者通过指定一个\
+  \ `latest` 标签来定义指向其应用程序最新版本的标签。如果你想拉取特定版本的容器镜像，你需要从该仓库获取可用标签的列表。对于 SQL Server，你可以使用代码清单\
+  \ 2-2（Bash）和代码清单 2-3（Windows）所示的命令来实现。\n\n```\n(Invoke-WebRequest https://mcr.microsoft.com/v2/mssql/server/tags/list).Content\n\
+  代码清单 2-3\nWindows 命令\n```\n\n```\ncurl -sL https://mcr.microsoft.com/v2/mssql/server/tags/list\n\
+  代码清单 2-2\nBash 命令\n```\n\n图 2-6 向你展示了这些命令输出的部分内容。实际上有更多可用的容器镜像，但为简洁起见我们省略了一些。\n\n\
+  ![../images/494804_1_En_2_Chapter/494804_1_En_2_Fig6_HTML.jpg](img/494804_1_En_2_Fig6_HTML.jpg)\n\
+  \n图 2-6\n\n容器镜像及其标签的简略列表\n\n如果你想拉取一个特定的容器，你需要指定一个容器镜像标签。代码清单 2-4 中的命令将拉取与标签 `2019-CU9-ubuntu-18.04`\
+  \ 关联的容器镜像。\n\n```\ndocker pull mcr.microsoft.com/mssql/server:2019-CU9-ubuntu-18.04\n\
+  代码清单 2-4\n拉取与特定标签关联的容器镜像的 docker pull 命令\n```\n\n要获取本地系统上可用的镜像列表，请执行代码清单 2-5 中的\
+  \ `docker image ls` 命令。命令的输出显示了已拉取到本地系统的镜像。示例如下。\n\n```\ndocker image ls\n代码清单 2-5\n\
+  docker image ls 命令\n```\n\n对于每个镜像，输出（图 2-7）显示了镜像的仓库、标签、镜像标识符（`IMAGE ID`）、创建日期和镜像大小。\n\
+  \n![../images/494804_1_En_2_Chapter/494804_1_En_2_Fig7_HTML.jpg](img/494804_1_En_2_Fig7_HTML.jpg)\n\
+  \n图 2-7\n\ndocker image ls 命令的输出\n\n一个常见的误解是 `docker image ls` 命令显示的创建日期是镜像被拉取的日期。事实并非如此。创建日期实际上是镜像被创建的日期。\n\
+  \n一个容器镜像可以有多个标签。在上面的输出中，如果你仔细观察容器 `IMAGE ID`，会注意到两个容器镜像的 `IMAGE ID` 值相同。标签 `2019-latest`\
+  \ 和 `2019-CU9-ubuntu-18.04` 指向同一个容器镜像，因为在撰写本文时，SQL Server 2019 的最新镜像是 CU9。当一个新的容器镜像发布到仓库时，它将拥有一个新的、唯一的容器镜像\
+  \ ID。仓库管理员会将 `latest` 标签更新为指向该仓库中的这个最新镜像。\n\n#### 启动容器\n\n要启动一个容器，请执行 `docker run`\
+  \ 命令，如清单 2-6 所示。让我们通过以下示例来逐步了解。\n\n```\ndocker run \\\n--env 'ACCEPT_EULA=Y' \\\n\
+  --env 'MSSQL_SA_PASSWORD=S0methingS@Str0ng!' \\\n--name 'sql1' \\\n--publish 1433:1433\
+  \ \\\n--detach \\\nmcr.microsoft.com/mssql/server:2019-CU9-ubuntu-18.04\n清单 2-6\n\
+  docker run 命令\n```\n\n要在容器中运行 SQL Server，需要为初始启动配置 SQL Server。如前所述，将配置与状态解耦是在容器中运行应用程序的关键。这里是一个解耦配置的示例。SQL\
+  \ Server 将配置点暴露为环境变量。通过在运行时为这些环境变量指定值，你可以注入配置。在前面的命令中，你看到 `--env 'ACCEPT_EULA=Y'`。这为环境变量\
+  \ `ACCEPT_EULA` 指定了值 `'Y'`。在启动时，SQL Server 将查找此值并相应地启动。类似地，还定义了一个环境变量 `'MSSQL_SA_PASSWORD=S0methingS@Str0ng!'`。这设置了容器启动时的\
+  \ `sa` 密码，在本例中为 `S0methingS@Str0ng!`。虽然不是必需的，但使用 `--name='sql1'` 参数指定了容器名称，这在命令行中使用容器时很有用，并使我们能够通过名称访问容器。\n\
+  \n> 提示\n>\n> 有关可作为环境变量使用的配置的更多信息，请查看 [`docs.microsoft.com/en-us/sql/linux/sql-server-linux-configure-environment-variables`](https://docs.microsoft.com/en-us/sql/linux/sql-server-linux-configure-environment-variables)。\n\
+  \n除了应用程序配置和名称之外，为了通过网络访问基于容器的应用程序，必须暴露一个端口。参数 `--publish 1433:1433` 将容器内的一个端口暴露到基础操作系统上的容器外端口。让我们稍微解析一下，因为这是我们刚开始使用容器时经常出错的地方。第一个\
+  \ `1433` 是应用程序在基础操作系统上监听的端口。默认情况下，它将监听主机操作系统的 IP 地址，因此这是用户和其他应用程序在同一主机上本地访问或从其他主机远程访问基于容器的应用程序的方式。第二个\
+  \ `1433` 是“容器内”监听的端口。更多关于这一点，稍后在讨论容器内部结构时会提到。接下来是 `--detach`，它告诉容器运行时将运行进程从标准输出分离。这让我们重新获得终端的控制权，并将\
+  \ SQL Server 作为后台进程运行。\n\n> 注意\n>\n> 如果你在启动容器时遇到问题，请移除 `--detach` 参数，以便在屏幕上看到容器的日志流式传输到标准输出。在\
+  \ SQL Server 容器中，这是 `SQL Server Error Log`。我们在创建容器时最常见的原因是 `sa` 密码不够复杂；在查看错误日志时，这会很快显现出来。`docker\
+  \ logs` 在此场景下也很有帮助。\n\n最后，是用于启动此容器的特定容器镜像，在本例中是 `mcr.microsoft.com/mssql/server:2019-CU9-ubuntu-18.04`。\n\
+  \n如果 `docker run` 命令成功，它会将容器 ID 打印到标准输出。\n\n在清单 2-7 中执行 `docker ps` 以列出本地系统上运行的容器。\n\
+  \n```\ndocker ps\n清单 2-7\ndocker ps 命令\n```\n\n图 2-8 显示了命令的输出。`sql1` 容器已启动并运行。它还显示了容器\
+  \ ID、启动它的容器镜像、容器启动时启动的命令、容器名称、容器的创建时间以及容器的当前状态，在本例中已运行了 10 分钟。\n\n![../images/494804_1_En_2_Chapter/494804_1_En_2_Fig8_HTML.jpg](img/494804_1_En_2_Fig8_HTML.jpg)\n\
+  图 2-8\n本地系统上运行的容器列表\n\n#### 如果出现问题怎么办？\n\n使用 `docker logs` 命令结合容器名称（清单 2-8），在本例中是\
+  \ `sql1`，以获取容器的输出。在 SQL Server 中，你在这里找到的输出来自 SQL Server 错误日志，其中很可能包含有关容器为何无法启动的有价值的信息。\n\
+  \n```\ndocker logs sql1 | more\n清单 2-8\ndocker logs 命令\n```\n\n#### 访问基于容器的应用程序\n\
+  \n在这个案例中，应用程序是 SQL Server，所以让我们使用命令行实用程序 `sqlcmd` 来访问 SQL Server。清单 2-9 中的代码显示了一个获取\
+  \ `@@VERSION` 输出的查询。\n\n```\nsqlcmd -S localhost,1433 -U sa -Q 'SELECT @@VERSION'\
+  \ -P 'S0methingS@Str0ng!'\n清单 2-9\n用于访问 SQL Server 的命令行实用程序 sqlcmd\n```\n\n在图 2-9\
+  \ 中，你可以看到一个运行 SQL Server 2019 CU1 的容器，这与容器启动时指定的容器镜像相符。\n\n![../images/494804_1_En_2_Chapter/494804_1_En_2_Fig9_HTML.jpg](img/494804_1_En_2_Fig9_HTML.jpg)\n\
+  图 2-9\n容器启动时指定的容器镜像\n\n#### 启动 SQL Server 的第二个实例\n\n要启动第二个 SQL Server 2019 CU1 容器实例，你需要再次执行\
+  \ `docker run`。关键区别在于一个唯一的容器名称，本例中是 `sql2`，以及一个要发布的唯一端口。在本例中，第二个 SQL Server 实例在端口\
+  \ `1434` 上可用，如清单 2-10 所示。要访问此 SQL Server 实例，应用程序将指向该端口。在以下命令中，我们使用了缩写的参数名称，而不是像之前\
+  \ `docker run` 命令中那样使用完整的参数名称。\n\n```\ndocker run \\\n--name 'sql2' \\\n-e 'ACCEPT_EULA=Y'\
+  \ \\\n-e 'MSSQL_SA_PASSWORD=S0methingS@Str0ng!' \\\n-p 1434:1433 \\\n-d mcr.microsoft.com/mssql/server:2019-CU9-ubuntu-18.04\n\
+  清单 2-10\n具有唯一容器名称的 docker run 命令\n```\n\n`docker ps` 将再次产生一个正在运行的容器列表。\n\n图 2-10\
+  \ 中的命令输出显示两个容器 `sql1` 和 `sql2` 都已启动并运行。\n\n![../images/494804_1_En_2_Chapter/494804_1_En_2_Fig10_HTML.jpg](img/494804_1_En_2_Fig10_HTML.jpg)\n\
+  图 2-10\ndocker ps 命令的输出\n\n现在有两个容器在运行，让我们将一个数据库恢复到其中一个容器中。在书籍下载中，你会找到一个 SQL Server\
+  \ 数据库 `TestDB1.bak` 和一个恢复脚本 `restore_testdb1.sql`。\n\n`restore_testdb1.sql` 的内容也可以在清单\
+  \ 2-11 中看到。\n\n```\nUSE [master]\nRESTORE DATABASE [TestDB1]\nFROM DISK = N'/var/opt/mssql/data/TestDB1.bak'\n\
+  WITH REPLACE\n清单 2-11\nrestore_testdb1.sql\n```\n\n让我们逐步完成恢复数据库的过程，查看容器内的文件布局，然后了解运行容器的生命周期。\n\
+  \n\n#### 将数据库恢复到容器中运行的 SQL Server\n\n清单 2-12 中的命令将现有的数据库备份复制到 `sql2` 容器内的 `/var/opt/mssql/data`\
+  \ 目录，然后清单 2-13 中的命令会为该复制的备份文件设置适当的权限。\n\n由于 SQL Server 2019 中非 root 用户 SQL Server\
+  \ 容器的性质（[`techcommunity.microsoft.com/t5/sql-server/non-root-sql-server-2019-containers/ba-p/859644`](https://techcommunity.microsoft.com/t5/sql-server/non-root-sql-server-2019-containers/ba-p/859644)），需要调整复制到容器中的文件的权限，以便容器内部的\
+  \ `sqlservr` 进程可以读取该文件。在 Linux 系统上，`docker cp` 命令会以执行该命令的基础操作系统用户的 `UID` 来复制文件。容器内部的\
+  \ `sqlservr` 进程以用户 `mssql` 运行。以下 `chown` 命令将备份文件的所有者更改为用户 `mssql`，以便该用户可以读取文件。\n\
+  \n```\ndocker exec -u root sql2 chown mssql /var/opt/mssql/data/TestDB1.bak\n清单\
+  \ 2-13\n容器内的 chown 命令\n```\n\n```\ndocker cp TestDB1.bak sql2:/var/opt/mssql/data\n\
+  清单 2-12\ndocker cp 命令\n```\n\n文件就位后，执行 `restore_testdb1.sql` 脚本，该脚本包含恢复此数据库所需的 T-SQL。请注意，我们是在容器外部运行此恢复操作（清单\
+  \ 2-14），在客户端工作站上使用 `sqlcmd`，并将其指向正确的服务器名称（`localhost`）和端口 `1434`。\n\n```\nsqlcmd\
+  \ -S localhost,1434 -U sa -i restore_testdb1.sql -P 'S0methingS@Str0ng!'\n清单 2-14\n\
+  通过 sqlcmd 执行恢复脚本\n```\n\n`sqlcmd` 将确认成功恢复，如图 2-11 所示。\n\n![../images/494804_1_En_2_Chapter/494804_1_En_2_Fig11_HTML.jpg](img/494804_1_En_2_Fig11_HTML.jpg)\n\
+  \n图 2-11\n成功恢复数据库\n\n数据库恢复后，让我们使用清单 2-15 中的 `docker exec` 命令来访问容器内部。这将允许我们探索正在运行的容器的内部结构。参数\
+  \ `-it` 为执行的进程（在本例中是 `/bin/bash`，一个 bash 提示符）提供一个交互式终端。在下面的示例中，显示的提示符展示了登录用户的用户名\
+  \ `mssql`，以及与容器 ID 匹配的容器主机名。\n\n```\ndocker exec -it sql2 /bin/bash\n清单 2-15\ndocker\
+  \ exec 命令\n```\n\n有了这个在容器内部运行的交互式 bash shell，让我们稍微探索一下。执行 `ps -aux` 命令，如清单 2-16\
+  \ 所示，以列出所有正在运行的进程。\n\n```\nps -aux\n清单 2-16\nps -aux 命令\n```\n\n在图 2-12 所示的输出中，你会看到容器内部只运行着一小部分进程：两个\
+  \ `sqlservr` 进程、一个 `bash` shell 和 `ps` 命令本身。此示例突显了容器在运行时具有的隔离性。此容器及其运行的进程无法看到基础操作系统上运行的任何其他进程。\n\
+  \n![../images/494804_1_En_2_Chapter/494804_1_En_2_Fig12_HTML.jpg](img/494804_1_En_2_Fig12_HTML.jpg)\n\
+  \n图 2-12\n`ps -aux` 命令的输出\n\n现在，执行目录列表（清单 2-17）`ls -la /var/opt/mssql/data`。这是 Linux\
+  \ 上 SQL Server 的默认数据库目录。\n\n```\nls -la /var/opt/mssql/data\n清单 2-17\n目录列表\n```\n\
+  \n如图 2-13 所示，你将在此目录中找到系统和用户数据库。你还会找到在之前的演示中复制进来的数据库备份文件，即 `TestDB1.bak` 文件。每个容器都有一个独立的文件系统。因此，此目录中的文件仅对这个正在运行的容器可用。如果此容器被删除，这些文件将随容器一起删除。我们稍后将介绍容器的数据持久化。\n\
+  \n![../images/494804_1_En_2_Chapter/494804_1_En_2_Fig13_HTML.jpg](img/494804_1_En_2_Fig13_HTML.jpg)\n\
+  \n图 2-13\nLinux 上 SQL Server 的默认数据库目录\n\n要退出此容器，请使用 `exit` 命令并返回到我们基础操作系统的 shell。\n\
+  \n#### 停止容器\n\n运行守护进程（如 SQL Server）的容器将持续运行，直到被告知停止。要停止一个正在运行的容器，执行清单 2-18 中的 `docker\
+  \ stop` 命令，并指定容器名称或容器 ID。在下面的示例中，容器 `sql2` 正在被停止。这将向容器内运行的进程发送一个 `SIGTERM` 信号，使其优雅地关闭。\n\
+  \n```\ndocker stop sql2\n清单 2-18\ndocker stop 命令\n```\n\n#### 在本地系统上查找容器\n\n此时，本地系统上有两个容器。一个容器已停止（`sql2`），另一个仍在运行（`sql1`）。现在执行\
+  \ `docker ps` 命令。\n\n在输出（图 2-14）中，只有一个正在运行的容器 `sql1`。\n\n![../images/494804_1_En_2_Chapter/494804_1_En_2_Fig14_HTML.jpg](img/494804_1_En_2_Fig14_HTML.jpg)\n\
+  \n图 2-14\n`docker ps` 命令的输出。正在运行的容器列表\n\n要查看系统上的所有容器，无论其当前状态是停止还是运行，请执行清单 2-19 中的\
+  \ `docker ps -a` 命令。\n\n```\ndocker ps -a\n清单 2-19\ndocker ps -a 命令\n```\n\n在图 2-15\
+  \ 显示的输出中，列出了两个容器 `sql1` 和 `sql2`。关键信息是 `STATUS`（状态）列。`sql1` 仍然在运行，状态值为 `16 minutes\
+  \ ago`（16 分钟前启动）。对于另一个容器 `sql2`，状态是 `Exited (0) 33 seconds`（33 秒前退出）；它目前已停止。其中的\
+  \ `0` 是应用程序的退出代码。非零退出代码表示程序内部发生错误；零（0）表示正常关闭。\n\n**注意**\n如果你发现非零退出代码，说明出现了问题，你需要使用\
+  \ `docker logs` 来调查该容器的问题。\n\n![../images/494804_1_En_2_Chapter/494804_1_En_2_Fig15_HTML.jpg](img/494804_1_En_2_Fig15_HTML.jpg)\n\
+  \n图 2-15\n`docker ps -a` 命令的输出。相应系统上所有容器的列表\n\n\n\n## 启动和管理容器\n\n### 启动一个现有容器\n\n\
+  由于容器仍存在于系统上，可以使用 `docker start` 命令并指定容器名称来重新启动它。该容器的所有状态和配置信息仍将保留，因此当容器再次启动时，我们的系统数据库和用户数据库都还在。\n\
+  \n```\ndocker start sql2\n代码清单 2-20\ndocker start 命令\n```\n\n然后，我们可以使用 `sqlcmd`\
+  \ 来列出我们实例中的数据库，如下列命令所示。\n\n```\nsqlcmd -S localhost,1434 -U sa -Q 'SELECT name from\
+  \ sys.databases' -P 'S0methingS@Str0ng!'\n代码清单 2-21\n使用 sqlcmd 列出数据库\n```\n\n在输出中，`sql2`\
+  \ 已重新启动，显示了系统上的当前数据库，包括已还原的用户数据库 `TestDB1`。\n\n![../images/494804_1_En_2_Chapter/494804_1_En_2_Fig16_HTML.jpg](img/494804_1_En_2_Fig16_HTML.jpg)\n\
+  *图 2-16. 数据库列表*\n\n现在，让我们清理并停止这些容器。\n\n```\ndocker stop sql1\ndocker stop sql2\n\
+  代码清单 2-22\ndocker stop 命令\n```\n\n### 移除容器\n\n当容器停止后，`docker rm` 将从系统中移除一个容器。此时，容器内的数据将被销毁。因此，一旦这些容器被移除，已还原的\
+  \ `TestDB1` 也就消失了。关于独立于容器生命周期的数据持久化将在下一节介绍。在以下示例中，`sql1` 和 `sql2` 都被删除。\n\n```\n\
+  docker rm sql1\ndocker rm sql2\n代码清单 2-23\ndocker rm 命令\n```\n\n前面的示例删除了容器，但没有删除容器镜像。容器镜像仍在本地系统上，可用于派生新的容器。执行\
+  \ `docker image ls` 可以显示系统上存在的容器镜像。\n\n```\ndocker image ls\n代码清单 2-24\ndocker image\
+  \ ls 命令\n```\n\n你可以看到容器镜像仍然在本地系统上。\n\n![../images/494804_1_En_2_Chapter/494804_1_En_2_Fig17_HTML.jpg](img/494804_1_En_2_Fig17_HTML.jpg)\n\
+  *图 2-17. `docker image ls` 命令的输出。本地系统上的容器镜像*\n\n## 容器内部原理\n\n现在，我们花点时间来看看容器内部原理，以便你能够理解操作系统在容器内运行进程时如何实现并提供对进程及其资源的隔离。\n\
+  \n容器是一个运行中的进程，它对底层操作系统及其资源具有隔离的视图。当从容器镜像启动容器时，容器运行时被指示启动在容器镜像中定义的一个特定进程。同时还定义了应用程序监听的端口以及其他配置信息。\n\
+  \n如前所述，在容器内执行的进程列表仅显示容器内运行的进程；系统上的其他进程不可见。尽管应用程序在容器内监听端口 `1433`，但要访问该应用程序，必须在基础操作系统上发布一个唯一的端口。操作系统如何为基于容器的应用程序在单一系统上提供这种隔离？这就是\
+  \ Linux 命名空间（namespaces）的用武之地。\n\n### 命名空间\n\nLinux 内核命名空间 ([`man7.org/linux/man-pages/man7/namespaces.7.html`](http://man7.org/linux/man-pages/man7/namespaces.7.html))\
+  \ 是一种内核构造，为在 Linux 上运行的进程提供隔离。Linux 中有六个核心命名空间，其中五个用于资源隔离，一个用于资源管理。查看下面的命名空间列表，你可以感受到命名空间提供了什么。它们为程序和程序正在使用的资源提供了与基础操作系统的隔离——例如进程、文件、网络等。\n\
+  \n五个资源隔离命名空间为系统上运行的进程提供对底层操作系统服务的访问：\n\n*   **PID：** 进程隔离\n*   **MNT：** 文件系统和挂载点隔离\n\
+  *   **NET：** 网络设备和协议栈隔离\n*   **IPC：** 进程间通信\n*   **UTS：** 唯一的主机名和域名\n\n第六个命名空间 `cgroups`（控制组）为在基础操作系统上运行的进程提供资源隔离。这使得多个进程可以在操作系统上运行，并让管理员能够控制资源分配：\n\
+  \n*   **cgroups：** 控制组能够分配和控制对系统资源（如 CPU、I/O 和内存）的访问。\n\n关于 `cgroups` 工作原理的更多信息，请查看\
+  \ Linux 手册页链接：[`man7.org/linux/man-pages/man7/cgroups.7.html`](http://man7.org/linux/man-pages/man7/cgroups.7.html)。\n\
+  \n### 联合文件系统\n\n容器镜像是只读的。当容器运行时，对容器内文件的任何更改都使用写时复制技术写入一个可写层。联合文件系统（Union File System）获取容器镜像的基础层和可写层，并将两者作为单一统一的文件系统呈现给应用程序。这种技术使我们能够从单个镜像启动许多容器，并通过重复使用该容器镜像层作为许多容器的起点来获得效率。每个容器都将拥有一个唯一的可写层，其生命周期与容器绑定。当容器被删除时，这个可写层也会被删除。如果你正在运行像\
+  \ SQL Server 这样的有状态应用，这听起来不太吸引人。为基于容器的应用程序提供数据持久化的技术将在下一节介绍。Docker 联合文件系统的实现细节多年来已经从\
+  \ AUFS、UnionFS 变为 OverlayFS，但这些实现细节超出了本讨论范围。\n\n**注意**\n如果你想深入了解容器镜像的工作原理，我们鼓励你查看我们同事\
+  \ Elton Stoneman (@EltonStoneman) 在 Pluralsight 上的课程 “Handling Data and Stateful\
+  \ Applications in Docker” ([`app.pluralsight.com/library/courses/handling-data-stateful-applications-docker/table-of-contents`](https://app.pluralsight.com/library/courses/handling-data-stateful-applications-docker/table-of-contents))。\n\
+  \n### 容器中的数据持久化\n\n容器是短暂的（ephemeral），这意味着当容器被删除时，它就永远消失了。在上一节中，我们介绍过，当正在运行的容器内部数据发生变化时，它会被写入一个可写层，联合文件系统的职责是将各层连接起来，为基于容器的应用程序呈现一个单一的统一文件系统。而当容器被删除时，可写层也会被一并删除。那么，容器能否在其生命周期内（从创建到删除再到重新创建）实现数据持久化呢？你可能还会问，我们为什么需要删除容器？难道我们不应该让它一直保持运行吗？嗯，是的，你可以让容器一直运行，但如果你需要更换基础容器镜像（可能因为升级或某种修补，你的应用程序有了新的容器镜像），你就需要删除现有容器并使用那个新的容器镜像启动一个新容器。\n\
+  \n\n\n\n#### Docker 卷\n\nDocker 卷（`https://docs.docker.com/storage/`）是一种由 Docker\
+  \ 管理的资源，它独立于容器的生命周期。Docker 卷从底层操作系统或共享存储分配存储空间，并将其呈现到容器文件系统内的特定位置。\n\n提示\n请访问 `https://docs.docker.com/storage/storagedriver/`\
+  \ 查阅 Docker 文档以获取关于存储驱动程序的信息。\n\n当一个卷被挂载到容器文件系统内的某个位置时，应用程序修改的数据会被写入该文件系统位置，并最终写入卷中。这个卷的后端存储位于容器外部。现在，如果这个容器被删除，容器及其可写层仍然会被删除，但卷会保留下来，因为它的生命周期独立于容器。因此，文件系统中未由卷支持的其他部分的所有更改将不会被持久化。但是，写入由卷支持的文件位置的数据将被持久化。如果创建一个新容器并将该卷挂载到其中，存储在该卷中的数据在新容器中仍然是可访问的。图\
+  \ 2-18 展示了一个名为 `sql1` 的容器化应用程序访问一个名为 `sqldata1` 的卷。\n\n![../images/494804_1_En_2_Chapter/494804_1_En_2_Fig18_HTML.jpg](img/494804_1_En_2_Fig18_HTML.jpg)\n\
+  \n图 2-18：附加了卷的容器\n\n让我们来看一些为 SQL Server 容器定义 Docker 卷的代码。\n\n#### 创建带有卷的容器\n\n清单\
+  \ 2-25 中的代码展示了一个容器的启动命令，与我们之前的示例类似。关键区别在于使用了 `-v` 或 `--volume` 参数来指定数据卷。\n\n```\n\
+  docker run \\\n--name 'sql1' \\\n-e 'ACCEPT_EULA=Y' \\\n-e 'MSSQL_SA_PASSWORD=S0methingS@Str0ng!'\
+  \ \\\n-p 1433:1433 \\\n-v sqldata1:/var/opt/mssql \\\n-d mcr.microsoft.com/mssql/server:2019-CU9-ubuntu-18.04\n\
+  ```\n\n清单 2-25：`docker run` 命令 – 数据卷规格说明\n\n让我们来解析这行代码……`-v` 指定了卷的配置。这会创建一个名为 `sqldata1`\
+  \ 的命名卷，该卷将从底层操作系统的文件系统中分配。确切的位置特定于容器运行时的平台（Windows、Linux 或 MacOS）。冒号之后，您需要定义希望在容器内部挂载卷的位置，因此此卷被挂载到\
+  \ `/var/opt/mssql`，这是 SQL Server on Linux 容器中的默认实例目录。在此目录内，您将找到 SQL Server 所需的数据文件，例如\
+  \ SQL Server 错误日志、跟踪文件、扩展事件文件以及系统和用户数据库。任何写入 `/var/opt/mssql` 的数据都将被写入卷中，这是一个独立于容器的资源。\n\
+  \n注意\nSQL Server 的二进制文件位于文件系统的另一部分 `/opt/mssql/bin`。因此，当容器镜像被更新版本的 SQL Server 替换时，新的二进制文件将用于启动容器，而我们的数据将从\
+  \ `/var/opt/mssql` 读取，该数据在容器实例化之间会持久存在。\n\n那么，让我们在实践中看看这个过程，运行一系列使用 SQL Server 和\
+  \ Docker 卷的演示，其中将突出显示以下要点。首先，启动一个在容器内部 `/var/opt/mssql` 处挂载了卷的容器，并还原一个数据库。接着，删除该容器。然后，创建一个使用相同卷的新容器。最后，观察我们的数据如何独立于该容器的生命周期而持久存在。让我们开始吧。\n\
+  \n在清单 2-26 中，定义了一个带有卷 `sqldata1` 的容器。该卷被挂载到容器文件系统的 `/var/opt/mssql` 位置，所以让我们运行这个命令。\n\
+  \n现在，容器已经启动并运行，将数据库备份复制到容器中，并在备份文件上设置适当的权限。然后使用与上一节相同的过程还原数据库。代码示例（清单 2-26）突出了这三个步骤。\n\
+  \n```\ndocker cp TestDB1.bak sql1:/var/opt/mssql/data\ndocker exec -u root sql1\
+  \ chown mssql /var/opt/mssql/data/TestDB1.bak\nsqlcmd -S localhost,1433 -U sa -i\
+  \ restore_testdb1.sql -P 'S0methingS@Str0ng!'\n```\n\n清单 2-26：`docker cp` 命令\n\n\
+  `sqlcmd` 将再次确认执行。\n\n容器启动并运行且用户数据库已还原后，检查我们此 SQL Server 容器实例上当前数据库列表，以确认数据库还原成功（清单\
+  \ 2-27）。\n\n```\nsqlcmd -S localhost,1433 -U sa -Q 'SELECT name from sys.databases'\
+  \ -P 'S0methingS@Str0ng!'\n```\n\n清单 2-27：通过 `sqlcmd` 列出所有数据库\n\n输出如图 2-19 所示。`TestDB1`\
+  \ 列在此 SQL Server 实例的数据库集合中。\n\n![../images/494804_1_En_2_Chapter/494804_1_En_2_Fig19_HTML.jpg](img/494804_1_En_2_Fig19_HTML.jpg)\n\
+  \n图 2-19：SQL Server 实例上的数据库列表\n\n\n\n此容器附加了一个卷，并挂载在其文件系统的 `/var/opt/mssql` 目录中。当\
+  \ SQL Server 首次启动时，它会将关键的实例文件和系统数据库放入此目录。前一示例中恢复的用户数据库，根据恢复脚本（代码清单 2-28）中的代码，被恢复到了子目录\
+  \ `/var/opt/mssql/data` 中。\n\n```\nsqlcmd -S localhost,1433 -U sa -Q 'SELECT name,\
+  \ physical_name from sys.master_files' -P 'S0methingS@Str0ng!' -W\n代码清单 2-28\n通过\
+  \ sqlcmd 列出所有文件及其物理名称\n```\n\n通过查询 `sys.master_files`，可以看到（图 2-20），我们数据库的所有文件位置都在\
+  \ `/var/opt/mssql/data` 中，该目录包含在我们的卷内。\n\n![../images/494804_1_En_2_Chapter/494804_1_En_2_Fig20_HTML.jpg](img/494804_1_En_2_Fig20_HTML.jpg)\n\
+  图 2-20\n文件及其位置列表\n\n注意\n默认的用户数据库和日志文件位置可作为环境变量进行配置。\n\n请查看 `https://docs.microsoft.com/en-us/sql/linux/sql-server-linux-configure-environment-variables?view=sql-server-ver15`\
+  \ 了解更多详情。本书第 7 章将对此主题进行进一步探讨。\n\n以下命令将停止容器 `sql1` 并将其移除（代码清单 2-29）。这通常会销毁与此容器关联的数据……但现在它使用的是一个卷。\n\
+  \n```\ndocker stop sql1\ndocker rm sql1\n代码清单 2-29\n停止并移除容器 sql1\n```\n\n代码清单 2-30\
+  \ 创建了一个新容器，并再次定义了一个卷 `sqldata1`。这是前一示例中使用的同一个卷，它是一个独立于容器的资源，你可以使用命令 `docker volume\
+  \ ls` 查看。SQL Server 的实例目录及其系统和用户数据库都在此卷内。因此，当 SQL Server 启动时，它会在 `/var/opt/mssql/data`\
+  \ 中找到 master 数据库，然后读取实例的配置和状态。文件系统中任何已定义的用户数据库也将被联机。\n\n```\ndocker run \\\n--name\
+  \ 'sql2' \\\n-e 'ACCEPT_EULA=Y' \\\n-e 'MSSQL_SA_PASSWORD=S0methingS@Str0ng!' \\\
+  \n-p 1433:1433 \\\n-v sqldata1:/var/opt/mssql \\\n-d mcr.microsoft.com/mssql/server:2019-CU9-ubuntu-18.04\n\
+  代码清单 2-30\ndocker run 命令 – 创建新容器\n```\n\n容器启动运行后，使用代码清单 2-31 中的命令查询当前数据库集。\n\n```\n\
+  sqlcmd -S localhost,1433 -U sa -Q 'SELECT name from sys.databases' -P 'S0methingS@Str0ng!'\n\
+  代码清单 2-31\n通过 sqlcmd 列出所有数据库\n```\n\n在输出中，你可以看到 `TestDB1`（图 2-21)。现在我们想指出，这不仅包括用户数据库，还包括系统数据库以及与该实例关联的其他文件。因此，对实例所做的任何配置更改也将持久保留，例如，实例级配置如最大服务器内存。\n\
+  \n![../images/494804_1_En_2_Chapter/494804_1_En_2_Fig21_HTML.jpg](img/494804_1_En_2_Fig21_HTML.jpg)\n\
+  图 2-21\nSQL Server 实例上的数据库列表\n\n我们的卷是一个独立于容器的资源，你可以使用 `docker volume ls` 命令（代码清单\
+  \ 2-32）查看，如输出所示。\n\n```\ndocker volume ls\n代码清单 2-32\ndocker volume ls 命令\n```\n\
+  \n图 2-22 将向我们展示系统上当前定义的所有卷。\n\n![../images/494804_1_En_2_Chapter/494804_1_En_2_Fig22_HTML.jpg](img/494804_1_En_2_Fig22_HTML.jpg)\n\
+  图 2-22\nDocker 卷列表\n\n#### 深入了解卷\n\n在使用 Docker 时，我们最喜欢的命令之一是 `docker inspect`。如代码清单\
+  \ 2-33 所示，此命令用于获取有关资源的更详细信息，在下面的示例中，执行 `docker inspect` 显示了关于我们卷的更详细信息。\n\n```\n\
+  docker volume inspect sqldata1\n代码清单 2-33\ndocker inspect 命令\n```\n\n让我们浏览一下此输出的一部分，你可以在图\
+  \ 2-23 中看到。首先是 `CreatedAt`，即卷创建的日期和时间。还有 `Driver`，其值为 `local`。这意味着它使用的是底层操作系统的文件系统。接下来是\
+  \ `Mountpoint`；这是暴露到容器中的基础操作系统上的实际路径。因此，如果你在运行容器的底层操作系统上浏览到此目录，你将看到卷内容器中的文件，在我们的示例中，你将在此位置找到\
+  \ SQL Server 实例的文件及其数据库。\n\n![../images/494804_1_En_2_Chapter/494804_1_En_2_Fig23_HTML.jpg](img/494804_1_En_2_Fig23_HTML.jpg)\n\
+  图 2-23\ndocker inspect 的输出 – 卷的详细信息\n\n注意\n如果你使用的是 Mac 或 Windows，这些文件将被抽象化。Mac 和\
+  \ Windows 都使用虚拟化技术，因此可以在这些平台上运行 Linux 容器。这些文件的实际位置将位于为容器运行时提供 Linux 内核服务的虚拟机“内部”。在运行\
+  \ Linux 容器的原生 Linux 系统上，你将在 `Mountpoint` 定义的实际文件系统位置找到这些文件。\n\n#### 停止和移除容器与卷\n\n\
+  现在我们已经介绍了容器的生命周期以及如何使用卷将数据持久保存在容器外部，是时候清理我们的资源了。我们现在将向你展示如何停止容器、删除容器以及删除卷。\n\n执行\
+  \ `docker stop sql1`（代码清单 2-34）会告知 SQL Server 进程停止，然后停止容器。\n\n```\ndocker stop sql1\n\
+  代码清单 2-34\ndocker stop 命令\n```\n\n要删除容器，请使用 `docker rm`（代码清单 2-35）加上容器名称 `sql1`。由于其数据存储在卷中，如果仍希望继续使用该数据，可以再次创建新容器。\n\
+  \n```\ndocker rm sql1\n代码清单 2-35\ndocker rm 命令\n```\n\n但既然此演示已完成，使用 `docker volume\
+  \ rm sqldata1`（代码清单 2-36）删除卷。卷被删除时，数据才会被销毁。因此请谨慎使用此操作！\n\n```\ndocker volume rm\
+  \ sqldata1\n代码清单 2-36\ndocker volume rm 命令\n```\n\n\n\n### 现代应用程序部署\n\n现在我们已经讨论了核心容器基础知识，比如如何启动容器、访问这些应用程序，以及独立于容器生命周期持久化数据，让我们转而讨论容器在现代应用程序部署场景中的使用方式，并介绍容器编排器的需求。\n\
+  \n在本章到目前为止，我们已经展示了启动容器、在网络上公开该应用程序以及将持久存储附加到容器的配置。但在生产系统中如何大规模地完成这些工作？你希望每次需要启动容器时都登录服务器并输入`docker\
+  \ run`吗？你希望跟踪你的应用程序正在监听/发布哪些端口吗？不，实施该配置并跟踪资源在哪里以及如何访问这些资源并非一项简单的任务。这正是容器编排器发挥作用的地方。\n\
+  \n让我们从一个示例应用程序栈开始，如图 2-24 所示。\n\n![../images/494804_1_En_2_Chapter/494804_1_En_2_Fig24_HTML.jpg](img/494804_1_En_2_Fig24_HTML.jpg)\n\
+  \n图 2-24\n\n示例应用程序架构\n\n关于如何使用容器部署这个架构，有一些基本问题：\n\n1.  这些基于容器的应用程序如何在数据中心部署和启动？\n\
+  2.  这些基于容器的应用程序在数据中心的哪些服务器上运行？\n3.  这些基于容器的应用程序如何扩展，如果我们想从 2 个 Web 服务器扩展到 20 个以应对工作负载激增怎么办？\n\
+  4.  我们如何一致地部署这个应用程序栈？\n5.  我们如何为测试或在另一个数据中心或云中部署到另一个环境？\n6.  我们或我们的任何应用程序如何访问这些服务？\n\
+  7.  哪些 IP 或 DNS 名称与这些应用程序相关联？\n\n容器编排器有助于回答这些问题。\n\n### 容器编排器的需求\n\n容器编排器是一种软件，用于帮助管理基于容器的应用程序的部署。容器编排器基于期望状态和控制器的核心概念工作。容器编排器会计算在数据中心或云中的计算资源集合的何处运行你的工作负载，启动这些容器，并保持这些容器正常运行并处于定义的状态。\n\
+  \n让我们介绍容器编排器的一些关键功能：\n\n*   **工作负载放置：** 给定数据中心中的一组服务器，选择在哪台服务器上运行容器。\n*   **管理状态：**\
+  \ 启动容器并保持其在线。如果某些原因导致基于容器的应用程序停止或变得不可用，容器编排器可以做出反应并重新启动容器。\n*   **部署的速度和一致性：** 代码用于定义应用程序部署。容器编排器将部署该代码中定义的内容。此代码用于快速且一致地部署我们的应用程序。\n\
+  *   **隐藏集群的复杂性：** 容器编排器暴露了一个程序化 API 进行交互，因此用户可以较少关注我们应用程序的物理基础设施，而更专注于应用程序的部署方式。\n\
+  *   **持久的应用程序访问端点：** 容器编排器将跟踪哪些服务可用，并为我们基于容器的应用程序提供的服务提供持久的访问。\n\n有几种不同的容器编排器可用，本书重点介绍\
+  \ Kubernetes（[*https://kubernetes.io/*](https://kubernetes.io/)），因为它已成为开源容器编排器的标准。因此，本书的其余部分将重点介绍如何构建\
+  \ Kubernetes 集群并将 SQL Server 部署到该环境中。\n\n### 更多资源\n\n要更深入地了解 Docker 卷，请查看 Anthony\
+  \ 的博客系列“在 Docker 容器中持久化 SQL Server 数据”：\n\n*   [*www.centinosystems.com/blog/sql/persisting-sql-server-data-in-docker-containers-part-1/*](http://www.centinosystems.com/blog/sql/persisting-sql-server-data-in-docker-containers-part-1/)\n\
+  *   [*www.centinosystems.com/blog/sql/persisting-sql-server-data-in-docker-containers-part-2/*](http://www.centinosystems.com/blog/sql/persisting-sql-server-data-in-docker-containers-part-2/)\n\
+  *   [*www.centinosystems.com/blog/sql/persisting-sql-server-data-in-docker-containers-part-3/*](http://www.centinosystems.com/blog/sql/persisting-sql-server-data-in-docker-containers-part-3/)\n\
+  \n看看我们的技术评审和容器专家 Andrew Pruski (*@dbafromthecold*)的容器博客系列。只要是关于容器的，Andrew 很可能都写过博客：\n\
+  \n*   [*https://dbafromthecold.com/2017/03/15/summary-of-my-container-series/*](https://dbafromthecold.com/2017/03/15/summary-of-my-container-series/)\n\
+  \n另外，请务必看看我们的好朋友和全方位的 SQL Server 专家 Bob Ward (*@bobwardms*)提供的资源。容器中的 SQL Server\
+  \ 就是 Linux 上的 SQL Server。如果你想深入了解 SQL Server 在 Linux 上的工作原理，请务必查看 Bob 的书*Pro SQL\
+  \ Server on Linux*，Anthony 非常荣幸地担任了该书的技术评审：\n\n*   **GitHub:** [*https://github.com/microsoft/bobsql*](https://github.com/microsoft/bobsql)\n\
+  *   ***Pro SQL Server on Linux:*** [*www.apress.com/gp/book/9781484241271*](https://www.apress.com/gp/book/9781484241271)\n\
+  *   ***SQL Server 2019 Revealed:*** [*www.apress.com/gp/book/9781484254189*](https://www.apress.com/gp/book/9781484254189)\n\
+  \n### 总结\n\nKubernetes 是一个容器编排器，在本章中，我们奠定了容器工作原理的基础。我们展示了什么是容器以及容器如何提供应用程序隔离。容器用于快速部署应用程序，在我们的示例中，我们在容器中运行了\
+  \ SQL Server。本章的一个关键概念是需要将配置和状态与容器生命周期解耦，其核心工具是用于注入配置的环境变量和独立于容器生命周期持久化状态（数据）的卷。随着你学习如何在\
+  \ Kubernetes 上部署 SQL Server，这些核心概念将在本书的其余部分被重新审视和利用。\n\n## 3. Kubernetes 架构\n\n\
+  本章介绍 Kubernetes，描述其在现代应用程序部署中的角色、提供的优势及其架构。从其优势开始，你将学习 Kubernetes 在现代基于容器的应用程序部署中提供的价值。接下来，你将学习\
+  \ Kubernetes API 如何使你能够构建和部署下一代应用程序和系统。在该 API 中，你将学习 Kubernetes 提供的用于定义和部署应用程序及系统的核心\
+  \ API 原语。然后，你将学习 Kubernetes 集群及其组件的关键概念，并了解 Kubernetes 网络基础知识。\n\n\n\n### Kubernetes\
+  \ 简介\n\nKubernetes 是一个容器编排器。它的职责是在数据中心内的服务器上启动基于容器的应用程序。为此，Kubernetes 使用代表数据中心资源的\
+  \ `API 对象`，使开发人员和系统管理员能够以代码形式定义系统，并使用该代码进行部署。基于容器的应用程序以 `Pod` 的形式部署到 `Kubernetes\
+  \ 集群` 中。集群是计算资源的集合，这些资源是被称为 `节点` 的物理或虚拟服务器。让我们更详细地探讨这些元素中的每一个，从 Kubernetes 的优势开始，了解它在现代应用部署中所提供的价值：\n\
+  \n*   **工作负载调度：** Kubernetes 是一个容器编排器，其主要目标是在集群的 `节点` 上启动称为 `Pod` 的基于容器的应用程序。Kubernetes\
+  \ 的工作就是找到在集群中运行 `Pod` 的最合适位置。在将 `Pod` 调度到 `节点` 上时，一个主要的关注点是确定一个 `节点` 是否有足够的 CPU\
+  \ 和内存资源来运行分配的工作负载。\n\n*   **状态管理：** 当代码部署到 Kubernetes 中，定义了一个需要运行的工作负载时，Kubernetes\
+  \ 有责任在集群中启动 `Pod` 和其他资源，并保持集群处于期望状态。如果集群的运行状态偏离了期望状态，Kubernetes 将尝试改变集群的运行状态，使其回到定义的期望状态。例如，如果一个\
+  \ `Deployment` 定义了要运行一定数量的 `Pod`，当一个 `Pod` 失败时，Kubernetes 将会在集群中部署一个新的 `Pod` 来替换失败的\
+  \ `Pod`，确保 `Deployment` 所定义的 `Pod` 数量保持正常运行。此外，假设您希望扩展支持应用程序的 `Pod` 数量以增加容量。在这种情况下，您只需增加\
+  \ `Deployment` 中的副本数，Kubernetes 就会在集群中创建额外的 `Pod`，确保期望状态得以实现。更多内容将在接下来关于 `控制器` 的章节中介绍。\n\
+  \n*   **一致部署：** 以代码形式部署应用程序能够实现可重复的流程。定义部署的代码是配置制品，可以置于源代码控制中。您也可以使用此代码在低级环境（例如开发环境）中部署相同的系统，甚至在本地系统与云之间部署。更多内容将在接下来关于\
+  \ Kubernetes API 的章节中介绍。\n\n*   **速度：** Kubernetes 支持快速、可控的部署，能够快速启动集群中的 `Pod`。此外，在\
+  \ Kubernetes 中，应用程序可以快速扩展。扩展支持应用程序的 `Pod` 数量可能就像更改一行代码那么简单，这可能只需要几秒钟。这将在第 5 章和第\
+  \ 7 章中详细演示。\n\n*   **基础设施抽象：** Kubernetes API 提供了对集群中可用资源的抽象或封装。在部署应用程序时，重点较少放在基础设施上，而更多地放在如何定义和部署应用程序以及如何消耗集群的资源上。用于部署的代码将描述\
+  \ `Deployment` 应该是什么样子，而集群将使其成为现实。如果应用程序需要诸如公共 IP 地址或存储之类的资源，这将成为 `Deployment` 的一部分，集群将为应用程序的使用调配这些资源。\n\
+  \n*   **持久服务端点：** Kubernetes 为在集群中部署的应用程序提供持久的 IP 和 DNS 命名。由于 `Pod` 可能会因为扩展操作或响应故障事件而出现和消失，Kubernetes\
+  \ 为访问这些应用程序提供了这种网络抽象。根据所使用的 `服务` 类型，服务会将应用程序流量负载均衡到支持该应用程序的 `Pod`。随着 `Pod` 基于扩展操作或响应集群中的故障而被创建和销毁，Kubernetes\
+  \ 会自动更新哪些 `Pod` 提供应用程序服务的信息。\n\n### Kubernetes API\n\nKubernetes API 提供了一个表示数据中心可用资源的可编程层。该\
+  \ API 使您能够编写代码，在您的应用程序部署中使用这些资源。在编写代码以使用该 API 时，您使用的是 `API 对象`，您使用它们来定义和部署 Kubernetes\
+  \ 中的应用程序工作负载。您编写的代码被提交给 `API 服务器`。`API 服务器` 是 Kubernetes 集群中的核心通信枢纽。它是您与 Kubernetes\
+  \ 集群交互的主要方式，也是集群内部 Kubernetes 组件交换信息的唯一方式。随着新的集群状态被定义（无论是在初始 `部署` 时还是在修改现有部署时），Kubernetes\
+  \ 开始实现您代码中描述的状态。您代码的期望状态成为了集群中的运行状态。\n\n#### API 对象\n\nKubernetes `API 对象` 代表集群中可用的资源。集群中有用于计算、存储和网络元素等的\
+  \ `API 对象`，可供您的应用程序工作负载使用。您将使用这些 `API 对象` 编写代码，以定义您部署到 Kubernetes 集群中的应用程序和系统的期望状态。这些定义的\
+  \ `API 对象` 向集群传达已部署工作负载的期望状态，而集群有责任确保该期望状态成为集群的运行状态。\n\n我们现在将介绍在 Kubernetes 集群中定义工作负载的核心\
+  \ `API 对象`。这些是在 Kubernetes 中部署的应用程序的核心构建块。在接下来的章节中，我们将更深入地逐一探讨：\n\n*   **Pod：**\
+  \ 这些是基于容器的应用程序。`Pod` 是集群中的工作单元。`Pod` 是一个抽象，包含一个或多个容器及其执行所需的资源和配置，包括网络、存储、环境变量、配置文件和机密信息。\n\
+  \n*   **控制器：** 这些控制器定义应用程序工作负载并使其在集群中保持期望状态。一些 `控制器` 负责启动 `Pod` 并使这些 `Pod` 保持在期望状态。有几种不同类型的\
+  \ `控制器`，用于确保已部署的应用程序和系统的状态，以及集群的运行状态。我们在本节介绍几种 `控制器`，并在本书的剩余部分介绍更多。\n\n*   **服务：**\
+  \ 这些为访问基于 `Pod` 的应用程序提供网络抽象。`服务` 是应用程序的使用者（例如用户和其他应用程序）访问集群中部署的基于容器的应用程序服务的方式。\n\
+  \n*   **存储：** Kubernetes 为 `Pod` 访问集群中的存储和配置数据提供了抽象。像 `持久卷` 和 `持久卷声明` (`PVC`) 这样的存储对象用于独立于\
+  \ `Pod` 的生命周期来持久化应用程序数据。\n\n*   **配置数据：** 配置数据可以作为 `ConfigMap` 和 `Secret` 存储在集群中，它们可以作为文件和环境变量暴露给在\
+  \ `Pod` 中运行的应用程序。\n\n除了所述的 `API 对象` 外，还有许多其他用于构建工作负载的对象，但这些是本书关注的核心 `API 对象` 类型，也用于部署\
+  \ SQL Server。\n\n\n\n#### API Server\n\nAPI Server 是 Kubernetes 集群中的**中央通信枢纽**。它是\
+  \ Kubernetes 用户与集群交互以部署工作负载的主要方式，也是 Kubernetes 在集群内部组件之间交换信息的主要方式。API Server 是一个通过\
+  \ HTTPS 提供的 REST API，以 JSON 格式暴露 API 对象。当集群用户定义工作负载并将信息传达给 API Server 时，该信息会被序列化并持久化存储在集群数据存储中。Kubernetes\
+  \ 随后会将集群的当前运行状态移动到这些存储在集群存储中的 API 对象所定义的**期望状态**。\n\n> 注意：集群数据存储是一个可插拔的资源。Kubernetes\
+  \ 中占主导地位的集群数据存储是一个名为 [etcd](https://etcd.io/) 的分布式键值存储。\n\n#### 核心 Kubernetes API\
+  \ 原语\n\n现在让我们更仔细地看看上一节介绍的高级 API 对象。本节介绍 Pods、Controllers、Services、存储、ConfigMaps\
+  \ 和 Secrets。你将了解每个对象的更多细节，以及它们如何使你能够在 Kubernetes 中部署应用程序，以及每个 API 对象允许你部署的工作负载类型。\n\
+  \n##### Pods\n\nPod 也是 Kubernetes 集群中最基本的工作单元。从本质上讲，Pod 是一个 API 对象，代表一个或多个容器、其资源（如网络、存储）以及控制其执行的配置。最常见的\
+  \ Pod API 对象定义包含容器镜像、用于与容器化应用程序通信的网络端口，以及（如果需要）存储。\n\nPod 是 Kubernetes 集群中的调度单元。在\
+  \ Kubernetes 中，调度决定了在集群中的哪个节点上启动 Pod。一旦 Pod 被调度到节点上，容器运行时（通常是 Docker 容器运行时）就会在该节点上使用指定的容器镜像启动一个容器。在将\
+  \ Pod 调度到节点上时，Kubernetes 会确保运行 Pod 所需的 CPU 和内存等资源在所选节点上可用，并且（如果在 Pod 中配置了）可以访问存储。\n\
+  \n> 注意：Kubernetes 实现了容器运行时接口（CRI），这意味着容器运行时是一个可插拔的资源，可以使用其他符合 CRI 的容器运行时。事实上的标准是\
+  \ containerd。有关这方面的更多详情，请参见第 2 章。\n\nPod 是伸缩单元。在 Kubernetes 中部署应用程序时，你可以通过在集群中创建\
+  \ Pod 的多个副本来水平伸缩应用程序，这些副本称为副本。伸缩 Pod 副本使应用程序能够通过在集群中的节点上启动更多容器并利用额外的集群容量来支持更大的工作负载。此外，在集群中的多个节点上运行\
+  \ Pod 的多个副本，可以在 Pod 或节点故障时提供高可用性。\n\nPod 是短暂的。如果删除了 Pod，其在节点上的容器会被停止然后删除。它被永久销毁，包括其可写层。Pod\
+  \ 永远不会被重新部署。相反，Kubernetes 会从当前的 Pod API 对象定义创建一个新的 Pod。这两次部署的 Pod 之间不维护任何状态。对于无状态工作负载（如\
+  \ Web 应用程序），这没问题。当新的 Pod 被创建时，它们可以在准备好后开始接受工作负载。但对于有状态工作负载（如关系数据库系统），Pod 需要能够独立于其生命周期持久化其数据库中存储的数据状态。Kubernetes\
+  \ 为我们提供了用于持久存储的 API 对象和结构，这将在下文描述。\n\n##### Controllers\n\n控制器定义、监控工作负载，并使集群的运行状态保持在期望状态。本节重点介绍用于创建和管理\
+  \ Pod 的控制器。在 Kubernetes 中，很少通过手动定义和部署 Pod 对象来创建 Pod。两个常用的工作负载 API 对象用于在 Kubernetes\
+  \ 中部署应用程序，它们是 `Deployment` 和 `StatefulSet`。\n\n`Deployment` 是一个 API 对象，使你能够通过 Pod\
+  \ 的配置来定义应用程序的期望状态，包括要创建的 Pod 数量（称为副本）。Deployment 控制器会创建一个 `ReplicaSet`。`ReplicaSet`\
+  \ 负责使用来自 `Deployment` 对象的 Pod 规范在集群中启动 Pod。图 3-1 的第一帧显示了一个 `Deployment` 创建了一个 `ReplicaSet`，然后该\
+  \ `ReplicaSet` 在集群中启动了三个 Pod。\n\n![../images/494804_1_En_3_Chapter/494804_1_En_3_Fig1_HTML.jpg](img/494804_1_En_3_Fig1_HTML.jpg)\n\
+  \n图 3-1：ReplicaSet 操作\n\n控制器负责使集群的运行状态保持在期望状态，那么让我们看看这个过程。在图 3-1 的第二帧中，假设其中一个 Pod\
+  \ 因任何原因失败。也许是应用程序崩溃了，或者 Pod 运行的节点不再可用。在第三帧中，`ReplicaSet` 控制器感知到运行状态已偏离期望状态，并启动创建一个新\
+  \ Pod，确保 `ReplicaSet`（或应用程序）始终保持在三个 Pod 运行的期望状态。\n\n你可能会问，为什么 Deployment 控制器创建一个\
+  \ `ReplicaSet`，而不是由 `Deployment` 直接创建 Pod？Deployment 控制器定义了要创建的 Pod 数量以及 Pod 的配置。当更新\
+  \ Deployment 配置时，旧 `ReplicaSet` 中的 Pod 会关闭，而新 `ReplicaSet` 中的 Pod 会被创建。这使得新的容器镜像或\
+  \ Pod 配置能够滚动更新。单个 `Deployment` 对象仍然存在，它管理着 `ReplicaSet` 之间的声明性更新和转换。如果你想深入了解这个主题，可以查看\
+  \ Pluralsight 课程 “Managing Kubernetes Controllers and Deployments”。\n\nDeployment\
+  \ 控制器不保证 Pod 的顺序或持久命名。一个 `Deployment` 包含一组 Pod，每个都是应用程序的精确副本。但是，如果一个 Pod 被销毁，并在其位置创建一个新\
+  \ Pod，则该 Pod 的名称不是持久的。像数据库系统这样的应用程序通常将数据分布在多个计算元素上，然后必须跟踪数据在系统中的位置以便后续检索。对于需要知道集合中命名计算资源的精确数据位置的有状态应用程序，使用\
+  \ Deployment 控制器可能会出现问题。\n\n为了允许 Kubernetes 支持这些类型的有状态应用程序，`StatefulSet` 控制器创建 Pod，每个\
+  \ Pod 都具有唯一、持久且有序的名称。因此，需要控制数据跨多个 Pod 放置的应用程序可以这样做，因为 Pod 名称是有序的，并且独立于 Pod 生命周期而持久存在。此外，`StatefulSet`\
+  \ 为应用程序提供稳定的存储，确保在因任何原因需要重新创建同名 Pod 时，正确的存储对象能映射到该 Pod。\n\n\n\n## Kubernetes 中的控制器、服务与存储\n\
+  \n### StatefulSet 示例\n\n图 3-2 展示了一个运行中的 `StatefulSet` 示例。此示例 `StatefulSet` 被定义为具有三个副本（Replicas）并创建了三个\
+  \ Pod。它创建的每个 Pod 都有一个唯一的有序名称：`sql-0`、`sql-1` 和 `sql-2`。`StatefulSet` 中创建的第一个 Pod\
+  \ 总是从索引 0 开始。在此示例中，即 `sql-0`。对于添加到 `StatefulSet` 的每个 Pod，索引增加一。所以下一个 Pod 是 `sql-1`，接着是\
+  \ `sql-2`。如果 `StatefulSet` 扩容以添加一个 Pod，下一个 Pod 将被命名为 `sql-3`。如果 `StatefulSet` 缩容，则编号最高的\
+  \ Pod 会首先被移除。在此示例中，`sql-3` 会被移除。这些有序的创建和扩缩容操作对于有状态应用至关重要，因为它们将数据放置在命名的计算资源上，使有状态应用能够在任何时间点知晓数据的位置。\n\
+  \n![../images/494804_1_En_3_Chapter/494804_1_En_3_Fig2_HTML.jpg](img/494804_1_En_3_Fig2_HTML.jpg)\n\
+  图 3-2：一个示例 `StatefulSet` – 每个 Pod 都具有唯一、有序且持久的名称。每个 Pod 还有关联的持久存储。\n\nKubernetes\
+  \ 中还有更多控制器可用。本书重点关注 `Deployment`、`ReplicaSet` 和 `StatefulSet`，以及如何使用它们在 Kubernetes\
+  \ 上部署 SQL Server。Kubernetes 中有许多控制器可用于构建不同类型的应用工作负载。有关不同控制器类型及其功能的更多信息，请查阅 Kubernetes\
+  \ 文档：[`https://kubernetes.io/docs/concepts/workloads/`](https://kubernetes.io/docs/concepts/workloads/)。\n\
+  \n### 服务\n\n如前所述，没有任何 Pod 会被重新创建。每次创建 Pod 时，无论是初始创建还是替换现有 Pod，该新 Pod 在启动时都会被分配一个新的\
+  \ IP 地址。当控制器根据配置创建和删除 Pod，或响应故障并影响期望状态时，我们面临一个挑战：如果 Pod 的 IP 地址不断变化，应该使用哪个 IP 地址来访问集群中由\
+  \ Pod 提供的应用程序服务？\n\nKubernetes 提供了一种用于访问集群中部署的基于 Pod 的应用程序的网络抽象，称为 *Service*。`Service`\
+  \ 是一个持久的 IP 地址，可选择性地包含一个 DNS 名称，用于访问集群中运行在 Pod 上的应用程序。一般来说，你在集群中部署的每个应用程序都有一个对应的\
+  \ `Service`。接收到 `Service` IP 上的应用程序流量会被负载均衡到其底层的 Pod IP 地址。随着 Pod 被控制器（如 `ReplicaSet`\
+  \ 控制器）创建和销毁，网络信息会自动更新以反映应用程序的当前状态。让我们看一个例子。\n\n在图 3-3 中，假设一个 `Deployment` 创建了一个\
+  \ `ReplicaSet`，然后该 `ReplicaSet` 创建了三个 Pod。每个 Pod 在网络上都有一个唯一的 IP 地址。为了让用户或应用程序能够访问这些\
+  \ Pod 中的应用程序，需要定义一个 `Service`。`Service` 在一个持久的 IP 地址和端口（例如 HTTP 的 80 端口）上暴露运行在一组\
+  \ Pod 中的应用程序。用户或其他应用程序可以通过连接到 `Service` 的 IP 地址或 DNS 名称来访问该 `Service` 提供的应用程序。然后，`Service`\
+  \ 会在属于它的 Pod 之间对流量进行负载均衡。\n\n![../images/494804_1_En_3_Chapter/494804_1_En_3_Fig3_HTML.jpg](img/494804_1_En_3_Fig3_HTML.jpg)\n\
+  图 3-3：`ReplicaSet` 和 `Service`\n\n在图 3-3 的第二帧中，假设 `ReplicaSet` 中的一个 Pod 发生故障。`ReplicaSet`\
+  \ 控制器感知到这一点，并部署一个新的 Pod，将该新 Pod 的 IP 地址注册到 `Service` 中，然后开始将流量负载均衡到这个新 Pod。发生故障的\
+  \ Pod 被删除，其 IP 地址从 `Service` 中移除，流量不再被发送到该 IP。这一切都是自动发生的，无需任何用户交互。\n\n此外，当应用程序扩容添加更多\
+  \ Pod，或缩容移除一些 Pod 时，Pod 的 IP 地址会相应地被添加到 `Service` 或从中移除。这确实是一项了不起的技术，我们每次看到它实际运行时都非常兴奋。这将在第\
+  \ 5 章中详细演示。\n\nKubernetes 中有三种类型的 `Service`，都可以用来访问在 Kubernetes 中运行的应用程序。服务类型分别是\
+  \ `ClusterIP`、`NodePort` 和 `LoadBalancer`。让我们更详细地了解每一种：\n\n- **`ClusterIP`：** `ClusterIP`\
+  \ 类型的 `Service` *仅*在集群内部可用。当应用程序不需要暴露在集群外部时，会使用此类 `Service`。\n- **`NodePort`：**\
+  \ `NodePort` 类型的 `Service` 在集群中每个节点的真实 IP 地址上的一个固定端口暴露你的应用程序。访问 `NodePort` 服务需要结合使用集群节点的真实网络\
+  \ IP 地址和服务端口。接收到的流量会被路由到支持该服务的相应 Pod。当基于集群的应用程序需要从集群外部访问或与外部负载均衡器集成时，会使用 `NodePort`\
+  \ 服务。\n- **`LoadBalancer`：** 此服务类型集成了云提供商的负载均衡器服务或集群外部部署的负载均衡器（例如本地的 F5）。在基于云的场景中，当基于集群的应用程序需要从集群外部访问时，会使用\
+  \ `LoadBalancer` 类型的 `Service`。\n\n这些服务类型都将在第 5 章中详细演示。\n\n##### 存储\n\n作为 SQL Server\
+  \ 专业人员，我们的首要任务是确保数据持久保存。Kubernetes 提供了 API 对象来支持像 SQL Server 这样的有状态应用程序的部署。有两个主要的\
+  \ API 对象可用于帮助实现这一点：`PersistentVolume`（持久卷）和 `PersistentVolumeClaim`（持久卷声明）。`PersistentVolume`\
+  \ 是由集群管理员定义的、可供 Pod 使用的集群内存储。`PersistentVolume` 可以是许多不同类型的存储，例如来自云提供商的虚拟磁盘、`iSCSI`、`NFS`\
+  \ 等。但 Pod 不直接访问 `PersistentVolume` 对象。Pod 在其对象定义中使用 `PersistentVolumeClaim` 来访问集群存储。`PersistentVolumeClaim`\
+  \ 会向集群“请求”存储，然后 PVC 会对 `PersistentVolume` 提出声明，并将该 `PersistentVolume` 映射到 Pod。这个额外的抽象层将\
+  \ Pod 与 `PersistentVolume` 的存储实现细节解耦。这主要的好处是无需将存储实现细节（例如基础设施特定的存储参数）作为 Pod 定义的一部分。实现细节位于\
+  \ `PersistentVolume` 对象中。在 Kubernetes 中持久化数据将在第 6 章中更详细地介绍。\n\n### 配置映射\n\n在 Kubernetes\
+  \ 中，应用程序配置数据可以作为 API 对象存储在集群中。`ConfigMap` 是一种存储键值对数据的 API 对象，是一种集群资源。存储的数据可以作为环境变量甚至配置文件暴露给\
+  \ Pod 及其容器，供容器中运行的应用程序使用。它们通常用于配置部署在 Kubernetes 中的更复杂的应用程序。`ConfigMap` 使你能够将配置从部署清单中的代码解耦，并将其存储在集群中供运行时引用。你将在第\
+  \ 8 章中看到 `ConfigMap` 的使用。\n\n\n\n## Kubernetes 集群组件\n\n### Secrets\n\n一个 `Secret`\
+  \ 是一种用于存储敏感信息的 API 对象，供部署在 Kubernetes 集群中的应用程序使用。Secrets 通常用于存储诸如密码、API 令牌、公私钥对以及\
+  \ TLS 证书等信息。您可以编写一个部署清单并通过名称引用该 `Secret`，其中存储的信息可以作为环境变量或文件系统中的文件暴露给在 Pod 中运行的容器。\n\
+  \nSecrets 使您能够拥有更安全、更灵活的清单和容器镜像，因为您无需将敏感信息与这些资源一起存储。您应该避免在部署清单和容器镜像中存储敏感信息。Secrets\
+  \ 允许您将此类潜在敏感信息存储在集群中，并在部署时检索以供后续使用。\n\n### 探索 Kubernetes 集群架构\n\n本章第一部分介绍了 Kubernetes\
+  \ 的概念以及用于在 Kubernetes 集群中构建和部署工作负载的核心 API 对象。现在是时候深入了解什么是 Kubernetes 集群了，让我们仔细看看每个主要组件。\n\
+  \nKubernetes 集群是称为 `Node` 的服务器（物理或虚拟）集合，为在 Pod 中运行基于容器的应用程序提供了一个平台。集群中有两种类型的节点。`控制平面节点`\
+  \ 是集群本身的控制器，是操作背后的大脑。`工作节点` 是用于运行 Pod 的计算设备。让我们更仔细地研究每一个，首先从控制平面节点开始。图 3-4 为我们提供了集群组件的概览。\n\
+  \n![../images/494804_1_En_3_Chapter/494804_1_En_3_Fig4_HTML.jpg](img/494804_1_En_3_Fig4_HTML.jpg)\n\
+  \n图 3-4：Kubernetes 集群组件\n\n#### 控制平面节点\n\n`控制平面节点` 运行控制平面服务。控制平面服务实现了 Kubernetes\
+  \ 集群的核心功能，例如管理集群本身及其资源，以及控制工作负载。控制平面由四个组件组成，每个组件在集群中都有特定的职责。它们是 `API Server`、`etcd`、`Scheduler`\
+  \ 和 `Controller Manager`。控制平面服务和组件最常见的部署方式是作为 Pod，可以在单个控制平面节点上运行，也可以在多个控制平面节点上运行以实现高可用性。有关构建高可用集群及其配置的更多信息，请查阅\
+  \ [`kubernetes.io/docs/setup/production-environment/tools/kubeadm/high-availability/`](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/high-availability/)\
+  \ 和 [`kubernetes.io/docs/setup/production-environment/tools/kubeadm/ha-topology/`](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/ha-topology/)。\n\
+  \n让我们更详细地看看每个控制平面功能及其在集群中的职责：\n\n*   `API Server`：`API Server` 是集群中的主要通信枢纽。所有集群组件都通过\
+  \ `API Server` 进行通信以交换信息和状态。它是一个简单的、无状态的 REST API，实现并暴露 Kubernetes API，供用户和其他集群组件访问。当\
+  \ API 对象被创建、修改或删除时，这些对象的状态会被提交到集群。可以跨多个控制平面节点部署 `API Server` 的多个副本，并且可以对 API 流量进行负载均衡以实现高可用性。\n\
+  *   `etcd`：`etcd` 是一个键值数据存储，用于持久化集群的状态。`API Server` 本身是无状态的，但它会序列化对象数据并存储在 `etcd`\
+  \ 中。由于它确实持久化数据，因此需要为恢复和可用性提供保护。应频繁备份 `etcd`，如果需要高可用性，则应配置多个副本以实现高可用性配置。\n*   `Controller\
+  \ Manager`：`Controller Manager` 实现并确保集群及其工作负载的期望状态。它使用控制循环持续监控运行状况，将其与期望状态进行比较，并进行必要的更改以使集群恢复到期望状态。为此，`Controller\
+  \ Manager` 观察并更新 `API Server`。在本章前面，我们介绍了控制器的概念以及它们如何让您告诉 Kubernetes API 期望的状态是什么。`Controller\
+  \ Manager` 实现该状态。当涉及到 Pod 和应用程序工作负载时，如果某个 `Deployment` 定义了需要有三个 Pod 副本的应用程序在线，`Controller\
+  \ Manager` 的职责就是确保这些 Pod 始终在线并准备就绪，通过在需要时创建新的 Pod 来协调定义的状态与集群的运行状态。\n*   `Scheduler`：`Scheduler`\
+  \ 决定在集群中的哪个节点上启动 Pod。它监控 `API Server`，寻找任何未调度的 Pod。如果 `Scheduler` 发现任何未调度的 Pod，它会确定在集群中运行这些\
+  \ Pod 的最佳位置。调度决策基于集群中可用的资源、为每个 Pod 定义的需求，以及可能的任何管理策略约束。如果您想了解更多关于调度的细节，请查看 Pluralsight\
+  \ 课程“Configuring and Managing Kubernetes Storage and Scheduling”。\n\n\n## 工作节点\n\
+  \n工作节点运行用户的应用程序负载。一个集群通常由至少一个控制平面节点和一组工作节点构成。每个工作节点都为集群的总体可用资源贡献一定数量的 CPU 和内存资源。您需要有足够的\
+  \ CPU 和内存资源来在集群中运行您的应用负载，确保为应用程序提供足够容量，并且能够应对节点故障甚至规模增长的情况。\n\n> **注意**\n> 控制平面节点的一个主要关注点是确保可用性。请查阅\
+  \ [`kubernetes.io/docs/setup/production-environment/tools/kubeadm/ha-topology/`](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/ha-topology/)\
+  \ 以获取有关高可用控制平面拓扑的更多信息。\n\n集群中的所有节点，无论是控制平面还是工作节点，都由三个组件组成：用于与 API Server 通信以进行集群操作的\
+  \ `kubelet`、用于将节点上运行的容器暴露给本地网络的 `kube-proxy`，以及用于在节点上启动和运行容器的 `容器运行时`：\n\n*   **kubelet：**\
+  \ `kubelet` 是运行在节点上的一个服务，负责与 API Server 通信、在节点上启动 Pod，并确保该节点上的 Pod 处于健康状态。`kubelet`\
+  \ 监控 API Server 的 Pod 工作负载状态，告诉容器运行时启动和停止容器。它还向 API Server 报告节点上运行的 Pod 的当前状态，并通过活性探针和就绪探针的形式对\
+  \ Pod 执行健康检查。`kubelet` 向 API Server 报告节点的当前状态及其可用资源。\n*   **kube-proxy：** `kube-proxy`\
+  \ 是运行在集群中所有节点上的一个容器，其功能是作为网络代理，负责将来自节点所在网络的流量路由到该节点上运行的 Pod。\n*   **容器运行时：** `容器运行时`\
+  \ 负责拉取容器镜像并在节点上运行容器。如今，最常见的是在 Kubernetes 集群中使用 Docker 作为容器运行时。但容器运行时领域正朝着容器运行时接口标准发展，该标准允许在\
+  \ Kubernetes 节点中使用几种不同的容器运行时作为容器运行时。Kubernetes 支持 Docker、containerd 和 CRI-O 容器运行时。在本书中，使用的容器运行时是\
+  \ Docker。有关 Kubernetes 支持的容器运行时的更多信息，请参见 [`kubernetes.io/docs/setup/production-environment/container-runtimes/`](https://kubernetes.io/docs/setup/production-environment/container-runtimes/)。\n\
+  \n### 网络基础\n\n本 Kubernetes 入门章节的最后一个主要主题是网络。Kubernetes 网络模型使得工作负载可以部署在 Kubernetes\
+  \ 中，同时抽象了网络的复杂性。这简化了集群中的应用程序配置和服务发现，并通过移除基础设施特定的代码提高了部署代码的可移植性。本节将介绍 Kubernetes\
+  \ 网络模型和示例集群通信模式。\n\nKubernetes 网络由三条规则管理。这些规则实现了前述的简洁性。这些规则源自 [`kubernetes.io/docs/concepts/cluster-administration/networking/`](https://kubernetes.io/docs/concepts/cluster-administration/networking/)。\n\
+  \n#### Kubernetes 网络模型规则\n\n1.  所有 Pod 可以在无需进行网络地址转换的情况下与所有节点上的所有其他 Pod 通信。\n2.\
+  \  节点上的所有代理，例如系统守护进程和 `kubelet`，可以与该节点上的所有 Pod 通信。\n3.  位于节点主机网络中的 Pod 可以在无需 NAT\
+  \ 的情况下与所有节点上的所有 Pod 通信。\n\n上述规则通过确保 Pod 使用其真实的 Pod IP 和容器端口相互通信，而不是将其转换为依赖于部署所在网络基础设施的\
+  \ IP 方案，从而简化了网络和应用程序配置。\n\n在 Kubernetes 中，`Pod 网络` 是指当容器运行时在节点上启动 Pod 时，Pod 所连接到的网络。每个部署的\
+  \ Pod 在 `Pod 网络` 上都被赋予一个唯一的 IP 地址。`Pod 网络` 必须遵循前面定义的规则，这导致 Pod 使用其真实的 IP 地址。在实施\
+  \ `Pod 网络` 时，有许多解决方案可以确保遵守 Kubernetes 网络模型规则。一个常见的解决方案是覆盖网络，它使用隧道协议在节点之间交换数据包，独立于底层物理基础设施的网络。这使得覆盖网络可以使用独立于数据中心物理基础设施的第\
+  \ 3 层 IP 方案，从而更简单地遵守 Kubernetes 网络模型。\n\n另一种选择是作为裸机方法的一部分，在数据中心基础设施中构建 `Pod 网络`。这将需要\
+  \ Kubernetes 集群管理员和负责网络的网络工程团队的协调。\n\n以下是 Kubernetes 集群中使用的常见通信模式，展示了 Pod 之间的相互访问以及对\
+  \ Pod 提供的服务的访问。\n\n#### 通信模式\n\n图 3-5 展示了 Kubernetes 集群中的一些示例通信模式。让我们一起看一下这些模式：\n\
+  \n![../images/494804_1_En_3_Chapter/494804_1_En_3_Fig5_HTML.jpg](img/494804_1_En_3_Fig5_HTML.jpg)\n\
+  \n*图 3-5 Kubernetes 网络*\n\n1.  **Pod 内部**\n    一个 Pod 内的多个容器共享相同的容器命名空间。这些容器可以通过\
+  \ `localhost` 在唯一的端口上相互通信。\n2.  **同一节点上的 Pod 之间**\n    当同一节点上的 Pod 需要通过网络通信时，它们通过节点上定义的本地软件桥接进行通信，并使用\
+  \ Pod IP。\n3.  **不同节点上的 Pod 之间**\n    当不同节点上的 Pod 需要通过网络通信时，它们通过本地第 2 层或第 3 层网络使用\
+  \ Pod IP 进行通信。\n4.  **服务**\n    当访问集群中的 `服务` 时，流量被路由到实现该 `服务` 的 `kube-proxy`，然后再路由到提供该应用程序服务的\
+  \ Pod。正如本章前面介绍的，`服务` 将是您在集群中部署应用程序时最常进行的交互方式。\n\n### 总结\n\n本章介绍了 Kubernetes 以及它如何实现现代基于容器的应用程序的部署。您了解了\
+  \ Kubernetes API 如何让您构建和建模要部署到 Kubernetes 集群中的应用程序。您还学习了部署工作负载的核心 API 原语：作为基于容器的应用程序的\
+  \ `Pod`；保持集群及其工作负载处于期望状态的 `控制器`；用于访问应用程序的 `服务`；以及用于有状态应用程序的 `存储`。然后，您了解了集群的组件以及它们如何协同工作以确保您的期望状态得以实现，并且我们快速浏览了\
+  \ Kubernetes 网络模型。在掌握了所有这些理论之后，现在该进入下一章了，在下一章中，我们将向您展示如何构建一个 Kubernetes 集群并让一个基本的工作负载启动并运行。\n\
+  \n"
+- "# 第二部分 Kubernetes 实践\n\n### 4. 安装 Kubernetes\n\n在本章中，我们将介绍如何在本地和云端构建 Kubernetes\
+  \ 集群。我们将首先讨论安装地点（本地或云端）的决策过程以及在此过程中需要考虑的因素。然后，我们将介绍使用 `kubeadm` 安装方法在本地构建基于虚拟机的\
+  \ Kubernetes 集群的过程。接下来，我们将在 Azure Kubernetes 服务中构建一个集群。这些集群将成为本书其余部分所有示例的基础。\n\n\
+  \n### 安装考虑因素与方法\n\n与几乎所有现代软件安装一样，您首先需要决定的是：在本地安装还是在云端安装。\n\n#### 部署位置？\n\n在云端部署时，您需要在两个主要的部署选项之间做出选择：\n\
+  \n*   **基础设施即服务 (IaaS)**：在 IaaS 场景中，您在云中部署`虚拟机`，然后在其上安装 Kubernetes。\n\n*   **平台即服务\
+  \ (PaaS)**：Kubernetes 也可从[所有主要的云提供商](https://app.pluralsight.com/course-player%253FclipId%253D5f4148df-26ef-4ce3-a052-f7c6a91da597%2526startTime%253D47.4)处作为托管服务获得。在托管服务产品中，[您无需担心任何底层](https://app.pluralsight.com/course-player%253FclipId%253D5f4148df-26ef-4ce3-a052-f7c6a91da597%2526startTime%253D53.94)[基础设施或冗余；云提供商会为您处理。](https://app.pluralsight.com/course-player%253FclipId%253D5f4148df-26ef-4ce3-a052-f7c6a91da597%2526startTime%253D56.1)\
+  \ 使用 PaaS 需要考虑的一点是，您将在版本控制和其他 Kubernetes 内部可用的功能以及访问控制平面节点方面失去一些灵活性。\n\n*   在本地部署时，决定因素同样是安装在虚拟机上还是直接安装在`裸机`上。虽然本地也有托管产品可用，但这些超出了本书的范围。\n\
+  \n在节点选择裸机还是虚拟机，主要取决于您的预期工作负载。如果您谈论的是大量可扩展的微服务，在虚拟机上运行的 Kubernetes 节点可能会为您提供更多灵活性。如果您部署的是一个大型的单体应用程序，中间的虚拟机管理程序将产生不必要的开销。您可能想知道：如果只运行一个应用程序，Kubernetes\
+  \ 是最好的平台吗？和往常一样，答案是：视情况而定！虽然这不是一个显而易见的用例，但有一些像 SQL Server 大数据集群这样的应用程序（我们将在第 10\
+  \ 章更深入地讨论）通常需要专用基础设施，但它们只部署在 Kubernetes 上。\n\n在本书中，我们将主要关注使用第 1 章中描述的设置、使用自管理（本地或\
+  \ IaaS）机器的环境。无论您是将这些机器作为云端或本地的虚拟机安装，还是在裸机上安装，都不重要，因为 Kubernetes 抽象了底层基础设施。\n\n展望未来，考虑在何处安装生产集群……这个问题应遵循您组织的总体战略。如果到目前为止您所有的应用都还在本地，那么让您的\
+  \ Kubernetes 集群也生活在那里可能非常合理。另一方面，如果您正在迁移或已经将主要工作负载迁移到云端，您的 Kubernetes 集群很可能也应该跟随。最终，这取决于您团队的技能组合以及在\
+  \ Kubernetes 上运行用例的需求。\n\n#### 进一步考虑因素\n\n除了“在哪里”的问题，当然还有其他考虑因素，我们将在本章及本书的后续内容中更深入地讨论：\n\
+  \n*   您需要多少个工作节点来支持您的工作负载？\n\n*   这些节点的 CPU 和 RAM 配置是什么？\n\n*   如果控制平面失败，您是否需要高可用的解决方案？\n\
+  \n*   您的备份和恢复策略是什么？\n\n*   您将使用哪种存储？\n\n*   您将如何管理 Pod 和节点之间的网络？\n\n虽然我们正处于 Kubernetes\
+  \ 之旅的起点，但在考虑推出生产系统之前，这些都是您应该回答的问题。\n\n#### 安装方法\n\n根据您的安装位置，这在很大程度上也决定了您的安装方法。安装自管理集群时，您主要可以选择`kubeadm`（这是一种在`Linux`上部署\
+  \ Kubernetes 的免费方式）或类似 Red Hat OpenShift 的企业产品。安装本身通常通过命令行工具触发。\n\n当安装基于云的集群时，您的云提供商将负责安装部分，具体细节由您的云提供商在幕后决定。他们通常也提供自己的基于命令行的方法以及用于引导部署的\
+  \ Web 门户。\n\n#### 其他选项\n\n还有一些其他选项，例如使用`Docker Desktop`在您的笔记本电脑上启动 Kubernetes 集群，或使用像树莓派这样的轻量级硬件作为部署目标。虽然它们可能有有效的用例，特别是在非生产环境中，但我们不会在本书中深入探讨这些。\n\
+  \n此外，虽然可以使用基于 Windows 的工作节点，但我们将重点使用`Linux`作为我们的操作系统。\n\n我们也不会详细介绍部署单节点集群的细节。如果您只有一台可用的`Ubuntu`机器，您可以使用清单\
+  \ 4-1 中的代码，它将启动一个包含`本地存储`的单节点集群，但这对于本书中的大多数练习来说是不够的，除了最基本的一些。\n\n```bash\nwget -q\
+  \ -O deploy_kubeadm.sh https://bookmark.ws/ArcDemo_Linux\nchmod +x deploy_kubeadm.sh\n\
+  ./deploy_kubeadm.sh\n```\n清单 4-1\n安装单节点集群\n\n### 安装要求\n\n对于自管理的 Kubernetes 安装，我们将重点关注在\
+  \ Linux（更具体地说是 Ubuntu）上使用`kubeadm`。虽然 CentOS、RHEL 和其他 Linux 发行版也受支持，但我们必须选择一个环境，而\
+  \ Ubuntu 似乎是如今最常见的选择。\n\n最低系统要求是具有两个 CPU、2GB RAM 并禁用交换空间的系统。然而，Kubernetes 组件的这一最低要求不支持任何有意义的工作负载。请确保您使用的是第\
+  \ 1 章中规定的环境。在生产环境中，还要确保您已考虑到可扩展性和冗余性。\n\n[除了这些基本系统要求之外，](https://app.pluralsight.com/course-player%253FclipId%253D982d8f0e-d017-4f76-8bd5-c243179677d4%2526startTime%253D43.84)[您还需要一个\
+  \ CRI（容器运行时接口）容器运行时。](https://app.pluralsight.com/course-player%253FclipId%253D982d8f0e-d017-4f76-8bd5-c243179677d4%2526startTime%253D47.32)\
+  \ 截至撰写本文时，Kubernetes 同时支持 Docker 和`containerd`。由于 Docker 在 Kubernetes 1.20 中已被弃用，并且其支持将在\
+  \ Kubernetes 1.23 或更高版本中被移除，因此在本书中我们将主要关注`containerd`。\n\n\n#### 网络要求\n\n从网络角度来看，请确保所有机器都具有唯一的主机名、MAC\
+  \ 地址和 IP 地址。理想情况下，这些 IP 地址应位于同一子网中，但至少必须设置为能够相互访问。\n\n如果你在网络内运行防火墙（出于本书实验目的，我们建议不要运行防火墙，以避免不必要的网络复杂性），表\
+  \ 4-1 列出了在控制平面上需要可访问的所有 TCP 端口。\n\n表 4-1\n\n控制平面节点上必需的 TCP 端口\n\n| 组件 | TCP 端口 |\n\
+  | --- | --- |\n| API | 6443 |\n| Etcd | 2379–2380 |\n| 调度器 | 10251 |\n| 控制器管理器 |\
+  \ 10252 |\n| Kubelet | 10250 |\n\n在节点上，需要打开表 4-2 中列出的端口。\n\n表 4-2\n\n工作节点上必需的 TCP\
+  \ 端口\n\n| 组件 | TCP 端口 |\n| --- | --- |\n| Kubelet | 10250 |\n| NodePort | 30000–32767\
+  \ |\n\n注意\n\n此处列出的 TCP 端口是默认端口。如果更改了这些端口，请相应地调整防火墙规则。\n\n#### [获取 Kubernetes](https://app.pluralsight.com/course-player%253FclipId%253Db0f4845d-f2a5-4a1a-a790-a39ccf314435)\n\
+  \n当然，要安装 Kubernetes，我们首先需要获取它。Kubernetes 软件托管在 GitHub 上，因此如果你访问 [*https://GitHub.com/Kubernetes/Kubernetes/*](https://github.com/Kubernetes/Kubernetes/)，就能找到\
+  \ Kubernetes 项目。你也可以将自己的想法和更改贡献给该项目。这也是一个非常宝贵的资源，可以详细了解其工作原理，因为你可以查看代码，并通过 GitHub\
+  \ 上的 issues 学习他人的经验。\n\n除了软件本身，你还会在那里找到额外的文档。\n\n虽然理论上你可以获取代码并自行编译所有内容，但为了方便，我们将通过包管理器来安装\
+  \ Kubernetes。\n\n### 构建自管理集群\n\n理论基础已备，现在让我们开始使用 `kubeadm` 在 Ubuntu 机器上构建我们的第一个\
+  \ Kubernetes 集群。我们将使用第 1 章中描述的环境，包括其中提到的先决条件。\n\n注意\n\n我们所有的脚本都使用第 1 章中描述的主机名/IP\
+  \ 地址。如果你的实验环境使用了不同的设置，你需要相应地调整这些脚本。为了可读性，我们不会逐一指出每个可能需要调整的地方。\n\n#### 准备虚拟机\n\n\
+  首先，我们需要准备好四台虚拟机（`control` 以及 `node-1`、`node-2` 和 `node-3`），并安装 `containerd` 和 Kubernetes\
+  \ 软件包。按照下面两段的描述，在每台机器上安装并配置它们。无需在存储机上安装 `containerd`。\n\n除非另有说明，否则只需在每台机器上使用 shell\
+  \ 运行所述命令。此安装无法直接从我们的管理工作站触发。\n\n##### 安装和配置 containerd\n\n要安装 `containerd`，我们需要加载两个模块（`overlay`\
+  \ 和 `br_netfilter`），如清单 4-2 中的代码所示。它们分别是容器运行时使用的 OverlayFS 和集群内网络所必需的。\n\n```\n\
+  sudo modprobe overlay\nsudo modprobe br_netfilter\n清单 4-2\n安装 modprobe overlay 和\
+  \ br_netfilter\n```\n\n使用清单 4-3 中的代码，我们需要确保这些模块在重启后也能加载。\n\n```\ncat <<EOF | sudo\
+  \ tee /etc/modules-load.d/containerd.conf\noverlay\nbr_netfilter\nEOF\n清单 4-3\n\
+  持久化 modprobe 和 br_netfilter\n```\n\n`containerd` 还需要一些系统参数，我们可以使用清单 4-4 中的命令进行设置和持久化。\n\
+  \n```\ncat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes-cri.conf\nnet.bridge.bridge-nf-call-iptables\
+  \  = 1\nnet.ipv4.ip_forward                 = 1\nnet.bridge.bridge-nf-call-ip6tables\
+  \ = 1\nEOF\n清单 4-4\n持久化 containerd 的系统参数\n```\n\n接下来，让我们使用清单 4-5 中的命令应用这些设置，而无需重启。\n\
+  \n```\nsudo sysctl --system\n清单 4-5\n应用 sysctl 更改\n```\n\n现在，我们已经为 `containerd`\
+  \ 准备好了先决条件，因此可以通过 `apt-get` 安装它，如清单 4-6 所示。\n\n```\nsudo apt-get update\nsudo apt-get\
+  \ install -y containerd\n清单 4-6\n安装 containerd\n```\n\n`containerd` 需要一个配置文件，我们可以使用\
+  \ `containerd` 本身生成一个具有默认设置的配置文件（清单 4-7）。\n\n```\nsudo mkdir -p /etc/containerd\n\
+  sudo containerd config default | sudo tee /etc/containerd/config.toml\n清单 4-7\n\
+  创建 containerd 配置\n```\n\n在此文件中，我们必须将 `containerd` 的 cgroup 驱动设置为 `systemd`，因为 `kubelet`\
+  \ 需要此设置。\n\n以 root 身份在文本编辑器中打开文件 `/etc/containerd/config.toml`（例如，通过 `vi`，如清单 4-8\
+  \ 所示）。\n\n```\nsudo vi /etc/containerd/config.toml\n清单 4-8\n编辑 containerd 配置\n```\n\
+  \n在此文件中，找到清单 4-9 所示的部分。\n\n```\n[plugins.\"io.containerd.grpc.v1.cri\".containerd.runtimes.runc]\n\
+  清单 4-9\ncontainerd 配置中的章节\n```\n\n在该部分下方，添加清单 4-10 所示的两行。\n\n```\n[plugins.\"io.containerd.grpc.v1.cri\"\
+  .containerd.runtimes.runc.options]\nSystemdCgroup = true\n清单 4-10\n要添加到 containerd\
+  \ 配置中的行\n```\n\n注意\n\n此处的缩进很重要——可以是制表符或空格！请确保你的文件看起来像图 4-1 中的文件一样！\n\n要退出 `vi` 并保存文件，请按\
+  \ `Esc` 键，然后输入 `:x!`。\n\n![../images/494804_1_En_4_Chapter/494804_1_En_4_Fig1_HTML.jpg](img/494804_1_En_4_Fig1_HTML.jpg)\n\
+  \n图 4-1\n\ncontainerd 配置文件中的缩进\n\n根据我们的新设置，我们可以使用 `systemctl` 重启 `containerd`，如清单\
+  \ 4-11 所示。\n\n```\nsudo systemctl restart containerd\n清单 4-11\n重启 containerd\n```\n\
+  \n`containerd` 现已准备就绪，我们可以继续安装 Kubernetes 软件包。\n\n你可以使用清单 4-12 中的命令确认服务状态。\n\n```\n\
+  sudo systemctl status containerd\n清单 4-12\ncontainerd 的状态\n```\n\n\n#### 安装与配置 Kubernetes\
+  \ 软件包\n\n由于我们将从 Google 仓库安装软件包，因此需要先添加 Google 的 apt 仓库 GPG 密钥（见代码清单 4-13）。\n\n```bash\n\
+  curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add\
+  \ -\n```\n代码清单 4-13\n添加 Google GPG 密钥\n\n有了该密钥后，我们就可以添加 Kubernetes apt 仓库了（见代码清单\
+  \ 4-14）。\n\n```bash\nsudo bash -c 'cat > /etc/apt/sources.list.d/kubernetes.list\n\
+  deb https://apt.kubernetes.io/ kubernetes-xenial main\nEOF'\n```\n代码清单 4-14\n添加\
+  \ Kubernetes apt 仓库\n\n接下来，我们更新 apt 软件包列表，并使用代码清单 4-15 中的命令查看 `kubelet` 的可用版本。\n\
+  \n```bash\nsudo apt-get update\napt-cache policy kubelet | head -n 20\n```\n代码清单\
+  \ 4-15\n更新 apt 软件包列表\n\n这会显示可用版本，如图 4-2 所示，在撰写本文时，最新可用版本是 `1.20.4`。\n\n![../images/494804_1_En_4_Chapter/494804_1_En_4_Fig2_HTML.jpg](img/494804_1_En_4_Fig2_HTML.jpg)\n\
+  图 4-2\n`kubelet` 的版本列表\n\n现在，我们可以如代码清单 4-16 所示，安装 `kubelet`、`kubeadm` 和 `kubectl`。如果你当前的机器也是你在第\
+  \ 1 章中用于安装 `kubectl` 的机器，你可能会收到它已安装的消息。\n\n```bash\nsudo apt-get install -y kubelet\
+  \ kubeadm kubectl\n```\n代码清单 4-16\n安装 Kubernetes 软件包\n\n这将安装这些工具的最新版本。如果你想安装之前的版本，可以如代码清单\
+  \ 4-17 所示进行指定。不过，本书中的代码和示例并非特定于某个版本。\n\n```bash\nVERSION=1.20.1-00\nsudo apt-get\
+  \ install -y kubelet=$VERSION kubeadm=$VERSION kubectl=$VERSION\n```\n代码清单 4-17\n\
+  安装特定版本的 Kubernetes 软件包\n\n为避免自动更新，我们将这些工具（以及 `containerd`）标记为保持（hold）状态（代码清单 4-18）。这使我们能完全控制打补丁的过程，使其独立于基础操作系统的补丁更新。\n\
+  \n```bash\nsudo apt-mark hold kubelet kubeadm kubectl containerd\n```\n代码清单 4-18\n\
+  将 Kubernetes 软件包和 `containerd` 标记为保持状态\n\n让我们检查一下 `kubelet` 和容器运行时的状态（代码清单 4-19）。\n\
+  \n```bash\nsudo systemctl status kubelet.service\nsudo systemctl status containerd.service\n\
+  ```\n代码清单 4-19\n检查 `kubelet` 和 `containerd` 的状态\n\n如图 4-3 所示，`kubelet` 会进入崩溃循环。在集群创建或节点加入现有集群之前，这是正常行为（你可以按\
+  \ `q` 键退出该进程）。\n\n![../images/494804_1_En_4_Chapter/494804_1_En_4_Fig3_HTML.jpg](img/494804_1_En_4_Fig3_HTML.jpg)\n\
+  图 4-3\n`kubelet` 和 `containerd` 的状态\n\n同时，请确保两个服务都设置为开机自启。这可以通过代码清单 4-20 中的命令进行设置。\n\
+  \n```bash\nsudo systemctl enable kubelet.service\nsudo systemctl enable containerd.service\n\
+  ```\n代码清单 4-20\n为 `kubelet` 和 `containerd` 设置开机自启\n\n注意\n请记住，在 `control`、`node1`、`node2`\
+  \ 和 `node3` 上分别重复此过程并安装配置这些软件包！\n\n#### 创建控制平面\n\n现在容器运行时和 Kubernetes 软件包已经就位，我们可以继续创建控制平面。\n\
+  \n注意\n本节中的所有命令都需要在你的 `control` 虚拟机上执行。\n\n我们首先生成一个配置文件，如代码清单 4-21 所示。\n\n```bash\n\
+  kubeadm config print init-defaults | tee ClusterConfiguration.yaml\n```\n代码清单 4-21\n\
+  创建 `kubeadm` 配置文件\n\n在默认的集群配置文件中，我们需要修改一些内容。其中一些可以通过代码清单 4-22 所示的方式自动化完成。这将：\n\n\
+  - 将 API 服务器的 IP 端点 `localAPIEndpoint.advertiseAddress` 设置为控制平面节点的 IP 地址。\n- 将 `nodeRegistration.criSocket`\
+  \ 从 Docker 更改为 `containerd`。在 Kubernetes 的未来版本中，这将成为默认值。\n- 将 `kubelet` 的 cgroup\
+  \ 驱动设置为 `systemd`，该值在此文件中尚未定义，默认值是 `cgroupfs`。\n- 定义 pod 网络。\n\n```bash\nsed -i\
+  \ 's/  advertiseAddress: 1.2.3.4/  advertiseAddress: 172.16.94.10/' ClusterConfiguration.yaml\n\
+  sed -i 's/  criSocket: \\/var\\/run\\/dockershim\\.sock/  criSocket: \\/run\\/containerd\\\
+  /containerd\\.sock/' ClusterConfiguration.yaml\ncat >> ClusterConfiguration.yaml\n\
+  \napiVersion: kubelet.config.k8s.io/v1beta1\nkind: KubeletConfiguration\ncgroupDriver:\
+  \ systemd\nEOF\n```\n代码清单 4-22\n修改 `kubeadm` 配置文件\n\n我们还需要编辑此文件中的 `kubernetesVersion`\
+  \ 以匹配你之前安装的版本。首先，使用代码清单 4-23 中的命令确认已安装的版本。\n\n```bash\nkubeadm version\n```\n代码清单\
+  \ 4-23\n获取当前的 `kubeadm` 版本\n\n如图 4-4 所示，我们安装的是 `1.20.4` 版本——除非你安装了其他版本。\n\n![../images/494804_1_En_4_Chapter/494804_1_En_4_Fig4_HTML.jpg](img/494804_1_En_4_Fig4_HTML.jpg)\n\
+  图 4-4\n当前安装的 `kubeadm` 版本\n\n有了这个信息，我们现在可以编辑文件（例如使用 `vi`）`ClusterConfiguration.yaml`，并确保版本匹配，如图\
+  \ 4-5 所示。\n\n![../images/494804_1_En_4_Chapter/494804_1_En_4_Fig5_HTML.jpg](img/494804_1_En_4_Fig5_HTML.jpg)\n\
+  图 4-5\n在 `ClusterConfiguration.yaml` 中设置 `kubelet` 的当前版本。\n\n在 `networking` 部分，添加一行将\
+  \ `podSubnet` 设置为 `10.244.0.10/16`，如图 4-6 所示，这是 `flannel` 网络插件所要求的。\n\n![../images/494804_1_En_4_Chapter/494804_1_En_4_Fig6_HTML.jpg](img/494804_1_En_4_Fig6_HTML.jpg)\n\
+  图 4-6\n`ClusterConfiguration.yaml` 中的 `podSubnet`\n\n现在，我们已准备好使用 `kubeadm` 初始化集群，如代码清单\
+  \ 4-24 所示。\n\n```bash\nsudo kubeadm init \\\n--config=ClusterConfiguration.yaml\
+  \ \\\n--cri-socket /run/containerd/containerd.sock\n```\n代码清单 4-24\n初始化集群\n\n这将需要几分钟时间，并会持续输出其进度。结果应与你在图\
+  \ 4-7 中看到的类似。\n\n![../images/494804_1_En_4_Chapter/494804_1_En_4_Fig7_HTML.jpg](img/494804_1_En_4_Fig7_HTML.jpg)\n\
+  图 4-7\n`kubeadm init` 的输出\n\n为确保我们也能在非提权 shell 中与集群交互，我们需要创建一个配置文件并将其存储在我们的主目录中，如代码清单\
+  \ 4-25 所示。\n\n```bash\nmkdir -p $HOME/.kube\nsudo cp -i /etc/kubernetes/admin.conf\
+  \ $HOME/.kube/config\nsudo chown $(id -u):$(id -g) $HOME/.kube/config\n```\n代码清单\
+  \ 4-25\n创建 `kubectl` 配置\n\n注意\n如果你使用的是管理工作站，你可以获取此文件并将其复制或其内容复制到该工作站上你的主目录下的 `.kube/config`\
+  \ 中。这将允许你从该工作站与你的集群通信。\n\n\n\n##### Pod 网络\n\n在加入工作节点之前，我们需要确保 Pod 网络已经设置好。市面上有许多不同的解决方案，我们决定保持简单，使用`flannel`。虽然它没有像另一个流行的\
+  \ Pod 网络方案`Calico`那样拥有所有高级配置设置，但它在本地和云网络上无需任何额外配置即可工作，而这些网络往往会限制`IPIP`数据包等。\n\n\
+  使用`wget`命令下载默认的清单文件，如清单 4-26 所示。\n\n```\nwget https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml\n\
+  清单 4-26\n下载 flannel\n```\n\n如果需要，你可以先查看文件内容，但无需进行任何更改，因此我们将直接使用`kubectl`安装它，如清单\
+  \ 4-27 所示。我们将在下一章详细讨论`kubectl`，所以如果现在感觉有些解释不清，请不要担心。\n\n```\nkubectl apply -f kube-flannel.yml\n\
+  清单 4-27\n安装 flannel\n```\n\n至此，使用`flannel`的 Pod 网络设置完成。\n\n##### 存储\n\n虽然通常会在此阶段进行配置，但我们将首先部署一个没有任何附加存储的集群。由于\
+  \ Kubernetes 将计算和数据分离，这完全可以实现。我们在下一章中关于与集群交互的最初练习不需要任何存储。在部署 SQL Server（它确实需要存储）之前，我们将在第\
+  \ 6 章深入探讨 Kubernetes 中的存储概念。\n\n#### 将节点添加到集群\n\n我们的控制平面已准备就绪，但还不能立即加入节点。为了使节点能够加入集群，我们需要一个令牌。最简单的方法是使用`kubeadm`直接生成一个`加入命令`，如清单\
+  \ 4-28 所示。\n\n```\nkubeadm token create --print-join-command\n清单 4-28\n生成令牌和加入命令\n\
+  ```\n\n输出内容与图 4-8 中看到的相似。\n\n![../images/494804_1_En_4_Chapter/494804_1_En_4_Fig8_HTML.jpg](img/494804_1_En_4_Fig8_HTML.jpg)\n\
+  **图 4-8 加入命令（在控制平面节点上生成）**\n\n> 注意\n> 根据你安装的版本，你可能会收到一个警告，提示 Docker 不是你的容器运行时。可以安全地忽略此警告。\n\
+  \n现在，我们可以获取此命令并在每个所需的工作节点上运行它（以 root 身份运行；参见清单 4-29），这将启动加入过程。你自己的加入命令会有所不同，因为 CA\
+  \ 证书是唯一的。加入令牌的有效期为 24 小时，因此如果以后想添加更多节点，你需要创建一个新的令牌。\n\n```\nsudo kubeadm join 172.16.94.10:6443\
+  \ \\\n--token pdru87.9yjxcif8n4bb4yp0  \\\n--discovery-token-ca-cert-hash sha256:9c86ee0fa239734c75f8c7233bdd628424098bfd451e154d6280fdf499a69c52\n\
+  清单 4-29\nkubeadm 加入命令\n```\n\n> 注意\n> 确保添加`sudo` – 命令需要以 root 身份运行，而`--print-join-command`不会为你添加它！\n\
+  \n节点将报告它们已开始加入过程，如图 4-9 所示。\n\n![../images/494804_1_En_4_Chapter/494804_1_En_4_Fig9_HTML.jpg](img/494804_1_En_4_Fig9_HTML.jpg)\n\
+  **图 4-9 加入命令（在工作节点上执行）**\n\n让我们在控制平面上运行`kubectl`来列出节点（参见清单 4-30）。\n\n```\nkubectl\
+  \ get nodes\n清单 4-30\n列出集群中的节点\n```\n\n我们将看到节点已出现但状态还是`NotReady`（参见图 4-10）。\n\n\
+  ![../images/494804_1_En_4_Chapter/494804_1_En_4_Fig10_HTML.jpg](img/494804_1_En_4_Fig10_HTML.jpg)\n\
+  **图 4-10 集群中的节点**\n\n如果几分钟后再次运行该命令，所有节点都将显示为`Ready`。节点显示为`NotReady`是因为运行 Pod 网络和`kube-proxy`的\
+  \ Pod 正在部署中。在所有节点都显示为 Ready（如图 4-11 所示）之前，你不应继续在该集群上工作。\n\n![../images/494804_1_En_4_Chapter/494804_1_En_4_Fig11_HTML.jpg](img/494804_1_En_4_Fig11_HTML.jpg)\n\
+  **图 4-11 集群中所有节点均显示为 Ready**\n\n### 在 Azure Kubernetes 服务中构建云集群\n\n有了自管理的集群后，让我们也使用\
+  \ Azure Kubernetes Service 在 Azure 中安装一个托管的 Kubernetes 集群。\n\n> 注意\n> 此练习也可以从你的管理工作站执行。也可以通过\
+  \ Azure 门户完成。\n\n我们将再次使用`Azure CLI`进行此练习。\n\n除非你仍然从第 1 章的会话中处于登录状态，否则让我们首先登录到你的\
+  \ Azure 帐户并设置要使用的订阅，如清单 4-31 所示。\n\n```\naz login\naz account set -s <subscription-id>\n\
+  清单 4-31\n登录 Azure 账户\n```\n\n接下来，让我们创建一个专用的资源组，如清单 4-32 所示。根据需要修改名称和位置。\n\n```\n\
+  az group create --name \"Kubernetes-Cloud\" --location eastus\n清单 4-32\n创建资源组\n\
+  ```\n\n我们已经准备好创建集群了。我们将使用清单 4-33 中的代码，这将在我们之前生成的资源组中创建一个名为`AKSCluster`的三节点集群。\n\n\
+  ```\naz aks create \\\n--resource-group \"Kubernetes-Cloud\" \\\n--generate-ssh-keys\
+  \ \\\n--name AKSCluster \\\n--node-count 3\n清单 4-33\n创建 AKS 集群（bash）\n```\n\n如果你是从\
+  \ PowerShell 运行此命令，请确保修改换行符，如清单 4-34 所示。这适用于本书中的任何多行清单。\n\n```\naz aks create `\n\
+  --resource-group \"Kubernetes-Cloud\" `\n--generate-ssh-keys `\n--name AKSCluster\
+  \ `\n--node-count 3\n清单 4-34\n创建 AKS 集群（PowerShell）\n```\n\n集群创建完成后，CLI 将报告结果，如图\
+  \ 4-12 所示。\n\n![../images/494804_1_En_4_Chapter/494804_1_En_4_Fig12_HTML.jpg](img/494804_1_En_4_Fig12_HTML.jpg)\n\
+  **图 4-12 `az aks create`的输出**\n\n有关创建 AKS 集群的更多选项（例如机器大小），请参阅官方文档[*https://docs.microsoft.com/en-us/cli/azure/aks?view=azure-cli-latest#az_aks_create*](https://docs.microsoft.com/en-us/cli/azure/aks%253Fview%253Dazure-cli-latest%2523az_aks_create)。\n\
+  \n为了能够与我们的集群通信，我们需要添加其凭据并将其合并到我们现有的配置文件中。运行清单 4-35 中的命令来执行此操作。这将允许我们使用基于证书的用户认证远程连接到此系统。\n\
+  \n```\naz aks get-credentials --resource-group \"Kubernetes-Cloud\" --name AKSCluster\n\
+  清单 4-35\n获取 AKS 集群的凭据\n```\n\n现在我们已经配置了两个集群，它们的凭据已存储在我们的`kubectl`配置中。我们将在下一章解释如何使用`kubectl`与这些集群通信并在它们之间切换。\n\
+  \n> 注意\n> 虽然工具和语法可能不同，但部署其他托管的 Kubernetes 集群解决方案（如 GKE 或 EKS）的一般过程是相同的：获取它们的工具、部署集群并下载集群凭据。\n\
+  \n### 总结\n\n在本章中，我们探讨了一些安装注意事项以及在安装 Kubernetes 之前需要了解的内容。我们还介绍了如何安装 Kubernetes，包括在\
+  \ Linux 上自管理安装和通过托管云服务安装。在下一章中，我们将了解如何通过`kubectl`与我们的集群进行交互。\n\n\n## 5. 与 Kubernetes\
+  \ 集群交互\n\n集群功能正常运行并启动后，我们现在将学习与集群交互的核心工具——`kubectl`。Kubectl 是一个命令行客户端，用于在 Kubernetes\
+  \ 中部署和维护应用程序，以及管理集群本身。在掌握了 `kubectl` 的基本知识后，我们将学习如何在集群中部署和访问应用程序。\n\n为确保您的管理工作站能够访问集群，请使用代码清单\
+  \ 5-1 中的命令将 `kubectl` 配置复制到该工作站。\n\n```\nmkdir c:\\users\\labuser\\.kube\n$LinuxPW=\"\
+  Str@ngPassw0rd\"\npscp -P 22 -pw $LinuxPW labuser@control:/home/labuser/.kube/config\
+  \ c:\\users\\labuser\\.kube\n```\n*代码清单 5-1：将 kubectl 配置复制到 Windows 工作站*\n\n###\
+  \ 使用 kubectl 与集群交互\n\nKubectl 是一个命令行工具，用于在 Kubernetes 中创建、读取、更新或删除几乎任何类型的资源。请记住，在\
+  \ Kubernetes 中，所有操作都通过 API Server 进行，因此 `kubectl` 是您与 API Server 交互的主要方式。任何需要在 Kubernetes\
+  \ 中创建、修改或查询内容时，这都是主要的命令行工具。\n\n大多数 `kubectl` 命令实际上由三部分组成：\n\n*   **操作：** 您想做什么？\n\
+  *   **资源：** 您想对什么资源执行操作？\n*   **输出：** 对于会产生输出的命令，输出应如何格式化？\n\n一个典型的命令如代码清单 5-2 中的通用示例所示。\n\
+  \n```\nkubectl    \n```\n*代码清单 5-2：通用 kubectl 命令*\n\n例如，代码清单 5-3 中的命令将返回集群中所有节点的详细列表。\n\
+  \n```\nkubectl get nodes -o wide\n```\n*代码清单 5-3：用于检索集群中节点详细列表的 Kubectl 命令*\n\n\
+  该命令的输出应与图 5-1 中的内容类似。\n\n![../images/494804_1_En_5_Chapter/494804_1_En_5_Fig1_HTML.jpg](img/494804_1_En_5_Fig1_HTML.jpg)\n\
+  \n*图 5-1：kubectl get node -o wide 命令的输出*\n\n如果您正在查找特定命名空间中的资源，此筛选条件也会传递给 `kubectl`。代码清单\
+  \ 5-4 中的命令将返回在 `mssql-server` 命名空间中运行的所有 Pod。\n\n```\nkubectl get pods -n kube-system\n\
+  ```\n*代码清单 5-4：用于检索命名空间中 Pod 的 Kubectl 命令*\n\n**注意**\n\n与 Kubernetes 生态系统中的大多数工具一样，`kubectl`\
+  \ 可跨平台运行，因此无论您是在 Windows、Linux 还是 Mac 上运行，这些命令都完全相同。\n\n此语法的一个例外情况如代码清单 5-5 所示。\n\
+  \n```\nkubectl cluster-info\n```\n*代码清单 5-5：用于获取集群概况的 Kubectl 命令*\n\n此命令未指定操作、资源或输出。这些都不需要，因为该命令提供集群的概况信息，例如其控制平面\
+  \ IP 地址和端口，以及 KubeDNS 的状态。\n\n您收到的输出应大致与图 5-2 中的输出匹配。\n\n![../images/494804_1_En_5_Chapter/494804_1_En_5_Fig2_HTML.jpg](img/494804_1_En_5_Fig2_HTML.jpg)\n\
+  \n*图 5-2：kubectl cluster-info 命令的输出*\n\n让我们更仔细地看看 `kubectl` 命令的不同组成部分。\n\n#### 操作\n\
+  \n在 Kubernetes 中使用 `kubectl` 有大量操作，因此让我们专注于核心操作并更详细地了解它们：\n\n*   **应用：** 这将把文件内容（通常是\
+  \ YAML 文件）部署到您的 Kubernetes 集群。例如，在上一章部署集群时，我们在添加 flannel 时使用了此操作。`apply` 也用于将应用程序声明式地部署到集群中。\n\
+  *   **创建：** `create` 允许您以命令式方式向集群添加资源，我们将在本章后面解释如何将应用程序部署到集群时更深入地探讨此操作。在许多情况下，`create`\
+  \ 和 `apply` 可以达到相同的效果。\n*   **运行：** `run` 允许您启动一个 Pod 并指定容器镜像，基本上是引导最基本的 Pod 配置。\n\
+  *   **解释：** 这为您提供了特定 Kubernetes API 对象或资源的文档，列出描述和构建该对象所需的字段。这在构建清单文件时特别有用，也可用于快速查找对象的字段名称。\n\
+  *   **删除：** 这将删除指定的资源。\n*   **获取：** `kubectl get` 将显示有关指定资源类型的基本信息。\n*   **描述：**\
+  \ `describe` 提供详细的资源信息，用于显示特定资源的非常详细的信息。当出现问题时，这是您的第一站：底部的事件部分是进行故障排除的绝佳位置。\n* \
+  \  **执行：** `exec` 允许您在 Pod 内的容器中执行命令。\n*   **日志：** 这允许您查看在 Pod 内运行的容器的日志。\n\n如前所述，这是一个简短的列表，包含我们认为最关键的几个操作，只是为了让您入门。您可以在\
+  \ [`kubernetes.io/docs/reference/kubectl/overview/#operations`](https://kubernetes.io/docs/reference/kubectl/overview/%23operations)\
+  \ 找到完整的列表，我们强烈建议您查看一下！\n\n#### 资源\n\n在命令行工作时，我们将把 `kubectl` 与前面看到的操作（如 `get`、`apply`\
+  \ 等）和资源结合起来。基本上，*针对什么*执行该操作。我们也介绍了节点、Pod 和服务等概念，老实说，Kubernetes 中还有更多我们可以使用的对象。这就是我们指定要对哪种资源类型执行操作的方式。\n\
+  \n一些最常见的资源类型包括：\n\n*   节点 (`no`)\n*   Pod (`po`)\n*   服务 (`svc`)\n\n在这里您可以看到括号中代表该特定资源类型的别名，因此节点用\
+  \ `no`，Pod 用 `po`，服务用 `svc`，这是一个让我们能在命令行快速执行这些命令的好方法。\n\n它们在使用 `kubectl` 时完全同义，因此运行代码清单\
+  \ 5-6 中的命令两次将得到完全相同的结果。\n\n```\nkubectl get no\nkubectl get nodes\n```\n*代码清单 5-6：使用和不使用资源类型别名的\
+  \ Kubectl 命令*\n\n官方文档 [`kubernetes.io/docs/reference/kubectl/overview/#resource-types`](https://kubernetes.io/docs/reference/kubectl/overview/%23resource-types)\
+  \ 提供了可用资源类型的完整列表供您参考！\n\n顺便说一句，您还可以通过运行代码清单 5-7 中的命令来获取 Kubernetes 集群中所有可用资源类型的列表。这是另一个不使用操作、资源或输出选项的命令示例。\n\
+  \n```\nkubectl api-resources\n```\n*代码清单 5-7：用于列出可用资源类型的 Kubectl 命令*\n\n### 输出\n\
+  \n`kubectl` 命令构建的最后一部分是修改其输出格式。我们可以通过向命令添加额外的标志来指定 `kubectl` 的输出格式。\n\n我们想向大家介绍的一个非常有用的格式是\
+  \ `wide`，它会额外显示有关我们正在使用的 Kubernetes 对象的更多信息。\n\n我们还可以将 Kubernetes 对象输出为 `YAML` 和\
+  \ `JSON` 格式。`YAML` 和 `JSON` 格式的文件是 Kubernetes 以声明式描述事物的核心，使我们能够用代码描述配置。我们可以使用 `kubectl`\
+  \ 输出 `YAML` 或 `JSON`，这是一种从集群中提取配置数据并描述已在集群中部署资源的宝贵方法。我们可以将其持久化到文件中，并根据需要与其他系统、其他环境和其他开发者交换。\n\
+  \n另一个选项是 `jsonpath`，它只会从 `JSON` 输出中获取特定的子集或值。例如，当你想检索端口或 IP 地址等值，以便随后在脚本中用作变量时，这特别有用。\n\
+  \n完整的输出选项列表可以在 [`https://kubernetes.io/docs/reference/kubectl/overview/#output-options`](https://kubernetes.io/docs/reference/kubectl/overview/%2523output-options)\
+  \ 找到。另一个非常有用的资源，特别是当你刚开始熟悉 `kubectl` 时，是 `kubectl` 速查表：[`https://kubernetes.io/docs/reference/kubectl/cheatsheet/`](https://kubernetes.io/docs/reference/kubectl/cheatsheet/)。\n\
+  \n### Kubectl 上下文\n\n`Kubectl` 可用于从同一工作站管理多个 Kubernetes 集群。这是通过所谓的上下文来处理的。上下文是集群和用于登录该集群的凭据的组合。\n\
+  \n让我们首先使用清单 5-8 中的命令列出当前对我们可用的所有上下文。\n\n```\nkubectl config view\n```\n清单 5-8\n\
+  显示 kubectl 的配置，包括所有上下文\n\n正如我们在图 5-3 中看到的，我们有 `kubernetes-admin` 上下文（这是我们的 `kubeadm`\
+  \ 集群）和 `AKSCluster` 上下文（这是我们在 Azure Kubernetes Service 中的集群）。\n\n`../images/494804_1_En_5_Chapter/494804_1_En_5_Fig3_HTML.jpg`\n\
+  图 5-3\n当前 kubectl 配置视图\n\n接下来，让我们通过运行清单 5-9 中的命令来检查我们当前正在使用哪个上下文。\n\n```\nkubectl\
+  \ config current-context\n```\n清单 5-9\n获取当前的 kubectl 上下文\n\n如图 5-4 所示，我们当前的上下文是\
+  \ `kubernetes-admin`，因此此时任何 `kubectl` 命令都将针对我们的 `kubeadm` 集群执行。\n\n`../images/494804_1_En_5_Chapter/494804_1_En_5_Fig4_HTML.jpg`\n\
+  图 5-4\n当前的 kubectl 上下文\n\n让我们使用清单 5-10 将上下文更改为 `AKSCluster`。\n\n```\nkubectl config\
+  \ use-context AKSCluster\n```\n清单 5-10\n将 kubectl 上下文切换到 AKSCluster\n\n这将把我们当前的上下文更改为\
+  \ `aks-admin`。`kubectl` 中的所有命令现在都将针对 AKS 集群执行。\n\n> **注意**\n>\n> 除非另有说明，本章及后续章节中的所有练习都应在\
+  \ `kubernetes-admin@kubernetes` 上下文中执行。\n\n### 在 Kubernetes 中部署应用\n\n既然我们知道了如何在命令行与集群交互，让我们将讨论转向在\
+  \ Kubernetes 中部署应用程序。\n\n与大多数通过 `kubectl` 在 Kubernetes 中执行的命令一样，应用程序可以使用命令式或声明式配置进行部署。\n\
+  \n#### 命令式部署\n\n当你使用命令式配置时，通常会在命令行一次执行一条命令，并且一次只操作一个对象。\n\n让我们运行清单 5-11 中的命令。\n\n\
+  ```\nkubectl create deployment nginx --image=nginx\n```\n清单 5-11\n使用 nginx 创建部署的\
+  \ Kubectl 命令\n\n该命令被发送到 API Server，API Server 将基于 `nginx` 镜像创建一个名为 `nginx` 的部署，但我们一次只在命令行上操作一个对象。\n\
+  \n当然，这也适用于其他类型的对象。例如，清单 5-12 中的命令将再次使用 `nginx` 镜像，但它将创建一个运行它的独立 Pod。\n\n```\nkubectl\
+  \ run nginx --image=nginx\n```\n清单 5-12\n运行一个新的 nginx Pod 的 Kubectl 命令\n\n虽然这无疑是一种管理系统的方法，但如果你的应用程序栈开始增长，配置和部署变得更加复杂，在命令行管理每个单独的对象并不是一种可持续的管理或维护系统的方式。我们需要以声明式的方式做事，这是\
+  \ Kubernetes 的核心原则之一，即我们使用 `YAML` 或 `JSON` 在代码中定义应用程序或集群本身的期望状态。\n\n让我们使用清单 5-13\
+  \ 中的命令查看 Pod。\n\n```\nkubectl get pods\n```\n清单 5-13\n列出 Pod 的 kubectl 命令\n\n我们将看到（图\
+  \ 5-5）我们的两个 Pod：一个是单独启动的（名为 `nginx`），另一个来自我们的部署（名为 `nginx-6799fc88d8-fj928`）。来自我们部署的\
+  \ Pod 的名称是随机的，并且每次 Pod 被终止并从同一部署创建新 Pod 时都会改变。\n\n`../images/494804_1_En_5_Chapter/494804_1_En_5_Fig5_HTML.jpg`\n\
+  图 5-5\nkubectl get pods 的输出\n\n在继续讨论声明式部署之前，让我们先清理并删除先前创建的部署和 Pod，使用清单 5-14 中的命令。\n\
+  \n```\nkubectl delete deployment nginx\nkubectl delete pod nginx\n```\n清单 5-14\n\
+  删除命令式创建的资源的 Kubectl 命令\n\n删除部署将立即完成，而删除单个 Pod 只有在 Pod 被终止和删除后才会返回。\n\n\n### 声明式部署\n\
+  \n对于更复杂的场景，或者仅仅是为了更轻松地将同一对象配置部署到另一个集群（例如，将应用程序从开发系统推送到测试系统），因此强烈建议使用基于清单的声明式方法。你的清单文件也应该像你环境中使用的任何其他代码一样，放入你的源代码控制系统中。在这种情况下，我们将仅使用一个可以用\
+  \ JSON 或 YAML 编写的清单，并通过像代码清单 5-15 中的命令将其提供给 API Server。顺便说一句，用 YAML 编写的清单会被 Kubernetes\
+  \ 转换为 JSON。\n\n```\nkubectl apply -f deployment.yaml\n代码清单 5-15\n将 YAML 文件提供给 API\
+  \ Server 的 Kubectl 命令\n```\n\n这个命令将获取 `deployment.yaml` 文件的内容，并将其传递给 API Server，以便\
+  \ Kubernetes 创建清单中定义的资源。\n\n一个清单可以由许多不同的对象类型组成，因此我们可以有一个 YAML 文件，其中首先创建一个存储类，然后是一个持久卷和持久卷声明，接着是一个部署和一个服务定义。所有这些都在同一个文件中。所有内容都通过命令行上的一个单一命令部署。\n\
+  \n正如前面也提到的，我们可以使用 `kubectl` 通过输出来生成这些清单。让我们从生成一个部署的清单开始，该部署与我们之前通过命令式方式创建的相匹配，使用的是代码清单\
+  \ 5-16 中的代码。为此，我们添加一个输出格式和 `dry-run` 开关，这将仅生成清单，而不会部署任何内容到我们的集群。\n\n```\nkubectl\
+  \ create deployment nginx --image=nginx --dry-run=client -o yaml\n代码清单 5-16\n生成\
+  \ nginx 部署的 YAML 清单的 Kubectl 命令\n```\n\n输出可以在代码清单 5-17 中找到。\n\n```\napiVersion:\
+  \ apps/v1\nkind: Deployment\nmetadata:\ncreationTimestamp: null\nlabels:\napp: nginx\n\
+  name: nginx\nspec:\nreplicas: 1\nselector:\nmatchLabels:\napp: nginx\nstrategy:\
+  \ {}\ntemplate:\nmetadata:\ncreationTimestamp: null\nlabels:\napp: nginx\nspec:\n\
+  containers:\n- image: nginx\nname: nginx\nresources: {}\n代码清单 5-17\n从前一个代码清单生成的清单\n\
+  ```\n\n让我们再次生成那个清单，但这次，我们将输出重定向到一个名为 `nginx.yaml` 的文件，如代码清单 5-18 所示。\n\n```\nkubectl\
+  \ create deployment nginx --image=nginx --dry-run=client -o yaml > nginx.yaml\n\
+  代码清单 5-18\n生成并重定向到文件的 nginx 部署 YAML 清单的 Kubectl 命令\n```\n\n我们现在可以取用那个文件，并以声明式方式创建一个部署。使用代码清单\
+  \ 5-19 中的命令来执行此操作。\n\n```\nkubectl apply -f nginx.yaml\n代码清单 5-19\n使用先前生成的清单进行声明式部署\n\
+  ```\n\n这将生成一个与前一个类似的部署。通过运行代码清单 5-20 中的命令，我们可以验证我们的一个副本（如清单中所定义）已就绪。\n\n```\nkubectl\
+  \ get deployment nginx\n代码清单 5-20\n检查此部署的状态\n```\n\n输出如图 5-6 所示，将确认我们部署的状态。\n\n\
+  ![`../images/494804_1_En_5_Chapter/494804_1_En_5_Fig6_HTML.jpg`](img/494804_1_En_5_Fig6_HTML.jpg)\n\
+  \n图 5-6\n\n`kubectl get deployment nginx` 的输出\n\n### 修改部署\n\n当然，现有部署也可以在不进行完全重新部署的情况下进行修改。\n\
+  \n例如，假设你想更新现有部署中的副本（Replica）或 Pod 的数量。\n\n乍一看，最简单的方法似乎又是通过命令式方式完成，如代码清单 5-21 所示。\n\
+  \n```\nkubectl scale deployment nginx --replicas=2\n代码清单 5-21\n将 nginx 部署扩展到两个副本\n\
+  ```\n\n如图 5-7 所示，部署现在显示两个副本。\n\n![`../images/494804_1_En_5_Chapter/494804_1_En_5_Fig7_HTML.jpg`](img/494804_1_En_5_Fig7_HTML.jpg)\n\
+  \n图 5-7\n\n扩展到两个副本后 `kubectl get deployment nginx` 的输出\n\n但现在，我们的清单文件和部署不同步了，因为清单仍然只反映一个副本。\n\
+  \n更好的方法是使用文本编辑器编辑清单。用你选择的文本编辑器打开该文件，将原始的副本定义（如代码清单 5-22 所示）替换为 20 个副本的新定义（如代码清单\
+  \ 5-23 所示）。\n\n```\nspec:\nreplicas: 1\n代码清单 5-22\n一个副本的现有副本定义\n```\n\n```\nspec:\n\
+  replicas: 20\n代码清单 5-23\n20 个副本的新副本定义\n```\n\n现在，我们可以重新应用清单（参见代码清单 5-24），这将把我们的部署扩展到\
+  \ 20 个副本。\n\n```\nkubectl apply -f nginx.yaml\n代码清单 5-24\n使用 kubectl 应用新定义\n```\n\
+  \n如图 5-8 所示，部署现在显示 20 个副本（请注意，所有这些副本显示为就绪需要一些时间）。\n\n![`../images/494804_1_En_5_Chapter/494804_1_En_5_Fig8_HTML.jpg`](img/494804_1_En_5_Fig8_HTML.jpg)\n\
+  \n图 5-8\n\n扩展到 20 个副本后 `kubectl get deployment nginx` 的输出\n\n修改现有对象的第三种方法是 ``kubectl\
+  \ edit``。虽然这也存在使你的 YAML 文件与实际部署在集群上的内容失去同步的缺点，但这是一种非常方便的方法，可以一次性对部署进行多项更改。\n\n运行代码清单\
+  \ 5-25 中的代码。\n\n```\nkubectl edit deployment nginx\n代码清单 5-25\n编辑正在运行的部署\n```\n\n\
+  这将在你的默认文本编辑器中打开当前部署的完整清单。找到先前定义的 20 个副本的那一行，并将其更改为 30。关闭并保存此编辑器时，这些更改将立即应用，我们可以再次使用\
+  \ `kubectl get deployment` 进行检查。结果也如图 5-9 所示。\n\n![`../images/494804_1_En_5_Chapter/494804_1_En_5_Fig9_HTML.jpg`](img/494804_1_En_5_Fig9_HTML.jpg)\n\
+  \n图 5-9\n\n扩展到 30 个副本后 `kubectl get deployment nginx` 的输出\n\n### 在集群中暴露和服务访问\n\n\
+  现在，我们有了一个扩展的 nginx 部署，但 Pod 中运行的应用程序还无法访问。让我们继续前进，将该部署作为一个 Kubernetes 服务暴露出来，为我们的应用程序提供一个持久的\
+  \ IP 地址和端口。\n\n可以使用 ``kubectl expose`` 创建服务。\n\n\n\n#### 暴露类型为 ClusterIP 的服务\n\n\
+  如果你运行代码清单 5-26 中的命令，这将创建一个在端口 80 上暴露的服务，同时目标端口也是 80（因为这是`nginx`的默认端口）。\n\n```\n\
+  kubectl expose deployment nginx --port=80 --target-port=80\n代码清单 5-26\n将 nginx 部署暴露为\
+  \ ClusterIP 服务\n```\n\n`port` 定义了服务监听的端口，而 `target port` 是容器内应用程序监听的端口。由于我们没有提供任何其他选项，该服务的类型将为\
+  \ `ClusterIP`，这是默认的服务类型。我们可以通过运行代码清单 5-27 中的命令来查看这一点。\n\n```\nkubectl get service\
+  \ nginx\n代码清单 5-27\n获取服务详情\n```\n\n如图 5-10 所示，这里还显示了该服务运行的 IP 地址。\n\n![../images/494804_1_En_5_Chapter/494804_1_En_5_Fig10_HTML.jpg](img/494804_1_En_5_Fig10_HTML.jpg)\n\
+  *图 5-10: `kubectl get service nginx` 的输出*\n\n虽然所有这些命令都是命令式的——正如我们之前提到的，这在测试中是可以的，但通常应使用`YAML`清单——你也可以通过添加`--dry-run`开关来修改命令，以生成一个`YAML`清单，然后如代码清单\
+  \ 5-28 所示，将其应用到你的集群中。\n\n```\nkubectl expose deployment nginx --port=80 --target-port=80\n\
+  --dry-run=client -o yaml\n代码清单 5-28\n创建清单以将 nginx 部署暴露为 ClusterIP 服务\n```\n\n顺便说一下，如果你只想获取`ClusterIP`，这是输出格式`jsonpath`的完美用例，如代码清单\
+  \ 5-29 所示。当需要在自动化脚本中将此值存储到变量中时，这尤其有用。\n\n```\nkubectl get service nginx -o jsonpath='{\
+  \ .spec.clusterIP }'\n代码清单 5-29\n仅通过 kubectl 检索 ClusterIP\n```\n\n我们现在可以访问这个服务，例如，通过运行代码清单\
+  \ 5-30 中的`curl`请求（确保将 IP 地址更改为你集群中服务的`ClusterIP`）。\n\n```\ncurl http://10.109.180.180/\n\
+  代码清单 5-30\n访问 ClusterIP 服务\n```\n\n正如我们在第 3 章详细阐述的，`ClusterIP`服务可以从集群内的任何节点和 Pod\
+  \ 访问，但无法从外部访问。根据你的应用场景，这可能足够，也可能不够。让我们假设你希望确保你的服务可以从集群外部访问。\n\n首先，使用代码清单 5-31 中的命令删除现有的服务。\n\
+  \n```\nkubectl delete service nginx\n代码清单 5-31\n删除 nginx 服务\n```\n\n#### 暴露类型为 NodePort\
+  \ 的服务\n\n如果你想暴露一个服务，使其也能从不属于你的 Kubernetes 集群的机器访问，我们需要将该服务作为`NodePort`类型暴露。\n\n\
+  为此，我们只需添加`--type`开关，如代码清单 5-32 所示。\n\n```\nkubectl expose deployment nginx --port=80\
+  \ --target-port=80 --type=NodePort\n代码清单 5-32\n将 nginx 部署暴露为 NodePort 服务\n```\n\n\
+  让我们使用代码清单 5-33 中的命令查看此服务。\n\n```\nkubectl get service nginx\n代码清单 5-33\n获取服务详情\n\
+  ```\n\n如图 5-11 所示，该服务现在显示类型为`NodePort`，并且也显示了我们服务部署时使用的（动态）端口。\n\n![../images/494804_1_En_5_Chapter/494804_1_En_5_Fig11_HTML.jpg](img/494804_1_En_5_Fig11_HTML.jpg)\n\
+  *图 5-11: `kubectl get service nginx` 的输出*\n\n此端口在服务的生命周期内不会改变。但是，如果你删除并再次暴露它，它很可能会显示一个不同的端口。\n\
+  \n就像上一个例子中的`ClusterIP`一样，我们可以使用`jsonpath`来仅检索`NodePort`，如代码清单 5-34 所示。\n\n```\n\
+  kubectl get service nginx -o jsonpath='{ .spec.ports[*].nodePort }'\n代码清单 5-34\n\
+  仅通过 kubectl 检索 nodePort\n```\n\n类型为`NodePort`的服务可以在 Kubernetes 集群的任何节点上访问。在我们的示例中，代码清单\
+  \ 5-35 所示的请求可能最终到达我们部署的不同副本，但都会产生相同的输出。\n\n```\ncurl http://control:31260\ncurl\
+  \ http://node1:31260\ncurl http://node2:31260\ncurl http://node3:31260\n代码清单 5-35\n\
+  访问 NodePort 服务\n```\n\n#### 暴露类型为 LoadBalancer 的服务\n\n如果你的 Kubernetes 运行在例如 Azure\
+  \ Kubernetes Service 上，你需要使用`LoadBalancer`类型来暴露服务，这将为你提供一个外部 IP 地址来访问该服务。这只适用于云场景或具有\
+  \ Kubernetes 集成负载均衡器的本地场景。\n\n让我们从暴露部署开始，如代码清单 5-36 所示。\n\n```\nkubectl expose deployment\
+  \ nginx --port=80 --target-port=80 --type=LoadBalancer\n代码清单 5-36\n将 nginx 部署暴露为\
+  \ LoadBalancer 服务\n```\n\n然后，我们可以再次获取完整的服务详情或仅获取服务 IP 地址，如代码清单 5-37 所示。\n\n```\n\
+  kubectl get service nginx\nkubectl get service nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip\
+  \ }'\n代码清单 5-37\n获取服务详情\n```\n\n使用此服务 IP 地址，我们就可以从外部客户端访问我们的部署了。\n\n### 总结\n\n在本章中，我们介绍了使用`kubectl`与\
+  \ Kubernetes 集群交互的不同方式，以从中获取所有不同类型的信息。我们还研究了如何使用命令式和声明式部署方法来部署和访问应用程序。让我们继续下一章，了解更多关于\
+  \ Kubernetes 集群中存储的知识！\n\n## 6. 在 Kubernetes 中存储持久数据\n\n在本章中，我们将深入探讨基于容器的应用程序对数据持久性的需求，以及容器持久化数据的内部原理。我们将介绍\
+  \ Kubernetes 中的核心存储概念，例如 Kubernetes 如何使用`Volumes`、`Persistent Volumes`和`Persistent\
+  \ Volume Claims`来存储数据，如何配置存储，以及 Kubernetes 如何控制对该存储的访问。我们将研究静态和动态配置场景，特别是使用我们实验室环境中的`NFS`和\
+  \ Azure Kubernetes Service。\n\n\n\n### 基于容器的应用程序中数据持久性的必要性\n\n正如你在第 2 章所学，容器镜像是只读的。当在容器内创建或更改数据时，数据会被写入可写层。容器运行时会将容器镜像和可写层整合到一个文件系统中，供容器内部运行的应用程序使用。当容器被删除时，容器及其可写层都会被移除，该可写层内的数据也随之永久丢失。这并非存储持久性数据（如数据库数据）的最佳位置。如图\
+  \ 6-1 所示，可写层的生命周期与容器相同。\n\n![../images/494804_1_En_6_Chapter/494804_1_En_6_Fig1_HTML.jpg](img/494804_1_En_6_Fig1_HTML.jpg)\n\
+  *图 6-1. 容器将数据写入可写层，该层的生命周期与容器相同。当容器被移除时，可写层中的数据也会被移除。*\n\n那么问题来了，如何才能在容器中存储独立于其生命周期的持久性数据？这就是卷的用武之地。卷允许你将存储附加到容器，任何创建或更改的数据都会写入此卷。卷的生命周期独立于容器，是容器运行时使用的持久化存储模型。图\
+  \ 6-2 突出展示了卷如何挂载到文件系统中，为容器提供独立于其生命周期的持久化存储。\n\n本章将把该模型扩展到 Kubernetes 中，你将学习 Kubernetes\
+  \ 如何为在 Pod 内运行的有状态应用提供独立于 Pod 生命周期的存储。\n\n![../images/494804_1_En_6_Chapter/494804_1_En_6_Fig2_HTML.jpg](img/494804_1_En_6_Fig2_HTML.jpg)\n\
+  *图 6-2. 卷使容器能够持久化数据，独立于容器生命周期。当容器被移除时，卷中的数据依然保留，并且可以挂接到新的或其他容器上。*\n\n### Kubernetes\
+  \ 中的存储\n\n要在 Kubernetes 中部署有状态应用，集群必须实现一些核心功能。首先，集群需要为 Pod 配置并附加存储作为应用的卷。其次，根据应用架构，集群需要控制对该存储的访问，以确保安全和应用兼容性。Kubernetes\
+  \ API 暴露了多个对象，支持部署有状态应用所需的配置、配置和访问控制。以下是 Kubernetes 用于支持有状态应用的 API 对象列表：\n\n*  \
+  \ **卷：** 作为 Pod 规范的一部分，卷是一种可以被 Pod 中运行的容器挂载的存储。\n*   **持久卷：** 集群中由管理员定义和配置的存储，或由存储类动态配置的存储。\n\
+  *   **持久卷声明：** 用户在清单中对存储的请求。\n*   **存储类：** 集群管理员定义集群中可用于配置的存储类别（或组）的一种方式。存储类可以促进动态配置，即根据需要创建持久卷，以满足用户通过持久卷声明提出的存储请求。\n\
+  \n现在，让我们更仔细地看看每一个 API 对象，以及它们如何使你能够在 Kubernetes 中部署有状态应用。\n\n### 卷\n\n卷是节点暴露的存储资源，挂载在\
+  \ Pod 内部。它是节点上的一个目录或块设备，可在 Pod 中运行的容器内部访问。一个卷可以被 Pod 中的多个容器挂载，从而实现 Pod 内容器之间的数据共享。作为\
+  \ Pod 规范的一部分定义，卷的生命周期独立于容器，但依赖于 Pod，这意味着当 Pod 被删除时，对卷的访问也会被移除。但是，卷上的数据不会被销毁，可供挂接到新的\
+  \ Pod。\n\nKubernetes 中有许多类型的卷可用。每种卷类型都需要根据所分配存储的种类进行独特的配置。下面列出了 Kubernetes 中常用的一些卷类型。使用卷时，每种卷类型都有其独特的配置属性：\n\
+  \n*   **hostPath：** Pod 中节点文件系统上的挂载目录。\n*   **Local：** 节点上的挂载存储设备。\n*   **NFS：**\
+  \ 将现有的 NFS 导出挂载到 Pod 中。\n*   **光纤通道和 iSCSI：** 通过存储网络访问远程存储的块设备。\n*   **云存储：** 访问主要云提供商的远程存储块设备和文件服务：\n\
+  \    *   AWS 弹性块存储\n    *   Azure 磁盘\n    *   Azure 文件\n    *   GCE 持久磁盘\n*   **Secret\
+  \ 和 ConfigMap：** 将包含配置数据的集群 API 对象暴露到 Pod 中。\n*   **持久卷声明：** 对集群中存储访问的请求。\n\n完整列表请参见\
+  \ [*https://kubernetes.io/docs/concepts/storage/volumes/*](https://kubernetes.io/docs/concepts/storage/volumes/)。\n\
+  \n对于 NFS、光纤通道甚至云存储等卷类型，它们需要特定于基础设施的配置元素。例如，使用 NFS 时，你需要定义 NFS 服务器的网络位置和要访问的导出路径。使用云存储时，你需要定义一个唯一标识符，例如你要访问的虚拟磁盘的资源\
+  \ ID 或卷 ID。在 Pod 规范中包含特定于基础设施的配置意味着在 Kubernetes 集群之间移动该代码可能具有挑战性，因为你需要更改 Pod 规范以匹配目标\
+  \ Kubernetes 集群的存储环境。这增加了错误风险并降低了代码的可移植性。持久卷声明有助于解决这一挑战。我们将在本章后面了解更多关于持久卷声明的内容。\n\
+  \n首先，让我们看看如何在 Pod 中配置卷。在下面的示例中，我们定义了一个运行 `nginx` 的 Pod。该 Pod 还定义了一个卷。该卷是一个 NFS 卷，用于访问我们实验室环境中存储服务器上的文件系统。在此示例中，NFS\
+  \ 客户端需要额外的配置参数，即 NFS 服务器的网络位置和我们要挂载的 NFS 服务器导出路径。重要的是要指出，卷是在 Pod 级别定义的，并且可供 Pod\
+  \ 中运行的任何容器挂载。在 Pod 中，你使用 `volumeMounts` 字段将卷附加到容器。在代码清单 6-1 中，你可以看到卷名称 `webcontent`\
+  \ 通过 `mountPath` 字段挂载到文件系统位置 `/usr/share/nginx/html/web-app`。\n\n```yaml\napiVersion:\
+  \ v1\nkind: Pod\nmetadata:\n  name: nginx-pod\nspec:\n  containers:\n  - name: nginx\n\
+  \    image: nginx\n    ports:\n    - containerPort: 80\n    volumeMounts:\n    -\
+  \ name: webcontent\n      mountPath: \"/usr/share/nginx/html/web-app\"\n  volumes:\n\
+  \  - name: webcontent\n    nfs:\n      server: 172.16.94.5\n      path: \"/srv/exports/volumes/webcontent\"\
+  \n```\n*代码清单 6-1. 在 Pod 规范中使用卷 (volume.yaml)*\n\n\n\n在控制节点上，我们使用 `-o wide` 输出修饰符获取\
+  \ Pod 列表以得到 Pod 的 IP 地址，然后结合该 Pod IP 地址使用 `curl` 来访问 `nginx`。在图 6-3 中，我们使用了 `kubectl\
+  \ get pods -o wide`，在输出中，你可以看到 `nginx` Pod 正在运行。\n\n![../images/494804_1_En_6_Chapter/494804_1_En_6_Fig3_HTML.jpg](img/494804_1_En_6_Fig3_HTML.jpg)\n\
+  \n图 6-3：使用持久存储上的内容访问 `nginx`\n\n在图 6-4 中，你可以看到 Pod 内部位于 `/user/share/nginx/html/web-app`\
+  \ 的持久存储映射。\n\n![../images/494804_1_En_6_Chapter/494804_1_En_6_Fig4_HTML.jpg](img/494804_1_En_6_Fig4_HTML.jpg)\n\
+  \n图 6-4：查看 Pod 内部持久存储上的内容\n\n在图 6-5 中，你可以看到内容在网络上实际存储的位置。它存储在 NFS 服务器的 `/srv/exports/volumes/webcontent`\
+  \ 路径下。当这个 Pod 被调度到集群中的某个节点时，由 `kubelet` 负责将存储附加到该节点并暴露给该 Pod。\n\n![../images/494804_1_En_6_Chapter/494804_1_En_6_Fig5_HTML.jpg](img/494804_1_En_6_Fig5_HTML.jpg)\n\
+  \n图 6-5：查看 NFS 服务器上的存储内容\n\n卷为 Kubernetes 中的持久存储提供了解决方案。然而，正如你在代码示例中所看到的，清单文件中存在与基础设施相关的代码。这意味着如果你想在另一个集群中使用此代码，就需要更新清单文件，这增加了维护成本并降低了代码的可移植性。Kubernetes\
+  \ 的设计者和维护者看到了这个问题，并引入了一个解决方案。回顾一下 Kubernetes 用于支持有状态应用的 API 对象，其中列出了一个卷类型：`持久卷声明`。这种卷类型使我们能够将基础设施相关的代码分离到独立的\
+  \ API 对象中，即 `持久卷` 和 `持久卷声明`。让我们继续前进，更详细地探讨这些对象。\n\n### 持久卷与持久卷声明\n\n你刚刚了解了如何在 Kubernetes\
+  \ 中使用卷向 Pod 暴露存储。但你也看到在 Pod 规范中包含基础设施相关的代码会增加维护难度并降低清单文件的可移植性。现在我们来看看 `持久卷` 和 `持久卷声明`\
+  \ 如何帮助解决这些挑战，并将那些基础设施相关的代码移出 Pod 规范。\n\n#### 持久卷\n\n`持久卷` 是 Kubernetes 中的一种 API\
+  \ 资源，由集群管理员定义或由集群使用 `存储类` 动态供给。`持久卷` 的生命周期独立于容器和 Pod。就像卷一样，每个 `持久卷` 都有一个类型，定义了你想要附加到\
+  \ Pod 的存储类型。现在，当你使用 `持久卷` 时，`持久卷` 对象持有附加到 Pod 的存储的实现细节，而不是将这些技术实现细节放在 Pod 规范中。在\
+  \ Pod 规范内部，有一个对称为 `持久卷声明` 的存储 API 对象的引用。`持久卷声明` 是对集群的一个请求，要求将 `持久卷` 映射到 Pod。\n\n\
+  根据其类型（块存储或文件系统），`持久卷` 由 `kubelet` 挂载或附加到节点。容器运行时负责将挂载或附加的 `持久卷` 暴露给 Pod 内部的容器。`持久卷`\
+  \ 是集群中一个不带命名空间的资源，这意味着如果需要，它可以在命名空间之间共享。\n\n#### 访问模式\n\n`持久卷` 的访问模式定义了访问 `持久卷`\
+  \ 对象的模式。每个 `持久卷` 都有一个访问模式，描述了底层存储的能力。\n\n以下列表详细说明了 Kubernetes `持久卷` 和 `持久卷声明` 支持的访问模式：\n\
+  \n*   `ReadWriteOnce (RWO):` 只有一个节点可以以读/写方式访问一个 `持久卷`。\n*   `ReadWriteMany (RWX):`\
+  \ 多个节点可以以读/写方式访问一个 `持久卷`。\n*   `ReadOnlyMany (ROX):` 多个节点可以以只读方式访问一个 `持久卷`。\n\n\
+  选择哪种访问模式取决于将使用 `持久卷` 的应用程序以及底层的 `持久卷` 存储类型。例如，由于 NFS 的特性，一个 NFS 导出可以支持许多读/写客户端。然而，像虚拟磁盘这样的块设备通常只支持一台主机进行读写访问，因为底层的虚拟磁盘通常由于其特性无法附加到多台主机。在应用方面，像\
+  \ SQL Server 这样的应用程序可能只有一个进程能同时打开一个数据库文件，因此需要 `ReadWriteOnce`。另一方面，像 Web 内容这样的静态文件可以是\
+  \ `ReadOnlyMany`，然后 `持久卷` 可以附加到许多 Pod，以实现对存储在 `持久卷` 中的内容的横向扩展访问。\n\n访问模式是节点级别的，而不是\
+  \ Pod 级别的。因此，即使一个 `持久卷` 是 `ReadWriteOnce`，运行在节点上的 Pod 也有可能访问它。这取决于所部署的应用程序及其配置，以确保在任意时间点只有一个\
+  \ Pod 正在访问该 `持久卷`。\n\n#### 持久卷的类型\n\nKubernetes 为 `持久卷` 支持广泛的存储类型。下面列出了我们在 Kubernetes\
+  \ 中处理有状态应用时更常见的 `持久卷` 类型：\n\n*   `hostPath:` 将节点文件系统上的一个目录挂载到 Pod 中。\n*   `Local:`\
+  \ 节点上挂载的存储设备。\n*   `NFS:` 将现有的 NFS 导出挂载到 Pod 中。\n*   `Fiber Channel and iSCSI:`\
+  \ 通过存储网络对远程存储进行块访问。\n*   `云存储:` 访问主要云提供商的远程存储块设备和文件服务：\n    *   `awsElasticBlockStore`\n\
+  \    *   `azureDisk`\n    *   `azureFiles`\n    *   `gcePersistentDisk`\n\n有关 `持久卷`\
+  \ 类型的完整列表和配置示例，请查阅 [*https://kubernetes.io/docs/concepts/storage/persistent-volumes/*](https://kubernetes.io/docs/concepts/storage/persistent-volumes/)。\n\
+  \n#### 定义持久卷\n\n让我们看一下描述一个 `持久卷` 所需的代码（清单 6-2）。在示例中，你可以看到我们在 `spec.capacity.storage`\
+  \ 字段中将大小定义为 10GB，在 `spec.accessModes` 中定义了访问模式并选择了 `ReadWriteMany`。因此，集群中的多个节点都可以访问这个\
+  \ `持久卷`。这个 `持久卷` 是 `nfs` 类型，所以你可以看到访问 NFS 服务器和路径的实现细节。每种类型的 `持久卷` 都有独特的配置参数。请参考前面的链接获取其他类型\
+  \ `持久卷` 的配置详细信息。\n\n```yaml\napiVersion: v1\nkind: PersistentVolume\nmetadata:\n\
+  \  name: pv-nfs-data-static\nspec:\n  capacity:\n    storage: 10Gi\n  accessModes:\n\
+  \    - ReadWriteMany\n  nfs:\n    server: 172.16.94.5\n    path: \"/srv/exports/volumes/webcontent\"\
+  \n```\n\n清单 6-2：`持久卷` 示例 (`pv.yaml`)\n\n\n\n## 持久卷与持久卷声明的静态配置\n\n### 持久卷声明\n\n当一个应用希望连接到集群中的持久卷时，必须创建一个**持久卷声明**。持久卷声明是用户发起的存储请求。通过持久卷声明，您只需向集群提出存储需求，而无需在\
+  \ Pod 规范中涉及实现细节。这使得您的应用配置具有可移植性，并且在定义 Pod 及更高级别的资源时，使您的部署清单独立于具体的集群，从而将基础设施相关的代码从部署代码中分离出来，归入专用的存储对象。\n\
+  \n持久卷声明请求基于容量大小和访问模式，由集群中的控制器负责将持久卷声明映射到持久卷。这个过程称为**绑定**。持久卷声明是一个命名空间作用域的资源，它会绑定到不具有命名空间作用域的持久卷。\n\
+  \n注意：在将持久卷声明绑定到持久卷时，如果集群无法找到完全匹配容量的持久卷，则可能将声明绑定到一个容量大于持久卷声明请求大小的持久卷。\n\n### 定义持久卷声明\n\
+  \n清单 6-3 展示了一个持久卷声明的代码。在该声明中，我们在 `spec.resources.requests.storage` 字段定义了 10GB 的容量大小，并在\
+  \ `spec.accessModes` 字段定义了 `ReadWriteMany` 的访问模式。一旦这个 YAML 清单被发送到 API 服务器，集群将尝试寻找一个匹配该持久卷声明的容量和访问模式的持久卷。这个过程称为\
+  \ `绑定`，对象的状态会变为 `Bound`。创建持久卷资源和持久卷声明的过程称为 **静态配置**。假设找不到满足持久卷声明的持久卷，则其状态为 `Unbound`。如果找不到持久卷，这将阻塞请求集群存储的\
+  \ Pod 的启动，该 Pod 将处于 `Pending` 状态。如果一个持久卷被创建但没有对应的持久卷声明，其状态则为 `Available`。\n\n```yaml\n\
+  apiVersion: v1\nkind: PersistentVolumeClaim\nmetadata:\nname: pvc-nfs-data-static\n\
+  spec:\naccessModes:\n- ReadWriteMany\nresources:\nrequests:\nstorage: 10Gi\n```\n\
+  清单 6-3：持久卷声明示例 (pvc.yaml)\n\n### 为应用静态配置存储\n\n理论部分介绍完毕，让我们来静态配置一个持久卷和持久卷声明，并部署一个使用这些资源进行持久化存储的应用。\n\
+  \n首先，使用清单 6-2 (pv.yaml) 中的代码创建持久卷，然后执行 `kubectl get pv`（`pv` 是持久卷的别名/缩写）来获取持久卷的状态。在图\
+  \ 6-6 中，您可以看到其名称 `pv-nfs-data-static`、容量 `10GB`、访问模式 `ReadWriteMany`、回收策略 `Retain`，以及状态\
+  \ `Available`（因为目前还没有声明绑定到它）。最后，存储类是空白的，因为此持久卷不是存储类的一部分。\n\n![../images/494804_1_En_6_Chapter/494804_1_En_6_Fig6_HTML.jpg](img/494804_1_En_6_Fig6_HTML.jpg)\n\
+  图 6-6：`kubectl get pv` 的输出\n\n接下来，使用清单 6-3 (pvc.yaml) 中的代码创建持久卷声明，然后执行 `kubectl\
+  \ get pvc`（`pvc` 是持久卷声明的别名/缩写）来获取其状态。在图 6-7 中，您可以看到持久卷声明的名称，其状态为 `Bound`，而 `Volume`\
+  \ 字段显示了它绑定到的持久卷 `pv-nfs-data-static`。这正是我们之前刚刚静态配置的持久卷 `pv-nfs-data-static`。该声明的容量为\
+  \ `10GB`，访问模式为 `ReadWriteMany(RWX)`，并且它不属于任何存储类。\n\n![../images/494804_1_En_6_Chapter/494804_1_En_6_Fig7_HTML.jpg](img/494804_1_En_6_Fig7_HTML.jpg)\n\
+  图 6-7：`kubectl get pvc` 的输出。持久卷声明已绑定到 `pv-nfs-data-static`\n\n当我们创建持久卷声明 `pvc-nfs-data-static`\
+  \ 时，集群中的一个控制器开始根据容量和访问模式寻找合适的持久卷来满足该声明。集群找到了 `pv-nfs-data-static`，然后两者被绑定在一起。在图\
+  \ 6-8 中，我们再次执行 `kubectl get pv`。持久卷 `pv-nfs-data-static` 的状态现在是 `Bound`，并且 `Claim`\
+  \ 字段显示为 `default/pvc-nfs-data-static`。`Default` 是该持久卷声明所在的命名空间的名称。\n\n![../images/494804_1_En_6_Chapter/494804_1_En_6_Fig8_HTML.jpg](img/494804_1_En_6_Fig8_HTML.jpg)\n\
+  图 6-8：持久卷和持久卷声明绑定后 `kubectl get pv` 的输出\n\n\n#### 使用持久化存储部署应用\n\n通过静态配置创建存储资源后，就可以在应用程序中使用这些存储了。清单\
+  \ 6-4 展示了一个使用存储的应用程序的部署清单。在 Pod 模板规范中，名为 `webcontent` 的卷类型是 `persistentVolumeClaim`。其\
+  \ claimName 是 `pvc-nfs-data-static`。这正是刚刚创建的持久卷声明对象。因此，这个 Pod 将尝试访问该持久卷声明。卷是 Pod\
+  \ 级别的资源，可以在 Pod 内运行的任何容器之间共享。该卷通过 `containers` 字段映射到容器。`volumeMounts` 字段指定了卷在容器文件系统内的挂载位置——在此示例中为\
+  \ `/usr/share/nginx/html/web-app`。因此，容器内部的应用程序访问该路径，但数据实际存储在持久卷上，该持久卷位于实验室的 NFS\
+  \ 服务器上，路径为 `/srv/exports/volumes/webcontent`。这是 nginx 的默认内容目录。所以，当应用程序可用时，该目录中的内容即可通过\
+  \ HTTP 访问。\n\n```yaml\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name:\
+  \ nginx-nfs-deployment\nspec:\n  replicas: 1\n  selector:\n    matchLabels:\n  \
+  \    app: nginx\n  template:\n    metadata:\n      labels:\n        app: nginx\n\
+  \    spec:\n      volumes:\n        - name: webcontent\n          persistentVolumeClaim:\n\
+  \            claimName: pvc-nfs-data-static\n      containers:\n        - name:\
+  \ nginx\n          image: nginx\n          ports:\n            - containerPort:\
+  \ 80\n          volumeMounts:\n            - name: webcontent\n              mountPath:\
+  \ \"/usr/share/nginx/html/web-app\"\n\n---\napiVersion: v1\nkind: Service\nmetadata:\n\
+  \  name: nginx-nfs-service\nspec:\n  selector:\n    app: nginx\n  ports:\n    -\
+  \ port: 80\n      protocol: TCP\n      targetPort: 80\n```\n清单 6-4\n一个使用持久化存储的部署（deployment-static.yaml）\n\
+  \n在图 6-9 中，您可以看到我们的 Web 应用程序正在访问 NFS 服务器上的 `index.html` 内容。\n\n![../images/494804_1_En_6_Chapter/494804_1_En_6_Fig9_HTML.jpg](img/494804_1_En_6_Fig9_HTML.jpg)\n\
+  图 6-9\n获取 Service 的 IP 地址，并使用 `curl` 访问应用程序。返回的文档来自 NFS 服务器。\n\n在图 6-10 中，您可以看到我们打开了一个到部署中某个\
+  \ Pod 的 bash shell，列出了 `/usr/share/nginx/html/web-app/` 目录的内容，来自 NFS 服务器的内容在该目录中可用。\n\
+  \n![../images/494804_1_En_6_Chapter/494804_1_En_6_Fig10_HTML.jpg](img/494804_1_En_6_Fig10_HTML.jpg)\n\
+  图 6-10\nPod 内部已挂载卷的目录列表\n\n最后，在图 6-11 中，您可以在存储服务器上看到，在 NFS 导出目录中，这是通过持久卷暴露给 Pod\
+  \ 并挂载到容器中供 nginx 访问的导出目录。\n\n![../images/494804_1_En_6_Chapter/494804_1_En_6_Fig11_HTML.jpg](img/494804_1_En_6_Fig11_HTML.jpg)\n\
+  图 6-11\n存储在 NFS 服务器上的内容的目录列表\n\n在本节中，我们使用静态配置为 Web 应用程序部署创建了存储——创建了持久卷和持久卷声明，然后将该持久卷声明作为卷附加到\
+  \ Pod 内部。\n\n### 存储类和动态配置\n\n静态配置是集群管理员手动定义和创建每个持久卷的方式，正如我们在上一节中所探讨的。动态配置则是在创建持久卷声明资源时，按需创建持久卷资源。这样做是有利的，因为它减轻了集群管理员为用户请求手动配置存储的负担。为了支持动态配置，集群管理员需要创建一个\
+  \ `Storage Class`。让我们详细了解一下 Kubernetes 中动态配置的工作原理。\n\n#### 存储类\n\n要启用动态配置，集群管理员需要创建一个\
+  \ `Storage Class`。`Storage Class` 是一个 API 对象，用于描述集群中可供分配的存储类别。`Storage Class` 允许您定义这些存储层级及其配置。然后，您可以动态分配持久卷来访问该存储，并将其附加到集群中的\
+  \ Pod。对存储进行分组的常见方式包括底层存储基础设施的性能属性，例如 Tier 1 固态硬盘或 Tier 2 硬盘驱动器，或在云环境中的 Premium 或\
+  \ Standard 存储类型。\n\n`Storage Class` 使用一个配置器（有时称为卷插件），这是部署在集群中的软件，与底层存储基础设施进行交互，在创建持久卷声明时创建存储对象，并将该存储作为持久卷呈现回集群。特定于基础设施的配置参数在\
+  \ `Storage Class` 中定义，并用作从该 `Storage Class` 动态分配的持久卷的模板。在定义 `Storage Class` 时，您可以配置一个默认的\
+  \ `Storage Class`。默认 `Storage Class` 是当持久卷声明在其清单中未指定 `Storage Class` 时所使用的那个。\n\n\
+  注意\n有关 Kubernetes 中可用于许多不同类型存储的 `Storage Class` 配置示例，请查看 [`kubernetes.io/docs/concepts/storage/storage-classes/`](https://kubernetes.io/docs/concepts/storage/storage-classes/)。\n\
+  \n#### 动态配置\n\n在集群中定义了 `Storage Class` 后，当您创建一个持久卷声明时，该 `Storage Class` 的卷插件会动态创建一个持久卷。动态配置可用于多种不同的物理和云存储，例如\
+  \ Azure Disk、Azure Files、AWS Elastic Block Storage、Fiber Channel、GCE Persistent\
+  \ Disk、iSCSI 和 vSphere VMDK。有关支持动态配置的存储类型的完整列表，请访问 [`kubernetes.io/docs/concepts/storage/storage-classes/`](https://kubernetes.io/docs/concepts/storage/storage-classes/)。\n\
+  \n### 回收策略\n\n当应用程序使用完持久卷（Persistent Volume）且消耗对象（如 Pod 或 Deployment）被删除时，可以删除持久卷声明（Persistent\
+  \ Volume Claim）。回收策略（Reclaim Policy）告诉集群在删除持久卷声明后应对持久卷做什么。当前支持的选项是 `Retain` 和 `Delete`。回收策略适用于静态和动态配置的持久卷：\n\
+  \n*   `Retain`：在删除持久卷声明时，保留持久卷及其底层存储。\n*   `Delete`：在删除持久卷声明时，删除持久卷及其底层存储。\n\n回收策略保护的是持久卷对象的复用，而不是底层存储。如果在删除持久卷声明对象时使用\
+  \ `Retain` 回收策略，持久卷对象将不会被删除。持久卷的状态将变为 `Released`。如果你想复用持久卷中存储的数据，则需要集群管理员手动回收底层存储。你需要删除持久卷对象，同时保持底层存储元素完好无损。然后，你将重新配置一个持久卷指向该设备。这完全是一个新的持久卷，只是复用了底层存储。如果你不打算复用存储，则集群管理员需要删除底层存储。\n\
+  \n对于支持动态配置的系统和存储类型，通常使用 `Delete` 回收策略。`Delete` 回收策略会在删除持久卷声明时删除持久卷及其底层存储。这要求底层存储使用支持动态配置的卷插件（Volume\
+  \ Plugin）。存储类（Storage Classes）通常使用 `Delete` 回收策略，给人一种回收/动态分配给集群的物理存储的感觉。在使用 Azure/GKE/EKS\
+  \ 等云平台的虚拟磁盘时，你会最常见到这种情况。随着存储子系统开始支持动态配置，这类功能在本地部署环境中也变得越来越普遍。请咨询你的存储管理员和供应商，了解你的存储系统是否支持动态配置。\n\
+  \n### 使用动态配置来创建持久卷和持久卷声明\n\n在本节中，我们将介绍如何在 Kubernetes 应用程序部署中使用动态配置进行存储。我们将介绍两种场景：用于本地实验室场景的基于\
+  \ NFS 的场景和用于云场景的基于 Azure 磁盘的场景。\n\n#### 使用 NFS 动态配置磁盘\n\n在本书的实验室环境中，我们选择使用 NFS，因为它简单且易于访问……NFS\
+  \ 易于配置且广泛可用。对于本地生产场景，请考虑为企业级存储集群和应用数据使用企业级存储。\n\n我们在上一节刚刚探讨了 NFS 的静态配置。让我们深入探讨如何在实验室集群中为\
+  \ NFS 配置动态配置。此配置支持本书后面即将进行的演示。我们还想指出，这里重点介绍的动态配置概念与其他动态配置器类似。\n\n我们将从清单 6-5 中的代码开始，为\
+  \ NFS 动态配置器配置安全设置。\n\n```\nkind: ServiceAccount\napiVersion: v1\nmetadata:\nname:\
+  \ nfs-client-provisioner\n\nkind: ClusterRole\napiVersion: rbac.authorization.k8s.io/v1\n\
+  metadata:\nname: nfs-client-provisioner-runner\nrules:\n- apiGroups: [\"\"]\nresources:\
+  \ [\"persistentvolumes\"]\nverbs: [\"get\", \"list\", \"watch\", \"create\", \"\
+  delete\"]\n- apiGroups: [\"\"]\nresources: [\"persistentvolumeclaims\"]\nverbs:\
+  \ [\"get\", \"list\", \"watch\", \"update\"]\n- apiGroups: [\"storage.k8s.io\"]\n\
+  resources: [\"storageclasses\"]\nverbs: [\"get\", \"list\", \"watch\"]\n- apiGroups:\
+  \ [\"\"]\nresources: [\"events\"]\nverbs: [\"create\", \"update\", \"patch\"]\n\n\
+  kind: ClusterRoleBinding\napiVersion: rbac.authorization.k8s.io/v1\nmetadata:\n\
+  name: run-nfs-client-provisioner\nsubjects:\n- kind: ServiceAccount\nname: nfs-client-provisioner\n\
+  namespace: default\nroleRef:\nkind: ClusterRole\nname: nfs-client-provisioner-runner\n\
+  apiGroup: rbac.authorization.k8s.io\n\nkind: Role\napiVersion: rbac.authorization.k8s.io/v1\n\
+  metadata:\nname: leader-locking-nfs-client-provisioner\nrules:\n- apiGroups: [\"\
+  \"]\nresources: [\"endpoints\"]\nverbs: [\"get\", \"list\", \"watch\", \"create\"\
+  , \"update\", \"patch\"]\n\nkind: RoleBinding\napiVersion: rbac.authorization.k8s.io/v1\n\
+  metadata:\nname: leader-locking-nfs-client-provisioner\nsubjects:\n- kind: ServiceAccount\n\
+  name: nfs-client-provisioner\nnamespace: default\nroleRef:\nkind: Role\nname: leader-locking-nfs-client-provisioner\n\
+  apiGroup: rbac.authorization.k8s.io\n```\n清单 6-5\n`nfs-rbac.yaml`\n\n接下来，我们将定义存储类本身（清单\
+  \ 6-6）。\n\n```\napiVersion: storage.k8s.io/v1\nkind: StorageClass\nmetadata:\nname:\
+  \ nfs-storage\nprovisioner: example.com/nfs\nparameters:\narchiveOnDelete: \"false\"\
+  \n```\n清单 6-6\n`nfs-storageclass.yaml`\n\n这个特定的存储类还需要在 Kubernetes API 服务器中进行设置。因此，我们需要更新\
+  \ API 服务器的配置以支持此设置。使用特权访问权限打开控制平面上的文件 `/etc/kubernetes/manifests/kube-apiserver.yaml`，并找到清单\
+  \ 6-7 中的部分。\n\n```\nspec:\ncontainers:\n- command:\n- kube-apiserver\n```\n清单 6-7\n\
+  `kube-apiserver.yaml` 中的 API 服务器部分\n\n在此部分中，添加如清单 6-8 所示的一行。\n\n```\n- --feature-gates=RemoveSelfLink=false\n\
+  ```\n清单 6-8\n`kube-apiserver.yaml` 中的新行\n\n对文件所做的更改将由 kubelet 自动读取并应用于 API 服务器。在应用更改和\
+  \ API 服务器 Pod 重建期间，你可能会暂时失去对 API 服务器的访问权限。\n\n> 注意\n>\n> 目录 `/etc/kubernetes/manifests/`\
+  \ 包含集群控制平面的静态 Pod 清单。此目录中的每个清单都定义了控制平面 Pod 的配置。\n\n我们进行动态配置的最后一步是一个客户端配置器，负责在 Pod\
+  \ 动态请求时创建卷（清单 6-9）。\n\n\n#### NFS 动态配置\n\n```\nkind: Deployment\napiVersion: apps/v1\n\
+  metadata:\n  name: nfs-client-provisioner\nspec:\n  selector:\n    matchLabels:\n\
+  \      app: nfs-client-provisioner\n  replicas: 1\n  strategy:\n    type: Recreate\n\
+  \  template:\n    metadata:\n      labels:\n        app: nfs-client-provisioner\n\
+  \    spec:\n      serviceAccountName: nfs-client-provisioner\n      containers:\n\
+  \      - name: nfs-client-provisioner\n        image: quay.io/external_storage/nfs-client-provisioner:latest\n\
+  \        volumeMounts:\n        - name: nfs-client-root\n          mountPath: /persistentvolumes\n\
+  \        env:\n        - name: PROVISIONER_NAME\n          value: example.com/nfs\n\
+  \        - name: NFS_SERVER\n          value: 172.16.94.5\n        - name: NFS_PATH\n\
+  \          value: /srv/exports/volumes\n      volumes:\n      - name: nfs-client-root\n\
+  \        nfs:\n          server: 172.16.94.5\n          path: /srv/exports/volumes\n\
+  ```\n\n清单 6-9: `nfs-provisioner.yaml`\n\n配置好 NFS 动态配置后，让我们创建一个应用程序来使用 NFS 动态配置存储持久数据。在清单\
+  \ 6-10 中，我们重构了 `nginx` 部署以使用动态配置。清单的第一部分是定义名为 `pvc-nfs-data-dynamic` 的 `PersistentVolumeClaim`。在该对象中，您可以在\
+  \ `storageClassName` 字段中看到它引用了清单 6-6 创建的 `StorageClass`，即 `nfs-storage`。`Volume`\
+  \ 仍然是 `persistentVolumeClaim` 类型，并引用名为 `pvc-nfs-data-dynamic` 的 `PersistentVolumeClaim`。当此清单被发送到\
+  \ API Server 时，首先创建 `PersistentVolumeClaim`，然后创建 `Deployment`。NFS 动态配置器随后会创建一个 `PersistentVolume`，该卷会绑定到\
+  \ `PersistentVolumeClaim`，然后 Pod 启动并将卷挂载到容器中。我们无需直接创建 `PersistentVolume` 对象。\n\n\
+  ```\napiVersion: v1\nkind: PersistentVolumeClaim\nmetadata:\n  name: pvc-nfs-data-dynamic\n\
+  spec:\n  accessModes:\n  - ReadWriteOnce\n  storageClassName: nfs-storage\n  resources:\n\
+  \    requests:\n      storage: 10Gi\n---\napiVersion: apps/v1\nkind: Deployment\n\
+  metadata:\n  name: nginx-nfs-deployment-dynamic\nspec:\n  replicas: 1\n  selector:\n\
+  \    matchLabels:\n      app: nginx\n  template:\n    metadata:\n      labels:\n\
+  \        app: nginx\n    spec:\n      containers:\n      - name: nginx\n       \
+  \ image: nginx\n        ports:\n        - containerPort: 80\n        volumeMounts:\n\
+  \        - name: webcontent\n          mountPath: \"/usr/share/nginx/html/web-app\"\
+  \n      volumes:\n      - name: webcontent\n        persistentVolumeClaim:\n   \
+  \       claimName: pvc-nfs-data-dynamic\n---\napiVersion: v1\nkind: Service\nmetadata:\n\
+  \  name: nginx-nfs-service-dynamic\nspec:\n  selector:\n    app: nginx\n  ports:\n\
+  \  - port: 80\n    protocol: TCP\n    targetPort: 80\n```\n\n清单 6-10: 使用动态配置的 Deployment\
+  \ (`deployment-dynamic.yaml`)\n\n清单发送到 API Server 后，`PersistentVolumeClaim` 被创建。NFS\
+  \ 动态配置器（Volume Plugin）会创建底层的 `PersistentVolume`。请注意，`StorageClass` 是 `nfs-storage`，这是在此场景中用于动态配置的存储类。\n\
+  \n图 6-12 显示了 `PersistentVolumeClaims`。\n\n![../images/494804_1_En_6_Chapter/494804_1_En_6_Fig12_HTML.jpg](img/494804_1_En_6_Fig12_HTML.jpg)\n\
+  *图 6-12: 集群中当前的持久卷声明*\n\n图 6-13 显示了 `PersistentVolumes`。\n\n![../images/494804_1_En_6_Chapter/494804_1_En_6_Fig13_HTML.jpg](img/494804_1_En_6_Fig13_HTML.jpg)\n\
+  *图 6-13: 集群中当前的持久卷*\n\n#### 在 Azure 中动态配置磁盘\n\n让我们再看一个动态配置场景，这次是在 Azure 中。这里的概念适用于任何主要的云提供商。当您需要在云中使用动态配置从集群获取存储时，首先要做的是查看有哪些\
+  \ `StorageClass` 已经可用。大多数云提供商都会将其常用的存储子系统预配置为 `StorageClass`，供您动态配置存储。\n\n**提示**\n\
+  请务必将集群上下文切换到第 4 章创建的 Azure Kubernetes Service 集群 (`kubectl config use-context AKSCluster`)。\n\
+  \n在图 6-14 中是 `kubectl get storageclass` 在 Azure Kubernetes Service 集群中的输出。有五种可用于动态配置的存储变体，每种都有不同的用例、性能配置和配置方式。要从其中一个存储类动态配置存储，您需要根据所需存储类型，从对应的\
+  \ `StorageClass` 创建 `PersistentVolumeClaim`。\n\n![../images/494804_1_En_6_Chapter/494804_1_En_6_Fig14_HTML.jpg](img/494804_1_En_6_Fig14_HTML.jpg)\n\
+  *图 6-14: Azure Kubernetes Service 集群中可用的存储类*\n\n在清单 6-11 中，创建了两种资源：一个 `PersistentVolumeClaim`\
+  \ 和一个 `Deployment`。`PersistentVolumeClaim` 定义了我们希望为此应用程序动态分配的存储类型。因此，与之前一样，我们定义了一个访问模式和大小。在这个\
+  \ `PersistentVolumeClaim` 中，我们还指定了 `storageClassName` 为 `managed-premium`。当此 `PersistentVolumeClaim`\
+  \ 被创建时，`PersistentVolume` 将从该存储类中动态分配。\n\n```\napiVersion: v1\nkind: PersistentVolumeClaim\n\
+  metadata:\n  name: pvc-azure-data-dynamic\nspec:\n  accessModes:\n  - ReadWriteOnce\n\
+  \  storageClassName: managed-premium\n  resources:\n    requests:\n      storage:\
+  \ 10Gi\n---\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: nginx-azure-deployment-dynamic\n\
+  spec:\n  replicas: 1\n  selector:\n    matchLabels:\n      app: nginx\n  template:\n\
+  \    metadata:\n      labels:\n        app: nginx\n    spec:\n      containers:\n\
+  \      - name: nginx\n        image: nginx\n        ports:\n        - containerPort:\
+  \ 80\n        volumeMounts:\n        - name: webcontent\n          mountPath: \"\
+  /usr/share/nginx/html/web-app\"\n      volumes:\n      - name: webcontent\n    \
+  \    persistentVolumeClaim:\n          claimName: pvc-azure-data-dynamic\n---\n\
+  apiVersion: v1\nkind: Service\nmetadata:\n  name: nginx-azure-service-dynamic\n\
+  spec:\n  selector:\n    app: nginx\n  ports:\n  - port: 80\n    protocol: TCP\n\
+  \    targetPort: 80\n  type: LoadBalancer\n```\n\n清单 6-11: 使用 `PersistentVolumeClaim`\
+  \ 和 Azure 存储动态配置的部署 (`deployment-dynamic-azure.yaml`)\n\n创建清单 6-11 中的资源后，您将拥有一个用于访问应用程序的\
+  \ `PersistentVolume`、`PersistentVolumeClaim`、`Deployment` 和 `Service`。`PersistentVolumeClaim`\
+  \ 将向集群请求从 `StorageClass` `managed-premium` 获取一个 `PersistentVolume`，底层的 `PersistentVolume`\
+  \ 会被动态配置。\n\n在图 6-15 中，`PersistentVolumeClaim` `pvc-azure-data-dynamic` 绑定到了一个动态生成的、名称以\
+  \ \"`pvc-`\" 为前缀的 `PersistentVolume`。\n\n![../images/494804_1_En_6_Chapter/494804_1_En_6_Fig15_HTML.jpg](img/494804_1_En_6_Fig15_HTML.jpg)\n\
+  *图 6-15: 动态配置的持久卷及其持久卷声明*\n\n**注意**\n请务必将集群上下文切换回您的实验集群：`kubectl config use-context\
+  \ kubernetes-admin@kubernetes`。\n\n### 总结\n\n在本章中，我们介绍了基于容器的应用程序中对数据持久性的需求，以及容器在\
+  \ `Volumes` 中持久化数据的内部原理。然后我们将该模型扩展到 Kubernetes 集群中，学习了如何使用 `PersistentVolumes` 和\
+  \ `PersistentVolumeClaims` 为部署在 Kubernetes 中的基于容器的应用程序提供存储。我们还研究了在我们的实验环境（使用 NFS）和云环境（使用\
+  \ Azure Kubernetes Service）中的动态配置场景。\n\n"
+- "# 第三部分：Kubernetes 中的 SQL Server\n\n\n\n## 7. 在 Kubernetes 上部署 SQL Server\n\n在本章中，我们将把所有知识融会贯通，学习如何在\
+  \ Kubernetes 上运行 SQL Server。我们将探讨在 Pod 中运行 SQL Server 的独特之处，以及如何配置和管理数据库状态。我们还将了解如何利用\
+  \ Deployment 来升级 SQL Server。本章最后将讨论在生产环境中运行 SQL Server on Kubernetes 所需考虑的事项，例如性能考量、资源管理和备份。\n\
+  \n### 在 Pod 中运行 SQL Server\n\n在 Kubernetes 上运行 SQL Server 实际上是将我们迄今为止学到的所有知识整合在一起。我们将定义一个或多个持久卷声明（Persistent\
+  \ Volume Claim）来存储 SQL Server 的数据。我们将部署一个运行 SQL Server 的 Pod，并将 PVC 附加到该 Pod，以克服\
+  \ Kubernetes 中数据与计算分离的特性。最后，我们将通过一个 Service（服务）暴露此 Pod，使其能被其他应用程序访问，如图 7-1 所示。\n\
+  \n![../images/494804_1_En_7_Chapter/494804_1_En_7_Fig1_HTML.jpg](img/494804_1_En_7_Fig1_HTML.jpg)\n\
+  \n图 7-1\nSQL Server Pod 的 Kubernetes 组件\n\n每当我们的 SQL Server Pod 被替换（无论是被删除还是被销毁），它都会回到容器镜像的初始状态。这也意味着，如果您没有定义任何持久化存储，所有的更改和数据都将丢失。因此，Pod\
+  \ 需要三个基本设置：\n\n*   `ACCEPT_EULA`：用于您接受最终用户许可协议，将设置为环境变量，是 Pod 启动所必需的。\n*   `MSSQL_SA_PASSWORD`：我们\
+  \ SQL 实例的 sa 密码，我们将把它存储在集群的 Secret 中，它会被哈希处理但不会加密。\n*   `Storage`：定义要使用哪个 PVC。\n\
+  \nKubernetes 将启动容器，存储被附加到节点，然后容器启动，映射的存储将被挂载到容器内部。这样，SQL Server 写入的所有数据都将有效地写入持久卷。应用关键设置（EULA\
+  \ 和 sa 密码）后，SQL Server 将检查默认数据目录`/var/opt/mssql/data`中是否存在系统数据库。如果没有系统数据库，SQL Server\
+  \ 会将一组新的系统数据库复制到此目录中。如果默认数据目录中已经存在一组系统数据库，它将从该目录中使系统数据库联机，然后是为此实例配置的用户数据库。\n\n无论\
+  \ Pod 是被重新创建，是因为我们主动触发（例如应用升级）还是因为控制平面将 Pod 迁移到另一个节点，这个过程每次都会重复。通过这种方法，您能够将 SQL\
+  \ Server 中存储的数据的持久性与 Pod 的生命周期解耦。当部署 Pod 时，存储被挂载，容器启动并看到它有一个 master 数据库，然后 SQL Server\
+  \ 使配置的用户数据库联机。\n\n### 在 Kubernetes 上部署 SQL Server\n\n在开始实际部署之前，首先需要完成一些准备工作。\n\n\
+  #### 准备工作\n\n在触发部署之前，两个关键的考虑和准备步骤是提供 sa 密码的 Secret 以及存储 SQL Server 数据的 PVC。虽然尤其是在生产环境中需要考虑更多事项（我们将在本章后面讨论），但它们构成了最低要求。\n\
+  \n简而言之，我们的步骤是：\n\n1.  创建一个 Secret。\n2.  创建存储（PV/PVC）。\n3.  创建 SQL Server Deployment。\n\
+  \n##### 存储\n\n我们将把第一个 SQL Server 部署到 kubeadm 集群，因此选择了 NFS 作为我们的存储平台，这将允许我们在节点之间移动\
+  \ Pod，而不会丢失对先前生成的数据的访问权限。如第 1 章所述，这非常适合我们的实验室环境，但不推荐用于高性能生产系统。\n\n为此，我们在存储服务器上创建一个名为`/srv/exports/volumes/sql-instance-1`的目录。\n\
+  \n将清单 7-1 的内容保存到一个名为`sql-storage.yaml`的文件中。这可以从任何连接到集群的客户端执行，包括您的管理工作站。\n\n```yaml\n\
+  apiVersion: v1\nkind: PersistentVolume\nmetadata:\n  name: pv-nfs-sql-instance-1\n\
+  \  labels:\n    disk: system\nspec:\n  capacity:\n    storage: 10Gi\n  accessModes:\n\
+  \    - ReadWriteOnce\n  persistentVolumeReclaimPolicy: Retain\n  nfs:\n    server:\
+  \ storage\n    path: \"/srv/exports/volumes/sql-instance-1\"\n\napiVersion: v1\n\
+  kind: PersistentVolumeClaim\nmetadata:\n  name: pvc-nfs-sql-instance-1\nspec:\n\
+  \  selector:\n    matchLabels:\n      disk: system\n  accessModes:\n    - ReadWriteOnce\n\
+  \  resources:\n    requests:\n      storage: 10Gi\n```\n清单 7-1\n`sql-storage.yaml`\n\
+  \n该文件包含一个持久卷和一个持久卷声明的定义。\n\n让我们使用清单 7-2 中的代码将此清单应用到我们的 Kubernetes 集群。\n\n```bash\n\
+  kubectl apply -f sql-storage.yaml\n```\n清单 7-2\n将`sql-storage.yaml`应用到 Kubernetes\
+  \ 集群\n\n我们可以使用`kubectl`验证两者是否已创建（见清单 7-3）。\n\n```bash\nkubectl get pv\nkubectl get\
+  \ pvc\n```\n清单 7-3\n验证先前创建的 PV 和 PVC\n\n如图 7-2 所示，两者都可在输出中看到。\n\n![../images/494804_1_En_7_Chapter/494804_1_En_7_Fig2_HTML.jpg](img/494804_1_En_7_Fig2_HTML.jpg)\n\
+  \n图 7-2\n`kubectl get node -o wide`的输出\n\n持久卷声明已绑定到我们的持久卷。我们的存储现已为 SQL Server 准备就绪。\n\
+  \n##### Secret\n\n如前所述，我们将在集群中存储一个包含 SQL Server 要使用的 sa 密码的 Secret。此 Secret 将存储在我们的集群中，可以由我们的\
+  \ SQL Server Deployment 引用，因此 SQL Server 可以访问和使用它。这样做还有一个好处是，Secret 不会出现在 Deployment\
+  \ 清单中，因此可以轻松共享而不泄露机密信息（如我们的密码）。这可以通过声明式或命令式方式完成，但通常 Secret 来源于安全的 Secret 存储，例如 Azure\
+  \ Key Vault。\n\n创建此 Secret 最简单的方法是通过`kubectl`命令，如清单 7-4 所示。\n\n```bash\nkubectl\
+  \ create secret generic mssql --from-literal=SA_PASSWORD=S0methingS@Str0ng!\n```\n\
+  清单 7-4\n使用`kubectl`创建 Kubernetes Secret\n\n我们现在已准备好将 SQL Server 部署到 Kubernetes 上。\n\
+  \n\n#### 在 YAML 中定义 SQL Server 部署\n\n对于我们的 SQL Server 部署，我们将创建另一个清单文件，命名为`sql-deployment.yaml`。你可以在代码清单\
+  \ 7-5 中找到其内容。\n\n我们想特别指出三点：\n\n-   **策略类型 – Recreate（重建）：** 默认情况下，例如在应用升级时，Kubernetes\
+  \ 会执行滚动更新过程，这意味着它会启动一个新的 Pod，并在旧 Pod 仍在运行时尝试访问数据库文件。通过将其设置为`Recreate`，在创建新的 ReplicaSet\
+  \ 和 Pod 之前，当前 ReplicaSet 中的所有 Pod 都将被关闭。\n    SQL Server 可以处理这种情况，因为它对文件具有独占锁。但这同时也意味着，容器会不断创建和重启，直到它能获得文件的独占锁为止。\n\
+  \n-   **`securityContext`（安全上下文）：** 我们的`fsGroup`是`10001`，这意味着对 NFS 的所有访问也将使用此组身份执行。如果你在第一章中没有设置权限和/或创建该组，此操作将失败。\n\
+  \n-   **Hostname（主机名）：** 我们没有定义主机名，因此我们的 SQL Server 将根据其 Pod 名称动态命名。我们将在本章后面说明如何调整此设置。\n\
+  \n```yaml\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: mssql-deployment\n\
+  spec:\n  replicas: 1\n  strategy:\n    type: Recreate\n  selector:\n    matchLabels:\n\
+  \      app: mssql\n  template:\n    metadata:\n      labels:\n        app: mssql\n\
+  \    spec:\n      securityContext:\n        fsGroup: 10001\n      containers:\n\
+  \      - name: mssql\n        image: 'mcr.microsoft.com/mssql/server:2019-CU8-ubuntu-18.04'\n\
+  \        ports:\n        - containerPort: 1433\n        env:\n        - name: ACCEPT_EULA\n\
+  \          value: \"Y\"\n        - name: SA_PASSWORD\n          valueFrom:\n   \
+  \         secretKeyRef:\n              name: mssql\n              key: SA_PASSWORD\n\
+  \        volumeMounts:\n        - name: mssqldb\n          mountPath: /var/opt/mssql\n\
+  \      volumes:\n      - name: mssqldb\n        persistentVolumeClaim:\n       \
+  \   claimName: pvc-nfs-sql-instance-1\n\napiVersion: v1\nkind: Service\nmetadata:\n\
+  \  name: mssql-deployment\nspec:\n  selector:\n    app: mssql\n  ports:\n  - protocol:\
+  \ TCP\n    port: 31433\n    targetPort: 1433\n  type: NodePort\n```\n*代码清单 7-5 `sql-deployment.yaml`*\n\
+  \n除了我们已经提到的设置外，此清单中最重要的设置如下：\n\n-   **镜像：** 通过此文件，我们将部署一个 SQL Server 2019 CU8。\n\
+  \n-   **卷：** 我们只挂载了一个 PVC，它与我们在上一步创建的那个相匹配。我们将一个持久卷放置在`/var/opt/mssql`，任何写入该目录的内容都将被写入持久卷，这是将数据持久性与\
+  \ Pod 生命周期解耦的关键。\n\n-   **服务：** 我们不仅部署了一个 SQL Server Pod，还部署了一个用于暴露此 Pod 的服务。该服务的类型是`NodePort`，因此我们需要先通过`kubectl`获取\
+  \ TCP 端口，才能访问此实例。\n\n要部署我们的 Pod 和服务，我们需要再次应用此清单，如代码清单 7-6 所示。\n\n```bash\nkubectl\
+  \ apply -f sql-deployment.yaml\n```\n*代码清单 7-6 将 `sql-deployment.yaml` 应用到 Kubernetes\
+  \ 集群*\n\n完成此步骤后，我们可以使用`kubectl`和代码清单 7-7 中的命令来检索部署状态。\n\n```bash\nkubectl get deployment\n\
+  ```\n*代码清单 7-7 检查部署状态*\n\n如图 7-3 所示（显示为`0/1`），部署通常需要几分钟才能准备就绪。你可能需要多次重新运行此命令（或使用`--watch`参数）直到它完成。请记住，除非你预先拉取了镜像，否则首次部署还包括下载\
+  \ SQL Server 镜像，根据你的网络连接情况，这将需要更长时间。\n\n![图 7-3](img/494804_1_En_7_Fig3_HTML.jpg)\n\
+  *图 7-3 `kubectl get deployment`的输出*\n\n一旦此过程完成，我们也可以通过`kubectl`检查 Pod 的创建情况以及外部\
+  \ TCP 端口，如代码清单 7-8 所示。\n\n```bash\nkubectl get pods\nkubectl get service\n```\n\
+  *代码清单 7-8 检查 Pod 和服务状态*\n\n如输出（图 7-4）所示，Pod 获得了一个唯一且随机的名称，每次重新创建时该名称都会改变。在我们的示例中，`NodePort`是`32651`。我们后续的查询需要此端口。\n\
+  \n![图 7-4](img/494804_1_En_7_Fig4_HTML.jpg)\n*图 7-4 `kubectl get pods/service`的输出*\n\
+  \n现在我们的 SQL Server 已就绪，并且已获取连接参数，我们可以如代码清单 7-9 所示使用`sqlcmd`对我们的实例运行第一个查询。\n\n```bash\n\
+  sqlcmd -S control, -U sa -P  -Q \"SELECT @@SERVERNAME,@@VERSION\"\n```\n*代码清单 7-9\
+  \ `sqlcmd` 查询服务器名称和版本*\n\n> **注意**\n> 对于本章中所有的`sqlcmd`查询，建议设置一个包含密码的环境变量，以便在查询中使用。这同样适用于你实例的端口。此外，如果你更喜欢其他客户端，请随意根据需要修改这些参数。同时，如果你是从控制平面运行此命令，请确保`sqlcmd`的位置包含在你的`PATH`环境变量中。\n\
+  \n如果你查看输出（图 7-5），你会注意到服务器名称与我们的 Pod 名称匹配，版本与我们在清单中定义的一致。\n\n![图 7-5](img/494804_1_En_7_Fig5_HTML.jpg)\n\
+  *图 7-5 “SELECT @@SERVERNAME,@@VERSION”的输出*\n\n接下来，让我们使用代码清单 7-10 中的命令创建一个名为`TestDB1`的用户数据库。\n\
+  \n```bash\nsqlcmd -S control, -U sa -P  -Q \"CREATE DATABASE TestDB1\"\n```\n*代码清单\
+  \ 7-10 `sqlcmd` 命令创建新的用户数据库*\n\n如果我们现在使用代码清单 7-11 中的命令列出 NFS 共享的目录内容，我们将看到此数据库的`mdf`和`ldf`文件。\n\
+  \n> **注意**\n> 请在`storage`服务器上运行此命令。\n\n```bash\nls -al /srv/exports/volumes/sql-instance-1/*\n\
+  ```\n*代码清单 7-11 列出 NFS 共享的目录内容*\n\n你可以从上一个命令的输出中看到图 7-6。\n\n![图 7-6](img/494804_1_En_7_Fig6_HTML.jpg)\n\
+  *图 7-6 NFS 共享的内容*\n\n至此，我们的第一个 SQL Server 用户数据库已在线运行在 Kubernetes 集群中。\n\n\n####\
+  \ 额外配置选项\n\n虽然上述环境变量仅构成了最基本的一组，但还有更多可以配置的选项，它们都可以像 `ACCEPT_EULA` 设置一样包含在你的 YAML\
+  \ 清单文件中。其中最重要的两个可能是：\n\n*   `MSSQL_AGENT_ENABLED`：默认值为 false。将其设置为 true 可为此实例启用\
+  \ SQL 代理服务。\n*   `MSSQL_PID Evaluation`：此设置允许你在 `Developer`、`Express`、`Web`、`Standard`\
+  \ 和 `Enterprise` 版本之间进行选择。或者，你也可以提供一个产品密钥。\n\n你可以在官方文档中找到关于排序规则和语言 ID 等额外配置选项的完整参考：[*https://docs.microsoft.com/en-us/sql/linux/sql-server-linux-configure-environment-variables?view=sql-server-ver15&viewFallbackFrom=sql-server-2019*](https://docs.microsoft.com/en-us/sql/linux/sql-server-linux-configure-environment-variables%253Fview%253Dsql-server-ver15%2526viewFallbackFrom%253Dsql-server-2019)。\n\
+  \n如果你更希望使用持久的服务器名称而不是动态的 Pod 名称，可以在你的部署清单中指定它，如清单 7-12 所示（最后两行是为了将服务器名称更改为 `sql01`\
+  \ 而添加的）。\n\n```\nspec:\n  securityContext:\n    fsGroup: 10001\n  hostname:\n  \
+  \  sql01\n清单 7-12\n定义静态主机名\n```\n\n要了解更多关于持久服务器名称的信息，我们推荐这篇博客文章：[*www.centinosystems.com/blog/sql/persistent-servername-when-deploying-sql-server-in-kubernetes/*](https://www.centinosystems.com/blog/sql/persistent-servername-when-deploying-sql-server-in-kubernetes/)。\n\
+  \n**注意**\n虽然手动设置主机名是可选的，但像复制这样的功能以及许多第三方工具都依赖于它。因此，我们强烈建议在生产环境中进行此设置。\n\n#### Pod\
+  \ 生命周期与数据持久性\n\n虽然你通常不会手动触发此过程，但我们之前已经详细阐述过，Kubernetes 将计算和存储分离。Pod 是短暂的，而存储（大部分）是持久的。\n\
+  \n让我们使用 `kubectl` 检索当前 Pod 的名称（清单 7-13）。\n\n```\nkubectl get pods\n清单 7-13\n获取 Pod\
+  \ 名称\n```\n\n如图 7-7 所示，我们当前的 Pod 是 `mssql-deployment-748c745b8d-w2sf8`。\n\n![../images/494804_1_En_7_Chapter/494804_1_En_7_Fig7_HTML.jpg](img/494804_1_En_7_Fig7_HTML.jpg)\n\
+  图 7-7\n当前 Pod 名称\n\n现在，我们将使用 `kubectl` 删除这个 Pod（清单 7-14）。\n\n```\nkubectl delete\
+  \ pod mssql-deployment-748c745b8d-w2sf8\n清单 7-14\n删除 Pod\n```\n\n`Kubectl` 将确认 Pod\
+  \ 已被删除，这需要几秒钟时间（见图 7-8）。\n\n![../images/494804_1_En_7_Chapter/494804_1_En_7_Fig8_HTML.jpg](img/494804_1_En_7_Fig8_HTML.jpg)\n\
+  图 7-8\n`kubectl delete pod` 的输出\n\n如果我们再次检索我们的 Pod，你将看到（图 7-9）一个新的、具有新名称的 Pod 已被立即创建。\n\
+  \n![../images/494804_1_En_7_Chapter/494804_1_En_7_Fig9_HTML.jpg](img/494804_1_En_7_Fig9_HTML.jpg)\n\
+  图 7-9\n`kubectl get pods` 的输出\n\n使用 `sqlcmd` 列出此实例中的所有数据库，如清单 7-15 所示。\n\n```\n\
+  sqlcmd -S control, -U sa -P  -Q \"SELECT Name FROM sys.databases\"\n清单 7-15\n列出我们实例中的数据库\n\
+  ```\n\n你将看到（图 7-10）我们的数据库 `TestDB1` 仍然存在，因为存储已重新挂载到新的 Pod 上。\n\n![../images/494804_1_En_7_Chapter/494804_1_En_7_Fig10_HTML.jpg](img/494804_1_En_7_Fig10_HTML.jpg)\n\
+  图 7-10\nSQL 实例中的数据库列表\n\n#### 在部署中升级 SQL Server\n\n在部署中升级现有的 SQL Server 与其初始部署一样简单。我们只需更新镜像，这可以通过修改\
+  \ Pod 规范中清单的容器镜像并重新应用来完成，或者简单地通过 `kubectl` 设置新镜像。在清单 7-16 的示例中，我们将把我们的 `mssql` 容器镜像更新到\
+  \ CU9。\n\n```\nkubectl set image deployment mssql-deployment mssql=mcr.microsoft.com/mssql/server:2019-CU9-ubuntu-18.04\n\
+  清单 7-16\n将镜像更新为 CU9\n```\n\n这里的关键是 Kubernetes 将在部署新 Pod 之前关闭当前 Pod（Kubernetes 默认是先添加一个新\
+  \ Pod，然后移除旧的）。\n\n如果我们使用 `kubectl` 来描述这个部署（清单 7-17），我们将看到旧的副本集被缩容，随后新的副本集被扩容。这再次是因为我们将策略设置为\
+  \ `Recreate`（如前所述）。\n\n```\nkubectl describe deployment mssql-deployment\n清单 7-17\n\
+  描述部署\n```\n\n如图 7-11 所示，上述命令显示了扩容操作。\n\n![../images/494804_1_En_7_Chapter/494804_1_En_7_Fig11_HTML.jpg](img/494804_1_En_7_Fig11_HTML.jpg)\n\
+  图 7-11\n清单 7-17 的输出\n\n这也导致了一个新的 Pod，我们可以通过 `kubectl` 再次检索其名称（图 7-12）。\n\n![../images/494804_1_En_7_Chapter/494804_1_En_7_Fig12_HTML.jpg](img/494804_1_En_7_Fig12_HTML.jpg)\n\
+  图 7-12\n`kubectl get pods` 的输出\n\n如果你在这个新的 Pod 上运行 `kubectl describe pod`，你可以看到在此更新命令期间及之后发生在此新\
+  \ Pod 中的事件（图 7-13）。\n\n![../images/494804_1_En_7_Chapter/494804_1_En_7_Fig13_HTML.jpg](img/494804_1_En_7_Fig13_HTML.jpg)\n\
+  图 7-13\n描述 Pod\n\n运行清单 7-18 中的命令。\n\n```\nkubectl rollout history deployment mssql-deployment\
+  \ --revision=2\n清单 7-18\n检索部署第二个修订版的历史记录\n```\n\n如图 7-14 所示，这将向你显示该部署第二个修订版的详细信息。对此部署的任何后续更新都可以用同样的方式检索和跟踪。\n\
+  \n![../images/494804_1_En_7_Chapter/494804_1_En_7_Fig14_HTML.jpg](img/494804_1_En_7_Fig14_HTML.jpg)\n\
+  图 7-14\n清单 7-18 的输出\n\n如果我们再次通过 `sqlcmd` 检索服务器名称和版本（图 7-15），你会看到服务器名称与新 Pod 名称匹配，并且版本已更改为\
+  \ CU9。\n\n![../images/494804_1_En_7_Chapter/494804_1_En_7_Fig15_HTML.jpg](img/494804_1_En_7_Fig15_HTML.jpg)\n\
+  图 7-15\n\"`SELECT @@SERVERNAME,@@VERSION`\" 的输出\n\n我们也可以再次使用 `sqlcmd` 来验证我们的 `TestDB1`\
+  \ 是否仍然存在（图 7-16）。\n\n![../images/494804_1_En_7_Chapter/494804_1_En_7_Fig16_HTML.jpg](img/494804_1_En_7_Fig16_HTML.jpg)\n\
+  图 7-16\nSQL 实例中的数据库列表\n\n**注意**\n正如我们刚刚升级了 SQL Server 一样，我们也可以使用相同的方法回滚 CU 升级。\n\
+  \n#### 在生产环境中于 Kubernetes 上运行 SQL Server\n\n就像在 Windows 上运行的传统 SQL Server 一样，在设计生产环境时需要考虑一系列因素。\n\
+  \n\n\n## 高级磁盘拓扑\n\n在生产环境中运行 SQL Server 时，存储始终是一个关键考量因素。在我们之前的示例中，我们将日志和数据部署到了同一个\
+  \ NFS 驱动器上，其中混合了用户和系统数据库。\n\n相反，你可以定义多个持久卷和持久卷声明，并将它们附加到你的 Pod 上，这等同于在 Windows 服务器上拥有多个驱动器。\n\
+  \n你还可以使用以下三个环境变量来指定默认目录：\n\n*   `MSSQL_DATA_DIR`\n*   `MSSQL_LOG_DIR`\n*   `MSSQL_BACKUP_DIR`\n\
+  \n任何新的用户数据库都将在这些位置创建。\n\n同样，所有 PVC 在启动时都会以其定义的位置挂载到容器中，而 master 数据库将使用户数据库联机。\n\n\
+  ## 资源管理（限制与请求）\n\n虽然存储配置处理了我们的数据部分，但我们也需要考虑计算资源，这实际上意味着 CPU 和内存。在 Kubernetes 中，这是通过\
+  \ `limits` 和 `requests` 来管理的，这些可以在 Pod 和命名空间级别上定义。\n\n请求是保证分配的最小资源量。如果你为 Pod 定义的请求无法满足（例如，在\
+  \ 64GB 内存的机器上请求 128GB 内存），则该 Pod 将无法启动。\n\n另一方面，限制定义了可分配给资源的最大值。默认情况下，不配置任何限制，这意味着默认情况下\
+  \ Pod 可以（理论上）消耗无限量的内存和 CPU。\n\n对于 SQL Server，服务器实例设置仍然适用，因此请确保设置它们来进行配置。\n\n理想情况下，限制和请求应放入你的清单文件中（尽管理论上你可以通过\
+  \ `kubectl` 命令式地设置它们）。它们将进入每个容器的一个名为 `resources` 的新部分，如代码清单 7-19 所示。\n\n```\nspec:\n\
+  containers:\n- name: mssql\nresources:\nrequests:\ncpu: 1\nmemory: 2Gi\nlimits:\n\
+  cpu: 1\nmemory: 4Gi\n代码清单 7-19\nYAML 清单中的资源部分\n```\n\n此特定设置将为 SQL Server 恰好分配一个\
+  \ CPU 核心、最少 2GB 内存（这是最低要求，依据 [*https://docs.microsoft.com/en-us/sql/linux/sql-server-linux-setup?view=sql-server-ver15#system*](https://docs.microsoft.com/en-us/sql/linux/sql-server-linux-setup%253Fview%253Dsql-server-ver15%2523system)），以及最多\
+  \ 4GB 内存。4GB 是容器将看到的其可用限制。由于 `SQLPAL` 的架构，Linux 上的 SQL Server 默认只会看到此值的 80%，这可以通过使用\
+  \ `mssql-conf` 来调整。\n\n**注意**\n\n我们强烈建议始终在你的 SQL Server 实例内配置 `Max Server Memory`，以及\
+  \ Kubernetes 的 CPU 和内存限制。\n\n如果你想了解更多关于在 Kubernetes 上运行 SQL Server 的内存设置，我们强烈推荐阅读这篇博客文章：[*www.centinosystems.com/blog/sql/memory-settings-for-running-sql-server-in-kubernetes/*](https://www.centinosystems.com/blog/sql/memory-settings-for-running-sql-server-in-kubernetes/)。\n\
+  \n## 备份（与还原）\n\n当然，另一个重要问题是：我如何以及在哪里备份我的数据？第一部分非常简单：你可以使用你偏好的现有技术，可以是像维护计划这样简单的东西，也可以是像\
+  \ dbatools ([*https://dbatools.io/*](https://dbatools.io/)) 或 Ola Hallengren 的框架\
+  \ ([*https://ola.hallengren.com/sql-server-backup.html*](https://ola.hallengren.com/sql-server-backup.html))\
+  \ 这样的外部工具。这些备份也可以使用 SQL Server Agent 进行调度。\n\n更有趣的是“在哪里”这部分。实际上，你有两个选项：\n\n*   `备份到\
+  \ URL`：从 SQL Server 2016 开始，Microsoft 实现了直接备份到（并从）Azure Blob 存储的能力。确切的语法和要求可以在 [*https://docs.microsoft.com/en-us/sql/relational-databases/backup-restore/sql-server-backup-to-url?view=sql-server-ver15*](https://docs.microsoft.com/en-us/sql/relational-databases/backup-restore/sql-server-backup-to-url%253Fview%253Dsql-server-ver15)\
+  \ 找到。\n*   **附加一个额外的持久卷。** 或者，你可以附加一个专门的额外卷，该卷可以是云原生的（如 Azure Disk 或 Azure Files），也可以是任何其他允许你将数据物理存储在不同位置的存储系统，如\
+  \ NFS、iSCSI 或光纤通道。\n\n同样的逻辑适用于还原。如果你想将现有的备份文件复制到你的 SQL 实例，可以使用 `kubectl` 来完成。重要的概念是该文件需要\
+  \ SQL Server 进程可以访问。\n\n此类复制任务的通用语法可在代码清单 7-20 中找到。\n\n```\nkubectl cp 本地文件 目标 Pod:目标文件\
+  \ -c 容器名称\n代码清单 7-20\n将本地文件复制到容器的通用代码\n```\n\n在我们的具体案例中，要将本地文件 `AdventureWorks2017.bak`\
+  \ 复制到我们的 Pod `mssql-deployment-748c745b8d-7pvgn` 的数据目录，命令将如代码清单 7-21 所示。\n\n```\n\
+  kubectl cp AdventureWorks2017.bak mssql-deployment-748c745b8d-7pvgn:var/opt/mssql/data/AdventureWorks2017.bak\
+  \ -c mssql\n代码清单 7-21\n将本地文件复制到容器的代码\n```\n\n复制后，可以使用 `sqlcmd`、Azure Data Studio、SQL\
+  \ Server Management Studio 或任何其他客户端工具还原此文件。我们仅建议对较小的文件使用此方法，因为你必须将文件复制到容器内部，这会消耗空间并需要时间。\n\
+  \n**注意**\n\nKubernetes 只是我们运行 SQL Server 的平台——它并不能替代原生 SQL 备份的需要！\n\n### 总结\n\n\
+  在本章中，我们涵盖了在 Kubernetes 的 Pod 中运行独立 SQL Server 实例的所有相关内容，从基本部署到升级，再到在生产环境中运行 SQL\
+  \ Server on Kubernetes 必要的考量因素。在下一章中，我们将探讨如何监控集群及其应用程序。\n\n## 8. 监控 Kubernetes 上的\
+  \ SQL Server\n\n虽然我们可以使用 `kubectl` 查看特定 Pod 的日志文件，但这根本算不上一个监控解决方案，并且由于工作负载在节点、Pod\
+  \ 和容器之间的分布式和临时性，我们确实认为需要一个集中式的观察窗口来快速分析和捕获问题——甚至在问题发生之前。\n\n因此，我们想向你们介绍两种完全集成 Kubernetes\
+  \ 和 SQL Server 的开源解决方案：用于性能和指标监控的 Grafana，以及用于日志聚合和分析的 Kibana。\n\n虽然 Kubernetes\
+  \ 有一个内置的仪表板，但它对于生产环境来说还远远不够。\n\nGrafana 和 Kibana 都是开源工具，因此你可以查看并为其代码库做出贡献。\n\n##\
+  \ 用于性能监控的 Grafana\n\nGrafana 门户提供关于 Kubernetes 节点本身的状态和性能的性能指标和洞察，以及 SQL Server\
+  \ 特定的指标。\n\n让我们首先概述与 Kubernetes 上的 SQL Server 相关的主要内容——即系统指标，然后是 SQL Server 指标——之后再指导你如何安装和配置此解决方案。\n\
+  \n\n### 系统指标\n\n系统指标汇总了 Kubernetes 节点的状态，并包含典型的性能指标，如 CPU、内存和磁盘使用率，如图 8-1 所示。\n\n\
+  ![../images/494804_1_En_8_Chapter/494804_1_En_8_Fig1_HTML.jpg](img/494804_1_En_8_Fig1_HTML.jpg)\n\
+  \n图 8-1：Grafana 门户 – Telegraf 系统仪表板\n\n除了“全局概览”之外，您还可以获取每个独立组件的详细信息，例如特定磁盘或网络接口。\n\
+  \n当遇到性能问题时，这始终是一个很好的起点。这也是判断您是否对集群进行了过度配置的一个很好的指标。\n\n### SQL Server 指标\n\n宿主节点指标侧重于集群的物理层面，而如图\
+  \ 8-2 所示的 SQL Server 指标则提供了 SQL Server 特定的性能指标，其中许多 DBA 已经很熟悉了。\n\n统计信息显示等待时间、按等待类型排序的等待任务数、每秒事务和请求数以及其他有价值的指标。它们有助于了解集群中特定\
+  \ SQL Server 实例的状态，该实例可以在屏幕左上角选择。\n\n![../images/494804_1_En_8_Chapter/494804_1_En_8_Fig2_HTML.jpg](img/494804_1_En_8_Fig2_HTML.jpg)\n\
+  \n图 8-2：Grafana 门户 – SQL Server 指标\n\n### 如何安装和配置 Grafana\n\n安装和配置 Grafana 不像仅仅部署一个小型\
+  \ Pod 那么简单。Grafana 是用于数据可视化的工具，因此我们还需要另外两个组件在幕后工作：`InfluxDB`，这是我们存储所有收集指标的数据库；以及\
+  \ `Telegraf`，它将被部署到每个节点上，收集这些节点上的指标，并将它们发送到 `InfluxDB`。\n\n设置 Grafana 所需的步骤是：\n\n\
+  *   创建一个命名空间并将其设置为当前上下文。\n*   设置供 `InfluxDB` 和 `Grafana` 使用的变量和密钥。\n*   为 `InfluxDB`\
+  \ 配置存储。\n*   部署 `InfluxDB`。\n*   通过 Service 暴露 `InfluxDB` 部署。\n*   为 `Telegraf`\
+  \ 创建一个 `ConfigMap`。\n*   为 `Telegraf` 创建一个 `DaemonSet`。\n*   为 `Grafana` 配置存储。\n\
+  *   部署 `Grafana`。\n*   通过 Service 暴露 `Grafana` 部署。\n*   通过 Grafana 门户配置 `Grafana`。\n\
+  \n您可以在图 8-3 中看到这个组合。\n\n![../images/494804_1_En_8_Chapter/494804_1_En_8_Fig3_HTML.jpg](img/494804_1_En_8_Fig3_HTML.jpg)\n\
+  \n图 8-3：Grafana 及其所需组件\n\n我们不会逐步指导或解释部署这些组件的每一个选项——单是这一点就足以单独写一本书——而是将逐步指导您完成所需的任务，使它们在您的集群中运行起来，以监控您的\
+  \ SQL Server 工作负载。\n\n为了保持整洁有序，让我们从创建一个名为 `monitoring` 的命名空间开始，并使用清单 8-1 中的命令将其设置为当前上下文。这意味着我们之后部署的每个对象都将自动部署到这个命名空间中。\n\
+  \n```\nkubectl create namespace monitoring\nkubectl config set-context --current\
+  \ --namespace=monitoring\n```\n\n清单 8-1：创建并切换到命名空间 `monitoring`\n\n`InfluxDB` 将需要一些密钥，我们将使用清单\
+  \ 8-2 中的命令进行设置。\n\n```\nkubectl create secret generic influxdb-creds \\\n--from-literal=INFLUXDB_DB=monitoring\
+  \ \\\n--from-literal=INFLUXDB_USER=user \\\n--from-literal=INFLUXDB_USER_PASSWORD=user\\\
+  \n--from-literal=INFLUXDB_READ_USER=readonly \\\n--from-literal=INFLUXDB_READ_USER_PASSWORD=readonly\
+  \ \\\n--from-literal=INFLUXDB_ADMIN_USER=admin \\\n--from-literal=INFLUXDB_ADMIN_USER_PASSWORD=admin\
+  \ \\\n--from-literal=INFLUXDB_HOST=influxdb \\\n--from-literal=INFLUXDB_HTTP_AUTH_ENABLED=false\n\
+  ```\n\n清单 8-2：设置 `InfluxDB` 的变量和密钥\n\n这同样适用于 `Grafana`（清单 8-3）。\n\n```\nkubectl\
+  \ create secret generic grafana-creds \\\n--from-literal=GF_SECURITY_ADMIN_USER=admin\
+  \ \\\n--from-literal=GF_SECURITY_ADMIN_PASSWORD=admin123 \\\n--from-literal=GF_INSTALL_PLUGINS=grafana-piechart-panel,grafana-clock-panel\n\
+  ```\n\n清单 8-3：设置 `Grafana` 的变量和密钥\n\n接下来是一组 YAML 清单。除非另有说明，否则请将每个清单保存到一个文件中，并使用\
+  \ `kubectl apply -f` 将它们部署到您的集群中。当然，这些文件也包含在本书的下载资料中。\n\n与我们为 SQL Server 实例所做的类似，让我们使用清单\
+  \ 8-4 中的清单为 `InfluxDB` 创建一个持久卷和一个持久卷声明。我们将再次将数据存储在我们的 NFS 共享上。\n\n```\napiVersion:\
+  \ v1\nkind: PersistentVolume\nmetadata:\n  name: pv-nfs-influxdb\n  labels:\n  \
+  \  disk: influxdb\nspec:\n  capacity:\n    storage: 5Gi\n  accessModes:\n    - ReadWriteOnce\n\
+  \  persistentVolumeReclaimPolicy: Retain\n  nfs:\n    server: storage\n    path:\
+  \ \"/srv/exports/volumes/influxdb\"\n---\napiVersion: v1\nkind: PersistentVolumeClaim\n\
+  metadata:\n  name: pvc-nfs-influxdb\nspec:\n  selector:\n    matchLabels:\n    \
+  \  disk: influxdb\n  accessModes:\n    - ReadWriteOnce\n  resources:\n    requests:\n\
+  \      storage: 5Gi\n```\n\n清单 8-4：`influxdb-storage.yaml`\n\n清单 8-5 部署了 `InfluxDB`\
+  \ 应用程序和数据库。\n\n\n```\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  namespace:\
+  \ monitoring\n  labels:\n    app: influxdb\n  name: influxdb\nspec:\n  replicas:\
+  \ 1\n  selector:\n    matchLabels:\n      app: influxdb\n  template:\n    metadata:\n\
+  \      labels:\n        app: influxdb\n    spec:\n      containers:\n      - envFrom:\n\
+  \        - secretRef:\n            name: influxdb-creds\n        image: docker.io/influxdb:1.8\n\
+  \        name: influxdb\n        volumeMounts:\n        - mountPath: /var/lib/influxdb\n\
+  \          name: var-lib-influxdb\n      volumes:\n      - name: var-lib-influxdb\n\
+  \        persistentVolumeClaim:\n          claimName: pvc-nfs-influxdb\n```\n清单\
+  \ 8-5: `influxdb-deployment.yaml`\n\n我们将使用一个 `NodePort` 类型的服务来暴露此部署，如清单 8-6 所示。\n\
+  \n**注意**\n\n在此清单中，我们为服务定义了一个静态端口 (`30010`)。与之前部署的服务不同，此服务将始终在此端口上运行，而不是使用随机端口。这样做的好处是，你无需更改你的\
+  \ URL 调用。\n\n```\napiVersion: v1\nkind: Service\nmetadata:\n  labels:\n    app:\
+  \ influxdb\n  name: influxdb\n  namespace: monitoring\nspec:\n  ports:\n  - port:\
+  \ 8086\n    protocol: TCP\n    targetPort: 8086\n    nodePort: 30010\n  selector:\n\
+  \    app: influxdb\n  type: NodePort\n```\n清单 8-6: `influxdb-service.yaml`\n\n清单\
+  \ 8-7 提供了 `Telegraf` 的 `ConfigMap`。我们添加了最常见的系统指标（如 `CPU`、`disk` 和 `memory`）以及我们的\
+  \ `SQL Server`。\n\n**注意**\n\n请在应用此清单前，调整其中的 `<Port>` 和 `<Password>` 以匹配你的设置。这将是你的\
+  \ `SQL Server` 所使用的密码及其端口 (`NodePort`)。\n\n```\napiVersion: v1\nkind: ConfigMap\n\
+  metadata:\n  name: telegraf\n  namespace: monitoring\n  labels:\n    k8s-app: telegraf\n\
+  data:\n  telegraf.conf: |+\n    [global_tags]\n    env = \"kubeadm\"\n    [agent]\n\
+  \      hostname = \"$HOSTNAME\"\n    [[outputs.influxdb]]\n      urls = [\"http://$INFLUXDB_HOST:8086/\"\
+  ] # required\n      database = \"$INFLUXDB_DB\" # required\n      timeout = \"5s\"\
+  \n      username = \"$INFLUXDB_USER\"\n      password = \"$INFLUXDB_USER_PASSWORD\"\
+  \n    [[inputs.cpu]]\n      percpu = true\n      totalcpu = true\n      collect_cpu_time\
+  \ = false\n      report_active = false\n    [[inputs.disk]]\n      ignore_fs = [\"\
+  tmpfs\", \"devtmpfs\", \"devfs\"]\n    [[inputs.diskio]]\n    [[inputs.kernel]]\n\
+  \    [[inputs.mem]]\n    [[inputs.processes]]\n    [[inputs.swap]]\n    [[inputs.system]]\n\
+  \    [[inputs.docker]]\n      endpoint = \"unix:///var/run/docker.sock\"\n    [[inputs.sqlserver]]\n\
+  \      servers = [\n        \"Server=control;Port=;User Id=sa;Password=;app name=telegraf;log=1;\"\
+  \n      ]\n      query_version = 2\n```\n清单 8-7: `telegraf-configmap.yaml`\n\n接下来，我们将使用清单\
+  \ 8-8 通过一个 `DaemonSet` 来部署 `Telegraf`。\n\n```\napiVersion: apps/v1\nkind: DaemonSet\n\
+  metadata:\n  name: telegraf\n  namespace: monitoring\n  labels:\n    k8s-app: telegraf\n\
+  spec:\n  selector:\n    matchLabels:\n      name: telegraf\n  template:\n    metadata:\n\
+  \      labels:\n        name: telegraf\n    spec:\n      containers:\n      - name:\
+  \ telegraf\n        image: docker.io/telegraf:latest\n        env:\n        - name:\
+  \ HOSTNAME\n          valueFrom:\n            fieldRef:\n              fieldPath:\
+  \ spec.nodeName\n        - name: \"HOST_PROC\"\n          value: \"/rootfs/proc\"\
+  \n        - name: \"HOST_SYS\"\n          value: \"/rootfs/sys\"\n        - name:\
+  \ INFLUXDB_USER\n          valueFrom:\n            secretKeyRef:\n             \
+  \ name: influxdb-creds\n              key: INFLUXDB_USER\n        - name: INFLUXDB_USER_PASSWORD\n\
+  \          valueFrom:\n            secretKeyRef:\n              name: influxdb-creds\n\
+  \              key: INFLUXDB_USER_PASSWORD\n        - name: INFLUXDB_HOST\n    \
+  \      valueFrom:\n            secretKeyRef:\n              name: influxdb-creds\n\
+  \              key: INFLUXDB_HOST\n        - name: INFLUXDB_DB\n          valueFrom:\n\
+  \            secretKeyRef:\n              name: influxdb-creds\n              key:\
+  \ INFLUXDB_DB\n        volumeMounts:\n        - name: sys\n          mountPath:\
+  \ /rootfs/sys\n          readOnly: true\n        - name: proc\n          mountPath:\
+  \ /rootfs/proc\n          readOnly: true\n        - name: docker-socket\n      \
+  \    mountPath: /var/run/docker.sock\n        - name: utmp\n          mountPath:\
+  \ /var/run/utmp\n          readOnly: true\n        - name: config\n          mountPath:\
+  \ /etc/telegraf\n      terminationGracePeriodSeconds: 30\n      volumes:\n     \
+  \ - name: sys\n        hostPath:\n          path: /sys\n      - name: docker-socket\n\
+  \        hostPath:\n          path: /var/run/docker.sock\n      - name: proc\n \
+  \       hostPath:\n          path: /proc\n      - name: utmp\n        hostPath:\n\
+  \          path: /var/run/utmp\n      - name: config\n        configMap:\n     \
+  \     name: telegraf\n```\n清单 8-8: `telegraf-daemonset.yaml`\n\n现在，我们有了 `InfluxDB`\
+  \ 来存储指标，并有 `Telegraf` 为我们收集指标，是时候部署 `Grafana` 来将它们可视化了。\n\n清单 8-9 中的代码将首先为我们提供 `Grafana`\
+  \ 配置的存储。\n\n```\napiVersion: v1\nkind: PersistentVolume\nmetadata:\n  name: pv-nfs-grafana\n\
+  \  labels:\n    disk: grafana\nspec:\n  capacity:\n    storage: 5Gi\n  accessModes:\n\
+  \    - ReadWriteOnce\n  persistentVolumeReclaimPolicy: Retain\n  nfs:\n    server:\
+  \ storage\n    path: \"/srv/exports/volumes/grafana\"\n---\napiVersion: v1\nkind:\
+  \ PersistentVolumeClaim\nmetadata:\n  name: pvc-nfs-grafana\nspec:\n  selector:\n\
+  \    matchLabels:\n      disk: grafana\n  accessModes:\n    - ReadWriteOnce\n  resources:\n\
+  \    requests:\n      storage: 5Gi\n```\n清单 8-9: `grafana-storage.yaml`\n\n接着使用清单\
+  \ 8-10 部署 `Grafana` 本身。请注意，`Grafana` 需要自己的用户和组来运行。我们在第 1 章设置 `NFS` 服务器时已经创建了这些。\n\
+  \n```\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  namespace: monitoring\n\
+  \  labels:\n    app: grafana\n  name: grafana\nspec:\n  replicas: 1\n  selector:\n\
+  \    matchLabels:\n      app: grafana\n  template:\n    metadata:\n      labels:\n\
+  \        app: grafana\n    spec:\n      containers:\n      - envFrom:\n        -\
+  \ secretRef:\n            name: grafana-creds\n        image: docker.io/grafana/grafana:7.3.3\n\
+  \        name: grafana\n        volumeMounts:\n        - name: data-dir\n      \
+  \    mountPath: /var/lib/grafana/\n        securityContext:\n          fsGroup:\
+  \ 472\n          runAsGroup: 472\n          runAsNonRoot: true\n          runAsUser:\
+  \ 472\n      volumes:\n      - name: data-dir\n        persistentVolumeClaim:\n\
+  \          claimName: pvc-nfs-grafana\n```\n清单 8-10: `grafana-deployment.yaml`\n\
+  \n在最后一步，我们将使用清单 8-11 将 `Grafana` 也作为一项服务暴露出来。此服务将再次使用一个静态端口 (`30080`)。\n\n```\n\
+  apiVersion: v1\nkind: Service\nmetadata:\n  labels:\n    app: grafana\n  name: grafana\n\
+  \  namespace: monitoring\nspec:\n  ports:\n  - port: 443\n    name: https\n    targetPort:\
+  \ 3000\n    nodePort: 30080\n  selector:\n    app: grafana\n  type: NodePort\n```\n\
+  清单 8-11: `grafana-service.yaml`\n\n你的性能监控环境现在已准备就绪。打开网页浏览器并登录 `http://control:30080`（这可以在任何能够访问控制平面节点且在其\
+  \ `hosts` 文件中有相应条目的机器上进行）。使用我们之前定义的凭据（在我们的示例中是 `admin` 和 `admin123`）。\n\n转到左侧的 `Configuration`\
+  \ ➤ `Data Sources`（图 8-4）并点击 `Add data source`。\n\n![../images/494804_1_En_8_Chapter/494804_1_En_8_Fig4_HTML.jpg](img/494804_1_En_8_Fig4_HTML.jpg)\n\
+  图 8-4: Grafana – 添加数据源\n\n从 `Time series databases` 中选择 `InfluxDB`，并点击 `Select`，如图\
+  \ 8-5 所示。\n\n![../images/494804_1_En_8_Chapter/494804_1_En_8_Fig5_HTML.jpg](img/494804_1_En_8_Fig5_HTML.jpg)\n\
+  图 8-5: Grafana – 添加数据源 - 时序数据库\n\n将 URL（图 8-6）设置为 `http://influxdb:8086`。\n\n![../images/494804_1_En_8_Chapter/494804_1_En_8_Fig6_HTML.jpg](img/494804_1_En_8_Fig6_HTML.jpg)\n\
+  图 8-6: Grafana – 添加数据源 - 设置\n\n向下滚动，将 `Database` 设置为 `monitoring`，然后点击 `Save & Test`\
+  \ 以验证你的连接，如图 8-7 所示。\n\n![../images/494804_1_En_8_Chapter/494804_1_En_8_Fig7_HTML.jpg](img/494804_1_En_8_Fig7_HTML.jpg)\n\
+  图 8-7: Grafana – 添加数据源\n\n利用此连接，我们现在可以使用其指标创建仪表板。同样，我们不会深入探讨这一点，而是直接使用两个现有的仪表板。\n\
+  \n导航到 `Dashboards` 并选择 `Manage`，如图 8-8 所示。\n\n![../images/494804_1_En_8_Chapter/494804_1_En_8_Fig8_HTML.jpg](img/494804_1_En_8_Fig8_HTML.jpg)\n\
+  图 8-8: Grafana – 管理仪表板\n\n在下一个屏幕（图 8-9）上，点击 `Import`。\n\n\n\n### Kibana 用于日志聚合与管理\n\
+  \n![../images/494804_1_En_8_Chapter/494804_1_En_8_Fig9_HTML.jpg](img/494804_1_En_8_Fig9_HTML.jpg)\n\
+  \n图 8-9\n\nGrafana – 导入仪表板\n\n在上部区域，通过 `grafana.com` `导入`，输入 ID `928` 并点击 `加载`（图\
+  \ 8-10）。仪表板 `928` 是来自 Grafana 库的一个预配置系统仪表板，我们将在本章稍后向你解释如何查找更多可供你使用的仪表板。\n\n![../images/494804_1_En_8_Chapter/494804_1_En_8_Fig10_HTML.jpg](img/494804_1_En_8_Fig10_HTML.jpg)\n\
+  \n图 8-10\n\nGrafana – 导入仪表板（仪表板 ID）\n\n将屏幕下部区域（图 8-11）的 `InfluxDB telegraf` 下拉菜单更改为\
+  \ `InfluxDB`，然后点击 `导入`。\n\n![../images/494804_1_En_8_Chapter/494804_1_En_8_Fig11_HTML.jpg](img/494804_1_En_8_Fig11_HTML.jpg)\n\
+  \n图 8-11\n\nGrafana – 导入仪表板（结果）\n\n这将为你导入并打开 Telegraf 系统仪表板，其中包含大量关于你的 Kubernetes\
+  \ 集群背后硬件的有价值信息（见图 8-12）。\n\n![../images/494804_1_En_8_Chapter/494804_1_En_8_Fig12_HTML.jpg](img/494804_1_En_8_Fig12_HTML.jpg)\n\
+  \n图 8-12\n\nGrafana – Telegraf 仪表板\n\n使用仪表板 ID `9386` 重复相同的步骤，以导入一个包含 SQL Server\
+  \ 特定指标的仪表板。\n\n你可以在 [`https://grafana.com/grafana/dashboards/`](https://grafana.com/%2520grafana/dashboards/)\
+  \ 找到更多可用的仪表板。如果你想了解更多关于 Grafana 本身的信息，请访问 [`https://grafana.com/`](https://grafana.com/)。\n\
+  \n另一方面，如图 8-13 所示的 Kibana 仪表板，让你能够洞察你的 Kubernetes 日志文件，包括那些影响你的 SQL Server Pod 和容器的日志。日志记录在故障排除场景中很有价值，并且鉴于日志与\
+  \ Pod 的生命周期绑定，而我们又需要独立于该生命周期访问日志的方法，因此我们需要一个能为我们覆盖此需求的解决方案。Kibana 是 Elastic Stack\
+  \ 的一部分。它还提供了在你的日志文件之上创建可视化和仪表板的选项。\n\n![../images/494804_1_En_8_Chapter/494804_1_En_8_Fig13_HTML.jpg](img/494804_1_En_8_Fig13_HTML.jpg)\n\
+  \n图 8-13\n\nKibana 门户 – 概览\n\n#### 如何安装和配置 Kibana\n\nKibana 使用的组件与 Grafana 完全不同，但总体逻辑非常相似。如图\
+  \ 8-14 所示，我们有 `elasticsearch` 作为我们的数据存储，而 Kibana 用作前端。每个节点上的 `Fluent-bit` Pod 负责收集日志并将其发送到\
+  \ `elasticsearch`。\n\n设置 Kibana 所需的步骤是：\n\n- 创建一个命名空间并将其设置为当前上下文。\n- 部署 elasticsearch\
+  \ 并将其作为服务暴露。\n- 部署 fluent-bit。\n- 部署 Kibana 并将其作为服务暴露。\n\n![../images/494804_1_En_8_Chapter/494804_1_En_8_Fig14_HTML.jpg](img/494804_1_En_8_Fig14_HTML.jpg)\n\
+  \n图 8-14\n\nKibana 及其所需组件\n\n就像之前使用 Grafana 一样，让我们使用清单 8-12 中的代码为 Kibana 创建一个新的命名空间。\n\
+  \n```bash\nkubectl create namespace logging\nkubectl config set-context --current\
+  \ --namespace=logging\n```\n\n清单 8-12：创建并切换到命名空间“logging”\n\n同样像使用 Grafana 时一样，我们不会解释每一个细节，而是引导你完成将日志聚合解决方案部署到集群的步骤。\n\
+  \n我们将从在集群内暴露 elasticsearch 的服务开始（清单 8-13）。\n\n你注意到什么了吗？我们在部署 Pod 之前就暴露了服务。这仅仅是为了说明这里的顺序并不重要。当然，只有在目标部署也创建后，服务才是可访问的。\n\
+  \n```yaml\nkind: Service\napiVersion: v1\nmetadata:\n  name: elasticsearch\n  namespace:\
+  \ logging\n  labels:\n    app: elasticsearch\nspec:\n  selector:\n    app: elasticsearch\n\
+  \  clusterIP: None\n  ports:\n  - port: 9200\n    name: rest\n  - port: 9300\n \
+  \   name: inter-node\n```\n\n清单 8-13：elasticsearch-service.yaml\n\n由于 elasticsearch\
+  \ 使用 StatefulSet，它需要为每个 Pod 提供一个持久卷，因此我们将使用 `storage class` 进行动态配置，而不是静态预配置 `PV`\
+  \ 和 `PVC`，我们将再次将其指向我们的 NFS 服务器。此存储类已在第 6 章配置好。\n\n有了存储，我们就可以使用清单 8-14 中的配置清单为 elasticsearch\
+  \ 应用程序推出一个 StatefulSet。在此清单的最后一部分，你可以看到引用了我们的 `nfs-storage` 存储类，这就是两者连接起来的方式。\n\n\
+  \n## 在 Kubernetes 上部署日志聚合系统\n\n### 部署 Elasticsearch StatefulSet\n\n```yaml\napiVersion:\
+  \ apps/v1\nkind: StatefulSet\nmetadata:\n  name: es-cluster\n  namespace: logging\n\
+  spec:\n  serviceName: elasticsearch\n  replicas: 3\n  selector:\n    matchLabels:\n\
+  \      app: elasticsearch\n  template:\n    metadata:\n      labels:\n        app:\
+  \ elasticsearch\n    spec:\n      containers:\n      - name: elasticsearch\n   \
+  \     image: docker.elastic.co/elasticsearch/elasticsearch:7.2.0\n        resources:\n\
+  \          limits:\n            cpu: 1000m\n          requests:\n            cpu:\
+  \ 100m\n        ports:\n        - containerPort: 9200\n          name: rest\n  \
+  \        protocol: TCP\n        - containerPort: 9300\n          name: inter-node\n\
+  \          protocol: TCP\n        volumeMounts:\n        - name: data\n        \
+  \  mountPath: /usr/share/elasticsearch/data\n        env:\n        - name: cluster.name\n\
+  \          value: k8s-logs\n        - name: node.name\n          valueFrom:\n  \
+  \          fieldRef:\n              fieldPath: metadata.name\n        - name: discovery.seed_hosts\n\
+  \          value: \"es-cluster-0.elasticsearch,es-cluster-1.elasticsearch,es-cluster-2.elasticsearch\"\
+  \n        - name: cluster.initial_master_nodes\n          value: \"es-cluster-0,es-cluster-1,es-cluster-2\"\
+  \n        - name: ES_JAVA_OPTS\n          value: \"-Xms512m -Xmx512m\"\n      initContainers:\n\
+  \      - name: fix-permissions\n        image: busybox\n        command: [\"sh\"\
+  , \"-c\", \"chown -R 1000:1000 /usr/share/elasticsearch/data\"]\n        securityContext:\n\
+  \          privileged: true\n        volumeMounts:\n        - name: data\n     \
+  \     mountPath: /usr/share/elasticsearch/data\n      - name: increase-vm-max-map\n\
+  \        image: busybox\n        command: [\"sysctl\", \"-w\", \"vm.max_map_count=262144\"\
+  ]\n        securityContext:\n          privileged: true\n      - name: increase-fd-ulimit\n\
+  \        image: busybox\n        command: [\"sh\", \"-c\", \"ulimit -n 65536\"]\n\
+  \        securityContext:\n          privileged: true\n  volumeClaimTemplates:\n\
+  \  - metadata:\n      name: data\n      labels:\n        app: elasticsearch\n  \
+  \  spec:\n      accessModes: [ \"ReadWriteOnce\" ]\n      storageClassName: nfs-storage\n\
+  \      resources:\n        requests:\n          storage: 100Gi\n```\n**清单 8-14**\
+  \ 将 Elasticsearch 部署为 StatefulSet (`elasticsearch.yaml`)\n\n### 部署 Kibana\n\n在我们的集群上运行\
+  \ Elasticsearch 后，我们可以使用清单 8-15 来部署 Kibana 并将其作为服务暴露（同样使用静态端口：30445）。这也表明，无论我们是通过多个清单还是单个清单部署所有内容（此处为服务和部署），都没有关系。此外，我们是在创建部署之前创建服务，但\
+  \ Kubernetes 会无缝地为我们处理好这一点。\n\n```yaml\napiVersion: v1\nkind: Service\nmetadata:\n\
+  \  name: kibana\n  namespace: logging\n  labels:\n    app: kibana\nspec:\n  ports:\n\
+  \  - port: 5601\n    targetPort: 5601\n    nodePort: 30445\n  selector:\n    app:\
+  \ kibana\n  type: NodePort\n---\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n\
+  \  name: kibana\n  namespace: logging\n  labels:\n    app: kibana\nspec:\n  replicas:\
+  \ 1\n  selector:\n    matchLabels:\n      app: kibana\n  template:\n    metadata:\n\
+  \      labels:\n        app: kibana\n    spec:\n      containers:\n      - name:\
+  \ kibana\n        image: docker.elastic.co/kibana/kibana:7.2.0\n        resources:\n\
+  \          limits:\n            cpu: 1000m\n          requests:\n            cpu:\
+  \ 100m\n        env:\n        - name: ELASTICSEARCH_URL\n          value: http://elasticsearch:9200\n\
+  \        ports:\n        - containerPort: 5601\n```\n**清单 8-15** `kibana.yaml`\n\
+  \n### 安装 Fluent-bit\n\n现在我们有了用于存储数据的 Elasticsearch 和用于展示数据的 Kibana。唯一缺少的组件是用于收集日志的\
+  \ `fluent-bit`，这样我们才有数据可供处理。\n\n在这种情况下，我们只需直接从 GitHub 应用一个文件（清单 8-16），就可以创建从 `ServiceAccount`\
+  \ 到 `Roles` 以及 `Deployment` 的所有内容。如果您想先检查或做任何更改，也可以先保存它们，然后应用本地清单。\n\n```bash\n\
+  kubectl create -f https://raw.githubusercontent.com/fluent/fluent-bit-kubernetes-logging/master/fluent-bit-service-account.yaml\n\
+  kubectl create -f https://raw.githubusercontent.com/fluent/fluent-bit-kubernetes-logging/master/fluent-bit-role.yaml\n\
+  kubectl create -f https://raw.githubusercontent.com/fluent/fluent-bit-kubernetes-logging/master/fluent-bit-role-binding.yaml\n\
+  kubectl create -f https://raw.githubusercontent.com/fluent/fluent-bit-kubernetes-logging/master/output/elasticsearch/fluent-bit-configmap.yaml\n\
+  kubectl create -f https://raw.githubusercontent.com/fluent/fluent-bit-kubernetes-logging/master/output/elasticsearch/fluent-bit-ds.yaml\n\
+  ```\n**清单 8-16** 安装 `fluent-bit`\n\n### 访问 Kibana\n\n我们的日志聚合系统现已准备就绪。打开 Web 浏览器并导航到\
+  \ [*http://control:30445/*](http://www.control:30445/)。\n\n您将被询问（见图 8-15）是希望从示例数据开始还是自行探索，此时您将点击\
+  \ *Explore on my own*。\n\n![../images/494804_1_En_8_Chapter/494804_1_En_8_Fig15_HTML.jpg](img/494804_1_En_8_Fig15_HTML.jpg)\n\
+  \n**图 8-15** Kibana Portal\n\n### 配置数据源\n\n与 Grafana 类似，我们在使用 Kibana 之前需要配置其数据源。如图\
+  \ 8-16 所示，点击左侧菜单中的 *Discover*。\n\n![../images/494804_1_En_8_Chapter/494804_1_En_8_Fig16_HTML.jpg](img/494804_1_En_8_Fig16_HTML.jpg)\n\
+  \n**图 8-16** Kibana Portal 导航\n\n配置菜单（图 8-17）将要求您定义一个索引模式。\n\n![../images/494804_1_En_8_Chapter/494804_1_En_8_Fig17_HTML.jpg](img/494804_1_En_8_Fig17_HTML.jpg)\n\
+  \n**图 8-17** Kibana Portal – 定义索引模式\n\n我们现在保持简单，因此在文本框中输入 `logstash-**` 并点击 *Next\
+  \ step*。\n\n下一步（图 8-18）要求您配置将使用哪个字段按时间过滤日志数据。在下拉菜单中选择 `@timestamp`，然后点击 *Create\
+  \ index pattern*。\n\n![../images/494804_1_En_8_Chapter/494804_1_En_8_Fig18_HTML.jpg](img/494804_1_En_8_Fig18_HTML.jpg)\n\
+  \n**图 8-18** Kibana Portal – 配置索引设置\n\n再次点击左侧的 *Discover*，您将看到集群中收集日志的直方图（图 8-19）。\n\
+  \n![../images/494804_1_En_8_Chapter/494804_1_En_8_Fig19_HTML.jpg](img/494804_1_En_8_Fig19_HTML.jpg)\n\
+  \n**图 8-19** Kibana 直方图\n\n这些数据可以通过多种方式进行筛选和分析。要了解更多关于 Kibana 的信息，我们建议您查看 [*www.elastic.co/kibana*](https://www.elastic.co/kibana)。\n\
+  \n#### 在 Kibana 中查看 SQL Server 日志\n\n不过，我们要特别指出的一组筛选条件是，如何在 Kibana 中检索 SQL Server\
+  \ 实例的日志。\n\n一种非常简单的方法是直接使用全文搜索，如图 8-20 所示。\n\n![../images/494804_1_En_8_Chapter/494804_1_En_8_Fig20_HTML.jpg](img/494804_1_En_8_Fig20_HTML.jpg)\n\
+  *图 8-20: Kibana 中的全文筛选器*\n\n不过，这会引入大量不必要的干扰信息。更好的解决方案是添加一个合适的筛选器。为此，点击筛选栏下方的`添加筛选器`，如图\
+  \ 8-21 所示。\n\n![../images/494804_1_En_8_Chapter/494804_1_En_8_Fig21_HTML.jpg](img/494804_1_En_8_Fig21_HTML.jpg)\n\
+  *图 8-21: 在 Kibana 中添加筛选器*\n\n选择字段`kuberneters.container_name`，运算符`是`，以及值`mssql`，如图\
+  \ 8-22 所示，然后点击`保存`。\n\n![../images/494804_1_En_8_Chapter/494804_1_En_8_Fig22_HTML.jpg](img/494804_1_En_8_Fig22_HTML.jpg)\n\
+  *图 8-22: 在 Kibana 中为 mssql 添加筛选器*\n\n这将显示我们所有 SQL Server 容器的日志文件，如图 8-23 所示。\n\n\
+  ![../images/494804_1_En_8_Chapter/494804_1_En_8_Fig23_HTML.jpg](img/494804_1_En_8_Fig23_HTML.jpg)\n\
+  *图 8-23: 在 Kibana 中筛选 mssql*\n\n当然，这也可以与全文筛选器结合使用。如果你在筛选器中添加`\"Login failed\"`，如图\
+  \ 8-24 所示，你将获得我们 SQL Server 中所有登录失败的事件，因为此日志也包含了完整的 SQL Server 错误日志。\n\n![../images/494804_1_En_8_Chapter/494804_1_En_8_Fig24_HTML.jpg](img/494804_1_En_8_Fig24_HTML.jpg)\n\
+  *图 8-24: Kibana 中的 SQL Server 错误日志*\n\n在我们的示例中，这已经足够了。如果你运行了多个 SQL Server 实例，你还可以添加额外的筛选器，用于设置如`namespace`、`deployment`或`pod`名称。\n\
+  \n### 清理\n\n为了确保你接下来的演示在正确的命名空间中运行，请将当前上下文重置为默认命名空间，如代码清单 8-17 所示。\n\n```\nkubectl\
+  \ config set-context --current --namespace=default\n```\n*代码清单 8-17: 重置 kubectl\
+  \ 上下文*\n\n注意\n\n本示例中使用的端口也将在后续章节的服务中使用。请记住这一点，并在那些章节中修改端口，或者先删除本章的资源。\n\n### 总结\n\
+  \n在本章中，我们介绍了如何使用 Grafana 和 Kibana 仪表板来监控集群及其应用程序。然后，我们利用这些门户网站深入了解了我们先前部署在 Kubernetes\
+  \ 上的 SQL Server。让我们继续下一章，看看 Azure Arc 启用的数据服务，它允许我们在 Kubernetes 上部署具有高可用性选项的 SQL\
+  \ Server。\n\n## 9. Azure Arc 启用的数据服务与 Kubernetes 上 SQL Server 的高可用性\n\n本章介绍 Azure\
+  \ Arc 启用的数据服务及其提供的强大功能，这些功能允许你使用从 Azure 云获得的相同自动化、集中控制管理和工具，在本地、本地数据中心和混合云中部署和管理数据资源。我们将向你展示如何在公司数据中心部署和管理运行在\
+  \ SQL Server 上的数据库，就好像它们是 Azure 平台的一部分一样，这一切都利用了 Kubernetes 的威力。Azure Arc 启用的数据服务也是如何为\
+  \ Kubernetes 上的 SQL Server（使用托管实例）实现可用性组（AG）这个问题的答案。\n\n### 什么是 Azure Arc？\n\n从核心上讲，Microsoft\
+  \ Azure Arc 可在你部署了本地或任何云资源的任何地方提供 Azure 管理服务。它使你能够为组织的核心运营提供一致的管理服务和工具，无论技术架构部署在何处。让我们看看\
+  \ Azure Arc 的核心功能：\n\n-   **跨本地和混合云的统一体验**：你可以使用熟悉的工具，如 Azure 门户、Azure CLI、PowerShell\
+  \ 和 REST API 来管理和部署系统。\n-   **部署和运营**：凭借一套统一的工具，无论你部署在本地还是任何云中，部署和运营都是一致的。统一的工具使你的组织能够在任何部署场景中使用相同的代码和工具，无论部署在哪里。运营的一个关键要素是性能和可用性监控，Azure\
+  \ Monitor 可帮助你为 Azure Arc 启用的资源完成这项工作。\n-   **整合的访问控制、安全、策略管理和日志记录**：根据资源部署位置实施多个安全模型是具有挑战性和风险的，因为你可能需要管理多组安全规则及其实施。Azure\
+  \ Arc 使你能够拥有一个整合的安全模型和实施，并使用 Azure Log Analytics 等工具进行集中的安全和应用程序日志记录。此外，你可以使用 Azure\
+  \ Policy 等服务来管理治理和控制解决方案。\n-   **清单和组织**：凭借一套可用的工具以及资源组、订阅和标签等关键的 Azure 构造，管理员、操作员和技术经理可以全面了解其技术资产。系统部署在哪里已不再重要——服务和资源作为托管资源注册在\
+  \ Azure 中，无论它们部署在哪里，是本地还是任何云。\n\nAzure Arc 的范围涵盖从`Azure Arc 启用的服务器`和`Azure Arc 启用的\
+  \ Kubernetes`到`Azure Arc 启用的 SQL Server`和`Azure Arc 启用的数据服务`。\n\n鉴于本书的范围，让我们将其总结到本质：Azure\
+  \ Arc 是一系列服务，允许你将原本只能部署到 Microsoft Azure 云中的服务运行在任何云中的任何基础设施上。我们将在本章中重点介绍 Azure\
+  \ Arc 启用的数据服务中的一些产品。\n\n要了解更多关于 Azure Arc 的一般信息，请参考 [`docs.microsoft.com/en-us/azure/azure-arc/`](https://docs.microsoft.com/en-us/azure/azure-arc/)。\n\
+  \n### Azure Arc 启用的数据服务简介\n\nAzure Arc 启用的数据服务架构是一个分层架构，包括硬件层、Kubernetes 层、管理控制平面层和数据服务层。图\
+  \ 9-1 突出了该架构。\n\n![../images/494804_1_En_9_Chapter/494804_1_En_9_Fig1_HTML.jpg](img/494804_1_En_9_Fig1_HTML.jpg)\n\
+  *图 9-1: Azure Arc 启用的数据服务架构*\n\n基础层是运行在任何硬件上的 Kubernetes，这些硬件可以是本地的，也可以在任何云中，并且构建在物理机或虚拟机上。然后，在\
+  \ Kubernetes 集群内部署的是 Arc 管理控制平面。Arc 管理控制平面是 Azure Arc 的大脑，它将 Azure 资源管理器（ARM）扩展到你的本地或混合云部署中。而在所有这一切之上，就是\
+  \ Azure Arc 启用的数据服务。\n\n让我们更仔细地看看图 9-2 所示的 Azure Arc 启用的数据服务的核心组件。\n\n![../images/494804_1_En_9_Chapter/494804_1_En_9_Fig2_HTML.jpg](img/494804_1_En_9_Fig2_HTML.jpg)\n\
+  *图 9-2: Azure Arc 启用的数据服务的核心组件*\n\n#### Azure Arc 数据控制器\n\n除了 Kubernetes 集群，运行 Azure\
+  \ Arc 启用的数据服务所需的第一个组件是数据控制器。它提供与 Azure 门户的连接，并部署一些我们稍后配置服务所需的核心服务。\n\n\n### 监控（Grafana\
+  \ 和 Kibana）\n\n在上一章中，我们部署了 Grafana，正如你所记得的，其中涉及了相当多的步骤。好消息是：当你部署 `Azure Arc Data\
+  \ Controller` 时，它会自动为你部署一个 Grafana 仪表板及其先决条件。\n\n它还附带了预配置的仪表板，如 SQL Managed Instance\
+  \ Metrics，如图 9-3 所示。这看起来与我们在前一章看到的例子不同，因为这个仪表板是根据 `SQL Managed Instance` 的具体情况定制的。\n\
+  \n![../images/494804_1_En_9_Chapter/494804_1_En_9_Fig3_HTML.jpg](img/494804_1_En_9_Fig3_HTML.jpg)\n\
+  \n图 9-3 Grafana 门户 – SQL MI 指标\n\n除了这个仪表板，图 9-4 中显示的仪表板也会被自动部署。\n\n![../images/494804_1_En_9_Chapter/494804_1_En_9_Fig4_HTML.jpg](img/494804_1_En_9_Fig4_HTML.jpg)\n\
+  \n图 9-4 Grafana 门户中的内置仪表板\n\n当然，你也可以像我们在前一章中所做的那样，添加任何现有的仪表板或创建自己的仪表板。\n\n除了 Grafana，`Azure\
+  \ Arc–enabled Data Services` 默认也附带 `Kibana` 及其先决条件，因此同样无需手动部署。\n\n### 连接到 Azure\
+  \ 门户的模式\n\n`Azure Arc–enabled Data Services` 附带一个到 `Azure Portal` 的后向通道，允许你上传安装的日志和指标。这使你可以在一个地方管理所有数据资产——无论它是在本地\
+  \ `Azure Arc` 上运行的 `Managed Instance`，还是 `Azure` 中的 `Azure SQL DB`。此信息也用于计费目的。\n\
+  \n根据你的基础设施、位置和需求，你可以选择两种模式：\n\n-   **直接连接：** 在此模式下，你的日志和指标会不断发送到 `Azure Portal`，使数据几乎立即可用于分析。\n\
+  -   **间接连接：** 在此模式下，你需要手动触发或计划导出和上传指标及日志。如果你所在位置互联网连接有限，这尤其有用。\n\n一旦资源的 `data` 被上传到\
+  \ `Azure`，它就会在门户中显示，如图 9-5 的示例所示。\n\n![../images/494804_1_En_9_Chapter/494804_1_En_9_Fig5_HTML.jpg](img/494804_1_En_9_Fig5_HTML.jpg)\n\
+  \n图 9-5 在 Azure 门户中显示的 CPU 指标\n\n### 数据服务\n\n在我们的 `Data Controller` 之上是 `Data Services`，在撰写本文时，它可以是\
+  \ `Azure Arc SQL Managed Instance` 或 `Azure Database for PostgreSQL`。\n\n我们将只关注\
+  \ `SQL Managed Instance`，因为 `PostgreSQL` 超出了本书的范围。\n\n#### Azure Arc SQL Managed\
+  \ Instance\n\n`Azure Arc–enabled SQL Managed Instance` 是你的 SQL Server 提升和转移版本。它使你能够将工作负载无缝迁移到\
+  \ `Azure Arc`，因为它与本地 `SQL Server` 安装提供了高度兼容性，据记录其兼容性接近 100%。这意味着将数据库从当前的本地实现迁移到\
+  \ `Azure Arc–enabled SQL Managed Instance` 几乎不需要数据库更改。在部署 `Azure Arc–enabled SQL\
+  \ Managed Instance` 时，你可以从本地 `SQL Server` 版本获取备份，并将该备份直接还原到 `Azure Arc-enabled SQL\
+  \ Managed Instance`。\n\n提示\n根据 [*https://docs.microsoft.com/en-us/azure/azure-arc/data/managed-instance-features#Unsupported*](https://docs.microsoft.com/en-us/azure/azure-arc/data/managed-instance-features%2523Unsupported)，你将找到\
+  \ `Azure Arc–enabled SQL Managed Instance` 不支持的功能和服务列表。\n\n`Azure Arc–enabled SQL\
+  \ Managed Instance` 作为 `SQL Server on Linux` 进程在 `Kubernetes` 容器内运行。不可用的功能与 `SQL\
+  \ Server on Linux` 中不支持的功能类似。更多信息，请参阅 [*https://docs.microsoft.com/en-us/sql/linux/sql-server-linux-editions-and-components-2019?#Unsupported*](https://docs.microsoft.com/en-us/sql/linux/sql-server-linux-editions-and-components-2019%253F%2523Unsupported)。\n\
+  \n类似于 `Azure PaaS` 服务（如 `Azure SQL Managed Instance` 在 `Azure Cloud` 托管部署中）提供的 `Always\
+  \ Current` 或 `Evergreen SQL` 产品，`Microsoft` 将持续发布更新的 `SQL Managed Instance` 容器镜像到\
+  \ `Microsoft Container Registry` 供 `Azure Arc–enabled SQL Managed Instance` 使用。然后，根据你部署中定义的更新策略，你可以指定更新应用到环境的频率和时间。在\
+  \ `SQL Server` 的传统实现中，管理更新是一个具有挑战性且耗时的过程。`Kubernetes` 提供了快速吸收更新和更改并将其推出到集群的能力。这就是\
+  \ `Azure Arc–enabled Data Services` 中使用的更新模型。\n\n#### Azure Database for PostgreSQL\n\
+  \n目前 `Azure Arc–enabled Data Services` 内可用的另一项服务是 `Azure Database for PostgreSQL`。由于这超出了本书的范围，我们将不再详细介绍。\n\
+  \n### Azure Arc–Enabled Data Services 中的 Kubernetes 构造\n\n当然，我们也想知道这一切是如何通过 `Kubernetes`\
+  \ 构造来反映的。\n\n每一个 `Azure Arc–enabled Data Services` 的部署都将位于其自己的 `namespace` 中。这将允许你在同一个\
+  \ `Kubernetes` 集群上运行多个部署。\n\n如图 9-6 所示，在这样的 `namespace` 中，我们将找到 `controller`、`Grafana`、`Kibana`\
+  \ 和其他 `Data Controller` 服务的 `pods`，以及与此控制器关联的 `Data Services`。\n\n![../images/494804_1_En_9_Chapter/494804_1_En_9_Fig6_HTML.jpg](img/494804_1_9_Fig6_HTML.jpg)\n\
+  \n图 9-6 Azure Arc–enabled Data Services namespace 中的 Pods\n\n对 `Data Services` 以及\
+  \ `pods` 中的监控和日志应用程序的访问是通过 `Kubernetes Services` 暴露的，如图 9-7 所示。\n\n![../images/494804_1_En_9_Chapter/494804_1_En_9_Fig7_HTML.jpg](img/494804_1_En_9_Fig7_HTML.jpg)\n\
+  \n图 9-7 Azure Arc–enabled Data Services namespace 中的 Services\n\n为了实现最大的灵活性，`Azure\
+  \ Arc–enabled Data Services` 要求至少一个 `storage class`。每当创建 `Data Controller` 或 `data\
+  \ service` 时，都需要一个 `storage class`。不同服务之间的类别可以不同，并且每个服务可以为日志（`Kubernetes` 日志）、数据和数据日志使用不同的类别。\n\
+  \n如果你想了解更多关于 `Azure Arc–enabled Data Services` 的信息，我们也推荐我们的 Apress 书籍 *Azure Arc–Enabled\
+  \ Data Services Revealed*。\n\n### 部署 Azure Arc–Enabled Data Services\n\n现在是时候部署一些\
+  \ `Azure Arc–enabled Data Services` 了。\n\n#### 先决条件\n\n正如预期的那样，在我们开始部署过程之前，我们需要一些先决条件。\n\
+  \n\n### Kubernetes 集群\n\n正如您根据架构可能猜测的那样，Kubernetes 集群是必需的。\n\n如前所述，在此集群中，我们还需要至少一个支持动态配置的存储类（就像我们在第\
+  \ 8 章部署 `elasticsearch` 时使用的 NFS 配置器）。\n\n我们将在此部署中使用我们的 `AKSCluster`。如果您更喜欢使用 `kubeadm`\
+  \ 集群，只需相应地调整 `存储类`。\n\n因此，我们首先按照清单 9-1 所示，将 `kubectl` 上下文切换回 `AKSCluster`。\n\n```\n\
+  kubectl config use-context AKSCluster\n```\n**清单 9-1**\n将 `kubectl` 上下文切换到 `AKSCluster`\n\
+  \n我们还将使用清单 9-2 中的 `kubectl` 命令检索此集群中的存储类。\n\n```\nkubectl get storageclass\n```\n\
+  **清单 9-2**\n列出 `AKSCluster` 中的存储类\n\n除非您已向此集群部署了任何其他存储类，否则输出应类似于图 9-8 所示。\n\n![../images/494804_1_En_9_Chapter/494804_1_En_9_Fig8_HTML.jpg](img/494804_1_En_9_Fig8_HTML.jpg)\n\
+  **图 9-8**\nAKS 集群中的存储类\n\n### 工具\n\n虽然我们可以通过 YAML 清单部署 Azure Arc 生态系统中的所有内容，但 Microsoft\
+  \ 通过提供另一个抽象层次使我们的工作更轻松。使用名为 `azdata` 的工具，我们可以描述所需的环境和配置服务，它将为我们生成 Kubernetes 中的对象。对于更复杂的场景，可以通过\
+  \ JSON 文件进行配置，而对于更简单的用例，则可以通过命令行参数运行，这与 `kubectl` 的命令式与声明式概念非常相似。\n\n**注意**\n不要混淆\
+  \ `Azure CLI` 和 `azdata`。它们是两种不同的工具！\n\n我们已经在第 1 章在管理工作站上安装了 `azdata`。\n\n如果您更喜欢图形化体验，Azure\
+  \ Data Studio 也提供了图形化安装向导。此向导将为每次部署创建一个 Jupyter notebook，并在后台调用 `azdata`。然而在本书中，我们将专注于基于命令行的安装。\n\
+  \n#### 部署数据控制器\n\n一旦您安装了 `azdata` 并且 `kubectl` 上下文设置为正确的集群，就可以通过类似于清单 9-3 中的命令来部署\
+  \ Azure Arc 数据控制器。\n\n您需要提供以下设置：\n\n*   **名称：** 控制器的名称。\n*   **命名空间：** 要在您的 Kubernetes\
+  \ 集群中使用的命名空间 – 此命名空间不能包含任何其他对象。如果尚不存在，它将被创建。\n*   **订阅：** 您的 Azure 订阅 ID。\n*   **资源组：**\
+  \ 部署后服务应显示在 Azure 中的资源组。\n*   **位置：** 用于存储指标和日志的 Azure 区域。\n*   **存储类：** 用于数据控制器数据和日志的存储类。如果省略，将使用默认类。\n\
+  *   **配置文件名称：** 要使用的部署配置文件。\n\n```\nazdata arc dc create \\\n--connectivity-mode\
+  \ Indirect \\\n--name arc-dc-aks \\\n--namespace arc \\\n--subscription  \\\n--resource-group\
+  \ \"Kubernetes-Cloud\" \\\n--location eastus \\\n--storage-class managed-premium\
+  \ \\\n--profile-name azure-arc-aks-premium-storage\n```\n**清单 9-3**\n用于创建数据控制器的\
+  \ `azdata` 命令\n\n如果您部署到 `AKS` 以外的其他目标，则需要相应地调整 `配置文件名称`。可以使用清单 9-4 中的命令检索可用配置文件的列表。\n\
+  \n**注意**\n我们的示例使用间接模式，如果您想将指标和日志上传到 Azure 门户，则需要采取本书范围之外的额外步骤。\n\n```\nazdata arc\
+  \ dc config list\n```\n**清单 9-4**\n列出数据控制器配置文件名称的 `azdata` 命令\n\n输出将类似于图 9-9 所示。\n\
+  \n![../images/494804_1_En_9_Chapter/494804_1_En_9_Fig9_HTML.jpg](img/494804_1_En_9_Fig9_HTML.jpg)\n\
+  **图 9-9**\nAzure Arc 数据控制器的配置配置文件列表\n\n要部署数据控制器，您需要接受许可协议并提供用户名和密码。\n\n如果您想在运行 `azdata`\
+  \ 命令时避免被提示输入它们，也可以在三个环境变量中提供：\n\n*   **ACCEPT_EULA：** 设置为 \"Y\"（仅当部署数据服务（如 SQL 托管实例）时才需要，数据控制器部署不需要）\n\
+  *   **AZDATA_USERNAME：** 要使用的用户名，例如 `arcadmin`\n*   **AZDATA_PASSWORD：** 为您选择的强密码\n\
+  \n如果您想在通过 `azdata` 部署时跟踪 Pod 的创建情况，可以使用清单 9-5 中的命令。\n\n```\nkubectl get pods -n\
+  \ arc –watch\n```\n**清单 9-5**\n使用 `kubectl` 监控部署状态\n\n**注意**\n每当您向 `kubectl get`\
+  \ 语句添加 `--watch` 开关时，`kubectl` 将持续监控与您的命令匹配的对象，并不断刷新其当前状态。\n\n`azdata` 将在部署完成后报告，如图\
+  \ 9-10 所示。\n\n![../images/494804_1_En_9_Chapter/494804_1_En_9_Fig10_HTML.jpg](img/494804_1_En_9_Fig10_HTML.jpg)\n\
+  **图 9-10**\n数据控制器部署的输出\n\n\n#### 部署 Azure Arc 托管 SQL 实例\n\n要通过 `azdata` 部署 Azure\
+  \ Arc 托管 SQL 实例，我们首先需要登录到集群，如清单 9-6 所示。\n\n```\nazdata login -ns arc\n清单 9-6\n登录到数据控制器的\
+  \ azdata 命令\n```\n\n注意：如果您未在环境变量中存储用户名和密码，此命令将再次提示您输入。\n\n可以通过一个简单的 `azdata` 命令部署一个新的托管实例，如清单\
+  \ 9-7 中的命令。唯一必需的参数是实例名称。如果您未提供存储类，则将使用默认存储类。这要求必须已定义默认存储类！\n\n```\nazdata arc sql\
+  \ mi create \\\n--name arc-mi-01 \\\n--storage-class-data managed-premium \\\n--storage-class-logs\
+  \ managed-premium \\\n--storage-class-data-logs managed-premium \\\n--storage-class-backups\
+  \ managed-premium\n清单 9-7\n使用参数创建新的 SQL 托管实例的 azdata 命令\n```\n\n部署过程会再次要求输入用户名和密码，除非您已通过环境变量提供，否则系统会提示您输入。\n\
+  \n部署完成后，`azdata` 将报告结果，如图 9-11 所示。\n\n![../images/494804_1_En_9_Chapter/494804_1_En_9_Fig11_HTML.jpg](img/494804_1_En_9_Fig11_HTML.jpg)\n\
+  \n图 9-11：创建 MI 后 `azdata` 的输出。\n\n使用清单 9-8 中的代码查看 Pod。\n\n```\nkubectl get pods\
+  \ arc-mi-01-0 -n arc\n清单 9-8\nkubectl get pods\n```\n\n我们还可以看到为我们的托管实例创建的 Pod（图\
+  \ 9-12）。\n\n![../images/494804_1_En_9_Chapter/494804_1_En_9_Fig12_HTML.jpg](img/494804_1_En_9_Fig12_HTML.jpg)\n\
+  \n图 9-12：MI 的 Pod。\n\n注意：这是一个包含三个内部运行容器的单一 Pod。这并不意味着我们获得了三个 SQL Server 实例。\n\n\
+  要使用 `sqlcmd`、`Azure Data Studio` 或其他客户端工具连接到我们的实例，我们需要 SQL Server 端点的 IP 地址和端口。除了使用\
+  \ `kubectl` 列出服务外，我们也可以使用清单 9-9 中的 `azdata` 命令来实现此目的。\n\n```\nazdata arc sql mi\
+  \ list\n清单 9-9\n列出当前控制器中所有 SQL MI 的 azdata 命令\n```\n\n这将返回我们实例的外部端点、其名称、副本数量及其当前状态，如图\
+  \ 9-13 所示。\n\n![../images/494804_1_En_9_Chapter/494804_1_En_9_Fig13_HTML.jpg](img/494804_1_En_9_Fig13_HTML.jpg)\n\
+  \n图 9-13：Azure Arc 命名空间中的托管实例。\n\n我们现在可以使用此信息连接到我们的 SQL Server。\n\n### Azure Arc\
+  \ SQL 托管实例的高可用性\n\n在撰写本文时，Kubernetes 上的“常规” SQL Server（如我们在第 7 章中部署的）不支持 `可用性组`。\n\
+  \n您现在可能想知道，既然 Kubernetes 提供了原生的高可用性，为什么还需要 AG。问题在于，根据您使用的存储类型，在节点发生故障时，存储需要附加到新节点。这个过程可能耗时从几毫秒到几分钟不等。在高可用性环境中，几分钟的停机时间显然是不可接受的。\n\
+  \n答案同样在于 Arc 中的 `SQL 托管实例 Always On 可用性组`。如图 9-14 所示，它们将我们在本章前面介绍的 Azure Arc SQL\
+  \ 托管实例与用于高可用性的可用性组 (`AGs`) 结合在一起。\n\n![../images/494804_1_En_9_Chapter/494804_1_En_9_Fig14_HTML.jpg](img/494804_1_En_9_Fig14_HTML.jpg)\n\
+  \n图 9-14：SQL 托管实例 Always On 可用性组。\n\n部署 Azure Arc 托管的 `SQL 托管实例 Always On 可用性组`时，它提供以下功能：\n\
+  \n1.  三副本组在内部管理，包括创建可用性组以及将副本加入创建的可用性组。\n2.  所有数据库（包括所有用户和系统数据库，如 `master` 和 `msdb`）都会自动添加到可用性组。此功能在可用性组副本之间提供单一系统视图。\n\
+  3.  会自动预配一个外部端点，用于连接到可用性组内的数据库，支持读写和只读连接。\n4.  能够通过连接到辅助实例运行只读工作负载。\n5.  在 Pod 或节点发生故障时，自动进行故障转移和实例重新部署。\n\
+  6.  由系统管理升级。\n\n部署由多个副本支持的托管实例简直太容易了。要将 Azure Arc SQL 托管实例部署为 AG，您只需在创建命令中添加 `--replicas`\
+  \ 开关，如清单 9-10 所示。\n\n```\nazdata arc sql mi create \\\n--name arc-mi-ha \\\n--replicas\
+  \ 3\n清单 9-10\n使用参数创建新的 SQL 托管实例的 azdata 命令\n```\n\n一旦此部署完成，我们就可以检索主实例的端点，并针对其运行清单\
+  \ 9-11 中的命令来检查我们的可用性组状态。\n\n```\nSELECT ag.name agname, ags.* FROM sys.dm_hadr_availability_group_states\
+  \ ags INNER JOIN sys.availability_groups ag ON ag.group_id = ags.group_id\n清单 9-11\n\
+  通过 T-SQL 获取 AG 运行状况\n```\n\n如图 9-15 所示，一切看起来都很好。\n\n![../images/494804_1_En_9_Chapter/494804_1_En_9_Fig15_HTML.jpg](img/494804_1_En_9_Fig15_HTML.jpg)\n\
+  \n图 9-15：AG 的状态。\n\n仅作参考，如果我们针对单实例部署运行相同的查询，此查询将返回空结果（参见图 9-16）。\n\n![../images/494804_1_En_9_Chapter/494804_1_En_9_Fig16_HTML.jpg](img/494804_1_En_9_Fig16_HTML.jpg)\n\
+  \n图 9-16：未部署可用性组。\n\n另请注意（图 9-17）我们的 HA 实例是使用三个 Pod 而不是一个部署的——您可以再次使用 `kubectl get\
+  \ pods` 进行验证。\n\n![../images/494804_1_En_9_Chapter/494804_1_En_9_Fig17_HTML.jpg](img/494804_1_En_9_Fig17_HTML.jpg)\n\
+  \n图 9-17：Azure Arc 命名空间中用于托管实例 AG 的 Pod。\n\n注意：这里我们看到三个副本在 StatefulSet 中运行，每个 Pod\
+  \ 运行四个容器。\n\n### 本章小结\n\n在本章中，我们探讨了 Azure Arc 托管的数据服务，以及它们如何通过 `azdata` 添加另一层抽象来允许部署复杂解决方案。我们部署了一个\
+  \ Azure Arc 托管的数据控制器以及一个 Azure Arc 托管实例，并通过将其部署为可用性组使其具有高可用性。在下一章，也是最后一章，我们将探讨另一种在\
+  \ Kubernetes 上运行的 SQL Server 实现：大数据群集。\n\n## 10. 大数据群集\n\n既然我们知道了如何在 Kubernetes\
+  \ 上部署 SQL Server，让我们在最后一章看看 Microsoft 如何设计、构建和部署大数据群集以在 Kubernetes 中运行，以及在 Kubernetes\
+  \ 中构建复杂分布式系统并将其作为产品交付所遇到的挑战和制定的解决方案。我们将查看 BDC 架构，并将其映射回 Kubernetes 对象和结构。\n\n\n\n\
+  ### 大数据集群简介\n\nSQL Server 2019 大数据集群——或简称大数据集群——是 SQL Server 2019 中的一套新功能集，涵盖了数据虚拟化、数据集市横向扩展以及人工智能等广泛功能。尽管微软采取“云优先”策略，将新功能和特性首先发布到\
+  \ Azure，并最终才（如果有的话）推广到本地版本，但它们是盒装产品的一部分，因此虽然你显然可以随心所欲地安装它们，但它们是客户自行管理的。\n\n大数据集群只能在\
+  \ Linux 上运行（请花点时间好好想想这一点！），并且只能部署在 Kubernetes 集群中。虽然本书到目前为止我们向你展示了将应用程序部署到 Kubernetes\
+  \ 作为 Windows 服务器上经典部署的现代替代方案的方法，但到了这里，你没有选择如何部署它的余地。并且，由于这是继上一章介绍的 Arc 启用数据服务之后的第二个示例，希望这也是你（如果你还没有意识到的话）看到\
+  \ Kubernetes 如何成为部署现代数据应用程序的平台，以及为什么将其作为你未来技能组合的一部分如此重要的时刻。\n\nSQL Server 2019 大数据集群本质上是\
+  \ SQL Server、Apache Spark 和 HDFS 在 Kubernetes 环境中的组合。它们不是单一功能，而是一个功能集。图 10-1 将此功能集的不同部分分类到不同的组中，以帮助你更好地理解所提供的内容。总体思路是，通过虚拟化和横向扩展，SQL\
+  \ Server 2019 成为你所有数据的数据中心，即使这些数据并不物理存储在 SQL Server 中。\n\n![../images/494804_1_En_10_Chapter/494804_1_En_10_Fig1_HTML.jpg](img/494804_1_En_10_Fig1_HTML.jpg)\n\
+  \n图 10-1\n\nSQL Server 2019 大数据集群功能概览\n\n从左到右展示了大数据集群的主要方面。你拥有对数据虚拟化的支持，然后是一个托管数据平台，最后一个人工智能（AI）平台。\n\
+  \n让我们更深入地看看它们。\n\n#### 数据虚拟化\n\n数据虚拟化将数据引入 SQL Server，而这些数据并不物理存储在 SQL Server 中。这是通过\
+  \ PolyBase 实现的。PolyBase 最初在 SQL Server 2016 中引入，引入了 `外部表` 的概念。虽然 PolyBase 最初只支持基于文件的源，但现在已大大增强，支持其他源，如\
+  \ Oracle、SQL Server、Teradata、MongoDB 以及无数其他源。这允许你创建一个表，例如 `dbo.Customers`，并像查询本地表一样查询它，但它的数据实际上存储在例如\
+  \ Azure SQL Database 中。虽然这可能让你联想到链接服务器，但 PolyBase 外部表不需要使用令人头疼的三段式命名法（`Servername.databasename.schemaname.tablename`）并且对它们的查询是多线程的，这些事实只显示了它们相对于链接服务器的一些优势。\n\
+  \n外部表没有缓存，因此对它们的每一次查询都会实时访问底层源，这是你在通过 PolyBase 从头构建数据仓库之前应该考虑的因素——考虑延迟和工作负载问题![../images/494804_1_En_10_Chapter/494804_1_En_10_Figa_HTML.gif](img/494804_1_En_10_Figa_HTML.gif)。\n\
+  \n#### 托管数据平台\n\n在大数据集群的托管数据平台中，你基本上有两个选项：你可以将单个 SQL Server 表横向扩展到多个 SQL Server\
+  \ 实例——因此，除了将它们分布在文件或文件组上之外，它们被物理地推送到单独的实例中。或者，你可以存储和消费基于文件的数据，如 `CSV` 或 `Parquet`\
+  \ 文件（如果你不熟悉 Parquet，可以将其视为平面文件的 `聚集列存储索引`）。这些文件将再次通过 SQL Server 中的外部表公开和访问，使你可能运行一个看起来只消耗\
+  \ SQL Server 数据的查询，但实际上它结合了来自 CSV 的数据、Oracle 实例中的表、一个横向扩展到其他几个 SQL Server 上的大型事实表……你明白这个意思了。\n\
+  \n#### AI 和应用程序平台\n\n大数据集群允许你部署应用程序，例如，可以是 SSIS 包或 R 或 Python 应用程序。这些应用程序随后可以通过\
+  \ REST API 公开，并从大数据集群内部以及外部访问。因此，你的大数据集群同时成为你的数据库、文件服务器和应用程序服务器，都在一个单一的部署中，而无需担心这些组件和池之间的连接性。\n\
+  \n### BDC 架构\n\n大数据集群可以分为四个逻辑层。将它们视为执行集群内特定功能的各种基础设施和管理部分的集合。每个区域又执行一个或多个角色。例如，在数据层内部，有两个角色：存储池和\
+  \ SQL 数据池。\n\n图 10-2 展示了四个逻辑区域以及各区域包含的各种角色的概览。\n\n![../images/494804_1_En_10_Chapter/494804_1_En_10_Fig2_HTML.jpg](img/494804_1_En_10_Fig2_HTML.jpg)\n\
+  \n图 10-2\n\n大数据集群架构\n\n你可以立即推断出四个逻辑层：控制层（内部命名为控制平面——就像 Kubernetes 本身也有另一个控制平面一样）以及计算、数据和应用区域。\n\
+  \n#### 大数据集群组件\n\n让我们更深入地了解一下大数据集群的组件。\n\n##### BDC 控制平面\n\n控制平面——不要与 Kubernetes\
+  \ 控制平面混淆——是每个 BDC 部署的核心。它结合了 Grafana 和 Kibana 监控仪表板等功能，以及控制服务和配置存储等关键功能。虽然你可能除了仪表板之外永远不会与这些组件中的任何一个交互，但没有它们，你的\
+  \ BDC 根本无法做任何事情。\n\n##### SQL Server 主实例\n\n你可能已经注意到图 10-2 中显示了一个额外或几乎是独立的角色，SQL\
+  \ Server 主实例。\n\nSQL Server 主实例是一个部署在 Linux 上的 SQL Server，充当你大数据集群的入口点。它通过 Azure\
+  \ Data Studio 或其他工具（如 SQL Server Management Studio）提供外部连接端点。\n\n##### 计算池\n\n计算池由一个或多个\
+  \ Linux 上的 SQL Server 实例组成，允许你通过 PolyBase 以分布式方式访问各种数据源。例如，计算池可以访问大数据集群本身 HDFS 中存储的数据，或者通过任何\
+  \ PolyBase 连接器（如 Oracle 或 MongoDB）访问数据。\n\n计算池的主要优势在于，它提供了将查询分布或横向扩展到每个计算池内多个节点的选项，从而提升了\
+  \ PolyBase 查询的性能。\n\n每个 BDC 部署至少会有一个 SQL 实例作为计算池的一部分。你永远不会直接与它们交互——可能除了调试目的——它们将只是透明地成为你在整个集群中执行查询的一部分。\n\
+  \n\n#### 存储池\n\n存储池为你提供了一个包含 Apache Spark 和 SQL Server 端点的 HDFS 集群。与计算池一样，每个大数据集群（BDC）至少有一个实例作为其存储池的一部分，但根据你的工作负载和用例，你也可以决定使用更多实例。这意味着每个大数据集群都自带其自身的\
+  \ HDFS，因此能够自托管你可能需要在集群内使用的任何基于文件的数据。如果你已经拥有一个 HDFS 存储，例如在 Azure Data Lake Store\
+  \ (ADLS) 中，你也可以通过所谓的层级化（tiering）将其作为挂载点添加。在这种情况下，你的 ADLS 仅会成为存储池中的一个文件夹。\n\n####\
+  \ 数据池\n\n另一方面，数据池为你提供多个运行在 Linux Pod/实例上的 SQL Server，这些实例可以——再次通过外部表（external table）的概念——用于将单个表横向扩展到它们之上。理论上，你也可以像所有其他池一样，仅用一个实例部署你的数据池。但这只有在你不打算利用数据池的场景下才有意义，因为显然无法仅用一个实例来横向扩展一个表。你可以将数据池上横向扩展的表想象成一个\
+  \ `UNION ALL`——你对一个表运行单个查询，却得到了多个物理表的结果。数据池仅支持 `INSERT` 和 `TRUNCATE` 操作，并且不支持事务，因此不要将其视作你的主要数据存储，而应视作\
+  \ SQL Server 数据的一个缓存。\n\n#### 应用池\n\n最后一个组件是应用池。它允许你通过 Azure Data Studio、Visual\
+  \ Studio Code 或使用 `azdata` 的命令行，将 MLeap、R、Python 或 SSIS 解决方案部署到其上。这些应用程序随后可以通过交互方式、通过\
+  \ `REST API` 或基于计划来使用。\n\n#### BDC 中的 Kubernetes 构造\n\n每个 BDC 都将部署到它自己的命名空间中，默认是\
+  \ `mssql-cluster`，位于一个 Kubernetes 集群内。BDC 中的不同组件由独立的 Pod 表示。在不同的池中，例如数据池的每个实例，都将由其自己的\
+  \ Pod 表示。通过 `kubectl` 检索到的 BDC 命名空间内 Pod 列表的输出可以在图 10-3 中看到。\n\n![../images/494804_1_En_10_Chapter/494804_1_En_10_Fig3_HTML.jpg](img/494804_1_En_10_Fig3_HTML.jpg)\n\
+  \n图 10-3\n\n在 BDC 命名空间中执行 `kubectl get pods` 的输出\n\n在此示例中，我们可以看到此特定部署在数据池和存储池中各有两个实例，而在应用池和计算池中各有一个实例，并且其他组件（如\
+  \ `metricsdb`、`metricsdc` 和 `metricsui` Pod）各有一个或多个 Pod，例如这些 Pod 代表了 Grafana 仪表板。正如你可能现在已经察觉到的，我们在第\
+  \ 8 章部署了 Grafana 和 Kibana，它们作为 Azure Arc 支持的数据服务的一部分交付（如第 9 章所示），并且它们现在再次出现，它们已成为\
+  \ Kubernetes 上的 SQL Server 世界中监控和日志管理的既定标准。\n\nBDC 的端点在 Kubernetes 中通过服务（service）暴露。根据平台的不同，这些服务的类型将是\
+  \ `NodePort` 或 `LoadBalancer`，正如我们在图 10-4 的示例中看到的那样。\n\n![../images/494804_1_En_10_Chapter/494804_1_En_10_Fig4_HTML.jpg](img/494804_1_En_10_Fig4_HTML.jpg)\n\
+  \n图 10-4\n\n在 BDC 命名空间中执行 `kubectl get services | grep NodePort` 的输出\n\n除了这些服务之外，它还公开了许多\
+  \ `ClusterIP` 服务，以允许服务之间进行通信。\n\n它还创建了多种不同的集合（sets）——DaemonSets、ReplicaSets 和 StatefulSets。如果我们使用\
+  \ `kubectl get all -n mssql-cluster` 来列出它们，它们都会出现在输出的下部（图 10-5）。\n\n![../images/494804_1_En_10_Chapter/494804_1_En_10_Fig5_HTML.jpg](img/494804_1_En_10_Fig5_HTML.jpg)\n\
+  \n图 10-5\n\n大数据集群中的 Kubernetes 集合\n\nBDC 中的存储通过存储类和其中的动态配置来寻址。正如你在图 10-6 中看到的，大数据集群会根据需要创建动态持久卷声明（以及底层的卷）。\n\
+  \n![../images/494804_1_En_10_Chapter/494804_1_En_10_Fig6_HTML.jpg](img/494804_1_En_10_Fig6_HTML.jpg)\n\
+  \n图 10-6\n\n大数据集群中的 PVC\n\n如你所见，大数据集群确实将我们迄今为止所涉及的所有内容整合在了一起，从 Kubernetes 对象、监控，当然还有\
+  \ SQL Server。\n\n\n### 部署\n\n与 Azure Arc 支持的数据服务类似，大数据集群通过 `azdata` 部署，并且该过程可以再次从命令行或\
+  \ Azure Data Studio 运行，后者将创建一个笔记本，然后在后台运行 `azdata`。\n\n部署 BDC 需要一个正常运行的 Kubernetes\
+  \ 集群，该集群可以运行在 `kubeadm`、AKS、EKS 或 OpenShift 上。\n\n要部署 BDC，您需要将 Kubernetes 上下文切换到所需的目标集群，并使用代码清单\
+  \ 10-1 中的代码创建一个配置。\n\n```\nazdata bdc config init [--path] [--source -s]\n```\n\
+  清单 10-1\n创建 BDC 配置\n\n`Path` 只是配置文件（`bdc.json` 和 `control.json`）将通过清单 10-1 中的命令创建的文件夹名称。`src`\
+  \ 是起始的现有基础模板之一，例如 `aks-dev-test` 或 `kubeadm-prod`。\n\n例如，要在名为 `myBDC` 的子文件夹中创建大数据集群配置的完整命令（该集群计划使用典型的开发/测试环境部署在\
+  \ AKS 上）如清单 10-2 所示。\n\n```\nazdata bdc config init --path myBDC –-source aks-dev-test\n\
+  ```\n清单 10-2\n创建 BDC 配置\n\n这些文件将用于配置部署的所有方面，从将大数据集群集成到 Active Directory 以进行 AD 认证，到每个池中的副本数量，再到内存和存储要求。清单\
+  \ 10-3 展示了这两个文件之一 `bdc.json` 的示例。\n\n```\n{\n\"apiVersion\": \"v1\",\n\"metadata\"\
+  : {\n\"kind\": \"BigDataCluster\",\n\"name\": \"mssql-cluster\"\n},\n\"spec\": {\n\
+  \"resources\": {\n\"nmnode-0\": {\n\"spec\": {\n\"replicas\": 2\n}\n},\n\"sparkhead\"\
+  : {\n\"spec\": {\n\"replicas\": 2\n}\n},\n\"zookeeper\": {\n\"spec\": {\n\"replicas\"\
+  : 3\n}\n},\n\"gateway\": {\n\"spec\": {\n\"replicas\": 1,\n\"endpoints\": [\n{\n\
+  \"name\": \"Knox\",\n\"dnsName\": \"\",\n\"serviceType\": \"NodePort\",\n\"port\"\
+  : 30443\n}\n]\n}\n},\n\"appproxy\": {\n\"spec\": {\n\"replicas\": 1,\n\"endpoints\"\
+  : [\n{\n\"name\": \"AppServiceProxy\",\n\"dnsName\": \"\",\n\"serviceType\": \"\
+  NodePort\",\n\"port\": 30778\n}\n]\n}\n},\n\"master\": {\n\"metadata\": {\n\"kind\"\
+  : \"Pool\",\n\"name\": \"default\"\n},\n\"spec\": {\n\"type\": \"Master\",\n\"replicas\"\
+  : 3,\n\"endpoints\": [\n{\n\"name\": \"Master\",\n\"dnsName\": \"\",\n\"serviceType\"\
+  : \"NodePort\",\n\"port\": 31433\n},\n{\n\"name\": \"MasterSecondary\",\n\"dnsName\"\
+  : \"\",\n\"serviceType\": \"NodePort\",\n\"port\": 31436\n}\n],\n\"settings\": {\n\
+  \"sql\": {\n\"hadr.enabled\": \"true\"\n}\n}\n}\n},\n\"compute-0\": {\n\"metadata\"\
+  : {\n\"kind\": \"Pool\",\n\"name\": \"default\"\n},\n\"spec\": {\n\"type\": \"Compute\"\
+  ,\n\"replicas\": 1\n}\n},\n\"data-0\": {\n\"metadata\": {\n\"kind\": \"Pool\",\n\
+  \"name\": \"default\"\n},\n\"spec\": {\n\"type\": \"Data\",\n\"replicas\": 2\n}\n\
+  },\n\"storage-0\": {\n\"metadata\": {\n\"kind\": \"Pool\",\n\"name\": \"default\"\
+  \n},\n\"spec\": {\n\"type\": \"Storage\",\n\"replicas\": 3,\n\"settings\": {\n\"\
+  spark\": {\n\"includeSpark\": \"true\"\n}\n}\n}\n}\n},\n\"services\": {\n\"sql\"\
+  : {\n\"resources\": [\n\"master\",\n\"compute-0\",\n\"data-0\",\n\"storage-0\"\n\
+  ]\n},\n\"hdfs\": {\n\"resources\": [\n\"nmnode-0\",\n\"zookeeper\",\n\"storage-0\"\
+  ,\n\"sparkhead\"\n],\n\"settings\": {\n\"hdfs-site.dfs.replication\": \"3\"\n}\n\
+  },\n\"spark\": {\n\"resources\": [\n\"sparkhead\",\n\"storage-0\"\n],\n\"settings\"\
+  : {\n\"spark-defaults-conf.spark.driver.memory\": \"2g\",\n\"spark-defaults-conf.spark.driver.cores\"\
+  : \"1\",\n\"spark-defaults-conf.spark.executor.instances\": \"3\",\n\"spark-defaults-conf.spark.executor.memory\"\
+  : \"1536m\",\n\"spark-defaults-conf.spark.executor.cores\": \"1\",\n\"yarn-site.yarn.nodemanager.resource.memory-mb\"\
+  : \"18432\",\n\"yarn-site.yarn.nodemanager.resource.cpu-vcores\": \"6\",\n\"yarn-site.yarn.scheduler.maximum-allocation-mb\"\
+  : \"18432\",\n\"yarn-site.yarn.scheduler.maximum-allocation-vcores\": \"6\",\n\"\
+  yarn-site.yarn.scheduler.capacity.maximum-am-resource-percent\": \"0.3\"\n}\n}\n\
+  }\n}\n}\n```\n清单 10-3\n示例 `bdc.json`\n\n一旦您编辑/创建了配置文件，就可以如清单 10-4 所示运行 `azdata`\
+  \ 来创建集群。\n\n```\nazdata bdc create -c  --accept-eula yes\n```\n清单 10-4\n使用 `azdata`\
+  \ 创建集群\n\n`Azdata` 将提示您输入用户名和密码，除非您之前已通过环境变量提供了这些信息。根据部署的范围和 Kubernetes 集群的性能，这可能需要几分钟到几小时不等。\n\
+  \n您可以跟踪进度并查看完成时间，如图 10-7 所示。\n\n![../images/494804_1_En_10_Chapter/494804_1_En_10_Fig7_HTML.jpg](img/494804_1_En_10_Fig7_HTML.jpg)\n\
+  \n图 10-7\n`azdata bdc create` 的输出\n\n部署所需的时间还取决于镜像是否已经预拉取，因为仅这些镜像就需要下载超过 30GB。\n\
+  \n### 监控和管理\n\nBDC 可以直接从 Azure Data Studio 内部进行监控，也可以通过 Grafana 和 Kibana 仪表板进行监控，正如我们在前几章中已经遇到过的，如图\
+  \ 10-8 所示。还要注意，您可以更改门户的整体行为（如深色模式与浅色模式），以及此仪表板与我们在前几章中使用的仪表板又略有不同。\n\n![../images/494804_1_En_10_Chapter/494804_1_En_10_Fig8_HTML.jpg](img/494804_1_En_10_Fig8_HTML.jpg)\n\
+  \n图 10-8\nGrafana 门户 – SQL Server 指标\n\nAzure Data Studio 为您提供集群端点的概览以及其健康状况的粗略状态，如图\
+  \ 10-9 所示。\n\n![../images/494804_1_En_10_Chapter/494804_1_En_10_Fig9_HTML.jpg](img/494804_1_En_10_Fig9_HTML.jpg)\n\
+  \n图 10-9\nADS 中的大数据集群概览\n\n除此之外，如图 10-10 所示，它还为您的 BDC 提供了一个故障排除工具集。\n\n![../images/494804_1_En_10_Chapter/494804_1_En_10_Fig10_HTML.jpg](img/494804_1_En_10_Fig10_HTML.jpg)\n\
+  \n图 10-10\nADS 中的故障排除链接\n\n此按钮背后是用于排除集群每个组件故障的一组笔记本。第一个打开的笔记本是“TSG100 – 大数据集群故障排除程序”，它将指导您完成对大数据集群的全面调试。如果您已经缩小了导致问题的服务范围，您也可以直接导航到该特定组件的分析器笔记本。\n\
+  \n\n\n### 升级大数据集群\n\nBDC 的升级通过 `azdata` 进行，因此首先请确保你已安装最新版本的 `azdata`。为此，请像首次安装 `azdata`\
+  \ 时一样，运行代码清单 10-5 中的代码。\n\n```\ncurl -o azdata.msi https://aka.ms/azdata-msi\nmsiexec\
+  \ azdata.msi\n代码清单 10-5\n将 azdata 更新至最新版本\n```\n\n现在你可以使用 `azdata` 来升级你的集群。对应的命令是\
+  \ `azdata bdc upgrade`，后至少跟上你的集群名称和目标版本。\n\n例如，要升级到大数据集群 2019 CU9，你会使用代码清单 10-6\
+  \ 所示的命令。这将更新你 BDC 的所有组件。\n\n```\nazdata bdc upgrade --name mybdc --tag 2019-CU9-ubuntu-16.04\n\
+  代码清单 10-6\n使用 azdata 将你的 BDC 升级到 CU9\n```\n\n这将需要一些时间，因为首先需要拉取所有单独的镜像，然后升级集群中的每一个组件。就像安装过程一样，升级过程会持续提供状态更新，告知当前正在处理哪个组件，直到升级过程完成。\n\
+  \n目前，部署后无法更改大数据集群的大小，因此 `azdata` 可以将现有集群升级到另一个版本，但你无法更改池中的实例数量，例如。这需要一个新的部署。\n\n\
+  如果你想了解更多关于大数据集群的信息，包括如何部署它们的详细信息，我们推荐 Apress 的书籍 *《SQL Server 大数据集群：数据虚拟化、数据湖与 AI\
+  \ 平台》*。\n\n### 总结\n\n在这最后一章中，我们探讨了如何利用 Kubernetes 以简单、自动化的方式部署像大数据集群这样复杂且异构的应用程序。这也为本书画上了句号。我们希望这有助于你更深入地理解\
+  \ Kubernetes 以及它如何帮助你部署现代数据应用程序！\n\n"
+- '# 索引
+
+
+  **A**
+
+  应用程序编程接口 (`API`) 对象 原语 `ConfigMaps` 控制器 `pods` `ReplicaSet` 操作 `secret` 服务 `StatefulSet`
+  存储 服务器 Arc–启用的数据服务 架构 组件 构建 核心功能 数据控制器 部署 可用性组 `azdata` 命令 配置 配置文件 数据控制器 环境变量 `kubectl`
+  上下文 列出配置文件名称 监控部署状态 SQL 托管实例 基础层 Kubernetes 集群 命名空间 `PostgreSQL` 先决条件 SQL 托管实例 切换
+  `kubectl` 上下文 工具 可用性组 (AGs) Azure 账户 详情 `deployment-dynamic-azure.yaml` 存储 数据持久性
+  Azure Kubernetes 服务 (AKS) `az aks` 创建集群 (bash) 登录账户 PowerShell 资源组 检索凭据 虚拟机 Azure
+  资源管理器 (`ARM`)
+
+
+  **B**
+
+  大数据集群 (`BDC`) AI/应用程序 应用程序池 架构/组件 计算池 控制平面 数据池 数据虚拟化 部署 `azdata` 输出 `bdc.json` 配置
+  功能 Kubernetes 构建 Linux 托管数据平台 监控/管理 SQL Server 主实例 存储池 更新过程
+
+
+  **C**
+
+  命令行接口 (`CLI`) 容器 基础知识 应用程序部署 命令行工具 `sqlcmd` 数据持久性 (参见 数据持久性) 数据库备份 部署自动化 `docker
+  pull` 元素 临时的 快速/一致的部署 镜像 内部结构 隔离 生命周期 列出数据库 本地系统 日志命令 `ls` 命令 操作系统 编排器 概述 删除选项 资源
+  运行命令 速度/打补丁 SQL Server 2019 CU1 `start/stop` 命令 故障排除技术 宇宙 虚拟机 虚拟化 Windows
+
+
+  **D, E, F**
+
+  数据持久性 容器生命周期 `cp` 命令 数据卷规范 文件位置 `inspect` 命令 实例级配置 `ls` 命令 Pod 生命周期 `remove` 命令
+  `run` 命令 `sqlcmd` SQL Server 实例 `stop/remove` 命令 存储 (参见 存储 数据持久性) 卷 可写层 可写层 Docker
+  主机
+
+
+  **G, H**
+
+  Grafana 仪表板 Arc–启用的数据服务 大数据集群 SQL Server 指标 系统指标 Telegraf 系统仪表板
+
+
+  **I, J**
+
+  安装 考虑事项/方法 额外选项 考虑事项 部署选项 GitHub 安装方法 网络要求 单节点集群 系统要求
+
+
+  **K**
+
+  交互 部署 声明式 命令式 配置修改 `nginx` 副本定义 暴露/访问服务 `ClusterIP` 服务 `get service` 详情 `LoadBalancer`
+  类型 `nginx` 部署 `NodePort` `kubectl` 命令 `AKSCluster` CLI 工具 上下文 异常 命名空间 操作 输出 资源 检索详细列表
+  Windows 工作站
+
+
+  **L**
+
+  Kibana 仪表板 大数据集群 组件 配置 `elasticsearch` `fluent-bit` 安装 直方图 索引模式 `kibana.yaml` 日志聚合/管理
+  概述 SQL Server 日志 错误日志 自由文本过滤器 `mssql` StatefulSet
+
+
+  **M**
+
+  监控方案 清理 Kibana 安装/配置 日志聚合/管理 SQL Server `kubectl`
+
+
+  **N, O, P, Q, R**
+
+  网络地址转换 (`NAT`) 网络文件系统 (`NFS`) 服务器 `deployment-dynamic.yaml` 动态配置磁盘 `enable-nfs.sh`
+  `kube-apiserver.yaml` `nfs-provisioner.yaml` `nfs-rbac.yaml` `nfs-storageclass.yaml`
+  持久卷
+
+
+  **S**
+
+  自管理集群 控制平面 `ClusterConfiguration.yaml` 配置文件 创建 `init` 命令 `kubeadm` 版本 `kubectl`
+  配置 Pod 网络 存储 `wget` 命令 节点 虚拟机 配置文件 安装/配置 包 保留 系统参数 版本列表 结构化查询语言 (`SQL`) 备份/恢复 组件
+  配置选项 描述 部署 生命周期/数据持久性 Pod 准备 简而言之 密钥 存储平台 生产环境 服务器指标 组件 `DaemonSet` 仪表板 数据源 `deployment.yaml`
+  导入仪表板 `InfluxDB` 命名空间 要求 `service.yaml` 设置变量和密钥 统计信息 `storage.yaml` `telegraf-configmap.yaml`
+  Telegraf 仪表板 更新镜像 YAML 定义 检查状态 `kubectl get pods/service` 清单 进程 `NFS` 共享 Pod/服务
+  规范 `sqlcmd` 查询/命令 `sql-deployment.yaml` 版本匹配 存储 数据持久性 Azure 类 别 动态配置 网络文件系统 持久卷
+  访问模式 绑定 声明 请求 定义 静态配置 存储类型 卷 `pv-nfs-data-static` 回收策略 有状态应用 静态类 独特配置属性 卷 系统 交换空间
+
+
+  **T**
+
+  工具安装 管理工作站 `azdata` Chocolatey/`choco` Linux 机器 工具 Windows 工作站 生产系统
+
+
+  **U**
+
+  联合文件系统
+
+
+  **V**
+
+  虚拟机 (`VM`) Azure 账户 详情 配置文件 计算和存储资源 容器 基础知识 安装/配置 Linux 主机 文件内容 网络配置 包 保留 系统参数 PowerShell
+  脚本 自管理集群 版本列表
+
+
+  **W, X, Y, Z**
+
+  Windows 机器
+
+  '

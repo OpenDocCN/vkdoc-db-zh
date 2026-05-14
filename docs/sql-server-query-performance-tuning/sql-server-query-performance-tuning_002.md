@@ -1,0 +1,16 @@
+# 内容概览
+第 16 章：参数嗅探 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx[311
+第 17 章：查询重新编译 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx[321
+第 18 章：查询设计分析 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx[355
+第 19 章：减少查询资源使用 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx[379
+第 20 章：阻塞与被阻塞进程 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx[397
+第 21 章：死锁的原因与解决方案 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx[443
+第 22 章：逐行处理 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx[459
+第 23 章：内存优化的 OLTP 表与存储过程 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx[483
+第 24 章：数据库性能测试 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx[505
+第 25 章：数据库工作负载优化 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx[515
+第 26 章：SQL Server 优化清单 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx547
+索引 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx[565
+iv
+[`www.it-ebooks.info`](http://www.it-ebooks.info/)
+

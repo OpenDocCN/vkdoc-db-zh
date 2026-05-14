@@ -1,0 +1,1315 @@
+# 关系数据库词典（扩展版）
+
+*   关系数据库词典（扩展版）
+*   目录
+*   引言
+    *   运行示例
+    *   字母顺序
+    *   技术问题
+    *   致谢
+*   词典
+    *   未知
+        *   0-元
+        *   0-目
+        *   0
+        *   元组
+        *   第一范式
+        *   第二范式
+        *   二值逻辑
+        *   第三范式
+        *   三值逻辑
+        *   第四范式
+        *   第五范式
+        *   第六范式
+*   A
+    *   A
+    *   阿贝尔群
+    *   绝对补集
+    *   吸收律
+    *   抽象数据类型
+    *   访问路径
+    *   实际操作数
+    *   聚合运算符
+    *   代数
+    *   集合代数
+    *   别名
+    *   ALL BUT
+    *   ALPHA
+    *   备用键
+    *   与
+    *   前件
+    *   反对称性
+    *   出现
+    *   参数
+    *   参数表达式
+    *   元数
+    *   阿姆斯特朗推理规则
+    *   箭头
+    *   赋值
+    *   赋值原理
+    *   关联寻址
+    *   结合性
+    *   原子谓词
+    *   原子命题
+    *   原子关系变量
+    *   原子语句
+    *   原子类型
+    *   原子值
+    *   属性
+    *   属性赋值
+    *   属性约束
+    *   属性提取器
+    *   属性 FROM
+    *   属性引用
+    *   属性类型
+    *   属性值
+    *   扩张
+    *   公理
+    *   外延公理
+*   B
+    *   包
+    *   包成员关系
+    *   基本关系
+    *   基本关系变量
+    *   基本表
+    *   BCNF
+    *   双条件
+    *   BI-IMPLIES
+    *   双射
+    *   二元的
+    *   绑定
+    *   主体
+    *   BOOLEAN
+    *   布尔代数
+    *   布尔表达式
+    *   布尔运算符
+    *   布尔值
+    *   约束变量
+    *   Boyce/Codd 范式
+    *   内置
+    *   业务规则
+*   C
+    *   演算
+    *   候选键
+    *   规范形式
+    *   基数
+    *   基数约束
+    *   笛卡尔连接
+    *   笛卡尔积
+    *   级联
+    *   目录
+    *   谨慎设计原则
+    *   单元格
+    *   子 / 子表
+    *   类
+    *   闭合的 WFF
+    *   封闭世界假设
+    *   闭包
+    *   传递闭包
+    *   合取范式
+    *   Codd, E. F.
+    *   Codd 归约算法
+    *   陪域
+    *   强制类型转换
+    *   集合
+    *   列
+    *   公共属性
+    *   交换群
+    *   交换性
+    *   比较
+    *   补偿操作
+    *   补集
+    *   互补性
+    *   完备性
+    *   分量
+    *   COMPOSE
+    *   复合属性
+    *   复合键
+    *   复合谓词
+    *   复合命题
+    *   复合语句
+    *   合成
+    *   计算完备性
+    *   概念建模
+    *   结论
+    *   条件表达式
+    *   条件运算符
+    *   合取项
+    *   合取
+    *   合取范式
+    *   连接陷阱
+    *   连接词
+    *   后件
+    *   一致性
+    *   一致的
+    *   常量
+    *   约束
+    *   约束推理
+    *   包含
+    *   矛盾
+    *   逆否命题
+    *   受控冗余
+    *   正确的
+    *   正确性
+    *   相关名
+    *   覆盖
+    *   CWA
+*   D
+    *   D
+    *   D_UNION
+    *   数据
+    *   数据定义运算符
+    *   数据独立性
+    *   数据操纵运算符
+    *   数据模型
+    *   数据建模
+    *   数据子语言
+    *   数据类型
+    *   数据库
+    *   数据库约束
+    *   数据库设计
+    *   数据库管理系统
+    *   数据库编程语言
+    *   数据库统计
+    *   数据库值
+    *   数据库变量
+    *   DBMS
+    *   dbvar
+    *   DCO
+    *   德摩根定律
+    *   可判定性
+    *   已声明的
+    *   声明类型
+    *   分解
+    *   演绎公理
+    *   DEE
+    *   默认值
+    *   延迟检查
+    *   延迟约束
+    *   度
+    *   DELETE
+    *   DELETE 规则
+    *   反规范化
+    *   依赖
+    *   依赖
+    *   依赖保持
+    *   依赖理论
+    *   解引用
+    *   导出关系
+    *   导出关系变量
+    *   描述符
+    *   指示符
+    *   决定因素
+    *   差
+    *   差（集合论）
+    *   直接像
+    *   直接证明
+    *   直接推理
+    *   有向关系
+    *   可分辨性
+    *   不相交
+    *   不相交并集
+    *   析取项
+    *   析取
+    *   析取范式
+    *   DISTINCT
+    *   分配律
+    *   DIVIDEBY
+    *   除法
+    *   Tutorial D
+    *   DK/NF
+    *   DNF
+    *   域
+    *   域（数学）
+    *   域演算
+    *   域检查覆盖
+    *   域键范式
+    *   点限定
+    *   双箭头
+    *   双下划线
+    *   DRC
+    *   删除
+    *   对偶
+    *   双模式原理
+    *   对偶性原理
+    *   DUM
+    *   重复
+    *   重复消除
+    *   二元的
+*   E
+    *   E/R
+    *   E/R 图
+    *   E/R 模型
+    *   E/R 建模
+    *   E-关系
+    *   元素
+    *   嵌入式依赖
+    *   空的
+    *   空包
+    *   空外键
+    *   空标题
+    *   空键
+    *   空值域
+    *   空关系
+    *   空关系变量
+    *   空限制
+    *   空集
+    *   空元组
+    *   空类型
+    *   封装的
+    *   实体
+    *   实体完整性
+    *   实体建模
+    *   实体/关系图
+    *   实体/关系模型
+    *   实体/关系建模
+    *   EQ
+    *   相等性
+    *   等值连接
+    *   EQUIV
+    *   等价
+    *   等价类
+    *   等价关系
+    *   必要性
+    *   EXCEPT
+    *   异或
+    *   存在量词
+    *   EXISTS
+    *   可表达关系
+    *   可表达关系变量
+    *   表达式
+    *   表达式转换
+    *   EXTEND
+    *   外延
+    *   外部谓词
+*   F
+    *   FALSE
+    *   FD
+    *   由超键隐含的 FD
+    *   FD 保持
+    *   字段
+    *   域（数学）
+    *   第五范式
+    *   文件
+    *   第一大谬误
+    *   第一范式
+    *   一阶逻辑
+    *   平面关系
+    *   FORALL
+    *   外键
+    *   外键约束
+    *   外键规则
+    *   形式化的
+    *   形式操作数
+    *   形式系统
+    *   公式
+    *   第四范式
+    *   自由变量
+    *   完全 FD
+    *   完全实例化
+    *   完全依赖
+    *   完全规范化的
+    *   函数
+    *   函数依赖
+    *   函数依赖于
+    *   函数决定
+*   G
+    *   生成类型
+    *   通用运算符
+    *   通用多态
+    *   黄金法则
+    *   黄金法则
+    *   黄金法则
+    *   大谬误
+    *   大鸿沟
+    *   大于连接
+    *   GROUP
+    *   组
+    *   群（数学）
+    *   分组
+*   H
+    *   哈希
+    *   标题
+    *   希思定理
+    *   水平分解
+    *   宿主语言
+*   I
+    *   幂等性
+    *   恒等
+    *   恒等投影
+    *   恒等限制
+    *   恒等值
+    *   当且仅当
+    *   如果...那么...
+    *   IFF
+    *   像
+    *   像关系
+    *   即时检查
+    *   即时约束
+    *   实现
+    *   实现定义的
+    *   实现依赖的
+    *   蕴涵
+    *   由 FD 隐含
+    *   由超键隐含
+    *   IMPLIES
+    *   非真包含
+    *   非真子键
+    *   非真子集
+    *   非真超键
+    *   非真超集
+    *   包含
+    *   包含依赖
+    *   包含多态
+    *   包含或
+    *   不连贯原则
+    *   IND
+    *   索引
+    *   间接推理
+    *   不可分辨性
+    *   推理规则
+    *   信息等价
+    *   信息原理
+    *   继承
+    *   单射
+    *   内连接
+    *   INSERT
+    *   实例化
+    *   完整性
+    *   完整性约束
+    *   智能键
+    *   预期解释
+    *   内涵
+    *   可互换性原理
+    *   内部谓词
+    *   解释
+    *   INTERSECT
+    *   交集
+    *   交集（集合论）
+    *   into
+    *   逆
+    *   迭代
+    *   不可约性
+    *   不可约依赖
+    *   不可约等价
+    *   IS_EMPTY
+    *   同构
+*   J
+    *   JD
+    *   由超键隐含的 JD
+    *   JOIN
+    *   连接
+    *   可连接的
+    *   连接依赖
+    *   连接陷阱
+*   K
+    *   键
+    *   键属性
+    *   键约束
+    *   键推理
+*   L
+    *   代数定律
+    *   左不可约 FD
+    *   左结合性
+    *   小于连接
+    *   词法的
+    *   字面量
+    *   逻辑
+    *   逻辑变量
+    *   逻辑数据库设计
+    *   逻辑表达式
+    *   逻辑蕴涵
+    *   逻辑运算符
+    *   逻辑系统
+    *   逻辑变量
+    *   无损分解
+    *   有损分解
+*   M
+    *   受控冗余
+    *   强制参与
+    *   多对多对应
+    *   多对一对应
+    *   多值逻辑
+    *   映射
+    *   标记
+    *   MATCHING
+    *   实质等价
+    *   实质蕴涵
+    *   物化
+    *   物化视图
+    *   意义
+    *   成员
+    *   成员关系
+    *   合并
+    *   元数据
+    *   极小性
+    *   MINUS
+    *   缺失信息
+    *   模型
+    *   一元的
+    *   多关系变量约束
+    *   多元组约束
+    *   多依赖的
+    *   多决定
+    *   多重赋值
+    *   多重集
+    *   多值依赖
+    *   突变
+    *   变更器
+    *   MVD
+    *   由超键隐含的 MVD
+*   N
+    *   n-元
+    *   n-目
+    *   n-位
+    *   n-元组
+    *   与非
+    *   自然连接
+    *   否定
+    *   失败即否定
+    *   负的
+    *   嵌套关系
+    *   NF²
+    *   零元
+    *   非交换群
+    *   非键属性
+    *   无损分解
+    *   非负的
+    *   非标量的
+    *   非平凡的
+    *   或非
+    *   范式
+    *   规范化
+    *   规范化原则
+    *   规范化的
+    *   规范化的关系变量
+    *   NOT
+    *   NOT MATCHING
+    *   空值
+    *   空集
+    *   零元的
+    *   零元外键
+    *   零元标题
+    *   零元键
+    *   零元投影
+    *   零元关系
+    *   零元组
+    *   空论
+    *   nVL
+*   O
+    *   对象
+    *   对象类
+    *   对象 ID
+    *   对象建模
+    *   对象/关系数据库
+    *   对象/关系 DBMS
+    *   观察者
+    *   一对多对应
+    *   一一对应
+    *   满射
+    *   OO
+    *   开放的 WFF
+    *   开放世界假设
+    *   操作数
+    *   操作
+    *   运算符
+    *   优化
+    *   优化器
+    *   可选参与
+    *   或
+    *   ORDER BY
+    *   有序元组
+    *   有序对
+    *   有序元组
+    *   排序
+    *   序（数学）
+    *   序数类型
+    *   正交的
+    *   正交分解
+    *   正交设计原则
+    *   重载
+    *   覆盖
+    *   OWA
+*   P
+    *   P-关系
+    *   对
+    *   参数
+    *   父 / 父表
+    *   偏函数
+    *   偏序
+    *   分区
+    *   持久性
+    *   物理数据库设计
+    *   图片
+    *   流水线
+    *   PJ/NF
+    *   占位符
+    *   PNF
+    *   指针
+    *   多态
+    *   正的
+    *   幂集
+    *   谓词
+    *   谓词演算
+    *   谓词常量
+    *   谓词表达式
+    *   谓词形式
+    *   谓词逻辑
+    *   谓词变量
+    *   前提
+    *   前束范式
+    *   主域
+    *   主键
+    *   素属性
+    *   基本运算符
+    *   谨慎设计原则
+    *   不可分辨者同一性原理
+    *   不连贯原理
+    *   可互换性原理
+    *   正交设计原理
+    *   积
+    *   积（集合论）
+    *   投影
+    *   投影-连接范式
+    *   证明
+    *   传播更新
+    *   真包含
+    *   真子键
+    *   真子集
+    *   真超键
+    *   真超集
+    *   属性
+    *   命题
+    *   命题演算
+    *   命题常量
+    *   命题表达式
+    *   命题形式
+    *   命题逻辑
+    *   命题变量
+    *   原型元组
+    *   伪变量引用
+*   Q
+    *   QBE
+    *   量化
+    *   量词
+    *   QUEL
+    *   查询
+    *   查询分解
+    *   查询重写
+    *   配额查询
+*   R
+    *   值域
+    *   值域变量
+    *   RANK
+    *   排名
+    *   只读运算符
+    *   实关系
+    *   实关系变量
+    *   记录
+    *   递归查询
+    *   递归关系
+    *   冗余
+    *   被引用键
+    *   被引用关系变量
+    *   引用
+    *   引用关系变量
+    *   引用元组
+    *   参照操作
+    *   参照环
+    *   参照完整性
+    *   参照路径
+    *   自反性
+    *   刷新
+    *   关系
+    *   关系（数学）
+    *   关系赋值
+    *   关系比较
+    *   关系常量
+    *   关系相等
+    *   关系表达式
+    *   关系字面量
+    *   关系包含
+    *   关系谓词
+    *   关系模式
+    *   关系类型
+    *   关系类型推断
+    *   关系值
+    *   关系值属性
+    *   关系变量
+    *   关系代数
+    *   关系赋值
+    *   关系演算
+    *   关系比较
+    *   关系完备性
+    *   关系数据库
+    *   关系 DBMS
+    *   关系表达式
+    *   关系包含
+    *   关系模型
+    *   关系运算符
+    *   关系
+    *   相对补集
+    *   关系连接符
+    *   关系连接符引用
+    *   关系变量
+    *   关系变量约束
+    *   关系变量谓词
+    *   关系变量引用
+    *   REMOVE
+    *   重命名
+    *   重复组
+    *   限制
+    *   限制条件
+    *   可逆分解
+    *   重写规则
+    *   右结合性
+    *   环（数学）
+    *   RM/T
+    *   RM/V1
+    *   RM/V2
+    *   行
+    *   行 ID
+    *   推理规则
+    *   RVA
+*   S
+    *   安全表达式
+    *   标量
+    *   标量类型
+    *   标量值
+    *   第二大谬误
+    *   第二范式
+    *   二阶逻辑
+    *   SELECT 表达式
+    *   选择
+    *   选择器
+    *   自引用关系变量
+    *   语义
+    *   语义建模
+    *   语义优化
+    *   语义覆盖
+    *   语义
+    *   半差
+    *   SEMIJOIN
+    *   半连接
+    *   SEMIMINUS
+    *   语句
+    *   SEQUEL
+    *   集合
+    *   集合代数
+    *   集合函数
+    *   集合包含
+    *   集合级
+    *   集合成员关系
+    *   集合运算符
+    *   集合论
+    *   SI 前缀
+    *   签名
+    *   简单属性
+    *   简单键
+    *   简单谓词
+    *   简单命题
+    *   单箭头
+    *   单关系变量约束
+    *   单元组约束
+    *   单元素集合
+    *   第六范式
+    *   斯柯伦常量
+    *   斯柯伦函数
+    *   小鸿沟
+    *   Tutorial D
+    *   快照
+    *   排序/归并
+    *   排序逻辑
+    *   健全性
+    *   源关系变量
+    *   源元组
+    *   SQL
+    *   星型连接
+    *   状态约束
+    *   语句
+    *   存储过程
+    *   子表达式
+    *   受制于更新
+    *   子键
+    *   子查询
+    *   子集
+    *   代入
+    *   子表和超表
+    *   子元组
+    *   子类型
+    *   汇总
+    *   SUMMARIZE
+    *   汇总
+    *   超键
+    *   超集
+    *   超类型
+    *   满射
+    *   代理
+    *   代理键
+    *   对称差（集合论）
+    *   对称性
+    *   语法的
+    *   语法
+    *   系统定义的
+*   T
+    *   表
+    *   表别名
+    *   TABLE_DEE 和 TABLE_DUM
+    *   表和视图
+    *   目标键
+    *   目标关系变量
+    *   目标元组
+    *   重言式
+    *   TCLOSE
+    *   时态数据库
+    *   定理
+    *   θ连接
+    *   第三范式
+    *   三值逻辑
+    *   时变关系
+    *   TIMES
+    *   总体数据库约束
+    *   全函数
+    *   全序
+    *   总体关系变量约束
+    *   事务
+    *   转移约束
+    *   传递闭包
+    *   传递 FD
+    *   传递性
+    *   转换关系模型
+    *   TRC
+    *   触发器
+    *   触发过程
+    *   平凡分解
+    *   平凡 FD
+    *   平凡 JD
+    *   平凡 MVD
+    *   TRUE
+    *   真值函数完备性
+    *   真值表
+    *   真值
+    *   ...的真值
+    *   真值表达式
+    *   真值运算符
+    *   元组
+    *   元组（数学）
+    *   元组赋值
+    *   元组演算
+    *   元组比较
+    *   元组分量
+    *   Tutorial D
+    *   元组合成
+    *   元组常量
+    *   元组约束
+    *   元组差
+    *   元组相等
+    *   元组表达式
+    *   元组扩展
+    *   元组提取器
+    *   TUPLE FROM
+    *   元组 ID
+    *   元组交集
+    *   元组连接
+    *   元组级
+    *   元组字面量
+    *   元组运算符
+    *   元组投影
+    *   元组重命名
+    *   元组选择器
+    *   元组类型
+    *   元组类型生成器
+    *   元组类型推断
+    *   元组并集
+    *   元组解包
+    *   元组值
+    *   元组值属性
+    *   元组变量
+    *   元组打包
+    *   元组变量
+    *   元组变量引用
+    *   Tutorial D
+    *   TVA
+    *   二值逻辑
+    *   类型
+    *   类型约束
+    *   类型错误
+    *   类型生成器
+    *   类型推断
+    *   类型继承
+*   U
+    *   UDO
+    *   UDT
+    *   一元的
+    *   UNGROUP
+    *   取消分组
+    *   统一表示
+    *   UNION
+    *   并集
+    *   并集（集合论）
+    *   并集兼容性
+    *   并集加
+    *   UNIQUE
+    *   唯一索引
+    *   全称量词
+    *   全关系
+    *   全关系变量
+    *   全集
+    *   非规范化的
+    *   未排序逻辑
+    *   UNWRAP
+    *   解包
+    *   UPDATE
+    *   UPDATE 规则
+    *   更新
+    *   更新异常
+    *   更新运算符
+    *   更新传播
+    *   用户
+    *   用户定义的
+*   V
+    *   值
+    *   值集
+    *   VAR
+    *   变量
+    *   变量引用
+    *   垂直分解
+    *   视图
+    *   视图物化
+    *   视图更新
+    *   虚拟关系
+    *   虚拟关系变量
+*   W
+    *   合式公式
+    *   WFF
+    *   假设分析
+    *   WHERE 子句
+    *   WITH
+    *   WRAP
+    *   打包
+*   X
+    *   XML
+    *   异或
+*   版权
+
+
+#### 目录
+
+## 关系数据库词典，扩展版
+
+## 内容
+## 引言
+### 运行示例
+### 字母顺序
+## 技术问题
+## 致谢
+
+## 词典
+
+### Unknown
+### 0-元
+### 0-元
+### 0
+#### 元组
+### 1NF
+### 2NF
+### 2VL
+### 3NF
+### 3VL
+### 4NF
+### 5NF
+### 6NF
+
+### A
+### A
+#### 阿贝尔群
+#### 绝对补集
+#### 吸收律
+#### 抽象数据类型
+#### 访问路径
+#### 实际操作数
+#### 聚合运算符
+#### 代数
+#### 集合代数
+#### 别名
+#### `ALL BUT`
+#### `ALPHA`
+#### 替代键
+#### `AND`
+#### 前件
+#### 反对称性
+#### 出现
+#### 参数
+#### 参数表达式
+#### 元数
+#### 阿姆斯特朗推理规则
+#### 箭头
+#### 赋值
+#### 赋值原理
+#### 关联寻址
+#### 结合律
+#### 原子谓词
+#### 原子命题
+#### 原子关系变量
+#### 原子语句
+#### 原子类型
+#### 原子值
+#### 属性
+#### 属性赋值
+#### 属性约束
+#### 属性提取器
+#### `attribute FROM`
+#### 属性引用
+#### 属性类型
+#### 属性值
+#### 扩张律
+#### 公理
+#### 外延公理
+
+### B
+#### 包
+#### 包成员资格
+#### 基本关系
+#### 基本关系变量
+#### 基表
+#### BCNF
+#### 双向蕴涵
+#### `BI-IMPLIES`
+#### 双射
+#### 二元
+#### 绑定
+#### 主体
+#### `BOOLEAN`
+#### 布尔代数
+#### 布尔表达式
+#### 布尔运算符
+#### 布尔值
+#### 约束变量
+#### 博伊斯-科德范式
+#### 内置
+#### 业务规则
+
+### C
+#### 演算
+#### 候选键
+#### 规范形式
+#### 基数
+#### 基数约束
+#### 笛卡尔连接
+#### 笛卡尔积
+#### 级联
+#### 目录
+#### 谨慎设计原则
+#### 单元格
+#### 子表
+#### 类
+#### 闭合 WFF
+#### 封闭世界假设
+#### 闭包
+#### 传递闭包
+#### CNF
+#### 科德，E. F.
+#### 科德归约算法
+#### 陪域
+#### 强制类型转换
+#### 集合
+#### 列
+#### 公共属性
+#### 交换群
+#### 交换律
+#### 比较
+#### 补偿操作
+#### 补集
+#### 互补性
+#### 完备性
+#### 组件
+#### `COMPOSE`
+#### 复合属性
+#### 复合键
+#### 复合谓词
+#### 复合命题
+#### 复合语句
+#### 复合
+#### 计算完备性
+#### 概念建模
+#### 结论
+#### 条件表达式
+#### 条件运算符
+#### 合取项
+#### 合取
+#### 合取范式
+#### 连接陷阱
+#### 联结词
+#### 后件
+#### 一致性
+#### 一致的
+#### 常量
+#### 约束
+#### 约束推理
+#### 包含
+#### 矛盾
+#### 逆否命题
+#### 受控冗余
+#### 正确的
+#### 正确性
+#### 相关名
+#### 覆盖
+#### CWA
+
+#### D
+#### D
+#### `D_UNION`
+#### 数据
+#### 数据定义运算符
+#### 数据独立性
+#### 数据操纵运算符
+#### 数据模型
+#### 数据建模
+#### 数据子语言
+#### 数据类型
+#### 数据库
+#### 数据库约束
+#### 数据库设计
+#### 数据库管理系统
+#### 数据库编程语言
+#### 数据库统计信息
+#### 数据库值
+
+
+
+## 术语索引
+
+#### D
+- `dbvar`
+- `DCO`
+- 德摩根定律
+- `可判定性`
+- `已声明`
+- `声明类型`
+- `分解`
+- `演绎公理`
+- `DEE`
+- `默认值`
+- `延迟检查`
+- `延迟约束`
+- `度`
+- `DELETE`
+- `删除规则`
+- `反规范化`
+- `依赖项 / 依赖`
+- `依赖`
+- `依赖保持`
+- `依赖理论`
+- `解引用`
+- `派生关系`
+- `派生关系变量`
+- `描述符`
+- `指示符`
+- `决定因素`
+- `差`
+- `差（集合论）`
+- `直接像`
+- `直接证明`
+- `直接推理`
+- `有向关系`
+- `可分辨性`
+- `不相交`
+- `不相交并`
+- `析取项`
+- `析取`
+- `析取范式`
+- `DISTINCT`
+- `分配性`
+- `DIVIDEBY`
+- `除`
+- `教程 D`
+- `域-键范式`
+- `点限定`
+- `双箭头`
+- `双下划线`
+- `DRC`
+- `删除`
+- `对偶`
+- `双模态原理`
+- `对偶性原理`
+- `DUM`
+- `重复`
+- `去重`
+- `二元的`
+
+### E
+- `E`
+- `E/R`
+- `E/R 图`
+- `E/R 模型`
+- `E/R 建模`
+- `E-关系`
+- `元素`
+- `嵌入式依赖`
+- `空`
+- `空包`
+- `空外键`
+- `空标题`
+- `空键`
+- `空范围`
+- `空关系`
+- `空关系变量`
+- `空约束`
+- `空集`
+- `空元组`
+- `空类型`
+- `封装的`
+- `实体`
+- `实体完整性`
+- `实体建模`
+- `实体/关系图`
+- `实体/关系模型`
+- `实体/关系建模`
+- `EQ`
+- `相等`
+- `等值连接`
+- `EQUIV`
+- `等价`
+- `等价类`
+- `等价关系`
+- `必要性`
+- `EXCEPT`
+- `异或`
+- `存在量词`
+- `EXISTS`
+- `可表达关系`
+- `可表达关系变量`
+- `表达式`
+- `表达式转换`
+- `EXTEND`
+- `扩展`
+- `外部谓词`
+
+### F
+- `F`
+- `FALSE`
+- `FD`
+- `由超键隐含的 FD`
+- `FD 保持`
+- `字段`
+- `域（数学）`
+- `第五范式`
+- `文件`
+- `第一大谬误`
+- `第一范式`
+- `一阶逻辑`
+- `扁平关系`
+- `FORALL`
+- `外键`
+- `外键约束`
+- `外键规则`
+- `形式的`
+- `形式操作数`
+- `形式系统`
+- `公式`
+- `第四范式`
+- `自由变量`
+- `完全 FD`
+- `完全实例化`
+- `完全依赖`
+- `完全规范化`
+- `函数`
+- `函数依赖`
+- `函数依赖的`
+- `函数决定`
+
+### G
+- `G`
+- `生成类型`
+- `通用运算符`
+- `通用多态`
+- `黄金法则`
+- `黄金法则`
+- `大谬误`
+- `大鸿沟`
+- `大于连接`
+- `GROUP`
+- `组`
+- `群（数学）`
+- `分组`
+
+### H
+- `H`
+- `哈希`
+- `标题`
+- `希思定理`
+- `水平分解`
+- `宿主语言`
+
+### I
+- `I`
+- `幂等性`
+- `恒等`
+- `恒等投影`
+- `恒等约束`
+- `恒等值`
+- `当且仅当`
+- `如果...那么...`
+- `IFF`
+- `像`
+- `像关系`
+- `立即检查`
+- `立即约束`
+
+
+
+html#p100) `implementation` `implementation defined` `implementation dependent` `implication` `implied by FDs` `implied by superkey(s)` `IMPLIES` `improper inclusion` `improper subkey` `improper subset` `improper superkey` `improper superset` `inclusion` `inclusion dependency` `inclusion polymorphism` `inclusive OR` `Incoherent Principle, The` `IND` `index` `indirect reasoning` `indiscernibility` `inference rule` `information equivalence` `Information Principle, The` `inheritance` `injection` `inner join` `INSERT` `instantiation` `integrity` `integrity constraint` `intelligent key` `intended interpretation` `intension` `Interchangeability Principle, The` `internal predicate` `interpretation` `INTERSECT` `intersection` `intersection (set theory)` `into` `inverse` `involution` `irreducibility` `irreducibly dependent` `irreducibly equivalent` `IS_EMPTY` `isomorphism` `J` `JD` `JD implied by superkeys` `JOIN` `join` `joinable` `join dependency` `join trap` `K` `key` `key attribute` `key constraint` `key inference` `L` `Laws of Algebra, The` `left irreducible FD` `left associativity` `less-than join` `lexical` `literal` `logic` `logic variable` `logical database design` `logical expression` `logical implication` `logical operator` `logical system` `logical variable` `lossless decomposition` `lossy decomposition` `M` `managed redundancy` `mandatory participation` `many-to-many correspondence` `many-to-one correspondence` `many-valued logic` `map / mapping` `mark` `MATCHING` `material equivalence` `material implication` `materialization` `materialized view` `meaning` `member` `membership` `merge` `metadata` `minimality` `MINUS` `missing information` `model` `monadic` `multi relvar constraint` `multi tuple constraint` `multidependent` `multidetermines` `multiple assignment` `multiset` `multivalued dependency` `mutation` `mutator` `MVD` `MVD implied by a superkey` `N` `n-adic` `n-ary` `n-place` `n-tuple` `NAND` `natural join` `negation` `negation as failure` `negative` `nested relation` `NF²` `niladic` `noncommutative group` `nonkey attribute` `nonloss decomposition` `nonnegative` `nonscalar` `nontrivial` `NOR` `normal form` `normalization` `normalization principles` `normalized` `normalized relvar` `NOT` `NOT MATCHING` `null` `null set` `nullary` `nullary foreign key` `nullary heading` `nullary key` `nullary projection` `nullary relation` `nullary tuple` `nullology` `nVL` `O` `object` `object class` `object ID` `object modeling` `object/relational database` `object/relational DBMS` `observer` `one-to-many correspondence` `one-to-one correspon` `onto` `OO` `open WFF` `Open World Assumption, The` `operand` `operation` `operator`
+
+
+
+## 术语索引 (P-S)
+
+#### P
+`html#p135` 优化 优化器 可选参与 或 `ORDER BY` 有序 -元组 有序对 有序元组 排序 序关系 (数学) 序数类型 正交 正交分解 `正交设计原理` 重载 覆写 `OWA`
+#### P
+`P` `P-关系` 对 参数 `父表` 偏函数 偏序 分区 持久性 物理数据库设计 图片 流水线 `PJ/NF` 占位符 `PNF` 指针 多态 正的 幂集
+#### Pre
+谓词 谓词演算 谓词常量 谓词表达式 谓词形式 谓词逻辑 谓词变量 `前提` 前束范式
+#### Pr
+主域 `主键` 素属性 原始运算符 `谨慎设计原理` `不可分辨者同一性原理` `不一致原理` `可互换性原理` `正交设计原理`
+#### Pro
+积 积 (集合论) 投影 投影-连接范式 证明 传播更新 真包含 真子键 真子集 真超键 真超集 属性 命题
+#### Propositional
+命题演算 命题常量 命题表达式 命题形式 命题逻辑 命题变元
+#### P
+原型元组 伪变量引用
+#### Q
+`Q` `QBE` 量化 量词 `QUEL` 查询 查询分解 查询重写 限额查询
+#### R
+`R` 范围 范围变量 `RANK` 排名 只读运算符 真实关系 真实关系变量 记录 递归查询 递归关系 冗余 被引用键 被引用关系变量 被引用 引用 引用关系变量 引用元组 参照动作 参照环 参照完整性 参照路径 自反性 刷新
+#### Relation
+关系 关系 (数学) 关系赋值 关系比较 关系常量 关系相等 关系表达式 关系字面量 关系包含 关系谓词 `关系模式` 关系类型 关系类型推断 关系值 关系值属性 关系变量
+#### Relational
+关系代数 关系赋值 关系演算 关系比较 关系完备性 关系数据库 关系数据库管理系统 关系表达式 关系包含 关系模型 关系运算符
+#### Re
+关系 相对补集 `关系常量` 关系常量引用
+#### Relvar
+关系变量 关系变量约束 关系变量谓词 关系变量引用
+#### R
+`REMOVE` 重命名 重复组
+#### Rest
+限制 限制条件
+#### Rev
+可逆分解 重写规则 右结合性
+#### R
+环 (数学) `RM/T` `RM/V1` `RM/V2` 行 `行标识` 推理规则 `RVA`
+#### S
+`S` 安全表达式 标量
+```
+scalar type.
+```
+
+
+
+## 术语索引
+
+[html#p175)] `scalar value` Second Great Blunder, The `second normal form` `second order logic` `SELECT expression` `selection` `selector` `self-referencing relvar` `semantic` `semantic modeling` `semantic optimization` `semantic override` `semantics` `semidifference` `SEMIJOIN` `semijoin` `SEMIMINUS` `sentence` `SEQUEL` `set` `set algebra` `set function` `set inclusion` `set level` `set membership` `set operator` `set theory` `SI prefixes` `signature` `simple attribute` `simple key` `simple predicate` `simple proposition` `single arrow` `single-relvar constraint` `single-tuple constraint` `singleton` `sixth normal form` `Skolem constant` `Skolem function` `Small Divide` `Tutorial D` `snapshot` `sort/merge` `sorted logic` `soundness` `source relvar` `source tuple` `SQL` `star join` `state constraint` `statement` `stored procedure` `subexpression` `subject to update` `subkey` `subquery` `subset` `substitution` `subtables and supertables` `subtuple` `subtype` `summarization` `SUMMARIZE` `summary` `superkey` `superset` `supertype` `surjection` `surrogate` `surrogate key` `symmetric difference (set theory)` `symmetry` `syntactic` `syntax` `system defined` `T` `table` `table alias` `TABLE_DEE and TABLE_DUM` `tables and views / tables or views` `target key` `target relvar` `target tuple` `tautology` `TCLOSE` [html#p196)] `temporal database` `theorem` `theta join` `third normal form` `three-valued logic` `time-varying relation` `TIMES` `total database constraint` `total function` `total ordering` `total relvar constraint` `transaction` `transition constraint` `transitive closure` `transitive FD` `transitivity` `TransRelational Model` `TRC` `trigger` `triggered procedure` `trivial decomposition` `trivial FD` `trivial JD` `trivial MVD` `TRUE` `truth functional completeness` `truth table` `truth value` `truth value of` `truth valued expression` `truth valued operator` `tuple` `tuple (mathematics)` `tuple assignment` `tuple calculus` `tuple comparison` `tuple component` `Tutorial D` `tuple composition` `tuple constant` `tuple constraint` `tuple difference` `tuple equality` `tuple expression` `tuple extension` `tuple extractor` `TUPLE FROM` `tuple ID` `tuple intersection` `tuple join` `tuple level` `tuple literal` `tuple operator` `tuple projection` `tuple renaming` `tuple selector` `tuple typ` `tuple type generator` `tuple type inference` `tuple union` `tuple unwrapping` `tuple value` `tuple valued attribute` `tuple variable` `tuple wrapping` `tuplevar` `tuplevar reference` `Tutorial D` `TVA` `two-valued logic` `type` `type constraint` `type error` `type generator` `type inference` `type inheritance` `U` `UDO` `UDT` `unary` `UNGROUP` `ungrouping` `uniform representation` [html#p215)]
+
+
+
+html#p216) 并集 并集 并集（集合论） 并集兼容性 并集增强 UNIQUE 唯一索引 全称量词 全域关系 全域关系变量 全集 未规范化 未排序逻辑 UNWRAP 解包 UPDATE UPDATE 规则 更新 更新异常 更新操作符 更新传播 用户 用户定义 V 值 值集 VAR 变量 变量引用 垂直分解 视图 视图物化 视图更新 虚拟关系 虚拟关系变量 W 合式公式 WFF 假设分析 WHERE 子句 WITH WRAP 包装 X XML XOR 版权
