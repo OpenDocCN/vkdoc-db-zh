@@ -100,6 +100,7 @@
 +   [SQL 入门指南](docs/sql-primer/README.md)
 +   [SQL Server 2008 查询性能调优精要](docs/sql-server-2008-query-performance-tuning-distilled/README.md)
 +   [SQL Server 2012 数据集成秘籍](docs/sql-server-2012-data-integration-recipes/README.md)
++   [SQL Server 2017 查询性能调优](docs/sql-server-2017-query-performance-tuning/README.md)
 +   [SQL SERVER 2019 ALWAYS ON 实战](docs/sql-server-2019-always-on/README.md)
 +   [SQL Server 2019 深入解析](docs/sql-server-2019-revealed/README.md)
 +   [SQL Server 2022 揭秘](docs/sql-server-2022-revealed/README.md)
