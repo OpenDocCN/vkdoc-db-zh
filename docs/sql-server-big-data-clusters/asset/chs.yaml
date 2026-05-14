@@ -1,0 +1,4079 @@
+- '
+
+  ![](img/978-1-4842-5985-6_CoverFigure.jpg)
+
+
+  ISBN 978-1-4842-5984-9 e-ISBN 978-1-4842-5985-6 [`doi.org/10.1007/978-1-4842-5985-6`](https://doi.org/10.1007/978-1-4842-5985-6)
+  © 本杰明·魏斯曼 和 恩里科·范·德·拉尔 2020
+
+  本作品受版权保护。出版者保留所有权利，无论涉及材料的全部或部分，具体包括翻译权、重印权、图表的重复使用、朗诵、广播、缩微胶片或其他任何物理方式的复制，以及信息存储与检索、电子改编、计算机软件，或目前未知或未来开发的类似或不同方法。在本出版物中使用通用描述性名称、注册商标、服务标记等，即使未作特别说明，也不意味着这些名称可不受相关保护性法律法规的约束而自由使用。出版者、作者和编辑可安全地假设本书中的建议和信息在出版时是真实准确的。出版者、作者或编辑均不对本文所含材料或可能存在的任何错误或遗漏提供任何明示或暗示的保证。对于已出版地图中的管辖权主张和机构从属关系，出版者保持中立。
+
+  本书由 Springer Science+Business Media New York (地址：美国纽约州纽约市斯普林街 233 号 6 层，邮编：10013)
+  全球发行至图书贸易领域。电话 1-800-SPRINGER，传真 (201) 348-4505，电子邮箱 orders-ny@springer-sbm.com，或访问
+  www.springeronline.com。Apress Media, LLC 是一家加利福尼亚州有限责任公司，其唯一成员（所有者）是 Springer Science
+  + Business Media Finance Inc (SSBM Finance Inc)。SSBM Finance Inc 是一家特拉华州公司。
+
+
+  *谨以此书献给全国所有的锐舞者。*
+
+
+  ## 引言
+
+
+  当我们最初开始讨论撰写一本关于 SQL Server 大数据群集的书籍时，该产品仍处于早期迭代阶段。我们俩都对其中包含的所有技术以及它可能改变数据处理和分析领域的方式感到非常兴奋。我们当时几乎不知道，在我们写作期间，该产品将经历多少变化。最终，这导致我们几乎每个月都要重写整本书。虽然这是一项艰巨的任务，但它也让我们能够跟踪并记录该产品在其开发过程中所经历的一切。现在最终产品已经发布，我们认为是时候提供一个反映大数据群集如今一切的更新版本了；结果就是您现在面前的这本书！
+
+
+  SQL Server 大数据群集是一个令人难以置信的激动人心的新平台。如前所述，它由多种使其运作的不同技术组成。Kubernetes、HDFS、Spark 和
+  Linux 上的 SQL Server 只是大数据群集内部的一些主要组成部分。除了所有这些不同的产品组合成一个单一产品外，您还可以根据您的用例将其部署在本地或
+  Azure 云中。正如您可以想象的那样，一本书几乎不可能深入讨论所有这些不同的产品（事实上，有很多书籍确实深入探讨了构成大数据群集的每个独立产品的所有微小细节，例如
+  Spark 或 Linux 上的 SQL Server）。因此，我们为本书选择了一种不同的方法，将更侧重于大数据群集的整体架构以及如何利用大数据群集提供的不同数据处理和分析方法的实用示例。
+
+
+  通过这种方法，我们相信在您阅读本书时，您将能够理解大数据群集的运作原理、它们的用例，以及如何开始部署、管理和使用大数据群集。这样，本书旨在提供有用的信息，可用于处理
+  `数据` 的各种工作角色——从希望了解大数据群集如何作为集中式数据枢纽的数据架构师，到想要知道如何将数据库管理和部署到集群的数据库管理员，再到希望在大数据群集上训练和操作化机器学习模型的数据科学家，以及许多其他角色。如果您以任何方式处理数据，这本书都应该有些东西能让您思考！
+
+
+  ## 书籍布局
+
+
+  我们将本书分为九个独立的章节，每章重点介绍大数据群集的一个特定领域或功能：
+
+
+  ### 第 1 章：“什么是大数据群集？”
+
+  在本章中，我们将概述 SQL Server 大数据群集及其各种用例。
+
+
+  ### 第 2 章：“大数据群集架构。”
+
+  在本章中，我们将更深入地探讨构成大数据群集的内容，描述大数据群集内的各个逻辑区域，并了解所有不同部分如何协同工作。
+
+
+  ### 第 3 章：“大数据群集的部署。”
+
+  本章将引导您完成使用本地或云环境部署大数据群集的第一步，并描述如何连接到您的集群，最后介绍可用于管理和监控大数据群集的管理选项。
+
+
+  ### 第 4 章：“将数据加载到大数据群集。”
+
+  本章将重点介绍从各种源到大数据群集的数据摄入。
+
+
+  ### 第 5 章：“通过 `T-SQL` 查询大数据群集。”
+
+  本章重点介绍通过 `PolyBase` 使用外部表，并使用 `T-SQL` 语句查询您的数据。
+
+
+  ### 第 6 章：“在大数据群集中使用 Spark。”
+
+  虽然前一章主要侧重于使用 `T-SQL` 处理大数据群集上的数据，但本章将重点放在使用 Spark 进行数据探索和分析。
+
+
+  ### 第 7 章：“大数据群集上的机器学习。”
+
+  大数据群集的主要功能之一是能够在单一平台内训练、评分和操作化机器学习模型。在本章中，我们将重点介绍通过 SQL Server 内置机器学习服务和 Spark 来构建和利用机器学习模型。
+
+
+  ### 第 8 章：“创建和使用大数据群集应用。”
+
+  在本书倒数第二章中，我们将仔细研究如何通过大数据群集平台部署和使用自定义应用程序。这些应用程序的范围可以涵盖从管理任务到提供用于执行机器学习模型评分的 REST
+  API。
+
+
+  ### 第 9 章：“大数据群集的维护。”
+
+  为了完成您的大数据群集体验，我们将探讨管理和维护大数据群集需要做什么。
+
+
+  ## 致谢
+
+
+  与每一次出版一样，我们首先要衷心感谢我们的家人在这个耗时的过程中给予我们的支持！
+
+
+  同时，非常感谢穆罕默德审阅本书所提供的帮助！
+
+
+  我们还要感谢 Microsoft SQL Server 产品团队，每当我们有疑问或遇到不太理解的情况时，他们总是乐于伸出援手。JRJ, Travis, Buck,
+  Mihaela 以及所有其他人——你们太棒了！
+
+
+  最后但同样重要的是，感谢 #sqlfamily——您们持续的支持、反馈和鼓励，是我们在探索和谈论像大数据群集这样激动人心的技术时不断前进的动力！
+
+
+  ## 关于作者
+
+  ## 关于技术审校者
+
+
+
+
+  ## 1. 什么是大数据集群？
+
+
+  SQL Server 2019 大数据集群——或简称大数据集群——是 SQL Server 2019 中的一套新功能集，围绕数据虚拟化、数据集市横向扩展和人工智能（AI）提供了广泛的功能。
+
+
+  SQL Server 2019 大数据集群仅作为盒装产品 SQL Server 的一部分提供。尽管微软采取“云优先”策略，先向 Azure 发布新功能和特性，最终（如果有的话）才推广到本地版本。
+
+
+  大数据集群的主要组件只能在 Linux 上运行。请细品这一点，并回想一下几年前的情景。如果在 2016 年初有人告诉你，你将能够在 Linux 上运行 SQL
+  Server，你大概率是不会相信的。后来，Linux 版 SQL Server 宣布了，但它最初只提供了其“老大哥”——Windows 版 SQL Server——实际包含功能的一个子集。而现在，我们拥有了一项实际上**要求我们在
+  Linux 上运行 SQL Server** 的功能。
+
+
+  哦，顺便说一句，这个名字有点误导性。SQL Server 大数据集群的某些部分并不真正构成一个集群——不过后面会详细讲到。
+
+
+  说到组成部分，大数据集群并非单一功能，而是一个庞大的 `功能集`，服务于多种不同目的，因此你不太可能用到它的每一部分。根据你的角色，某些特定部分可能对你更有用。在本书的整个过程中，我们将引导你了解所有功能，让你能够选择那些对你有帮助的功能，而忽略那些对你没有价值的功能。
+
+
+  ## SQL Server 2019 大数据集群究竟是什么？
+
+
+  SQL Server 2019 大数据集群本质上是在 Kubernetes 环境中运行的 SQL Server、Apache Spark 和 HDFS 文件系统的组合。如前所述，大数据集群并非单一功能。图
+  1-1 将该功能集的不同部分进行了分类，以帮助你更好地理解所提供的内容。其总体思路是，通过虚拟化和横向扩展，SQL Server 2019 成为你的数据枢纽，用于管理你所有的数据，即使这些数据并不物理存储在
+  SQL Server 中。
+
+
+  ![../images/480532_2_En_1_Chapter/480532_2_En_1_Fig1_HTML.jpg](img/480532_2_En_1_Fig1_HTML.jpg)
+
+
+  图 1-1
+
+  SQL Server 2019 大数据集群功能概览
+
+
+  图 1-1 从左到右展示了大数据集群的主要方面。你拥有数据虚拟化支持，然后是托管数据平台，最后是人工智能（AI）平台。这些方面的每一个都将在本章剩余部分进行更详细的描述。
+
+
+  ## 数据虚拟化
+
+
+  SQL Server 2019 大数据集群中的第一个功能是数据虚拟化。数据虚拟化——与数据集成不同——将你的数据保留在源位置，而不是复制它。图 1-2 说明了数据集成和数据虚拟化之间的区别。数据虚拟化目标中的虚线矩形代表虚拟数据源，这些数据源总是解析回原始源数据的单个实例。在微软的世界里，这种数据到其原始源的解析是通过一个名为
+  PolyBase 的 SQL Server 功能完成的，它允许你虚拟化数据集市的全部或部分。
+
+
+  ![../images/480532_2_En_1_Chapter/480532_2_En_1_Fig2_HTML.jpg](img/480532_2_En_1_Fig2_HTML.jpg)
+
+
+  图 1-2
+
+  数据虚拟化 vs. 数据集成
+
+
+  数据虚拟化的一个明显好处是，你消除了冗余数据，因为你不是从源复制数据，而是直接从那里读取。特别是在你只是读取一个大的平面文件一次进行汇总的情况下，那个重复和冗余的数据可能没什么用。此外，使用
+  PolyBase，你的查询是实时的，而集成的数据总会存在一些延迟。
+
+
+  另一方面，你无法在外部表上创建索引。因此，如果你的数据经常需要以与原始源不同的工作负载进行查询，这意味着你需要另一种索引策略，那么集成数据可能仍然比虚拟化更有意义。这个决策也可能取决于你是否能接受更频繁的报告查询等给源系统带来的额外负载。
+
+
+  注意
+
+  虽然数据虚拟化解决了数据集成带来的一些问题，但它无法取代数据集成。这**不是** SSIS 或 ETL 的终结。
+
+
+  从技术上讲，PolyBase 自 SQL Server 2016 就已存在，但迄今为止只支持非常有限的数据源类型。在 SQL Server 2019 中，PolyBase
+  得到了极大的增强，支持多种关系型数据源，如 SQL Server 或 Oracle，以及 NoSQL 数据源，如 MongoDB、HDFS 和其他各种数据，如图
+  1-3 所示。
+
+
+  ![../images/480532_2_En_1_Chapter/480532_2_En_1_Fig3_HTML.jpg](img/480532_2_En_1_Fig3_HTML.jpg)
+
+
+  图 1-3
+
+  SQL Server 2019 中的 PolyBase 源和能力
+
+
+  实际上，你可以查询另一个数据库中，甚至在一台完全不同的机器上的表，就好像它是本地表一样。
+
+
+  使用 PolyBase 进行虚拟化可能让你想起链接服务器，它们之间肯定有一些相似之处。一个很大的区别是，针对链接服务器的查询往往比 PolyBase 查询更长、更复杂。例如，这是一个针对远程表的典型查询：
+
+
+  ```
+
+  SELECT * FROM MyOtherServer.MyDatabase.DBO.MyTable
+
+  ```
+
+
+  使用 PolyBase，你可以更简单地编写相同的查询，就好像表在你的本地数据库中一样。例如：
+
+
+  ```
+
+  SELECT * FROM MyTable
+
+  ```
+
+
+  PolyBase 会知道该表在不同的数据库中，因为你将在 PolyBase 中创建一个定义，指明表可以在哪里找到。
+
+
+  使用 PolyBase 的一个优点是，你可以将 `MyDatabase` 移动到另一台服务器，而无需重写你的查询。只需更改你的 PolyBase 数据源定义，重定向到新的数据源即可。你可以轻松完成，而不会损害或影响你现有的查询或视图。
+
+
+  链接服务器和 PolyBase 的使用还有更多不同之处。表 1-1 描述了一些你应该了解的区别。
+
+
+  表 1-1
+
+  链接服务器与 PolyBase 比较
+
+
+  | 链接服务器 | PolyBase |
+
+  | --- | --- |
+
+  | − 实例作用域− OLEDB 提供程序− 读/写和直通语句− 单线程− Always On 可用性组中每个实例都需要单独配置 | − 数据库作用域− ODBC
+  驱动程序− 只读操作− 查询可以横向扩展− Always On 可用性组无需单独配置 |
+
+
+  ### 将你的数据外包
+
+
+  你可能听说过“伸缩数据库”(Stretch Database)，^(¹) 这是 SQL Server 2016 中引入的一个功能，它允许你将部分数据卸载到 Azure。其理念是将此功能用于“冷数据”——指的是你不经常访问的数据，因为它们要么是旧的（但某些查询仍然需要），要么仅仅是对于关注度较低的业务领域。
+
+
+  冷数据背后的基本原理是，在 Azure 中存储这些数据应该比在本地更便宜。不幸的是，该服务可能并不适合所有人，因为即使是其入门级也提供了显著的存储性能，这显然需要付出成本。
+
+
+  借助 PolyBase，你现在可以将数据卸载到 Azure SQL 数据库等，从而构建自己的非常底层的外包功能。
+
+
+
+
+  '
+- '# 减少数据冗余与开发时间
+
+
+  除了卸载数据，虚拟化数据而非集成数据的一个明显好处是它可能大幅减少数据冗余。因为数据虚拟化将数据保留在其原始源，因此数据不会持久化到目标位置。与传统的基于 `ETL`
+  的暂存过程相比，这基本上将存储需求**减半**。
+
+
+  **注意**
+
+
+  我们“减半”的说法可能并不十分准确，因为你可能没有暂存完整的数据集（从而减少了节省空间），或者你可能使用了不同的数据类型（甚至可能进一步增加节省空间）。
+
+
+  试想一下：你想要跟踪网站上每小时的页面请求数量，这些数据被记录到文本文件中。在传统环境中，你可能需要编写一个 `SQL Server Integration Services`
+  (`SSIS`) 包来将文本文件加载到表中，然后在其上运行查询以对数据进行分组，最后存储或使用其结果。而在这种新的虚拟化方法中，你仍然会运行查询来对数据分组，但你会直接在原始文本文件上运行它，这样就节省了开发
+  `SSIS` 包所需的时间，也节省了用于暂存日志数据的暂存表的存储空间——否则，这些数据会同时存在于文件中以及 `SQL Server` 的暂存表中。
+
+
+  ## 综合数据平台环境
+
+
+  `SQL Server 大数据集群`的一个重要用例是能够创建一个环境，以存储、管理和分析不同格式、类型和大小的数据。最显著的是，你可以同时在 `SQL Server`
+  组件内存储关系型数据，以及在 `HDFS` 存储子系统内存储非关系型数据。使用 `大数据集群` 使你能够创建一个数据湖环境，满足你所有的数据需求，而无需承担管理、更新和配置构成数据湖的各个部分所带来的巨大复杂性。
+
+
+  `大数据集群`从产品安装开始就完全负责你 `大数据集群` 的安装和管理。由于 `大数据集群` 作为一个独立的产品推出，并得到 `Microsoft` 的全面支持，这意味着
+  `Microsoft` 将通过服务包和更新来处理构成 `大数据集群` 的所有技术的更新。
+
+
+  那么，为什么你会对数据湖感兴趣呢？事实证明，许多组织都有大量以不同格式存储的数据。在许多情况下，很大一部分数据来自应用程序的使用，这些应用程序将其数据存储在像
+  `SQL Server` 这样的关系型数据库中。通过使用关系型数据库，我们可以轻松地查询其中的数据，并将其用于各种用途，例如仪表板、`KPI`（关键绩效指标），甚至是用于预测未来销售的机器学习任务。
+
+
+  关系型数据库必须遵循若干规则，其中最重要的规则之一是关系型数据库总是以 **写入时模式** 的方式存储数据。这意味着如果你想向关系型数据库插入数据，你必须确保该数据符合要写入到的表的结构。图
+  1-4 说明了 **写入时模式**。
+
+
+  例如，一个包含 `OrderID`、`OrderCustomer` 和 `OrderAmount` 列的表规定，你插入到该表的数据也需要包含相同的列。这意味着当你想在该表中写入新行时，你必须为插入操作定义一个
+  `OrderID`、`OrderCustomer` 和 `OrderAmount` 才能成功。没有临时添加额外列的空间，并且在许多情况下，你插入的数据需要与表中指定的数据类型相同（例如，整数用于数字，字符串用于文本）。
+
+
+  ```
+
+  ../images/480532_2_En_1_Chapter/480532_2_En_1_Fig4_HTML.jpg
+
+  ```
+
+
+  图 1-4
+
+  写入时模式
+
+
+  在许多情况下，**写入时模式** 的方法是完全可行的。你确保所有数据都按照关系型数据库期望的方式进行格式化，并将所有数据存储在其中。但是，当你决定添加不一定具有固定模式的新数据集时，会发生什么？或者，你想处理体积非常大（数
+  TB）的数据？在这些情况下，通常建议寻找另一种技术来存储和处理你的数据，因为关系型数据库在处理具有这些特征的数据时存在困难。
+
+
+  像 `Hadoop` 和 `HDFS` 这样的解决方案就是为了解决关系型数据库的一些局限性而创建的。大数据平台能够以分布式方式处理海量数据，方法是将数据分散在组成集群架构的不同机器（称为节点）上。使用像
+  `Hadoop` 这样的技术，或者如我们将在本书中使用的 `Spark`，可以让你以任何格式存储和处理数据。这意味着我们可以存储巨大的 `CSV`（逗号分隔值）文件、视频文件、`Word`
+  文档、`PDF` 或任何我们想要的东西，而不必像将数据存储在关系型数据库中那样，担心是否符合预定义的模式。
+
+
+
+
+  ## 2. 大数据集群架构
+
+
+  Apache 的 Spark 技术确保我们的数据被切分成更小的块，并存储在构成 Spark 集群的节点的文件系统上。我们只在准备读取和处理数据时才需要关心模式，这被称为`读取时定义模式`。当我们加载
+  CSV 文件以检查其内容时，必须定义它是什么类型的数据，对于 CSV 文件而言，还要定义数据的列是什么。在读取时指定这些细节为我们处理这些数据提供了极大的灵活性，因为我们可以添加或删除列或转换数据类型，而无需在写回数据前担心模式问题。由于像
+  Spark 这样的技术具有分布式架构，我们可以非常快速地在大型数据集上执行所有这些数据操作和查询步骤，这一点我们将在第[2]章中更详细地解释。
+
+
+  现实世界中你会看到，在许多情况下，组织既拥有关系数据库，又拥有 Hadoop/Spark 集群来存储和处理他们的数据。这些解决方案是彼此独立实施的，并且在许多情况下并不“互通”。数据是关系型的吗？把它存进数据库！是非关系型的，比如
+  CSV、IoT 数据或其他格式？扔到 Hadoop/Spark 集群上！我们之所以对 SQL Server 大数据集群的发布感到如此兴奋，一个原因就是它将这两种解决方案结合到了一个产品中，这个产品同时包含了
+  Spark 集群和 SQL Server 的功能。虽然你仍然需要选择是将某些数据直接存储在 SQL Server 数据库中还是存储在 HDFS 文件系统上，但你总是可以从这两种技术中访问它！想要将关系数据与存储在
+  HDFS 上的 CSV 文件结合起来？没问题，使用本章前面描述的数据虚拟化，你可以从 HDFS 读取 CSV 文件的内容，并使用 T-SQL 查询将其与关系数据合并，产生一个单一的结果集！
+
+
+  从这个意义上说，SQL Server 大数据集群由非常互补的技术组成，使你能够弥合因数据存储方式不同而在数据处理上受到的限制。大数据集群最终让你能够创建一个可扩展且灵活的数据湖环境，在其中你可以存储和处理任何格式、形状或大小的数据，甚至允许你在使用
+  SQL Server 或 Spark 处理数据之间进行选择，根据你想要执行的任务选择你更偏好的那个。
+
+
+  大数据集群架构还能够优化数据分析方面的性能。将所有你需要的数据存储在一个集群中，无论是否是关系型数据，都意味着你可以在需要时立即访问它。你避免了跨不同系统或网络的数据移动，这在一个我们不断尝试寻找更快分析数据的解决方案的世界里是一个巨大的优势。
+
+
+  如果你问我们 SQL Server 大数据集群的终极优势是什么，我们坚信是在单一解决方案中存储、处理和分析任何形状、大小或类型数据的能力。
+
+
+  ## 集中化 AI 平台
+
+
+  正如我们在前一节所述，SQL Server 大数据集群允许你创建一个可以处理所有类型和格式数据的数据湖环境。除了在处理方面具有巨大优势外，它自然在处理高级分析（如机器学习）方面也具有巨大优势。由于你所有的数据本质上都存储在一个地方，你可以在大数据集群上对所有可用数据执行机器学习模型训练等任务，而不必从组织内的多个系统收集数据。
+
+
+  通过结合 SQL Server 和 Spark，我们在处理机器学习时也有多种选择。我们可以选择通过 Spark 直接在存储于 HDFS 文件系统上的数据上训练和评分机器学习模型，或者使用通过
+  SQL Server 可用的内置机器学习服务。这两种选项都提供了广泛的语言和库供你或你的数据科学团队使用，例如，对于 SQL Server 机器学习服务可以使用
+  R、Python 和 Java，而对于通过 Spark 集群运行机器学习工作负载则可以使用 PySpark 和 Scala。
+
+
+  在用例方面，大数据集群几乎可以处理任何机器学习流程，从处理实时评分到结合 TensorFlow 使用 GPU 来优化处理 CPU 密集型工作负载，或者例如执行图像分类任务。
+
+
+  脚注 [1]
+
+
+  ## 物理大数据集群基础设施
+
+
+  大数据集群的物理基础设施由容器组成，在这些容器上部署了主要的软件组件。这些主要组件是 Linux 上的 SQL Server、Apache Spark 和 HDFS
+  文件系统。以下是对这些基础设施元素的介绍，从容器开始，依次介绍其他部分，为你提供这些组件如何协同工作的全景图。
+
+
+
+  ### 容器
+
+
+  一个 *容器* 是一种独立的包，它包含在隔离或沙盒环境中运行应用程序所需的一切。容器经常被拿来与虚拟机（VM）比较，因为两种方案都存在虚拟化层。然而，容器比虚拟机提供了更大的灵活性。一个显著体现灵活性的领域是可移植性。
+
+
+  使用容器的主要优势之一是它们避免了在容器内部实现操作系统。虚拟机需要在每个虚拟机内部安装自己的操作系统，而对于容器，每个容器都使用其运行所在的宿主机的操作系统（通过隔离的进程）。像
+  `Docker` 这样的工具，通过运行一个虚拟机来作为容器的宿主机，可以在单台宿主机机器上实现多种操作系统，例如让你在 Windows 上运行一个 Linux
+  容器。
+
+
+  你立刻就能看到一个优势：运行多个虚拟机时，你还有额外的负担来维护每个虚拟机上的操作系统——打补丁、配置并确保一切按预期运行。使用容器，你则没有这些额外的管理层级。相反，你维护一份操作系统副本，由所有容器共享。
+
+
+  容器相对于虚拟机的另一个优势是，容器可以被定义为一种“基础设施即代码”形式。这意味着你可以在构建文件或镜像中，通过脚本定义容器的整个创建过程。这意味着当你使用相同的镜像或构建文件部署多个容器时，它们是
+  100% 相同的。确保 100% 一致的部署在使用虚拟机时可能非常具有挑战性，但使用容器则很容易实现。
+
+
+  图 2-1 展示了容器和虚拟机在资源分配和隔离方面的一些差异。你可以看到容器如何减少了对多个客户操作系统的需求。
+
+
+  ![../images/480532_2_En_2_Chapter/480532_2_En_2_Fig1_HTML.jpg](img/480532_2_En_2_Fig1_HTML.jpg)
+
+
+  图 2-1
+
+
+  虚拟机 vs. 容器
+
+
+  我们想提到的容器的最后一个优势（还有很多其他优势，但已超出本书范围）是容器可以部署为“无状态”应用。本质上这意味着容器不会改变，并且它们自身不存储数据。
+
+
+  例如，考虑一种情况：你使用容器部署了多个应用服务。在这种情况下，每个容器都将以与其他容器完全相同的运行方式和状态来运行你的应用。当一个容器崩溃时，使用相同的构建文件部署一个新的容器来接替崩溃容器的角色是很容易的，因为容器在运行期间内部没有存储或更改任何数据。
+
+
+  你的应用数据的存储可以由基础设施中的其他角色来处理，例如，一个 `SQL Server` 保存着由你的应用容器处理的数据，或者，作为另一个例子，一个文件共享存储着容器内应用使用的数据。此外，当你有新的应用服务器软件构建可用时，你可以轻松地创建一个新的容器镜像或构建文件，将该镜像或构建文件映射到你的应用容器，并几乎在瞬间切换构建版本。
+
+
+  `SQL Server Big Data Clusters` 使用容器部署，为大数据集群中可用的各种角色和功能创建一个可扩展、一致且灵活的环境。`Microsoft`
+  选择使用 `Kubernetes` 来部署所有容器。`Kubernetes` 是容器基础设施中的一个额外层，它充当协调器。通过使用 `Kubernetes`（或通常称为
+  `K8s`），你在处理容器时能获得若干优势。例如，`Kubernetes` 可以在性能需要时自动部署新容器，或者在其他容器失败时部署新容器。
+
+
+  因为大数据集群构建在 `Kubernetes` 之上，你在部署大数据集群的位置上有一定的灵活性。`Azure` 能够使用托管的 Kubernetes 服务（`AKS`），你也可以选择在其中部署大数据集群。其他本地选项可以使用
+  `Docker` 或 `Minikube` 作为容器协调器。我们将在第 3 章更深入地探讨在 `AKS`、`Docker` 或 `Minikube` 内部部署大数据集群。
+
+
+  使用 `Kubernetes` 也引入了几个特定的术语，我们将在本书中持续使用。我们已经讨论了容器的概念和定义。然而，`Kubernetes`（以及大数据集群）也经常使用另一个术语，叫做“`pods`”。`Kubernetes`
+  不直接运行容器；相反，它将容器包裹在一个称为 `pod` 的结构中。一个 `pod` 组合了一个或多个容器、存储资源、网络配置以及一个管理容器如何在 `pod`
+  内运行的特定配置。
+
+
+  图 2-2 展示了 `Kubernetes` 内部的 `node` - `pods` - 容器架构的简单表示。
+
+
+  ![../images/480532_2_En_2_Chapter/480532_2_En_2_Fig2_HTML.jpg](img/480532_2_En_2_Fig2_HTML.jpg)
+
+
+  图 2-2
+
+
+  `Kubernetes` 中容器、`pods` 和 `nodes` 的表示
+
+
+  通常，`pods` 有两种使用方式：每个 `pod` 一个容器，或者一个 `pod` 内有多个容器。后者用于当你的多个容器需要以某种方式协同工作时——例如，在多个容器之间分配负载时。`pods`
+  也是为容器分配更多系统资源的管理单位。例如，要增加容器可用的内存，对 `pod` 配置的更改将导致 `pod` 内所有容器都能访问增加的内存。关于这一点，在 `Kubernetes`
+  集群中，你主要是在管理和扩展 `pods`，而不是容器。
+
+
+  `Pods` 运行在 `Kubernetes` 的 `nodes` 上。一个 `node` 是 `Kubernetes` 集群内部最小的计算硬件单元。大多数时候，一个
+  `node` 是一台安装了 `Kubernetes` 集群软件的物理或虚拟机，但理论上任何具有 CPU 和内存的机器/设备都可以成为一个 `Kubernetes`
+  `node`。因为这些机器只作为 `Kubernetes` `pods` 的宿主机，它们可以轻松地被替换、添加或从 `Kubernetes` 架构中移除，使得底层的物理（或虚拟）机基础设施非常灵活。
+
+
+
+  '
+- '# Linux 上的 SQL Server
+
+
+  2016 年 3 月，微软宣布下一版 SQL Server（后来被证实为 SQL Server 2017）不仅可在 Windows 操作系统上运行，也将支持 Linux——这个长期以来似乎不可能、只要微软还在开发软件就不会发生的事情，突然间成为了现实。不用说，整个
+  IT 界为之震动。
+
+
+  事后看来，微软宣布这一战略决策（即让其旗舰产品之一可在 Linux 上运行）的时机堪称完美。我们在前一节讨论的，关于容器新技术的惊人适应性，主要就是基于各种 Linux
+  发行版。我们相信，如果没有容器技术的能力，进而没有这些容器所提供的 Linux 操作系统，就永远不会诞生 SQL Server 大数据集群这款产品。
+
+
+  值得庆幸的是，微软坚持推进了对 Linux 的采用，随着最新的 SQL Server 2019 发布，许多困扰 SQL Server 2017 在 Linux
+  上运行的问题现已解决，并且 Windows 版本的许多功能也已引入到 Linux 版本中。
+
+
+  那么，微软是如何让一个为 Windows 操作系统设计的应用程序在 Linux 上运行的呢？他们是否重写了 SQL Server 内部的所有代码以使其能在 Linux
+  上运行？事实证明，事情远比为了兼容 Linux 而重写代码库复杂得多。
+
+
+  为了使 SQL Server 能在 Linux 上运行，微软引入了一个称为 `平台抽象层`（简称 `PAL`）的概念。`PAL` 的理念是将运行 SQL Server
+  所需的代码，与和操作系统交互所需的代码分离开来。由于 SQL Server 以前从未在 Windows 以外的任何系统上运行过，其代码内部充满了对操作系统的引用。这意味着，要让
+  SQL Server 在 Linux 上运行，由于所有这些操作系统依赖性，最终将耗费巨大的时间成本。
+
+
+  SQL Server 团队为解决操作系统依赖问题寻找了不同的方法，并在一个名为 `Drawbridge` 的微软研究项目中找到了答案。`Drawbridge`
+  的定义可以在其项目页面 [`www.microsoft.com/en-us/research/project/drawbridge/`](http://www.microsoft.com/en-us/research/project/drawbridge/)
+  上找到，其中声明：
+
+
+  > *Drawbridge 是一种用于应用程序沙盒化的新虚拟化形式的研究原型。Drawbridge 结合了两项核心技术：首先，是一个微进程，这是一种基于进程的隔离容器，具有最小的内核
+  API 表面。其次，是一个库操作系统，这是一个经过优化以在微进程内高效运行的 Windows 版本。*
+
+
+  吸引 SQL Server 团队的主要部分是 `Drawbridge` 项目中的库操作系统技术。这项新技术可以处理种类繁多的 Windows 操作系统调用，并将其转换到主机的操作系统（在此情况下是
+  Linux）上。
+
+
+  当然，SQL Server 团队并没有原封不动地采用 `Drawbridge` 技术，因为该研究项目存在一些挑战。其中一个挑战是该研究项目已正式完结，意味着没有后续支持。另一个挑战是
+  SQL Server 操作系统 (`SOS`) 和 `Drawbridge` 在技术上存在大量重叠。例如，两种解决方案各自都有自己的内存管理和线程/调度处理功能。
+
+
+  最终决定是将 SQL Server OS 和 `Drawbridge` 合并为一个新的平台层，称为 `SQLPAL`（`SQL 平台抽象层`）。使用 `SQLPAL`，SQL
+  Server 团队可以像往常一样开发代码，而将操作系统调用的转换工作留给 `SQLPAL` 处理。图 2-3 展示了在 Linux 上运行 SQL Server
+  时各层之间的交互。
+
+
+  ![../images/480532_2_En_2_Chapter/480532_2_En_2_Fig3_HTML.jpg](img/480532_2_En_2_Fig3_HTML.jpg)
+
+
+  图 2-3
+
+
+  Linux 上的 SQL Server 各层交互
+
+
+  许多微软博客提供了大量关于 `SQLPAL` 功能及设计选择的更多信息。如果您想了解更多关于 `SQLPAL` 或其诞生过程的信息，我们推荐文章“SQL Server
+  on Linux: How? Introduction”，可在 [`https://cloudblogs.microsoft.com/sqlserver/2016/12/16/sql-server-on-linux-how-introduction/`](https://cloudblogs.microsoft.com/sqlserver/2016/12/16/sql-server-on-linux-how-introduction/)
+  获取。
+
+
+  除了容器的使用，Linux 上的 SQL Server 2019 是大数据集群产品的核心。大数据集群内部在数据访问、操作和查询分发方面发生的几乎所有操作，都是通过运行在容器内的
+  Linux 上的 SQL Server 实例来完成的。
+
+
+  在部署大数据集群时，部署脚本将负责在容器内完成完整的 Linux 版 SQL Server 安装。这意味着无需手动安装 Linux 版 SQL Server，甚至无需手动保持所有组件更新。所有这些都由大数据集群的部署和管理工具处理。
+
+
+
+
+  '
+- "# Spark\n\n随着能够在`Linux`上运行`SQL Server`的能力出现，将`SQL Server`与各种开源及基于`Linux`的产品和技术集成开启了诸多新的可能性。其中最令人兴奋的组合之一，是在`SQL\
+  \ Server 大数据集群`中实现了对`Apache Spark`的集成。\n\n`SQL Server`是一个关系型数据库平台。虽然像`PolyBase`这样的技术能够将非关系型数据（或来自另一个关系型平台如`Oracle`或`Teradata`的关系型数据）读入`SQL\
+  \ Server`所需的关系型格式中，但本质上，`SQL Server`过去并不擅长处理非结构化或非关系型数据。在这方面，`Spark`是一个改变游戏规则的存在。\n\
+  \n在产品中集成`Spark`意味着，您现在可以根据自己的偏好，轻松地在`SQL Server 大数据集群`内部使用`Spark`或`SQL Server`来处理和分析海量的、各种类型的数据。这种处理大量数据的能力提供了最大的灵活性，并使数据集的并行和分布式处理成为现实。\n\
+  \n## MapReduce\n\n`Apache Spark`于 2009 年在加州大学伯克利分校创建，主要是为了解决一种名为`MapReduce`技术的局限性。`MapReduce`编程模型由`Google`开发，是用于为互联网上所有网页建立索引的基础技术（您可能更熟悉其`Hadoop\
+  \ MapReduce`形式）。简而言之，`MapReduce`是一个框架，用于在大量被称为节点的计算机上并行处理海量数据集。这种跨多个节点的并行处理至关重要，因为数据集的规模已经增长到无法再由单台机器高效处理的地步。通过将工作（和数据）分布到多台机器上，可以实现并行性，从而更快地处理这些大数据集。\n\
+  \n在`MapReduce`框架上运行一个查询通常需要经历四个执行步骤：\n\n1.  `输入分片`\n\n    `MapReduce`任务的输入被分割成逻辑上的数据分布，这些数据存储在文件块中。`MapReduce`任务会计算哪些记录适合放入一个逻辑块或“分片”，并决定处理该任务所需的映射器数量。\n\
+  \n2.  `映射`\n\n    在映射阶段，我们的查询在每个“分片”上分别执行，并为该特定分片生成针对该特定查询的输出。输出始终是由映射过程返回的某种形式的键/值对。\n\
+  \n3.  `混洗`\n\n    `混洗`过程，简单来说，就是对映射过程返回的数据进行排序和合并的过程。\n\n4.  `归约`\n\n    最后一步，`归约`，汇总混洗过程返回的结果，并返回一个单一的输出。\n\
+  \n解释`MapReduce`过程的最佳方式是查看一个可视化示例。图 2-4 展示了一个计算数据集中单词出现次数的`MapReduce`任务示例。为了简单且便于可视化展示，我们使用一个简短的句子作为数据集：\"\
+  `SQL Server` is no longer just `SQL` but it is much more.\"\n\n![../images/480532_2_En_2_Chapter/480532_2_En_2_Fig4_HTML.jpg](img/480532_2_En_2_Fig4_HTML.jpg)\n\
+  \n图 2-4\nMapReduce 示例任务\n\n在该示例中，包含我们任务输入的数据集（句子“`SQL Server` is no longer just\
+  \ `SQL` but is also much more”）被分割成三个不同的`分片`。这些`分片`在`映射`阶段被处理，得出每个分片的单词计数。结果被发送到`混洗`步骤，该步骤将所有结果按顺序排列。最后，`归约`步骤计算每个单词的总出现次数，并将其作为最终输出返回。\n\
+  \n从图 2-4 中的（简单）示例可以看出，`MapReduce`在跨并行环境分发和协调数据处理方面非常高效。然而，`MapReduce`框架也有一些缺点，最显著的是编写需要多次遍历数据（例如，机器学习算法）的大型程序很困难。对于数据集的每一次遍历，都必须编写一个独立的`MapReduce`任务，每个任务都需要从头开始重新加载它所需的数据。由于这一点，以及`MapReduce`访问数据的方式，在`MapReduce`框架内处理数据可能相当缓慢。\n\
+  \n## Spark：改进 MapReduce\n\n创建`Spark`是为了解决这些问题，并使大数据分析更加灵活和高性能。它通过实现内存技术来实现这一点，该技术允许在处理步骤之间共享数据，并允许进行临时数据处理，而不必编写复杂的`MapReduce`任务来处理数据。此外，`Spark`支持广泛的库，这些库可以增强或扩展`Spark`的功能，例如处理流数据、执行机器学习任务，甚至通过`SQL`语言查询数据。\n\
+  \n`Spark`在外观和行为上与`MapReduce`框架非常相似，因为`Spark`也是一个协调和管理处理数据的任务的协调器。与`MapReduce`一样，`Spark`使用工作节点来执行实际的数据处理。这些工作节点通过所谓的`Spark`应用程序（定义为`驱动器进程`）来获知要做什么。`驱动器进程`本质上是`Spark`应用程序的核心，它跟踪`Spark`应用程序的状态，响应输入或输出，并调度工作并将其分配给工作节点。`驱动器进程`的一个优点是，它可以通过语言\
+  \ API（如`Python`或`R`）从不同的编程语言“驱动”。`Spark`负责将各种语言中的命令转换为在工作节点上处理的`Spark`代码。\n\n图 2-5\
+  \ 展示了`逻辑上的``Spark`架构概览。\n\n![../images/480532_2_En_2_Chapter/480532_2_En_2_Fig5_HTML.jpg](img/480532_2_En_2_Fig5_HTML.jpg)\n\
+  \n图 2-5\nSpark 逻辑架构\n\n我们特意在提及`Spark`架构时使用了“`逻辑上`”这个词是有原因的。尽管图 2-5 暗示`工作节点`是集群中独立的机器，但实际上在`Spark`中，您可以在一台机器上运行任意多的`工作节点`。事实上，出于测试和开发任务的考虑，`驱动器进程`和`工作节点`都可以在单台机器上以`本地模式`运行。\n\
+  \n图 2-5 还展示了`Spark`应用程序如何在集群上协调工作。您作为用户编写的代码由`驱动器进程`翻译成您的`工作节点`能够理解的语言；它将工作分发给各个`工作节点`，由它们处理数据。在图中，我们特别突出了`工作节点`内部的`缓存`。`缓存`是`Spark`能够如此高效地执行数据处理的原因之一，因为它可以将中间处理结果存储在节点的内存中，而不是像`Hadoop\
+  \ MapReduce`那样存储在磁盘上。\n\n## SQL Server 大数据集群中的 Spark\n\n在`SQL Server 大数据集群`内部，`Spark`被包含在一个独立的容器中，该容器与一个`SQL\
+  \ Server on Linux`容器共享一个 Pod。\n\n我们尚未触及的一个方面是，`SQL Server`外部的非关系型数据在`大数据集群`内部是如何存储的。如果您熟悉基于`Spark`或`Hadoop`的大数据基础架构，下一节内容应该不会让您感到意外。\n\
+  \n\n\n### HDFS\n\nHDFS，即 Hadoop 分布式文件系统，是 Spark 架构中存储数据的主要方法。HDFS 在如何存储和处理文件系统上的数据方面具有许多优势，例如容错能力以及将数据分布在组成\
+  \ HDFS 集群的多个节点上。\n\nHDFS 的工作方式是将数据拆分成独立的块（称为数据块），并在数据存储到文件系统时，将这些块分布到组成 HDFS 环境的各个节点上。这些数据块（默认大小为\
+  \ 64 MB）随后会在多个节点上进行复制，以实现容错。如果一个节点发生故障，数据块的副本在其他节点上仍然可用，这意味着文件系统可以轻松地从单个节点的数据丢失中恢复。\n\
+  \n图 2-6 展示了 HDFS 架构的简化概览。\n\n![../images/480532_2_En_2_Chapter/480532_2_En_2_Fig6_HTML.jpg](img/480532_2_En_2_Fig6_HTML.jpg)\n\
+  \n图 2-6\n\nHDFS 架构\n\n在许多方面，HDFS 映射了 Hadoop 的架构，从这个意义上说，也映射了我们在上一节中展示的 Spark 架构。由于文件系统中存储的数据具有分布式特性，数据分布在也负责处理该数据的\
+  \ Spark 架构节点上是可能的，实际上也是预期的。这种数据分布带来了巨大的性能优势；由于数据驻留在负责处理该数据的同一节点上，因此无需在存储架构中移动数据。再加上在\
+  \ Spark 工作节点内进行数据缓存的额外好处，数据确实可以非常高效地处理。\n\n需要指出的一点是，与 Hadoop 不同，Spark 并不一定局限于驻留在\
+  \ HDFS 中的数据。Spark 可以通过 API 和原生支持访问存储在各种来源的数据。例子包括各种云存储平台，如 Azure Blob Storage，或关系型数据源，如\
+  \ `SQL Server`。\n\n### 将物理基础设施部分整合起来\n\n现在是时候看看全局了。图 2-7 完整地展示了前几节讨论的技术如何在 `SQL\
+  \ Server Big Data Clusters` 内协同工作。\n\n![../images/480532_2_En_2_Chapter/480532_2_En_2_Fig7_HTML.jpg](img/480532_2_En_2_Fig7_HTML.jpg)\n\
+  \n图 2-7\n\n包含 Spark、HDFS 和 Kubernetes 的 `SQL Server Big Data Cluster` 架构\n\n从图 2-7\
+  \ 可以看出，`SQL Server Big Data Clusters` 在 Kubernetes 部署的容器内整合了多种不同的角色。将 `SQL Server`\
+  \ 和 Spark 与 HDFS 数据节点一起放在同一个容器中，允许这两种产品以性能优化的方式访问存储在 HDFS 中的数据。在 `SQL Server` 中，这种数据访问将通过\
+  \ `PolyBase` 发生，而 Spark 则可以原生查询驻留在 HDFS 中的数据。\n\n图 2-7 中的架构还为我们提供了处理和查询数据的两条不同路径。我们可以选择使用可用的\
+  \ `SQL Server` 实例将数据以关系格式存储，或者我们可以使用 HDFS 文件系统并在其中存储（非关系）数据。当数据存储在 HDFS 中时，我们可以以任何我们喜欢的方式访问和处理该数据。如果你的用户更熟悉编写\
+  \ `T-SQL` 查询来检索数据，你可以使用 `PolyBase` 将 HDFS 存储的数据通过外部表引入 `SQL Server`。另一方面，如果用户更喜欢使用\
+  \ Spark，他们可以编写直接从 HDFS 访问数据的 Spark 应用程序。然后，如果需要，用户可以调用 Spark API 来将存储在 `SQL Server`\
+  \ 中的关系数据与存储在 HDFS 中的非关系数据结合起来。\n\n## 逻辑大数据集群架构\n\n如本章引言所述，大数据集群可以分为四个逻辑区域。将这些区域视为各种基础设施和管理部分的集合，它们在集群内执行特定功能。每个区域又包含一个或多个它所执行的角色。例如，在数据池区域中，有两个角色：存储池和\
+  \ SQL 数据池。\n\n图 2-8 展示了四个逻辑区域以及作为每个区域一部分的各种角色的概览。\n\n![../images/480532_2_En_2_Chapter/480532_2_En_2_Fig8_HTML.jpg](img/480532_2_En_2_Fig8_HTML.jpg)\n\
+  \n图 2-8\n\n大数据集群架构\n\n你可以立即推断出这四个逻辑区域：控制区域（内部命名为控制平面）以及计算、数据和应用程序区域。在接下来的章节中，我们将分别深入探讨这些逻辑区域中的每一个，描述其功能以及其中执行的角色。在我们开始仔细研究控制平面之前，你可能已经注意到图\
+  \ 2-8 中还显示了一个额外的角色：`SQL Server Master Instance`。\n\n`SQL Server master instance`\
+  \ 是 Kubernetes 节点内的一个 `SQL Server on Linux` 部署。`SQL Server master instance` 就像通往你的大数据集群的入口点，并通过\
+  \ `Azure Data Studio` (`ADS`)（见图 2-9）或其他工具（如 `SQL Server Management Studio`）提供外部连接端点。\n\
+  \n![../images/480532_2_En_2_Chapter/480532_2_En_2_Fig9_HTML.jpg](img/480532_2_En_2_Fig9_HTML.jpg)\n\
+  \n图 2-9\n\n通过 `Azure Data Studio` 连接到 `SQL Server master instance`\n\n在许多方面，`SQL\
+  \ Server master instance` 的行为就像一个普通的 `SQL Server` 实例。你可以使用 `Azure Data Studio` 访问它并浏览该实例，查询存储在其中的系统数据库和用户数据库。与传统的\
+  \ `SQL Server` 实例相比，一个重大变化是 `SQL Server master instance` 将把你的查询分发到计算池中的所有 `SQL Server`\
+  \ 节点，并通过 `PolyBase` 访问存储在数据平面内 HDFS 上的数据。\n\n默认情况下，`SQL Server master instance`\
+  \ 还启用了 `Machine Learning Services`。这使你可以直接从查询中运行使用 `R`、`Python` 或 `Java` 的数据库内分析。使用\
+  \ `SQL Server Big Data Cluster` 提供的数据虚拟化选项，`Machine Learning Services` 也可以访问存储在\
+  \ HDFS 文件系统内的非关系数据。这意味着你的数据分析师或科学家可以选择使用 Spark 或 `SQL Server Machine Learning Services`\
+  \ 来分析或操作化存储在大数据集群中的数据。我们将在第 7 章中更详细地探讨这些选项。\n\n\n\n### 控制平面\n\n图 2-10 所示的控制平面是您进入大数据集群管理环境的入口。它提供了如\
+  \ Grafana 等各种管理和日志工具，是您执行所有大数据集群管理的集中地。此外，大数据集群内部的安全性也是通过控制平面来管理和控制的。\n\n![../images/480532_2_En_2_Chapter/480532_2_En_2_Fig10_HTML.jpg](img/480532_2_En_2_Fig10_HTML.jpg)\n\
+  \n图 2-10 大数据集群控制平面\n\n关于大数据集群的管理，我们将在第 3 章讨论可用于管理大数据集群的各种管理工具。\n\n除了提供一个可执行所有大数据集群管理任务的集中位置外，控制平面在协调向底层计算和数据区域分发任务方面也扮演着非常重要的角色。访问控制平面是通过控制器端点进行的。\n\
+  \n控制器端点用于大数据集群的部署和配置管理。该端点通过 REST API 进行访问，大数据集群内部的一些服务以及我们用于部署和配置大数据集群的命令行工具都会访问这些\
+  \ API。\n\n在下一章中，您将非常熟悉控制器端点，我们将使用 `azdata` 来部署和配置一个大数据集群。\n\n### 计算区域\n\n计算区域（见图\
+  \ 2-11）由一个或多个计算池组成。一个计算池是一组 Kubernetes Pod 的集合，这些 Pod 包含运行在 Linux 上的 SQL Server。使用计算池，您可以通过\
+  \ PolyBase 以分布式方式访问各种数据源。例如，计算池可以访问大数据集群本身 HDFS 内部存储的数据，或者通过任何 PolyBase 连接器（如 Oracle\
+  \ 或 MongoDB）访问数据。\n\n![../images/480532_2_En_2_Chapter/480532_2_En_2_Fig11_HTML.jpg](img/480532_2_En_2_Fig11_HTML.jpg)\n\
+  \n图 2-11 大数据集群计算区域\n\n拥有计算池的主要优势在于，它提供了将查询分布式或横向扩展到每个计算池内部多个节点的选项，从而提升了 PolyBase\
+  \ 查询的性能。\n\n默认情况下，在计算逻辑区域内您可以访问一个计算池。但是，在某些情况下，例如当您希望将资源专用于访问特定数据源时，您可以添加多个计算池。计算池内部每个\
+  \ Kubernetes Pod 的所有管理和配置都由 SQL Server 主实例处理。\n\n### 数据区域\n\n数据区域（图 2-12）用于在您的大数据集群中持久化和缓存数据，它分为两种不同的角色：存储池和\
+  \ SQL 数据池，它们在大数据集群中具有不同的功能。\n\n![../images/480532_2_En_2_Chapter/480532_2_En_2_Fig12_HTML.jpg](img/480532_2_En_2_Fig12_HTML.jpg)\n\
+  \n图 2-12 数据平面架构\n\n#### 存储池\n\n存储池由结合了 Spark、运行在 Linux 上的 SQL Server 和 HDFS 数据节点的\
+  \ Kubernetes Pod 组成。图 2-13 展示了 Pod 的内容。\n\n![../images/480532_2_En_2_Chapter/480532_2_En_2_Fig13_HTML.jpg](img/480532_2_En_2_Fig13_HTML.jpg)\n\
+  \n图 2-13 存储池内部的存储节点\n\nHDFS 数据节点被组合成一个存在于您大数据集群内部的单一 HDFS 集群。存储池的主要功能是提供一个 HDFS\
+  \ 存储集群，用于存储通过例如 Spark 导入的数据。通过创建一个 HDFS 集群，您基本上可以在大数据集群内部访问一个数据湖，用于存储各种非关系型数据，如\
+  \ Parquet 或 CSV 文件。\n\nHDFS 集群会自动安排数据持久化，因为您导入存储池的数据会自动分散到存储池内部的所有存储节点上。这种跨节点的数据分布也使您能够快速分析大量数据，因为分析的负载分布在多个节点上。这种架构的一个优势是，您可以使用数据节点上的本地存储，也可以向节点添加自己的持久存储子系统。\n\
+  \n与计算池类似，存储节点中存在的 SQL Server 实例是通过 SQL Server 主实例访问的。因为存储节点结合了 SQL Server 和 Spark，所以驻留在存储节点上或由存储节点管理的所有数据也可以直接通过\
+  \ Spark 访问。这意味着您不必使用 PolyBase 来访问 HDFS 环境内部的数据。这为数据分析或数据工程提供了更大的灵活性。\n\n#### SQL\
+  \ 数据池\n\n数据平面的另一个区域是 SQL 数据池。这组 Pod 与存储池的不同之处在于，它没有将 Spark 或 HDFS 一起组合到节点中。相反，SQL\
+  \ 数据池由一个或多个运行在 Linux 上的 SQL Server 实例组成。这些实例被称为分片，您可以在图 2-14 中看到它们的示意图。\n\n![../images/480532_2_En_2_Chapter/480532_2_En_2_Fig14_HTML.jpg](img/480532_2_En_2_Fig14_HTML.jpg)\n\
+  \n图 2-14 SQL 数据池内部对外部数据源的横向扩展和缓存\n\nSQL 数据池的主要角色是优化使用 PolyBase 对外部源的访问。SQL 数据池随后可以对外部源的数据进行分区和缓存，并最终提供针对外部数据源的并行和分布式查询。为了提供这种并行和分布式功能，SQL\
+  \ 数据池内部的数据集被划分为跨 SQL 数据池内部节点的分片。\n\n## 总结\n\n在本章中，我们从物理和逻辑两个角度探讨了 SQL Server 大数据集群的架构。在物理架构中，我们重点关注了构成大数据集群的技术，如容器、SQL-on-Linux\
+  \ 和 Spark。在逻辑架构中，我们讨论了大数据集群内部执行特定角色或任务的不同逻辑区域。\n\n对于大数据集群中使用的每种技术，我们都简要介绍了其起源以及该技术在大数据集群中扮演的角色。由于\
+  \ SQL Server 大数据集群中使用了广泛的技术和解决方案，我们尽可能全面地描述了各种技术；然而，我们也意识到，我们无法像希望的那样详细描述每一种技术。例如，仅\
+  \ Spark 一项，就已经出版发行了数十本描述其工作原理以及如何利用该技术的书籍。在 SQL-on-Linux、HDFS 和 Kubernetes 领域，情况也并无太大不同。因此，最好将本章视为对这些技术或解决方案的简单而简要的介绍，足以让您开始理解和使用\
+  \ SQL Server 大数据集群。\n\n\n\n## 3. 大数据集群的部署\n\n现在是时候安装属于您自己的 `SQL Server 2019 大数据集群`\
+  \ 了！我们将详细处理三种不同的场景，并且会为每个场景使用一台全新的机器：\n\n*   在 `Windows` 上独立安装 `PolyBase`\n*   在\
+  \ `Linux` 上使用 `kubeadm` 部署大数据集群\n*   使用 `Azure Kubernetes Service (AKS)` 部署大数据集群\n\
+  \n从同一台机器运行所有选项是完全可以的。但考虑到您可能不会用到全部方案，我们认为每次都从头开始会更合理。\n\n我们将介绍使用 `Microsoft Windows`\
+  \ 操作系统的安装过程。本指南的目标是让您的 `大数据集群` 尽快启动并运行，因此我们会配置一些可能并非最佳实践的选项（比如将所有服务账户和目录都保留为默认设置）。请根据您的需求随意修改这些设置。\n\
+  \n如果您选择 `AKS` 安装，则需要一个有效的 `Azure` 订阅。如果您还没有 `Azure` 订阅，可以免费创建一个，其中包含可免费使用的额度。\n\n\
+  ## 一个小助手：`Chocolatey`\n\n在开始之前，我们想请您关注 `Chocolatey`（或称 `choco`）。如果您没听说过它，`choco`\
+  \ 是一个适用于 `Windows` 的免费软件包管理器，它允许我们通过在 `PowerShell` 或 `命令提示符` 中执行一行命令来安装许多先决条件。您可以在\
+  \ [`http://chocolatey.org`](http://chocolatey.org) 找到更多信息（参见图 3-1），您甚至可以在那里创建账户并提供自己的软件包。\n\
+  \n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig1_HTML.jpg](img/480532_2_En_3_Fig1_HTML.jpg)\n\
+  图 3-1\n`Chocolatey` 主页\n\n不过，从一个简单用户的角度来看，无需创建账户或下载任何安装程序。\n\n要在您的系统上启用 `choco`，请以管理员模式打开一个\
+  \ `PowerShell` 窗口，并运行清单 3-1 中所示的脚本。\n\n```\nSet-ExecutionPolicy Bypass -Scope Process\
+  \ -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol\
+  \ -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))\n\
+  ```\n清单 3-1\n在 `PowerShell` 中安装 `Chocolatey` 的脚本\n\n相应的命令执行完成后，`choco` 即安装完毕并可以使用了。\n\
+  \n## 安装本地 `PolyBase` 实例\n\n如果您只对 `SQL Server 2019 大数据集群` 的数据虚拟化功能感兴趣，那么安装过程实际上比完整环境要简单和轻量得多。实现数据虚拟化功能的\
+  \ `PolyBase` 特性，可以在任何平台的常规 `SQL Server 2019` 安装过程中安装。\n\n如果您想通过 `PolyBase` 使用 `Teradata`，则需要安装\
+  \ `C++ Redistributable 2012` 才能与我们的 `SQL Server` 实例进行实际通信。在任何情况下，安装 `SQL Server\
+  \ Management Studio (SSMS)` 都可能会有所帮助，并且安装好它以便重现我们在本书中展示的示例是件好事。\n\n让我们通过 `Chocolatey`\
+  \ 安装前面提到的软件包。只需运行清单 3-2 中的三个命令，`choco` 就会处理其余的事情。\n\n```\nchoco install sql-server-management-studio\
+  \ -y\nchoco install vcredist2012 -y\n```\n清单 3-2\n安装 `PolyBase` 先决条件的脚本\n\n安装好先决条件后，我们就可以开始实际的\
+  \ `SQL Server` 安装了。导航到 [`www.microsoft.com/en-us/evalcenter/evaluate-sql-server-2019`](http://www.microsoft.com/en-us/evalcenter/evaluate-sql-server-2019)\
+  \ 并按照说明进行下载。\n\n运行下载的文件，如图 3-2 所示。\n\n选择“下载媒体”作为安装类型。\n\n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig2_HTML.jpg](img/480532_2_En_3_Fig2_HTML.jpg)\n\
+  图 3-2\n`SQL Server 2019` 安装程序 - 安装类型选择\n\n然后确认语言和目录，如图 3-3 所示。\n\n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig3_HTML.jpg](img/480532_2_En_3_Fig3_HTML.jpg)\n\
+  图 3-3\n`SQL Server 2019` 安装程序 - 下载媒体对话框\n\n下载完成并成功后，您将看到图 3-4 中的消息。\n\n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig4_HTML.jpg](img/480532_2_En_3_Fig4_HTML.jpg)\n\
+  图 3-4\n`SQL Server 2019` 安装程序 - 下载媒体成功\n\n现在导航到您保存下载文件的文件夹。挂载映像，如图 3-5 所示。\n\n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig5_HTML.jpg](img/480532_2_En_3_Fig5_HTML.jpg)\n\
+  图 3-5\n`SQL Server 2019` 安装程序 - 挂载 ISO\n\n安装可以无人值守运行，但对于第一次安装，可能更有意义的是探索您的选项。运行\
+  \ `setup.exe`，转到“安装”选项卡，然后选择“新建 `SQL Server` 独立安装”，如图 3-6 所示。\n\n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig6_HTML.jpg](img/480532_2_En_3_Fig6_HTML.jpg)\n\
+  图 3-6\n`SQL Server 2019` 安装程序 - 主屏幕\n\n选择评估版，如图 3-7 所示，确认许可条款，并在后续屏幕上勾选“检查更新”复选框。\n\
+  \n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig7_HTML.jpg](img/480532_2_En_3_Fig7_HTML.jpg)\n\
+  图 3-7\n`SQL Server 2019` 安装程序 - 版本选择\n\n安装程序规则会识别在运行安装程序时可能出现的潜在问题。如图 3-8 所示的失败和警告必须在安装完成前得到纠正。\n\
+  \n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig8_HTML.jpg](img/480532_2_En_3_Fig8_HTML.jpg)\n\
+  图 3-8\n`SQL Server 2019` 安装程序 - 安装规则\n\n从图 3-9 所示的功能选择对话框中，勾选“`PolyBase 查询对外部数据`”。同时勾选其子节点“用于\
+  \ HDFS 数据源的 Java 连接器”。\n\n\n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig9_HTML.jpg](img/480532_2_En_3_Fig9_HTML.jpg)\n\
+  \n图 3-9\n\n`SQL Server 2019 安装程序` – 功能选择\n\n使用“实例配置”为 `SQL Server` 实例指定名称和实例 ID。如图\
+  \ 3-10 所示，实例 ID 成为安装路径的一部分。\n\n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig10_HTML.jpg](img/480532_2_En_3_Fig10_HTML.jpg)\n\
+  \n图 3-10\n\n`SQL Server 2019 安装程序` – 实例配置\n\n在图 3-11 所示的对话框中，选择配置一个启用 `PolyBase`\
+  \ 的独立实例。\n\n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig11_HTML.jpg](img/480532_2_En_3_Fig11_HTML.jpg)\n\
+  \n图 3-11\n\n`SQL Server 2019 安装程序` – `PolyBase` 配置\n\n如图 3-12 所示，`PolyBase` HDFS\
+  \ 连接器需要 Java；系统将提示您要么随 `SQL Server` 安装 `Open JRE`，要么提供您计算机上现有 Java 安装的位置（如果有的话）。\n\
+  \n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig12_HTML.jpg](img/480532_2_En_3_Fig12_HTML.jpg)\n\
+  \n图 3-12\n\n`SQL Server 2019 安装程序` – Java 安装位置\n\n然后确认如图 3-13 所示的默认账户。\n\n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig13_HTML.jpg](img/480532_2_En_3_Fig13_HTML.jpg)\n\
+  \n图 3-13\n\n`SQL Server 2019 安装程序` – 服务器配置\n\n坚持使用 Windows 身份验证，并如图 3-14 所示添加您当前的用户。\n\
+  \n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig14_HTML.jpg](img/480532_2_En_3_Fig14_HTML.jpg)\n\
+  \n图 3-14\n\n`SQL Server 2019 安装程序` – 数据库引擎配置\n\n单击图 3-15 所示摘要页面上的 `安装`，并等待安装程序完成。\n\
+  \n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig15_HTML.jpg](img/480532_2_En_3_Fig15_HTML.jpg)\n\
+  \n图 3-15\n\n`SQL Server 2019 安装程序` – 概述\n\n安装成功完成后，将显示如图 3-16 所示的状态摘要，然后您可以关闭安装程序。\n\
+  \n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig16_HTML.jpg](img/480532_2_En_3_Fig16_HTML.jpg)\n\
+  \n图 3-16\n\n`SQL Server 2019 安装程序` – 完成\n\n使用 `SQL Server Management Studio (SSMS)`\
+  \ 或任何其他 `SQL Server` 客户端工具（如 `Azure Data Studio`）连接到实例，打开一个新查询，并运行清单 3-3 中所示的脚本。\n\
+  \n```\nexec sp_configure @configname = 'polybase enabled', @configvalue = 1;\nRECONFIGURE\n\
+  ```\n\n清单 3-3\n通过 `T-SQL` 启用 `PolyBase`\n\n输出应为\n\n```\nConfiguration option 'polybase\
+  \ enabled' changed from 0 to 1. Run the RECONFIGURE statement to install.\n```\n\
+  \n如图 3-17 所示，单击 `对象资源管理器` 菜单中的 `重新启动`，以重新启动 `SQL Server` 实例。\n\n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig17_HTML.jpg](img/480532_2_En_3_Fig17_HTML.jpg)\n\
+  \n图 3-17\n\n重新启动 `SQL Server` 实例\n\n您已大功告成——现在您可以访问启用 `PolyBase` 的 `SQL Server 2019`\
+  \ 安装了。\n\n## 使用 `Azure Data Studio` 处理大数据群集\n\n作为微软 `SQL 客户端工具` 战略的一部分，处理大数据群集所需的大部分任务通过\
+  \ `Azure Data Studio (ADS)` 而非 `SQL Server Management Studio` 或其他工具完成，这可能并不令您感到惊讶。对于那些不熟悉此工具的读者，我们将从简要介绍开始，包括如何获取此工具。\n\
+  \n### 什么是 `Azure Data Studio`？\n\n`Azure Data Studio` 是一个跨平台（Windows、MacOS 和 Linux）、可扩展且可定制的工具，可用于经典的\
+  \ `T-SQL` 查询和命令，以及诸如笔记本等多种新功能。后者可以通过扩展来启用，这些扩展通常通过 `VSIX` 文件安装，您在处理 `Visual Studio`\
+  \ 或 `Visual Studio Code`^(²) 的其他扩展时可能对此很熟悉。\n\n它最初于 2017 年以 `SQL Operations Studio`\
+  \ 的名称公开，但在 2018 年正式发布前进行了品牌重塑。虽然产品名称有点误导性，但它不仅适用于云（Azure）服务，也适用于本地解决方案和需求。\n\n例如，它没有为\
+  \ `SQL Server Agent` 提供开箱即用的界面，但作为交换提供了内置的图表功能，这表明它与其说是替代品，不如说是对 `SQL Server Management\
+  \ Studio (SSMS)` 的补充工具。`SSMS` 针对的是管理和运维群体（数据库管理员），而 `Azure Data Studio` 更适合各种数据专业人员，包括数据科学家。\n\
+  \n### 获取并安装 `Azure Data Studio`\n\n您可以直接从微软获取免费的 `Azure Data Studio` 副本： [`https://docs.microsoft.com/en-us/sql/azure-data-studio/download`](https://docs.microsoft.com/en-us/sql/azure-data-studio/download)。为您选择的平台下载安装程序并运行。\n\
+  \n或者，只需运行此 `Chocolatey` 命令（清单 3-4），它将为您安装最新版本。\n\n```\nchoco install azure-data-studio\
+  \ -y\n```\n\n清单 3-4\n通过 `choco` 安装 `ADS`\n\n## 安装“真正的”大数据群集\n\n如果您想充分利用完整的大数据群集功能集，则需要一个包含所有不同角色和池的完整安装。\n\
+  \n### 在 Linux 上使用 kubeadm\n\n一个非常简单的大数据集群部署方法是在一个全新安装的 Ubuntu 16.04 或 18.04 虚拟机或物理机上使用\
+  \ kubeadm。\n\n微软提供了一个能完成所有工作的脚本，因此除了 Linux 安装本身，您几乎不需要做太多事情，这可能是让您第一个大数据集群启动并运行的最简单方法。\n\
+  \n首先，运行列表 3-5 中的命令，确保您的 Linux 机器是最新的。\n\n```\nsudo apt update&&apt upgrade -y\n\
+  sudo systemctl reboot\n列表 3-5\n为 Ubuntu 打补丁\n```\n\n然后，下载脚本，使其可执行，并以 root 权限运行它，如列表\
+  \ 3-6 所示。\n\n```\ncurl --output setup-bdc.sh https://raw.githubusercontent.com/microsoft/sql-server-samples/master/samples/features/sql-big-data-cluster/deployment/kubeadm/ubuntu-single-node-vm/setup-bdc.sh\n\
+  chmod +x setup-bdc.sh\nsudo ./setup-bdc.sh\n列表 3-6\n下载并执行部署脚本\n```\n\n如图 3-18 所示，脚本会要求您输入密码，然后自动开始准备步骤。\n\
+  \n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig18_HTML.jpg](img/480532_2_En_3_Fig18_HTML.jpg)\n\
+  图 3-18\n在 Linux 上使用 kubeadm 进行部署\n\n在预取镜像、配置 Kubernetes 以及所有其他必需步骤之后，大数据集群的部署将开始，如图\
+  \ 3-19 所示。\n\n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig19_HTML.jpg](img/480532_2_En_3_Fig19_HTML.jpg)\n\
+  图 3-19\n在 Linux 上使用 kubeadm 进行部署\n\n一旦整个脚本执行完毕，您就完成了！如图 3-20 所示，脚本还将提供在部署过程中创建的所有端点。\n\
+  \n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig20_HTML.jpg](img/480532_2_En_3_Fig20_HTML.jpg)\n\
+  图 3-20\n在 Linux 上使用 kubeadm 成功部署\n\n您的集群现已完全部署并准备就绪！\n\n### Azure Kubernetes Service\
+  \ (AKS)\n\n另一个直接部署集群的方法是使用 Azure Kubernetes Service，其中 Kubernetes 集群在 Microsoft\
+  \ Azure 云中设置并提供。虽然部署是从任何机器（您的本地 PC 或 VM）启动和控制的，但集群本身将在 Azure 中运行，因此这意味着部署需要一个 Azure\
+  \ 帐户，并且会在您的 Azure 订阅上产生费用。\n\n您可以通过 Azure Data Studio 中的向导或通过一个名为 `azdata` 的工具（在\
+  \ Linux 上部署前一个集群的脚本也调用了它）手动部署。两种方法都需要先安装一些先决条件。一个完整的安装实际上需要几个工具和助手：\n\n*   Python\n\
+  *   Curl 和 SQL Server 命令行工具，这样我们才能与集群通信并向其上传数据。\n*   Kubernetes CLI\n*   `azdata`，这将创建、维护和删除大数据集群。\n\
+  *   Notepad++ 和 7Zip，这些不是实际要求，但如果您想调试安装，可能会得到一个包含可能很大的文本文件的 tar.gz 文件。Windows 默认不处理这些。\n\
+  \n列表 3-7 中的脚本会将这些安装到您的本地机器（或您运行脚本的任何机器）上，因为部署是从这里控制和触发的。我们将通过 Chocolatey 安装这些先决条件。\n\
+  \n```\nchoco install python3 -y\nchoco install sqlserver-cmdlineutils -y\n$env:Path\
+  \ = [System.Environment]::GetEnvironmentVariable(\"Path\",\"Machine\") + \";\" +\
+  \ [System.Environment]::GetEnvironmentVariable(\"Path\",\"User\")\npython -m pip\
+  \ install --upgrade pip\npython -m pip install requests\npython -m pip install requests\
+  \ --upgrade\nchoco install curl -y\nchoco install kubernetes-cli -y\nchoco install\
+  \ notepadplusplus -y\nchoco install 7zip -y\nchoco install visualcpp-build-tools\
+  \ -y\npip3 install kubernetes\npip3 install -r https://aka.ms/azdata\n列表 3-7\n大数据集群先决条件的安装脚本\n\
+  ```\n\n虽然相关供应商显然为大多数工具提供了可视化/手动安装程序，但脚本化方法使整个体验变得容易得多。\n\n此外，由于我们想使用脚本部署到 Azure，我们需要列表\
+  \ 3-8 中所示的 `azure-cli` 包，以便能够连接到我们的 Azure 订阅。\n\n```\nchoco install azure-cli -y\n\
+  列表 3-8\n安装 azure-cli\n```\n\n虽然您技术上可以在 Azure 门户中或通过手动 PowerShell 脚本准备所有内容（我们需要一个资源组、Kubernetes\
+  \ 集群等），但有一个更简单的方法：从 [`https://github.com/Microsoft/sql-server-samples/tree/master/samples/features/sql-big-data-cluster/deployment/aks`](https://github.com/Microsoft/sql-server-samples/tree/master/samples/features/sql-big-data-cluster/deployment/aks)\
+  \ 获取 Python 脚本，它会自动为您处理整个过程和设置。\n\n将脚本下载到您的桌面或其他合适的位置，并打开命令提示符。导航到保存脚本的文件夹。您也可以如列表\
+  \ 3-9 所示使用命令提示符下载。\n\n```\ncurl --output deploy-sql-big-data-aks.py https://raw.githubusercontent.com/microsoft/sql-server-samples/master/samples/features/sql-big-data-cluster/deployment/aks/deploy-sql-big-data-aks.py\n\
+  列表 3-9\n下载部署脚本\n```\n\n当然，您也可以根据需要修改和审查脚本，例如，将一些参数（如 VM 大小）设为静态而非变量，或更改某些值的默认值。\n\
+  \n首先，我们需要登录 Azure，这将使用列表 3-10 中所示的命令完成。\n\n```\naz login\n列表 3-10\n从命令提示符触发登录到 azure\n\
+  ```\n\n"
+- "# 在 Azure 上部署\n\n一个网站将打开；请使用你的 Azure 凭据登录，如图 3-21 所示。\n\n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig21_HTML.jpg](img/480532_2_En_3_Fig21_HTML.jpg)\n\
+  \n**图 3-21** Azure 登录屏幕\n\n该网站将确认你已登录；你可以关闭浏览器，如图 3-22 所示。\n\n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig22_HTML.jpg](img/480532_2_En_3_Fig22_HTML.jpg)\n\
+  \n**图 3-22** Azure 登录确认\n\n你的命令提示符，如图 3-23 所示，显示了与你刚使用的凭据关联的所有订阅。复制你要使用的订阅 ID 并执行\
+  \ Python 脚本，该脚本将询问从订阅 ID 到 Kubernetes 集群中节点数量的所有信息。\n\n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig23_HTML.jpg](img/480532_2_En_3_Fig23_HTML.jpg)\n\
+  \n**图 3-23** Python 部署脚本中的参数输入\n\n脚本现在开始运行所有必需的步骤。同样，这可能需要几分钟到几小时，具体取决于虚拟机大小、节点数量等因素。\n\
+  \n该脚本会像在 Linux 上安装时的脚本一样，在过程中进行报告。它使用了相同的工具(`azdata`)，因此创建实际大数据集群时的输出非常相似，如图 3-24\
+  \ 所示。\n\n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig24_HTML.jpg](img/480532_2_En_3_Fig24_HTML.jpg)\n\
+  \n**图 3-24** Python 部署脚本的输出\n\n脚本还会使用`azdata bdc config`来创建你的 JSON 文件。\n\n由于此 SQL\
+  \ Server 2019 大数据集群是部署到 Azure 上的，与本地安装时可以直接使用`localhost`地址访问不同，你将需要有关安装的 IP 地址和端口信息。因此，IP\
+  \ 地址和端口会在最后提供，如图 3-25 所示。\n\n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig25_HTML.jpg](img/480532_2_En_3_Fig25_HTML.jpg)\n\
+  \n**图 3-25** Python 部署脚本的最终输出（包括 IP 地址）\n\n如果你忘记了 IP 地址是什么，可以运行这个简单的脚本，如清单 3-11\
+  \ 所示。\n\n```\nkubectl get service -n \n```\n\n**清单 3-11** 使用`kubectl`检索 Kubernetes\
+  \ 服务 IP\n\n如果你也忘记了集群的名称，试试清单 3-12。\n\n```\nkubectl get namespaces\n```\n\n**清单 3-12**\
+  \ 使用`kubectl`检索 Kubernetes 命名空间\n\n如果你同时运行多个集群，清单 3-13 中的脚本也可能很有帮助。只需将其保存为`IP.py`，你就可以如图\
+  \ 3-26 所示运行它。\n\n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig26_HTML.jpg](img/480532_2_En_3_Fig26_HTML.jpg)\n\
+  \n**图 3-26** `IP.py`的输出\n\n```\nCLUSTER_NAME=\"myfirstbigdatacluster\"\nfrom subprocess\
+  \ import check_output, CalledProcessError, STDOUT, Popen, PIPE\nimport os\nimport\
+  \ getpass\ndef executeCmd (cmd):\nif os.name==\"nt\":\nprocess = Popen(cmd.split(),stdin=PIPE,\
+  \ shell=True)\nelse:\nprocess = Popen(cmd.split(),stdin=PIPE)\nstdout, stderr =\
+  \ process.communicate()\nif (stderr is not None):\nraise Exception(stderr)\nprint(\"\
+  \")\nprint(\"SQL Server big data cluster connection endpoints: \")\nprint(\"SQL\
+  \ Server master instance:\")\ncommand=\"kubectl get service master-svc-external\
+  \ -o=custom-columns=\"\"IP:.status.loadBalancer.ingress[0].ip,PORT:.spec.ports[0].port\"\
+  \" -n \"+CLUSTER_NAME\nexecuteCmd(command)\nprint(\"\")\nprint(\"HDFS/KNOX:\")\n\
+  command=\"kubectl get service gateway-svc-external -o=custom-columns=\"\"IP:status.loadBalancer.ingress[0].ip,PORT:.spec.ports[0].port\"\
+  \" -n \"+CLUSTER_NAME\nexecuteCmd(command)\nprint(\"\")\nprint(\"Cluster administration\
+  \ portal (https://:):\")\ncommand=\"kubectl get service mgmtproxy-svc-external -o=custom-columns=\"\
+  \"IP:status.loadBalancer.ingress[0].ip,PORT:.spec.ports[0].port\"\" -n \"+CLUSTER_NAME\n\
+  executeCmd(command)\nprint(\"\")\n```\n\n**清单 3-13** 检索大数据集群端点的 Python 脚本\n\n你已经完成了！你在\
+  \ Azure Kubernetes 服务中的大数据集群现已启动并运行。\n\n> **注意** 无论你是否使用，这个集群都会根据虚拟机数量及其大小产生费用，所以最好不要让它闲置着！\n\
+  \n"
+- "# 通过 Azure Data Studio 部署大数据集群\n\n如果你更喜欢使用图形化向导进行部署，那么答案就是 Azure Data Studio (ADS)！ADS\
+  \ 为你提供了部署 SQL Server 的多种选项，而 **大数据集群** 就在其中。在 ADS 中，可以在欢迎屏幕上找到“新建部署”的链接，也可以在活动连接旁边的上下文菜单中找到，如图\
+  \ 3-27 所示。\n\n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig27_HTML.jpg](img/480532_2_En_3_Fig27_HTML.jpg)\n\
+  \n图 3-27 ADS 中的新建部署\n\n在接下来的屏幕上，选择“`SQL Server Big Data Cluster`”。向导将要求你接受许可条款、选择一个版本，并选择一个部署目标。此向导当前支持的目标包括新的\
+  \ Azure Kubernetes Service (AKS) 集群、现有的 AKS 集群或现有的 `kubeadm` 集群。如果你计划部署到现有集群，Kubernetes\
+  \ 上下文/连接需要存在于你的 Kubernetes 配置中。如果 Kubernetes 集群不是在同一台机器上创建的，那么它很可能还缺失。在这种情况下，你可以将\
+  \ `*.kube` 文件复制到本地机器，或者按照 [`https://kubernetes.io/docs/tasks/access-application-cluster/access-cluster/`](https://kubernetes.io/docs/tasks/access-application-cluster/access-cluster/)\
+  \ 中的描述手动配置 Kubernetes。\n\n在屏幕的下方，向导还会再次列出所需的工具，并确认它们是否已安装合适的版本，如图 3-28 所示。\n\n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig28_HTML.jpg](img/480532_2_En_3_Fig28_HTML.jpg)\n\
+  \n图 3-28 通过 ADS 部署 BDC – 介绍\n\n让我们尝试使用一个新的 AKS 集群进行另一次部署（这也是默认选项）。单击“`Select`”，向导将带你进入第一步。它将为你提供与目标环境匹配的部署模板。不同的模板在大小以及功能（如身份验证类型和高可用性）上有所不同，如图\
+  \ 3-29 所示。\n\n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig29_HTML.jpg](img/480532_2_En_3_Fig29_HTML.jpg)\n\
+  \n图 3-29 通过 ADS 部署 BDC – 步骤 1\n\n接下来的屏幕将取决于你的目标。由于我们选择部署到 Azure 并包含一个新集群，我们需要提供订阅、资源组名称、位置、集群名称，以及底层虚拟机的数量和大小（参见图\
+  \ 3-30）。\n\n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig30_HTML.jpg](img/480532_2_En_3_Fig30_HTML.jpg)\n\
+  \n图 3-30 通过 ADS 部署 BDC – 步骤 2\n\n在步骤 3 中，如图 3-31 所示，我们定义大数据集群的名称（这与之前设置 Kubernetes\
+  \ 集群名称的步骤不同！）以及身份验证类型。\n\n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig31_HTML.jpg](img/480532_2_En_3_Fig31_HTML.jpg)\n\
+  \n图 3-31 通过 ADS 部署 BDC – 步骤 3\n\n在最后的配置屏幕（如图 3-32 所示）中，你可以修改每个池的实例数量，以及为数据和日志声明的存储大小和存储类。\n\
+  \n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig32_HTML.jpg](img/480532_2_En_3_Fig32_HTML.jpg)\n\
+  \n图 3-32 通过 ADS 部署 BDC – 步骤 4\n\n如图 3-33 所示的最终屏幕会给你一个配置摘要。如果你希望继续，请点击“`Script to\
+  \ Notebook`”；否则，你可以使用“`Previous`”按钮返回，进行任何必要的更改和调整。\n\n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig33_HTML.jpg](img/480532_2_En_3_Fig33_HTML.jpg)\n\
+  \n图 3-33 通过 ADS 部署 BDC – 摘要\n\n除非你之前已经安装过，否则 ADS 会提示你为 Notebook 安装 Python，如图 3-34\
+  \ 所示。\n\n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig34_HTML.jpg](img/480532_2_En_3_Fig34_HTML.jpg)\n\
+  \n图 3-34 通过 ADS 部署 BDC – 安装 Python\n\n等待安装完成。你的所有设置都已填充到一个 Python Notebook 中，你可以保存起来稍后使用，也可以立即运行。要执行\
+  \ Notebook，只需单击“`Run Cells`”，如图 3-35 所示。请确保 Python 安装已完成。内核组合框应显示为“`Python 3`”。如果它仍然显示“`Loading\
+  \ kernels…`”，请耐心等待。\n\n![../images/480532_2_En_3_Chapter/480532_2_En_3_Figa_HTML.gif](img/480532_2_En_3_Figa_HTML.gif)\n\
+  \n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig35_HTML.jpg](img/480532_2_En_3_Fig35_HTML.jpg)\n\
+  \n图 3-35 通过 ADS 部署 BDC – 预部署 Notebook\n\n一旦你点击“`Run Cells`”，部署过程就会运行，并且——如果中途没有任何问题——最终会报告回集群的端点，如图\
+  \ 3-36 所示。你还会获得一个用于连接到主实例的直接链接。使用与脚本化部署选项相同的参数，部署所需的时间将与之相同。\n\n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig36_HTML.jpg](img/480532_2_En_3_Fig36_HTML.jpg)\n\
+  \n图 3-36 通过 ADS 部署 BDC – 部署后 Notebook\n\n## 什么是 azdata？\n\n如前所述，无论你选择哪种部署路径，大数据集群的部署始终通过一个名为\
+  \ `azdata` 的工具来控制。这是一个命令行工具，将帮助你创建大数据集群配置、部署你的大数据集群，并且之后可能删除或升级你现有的集群。\n\n合乎逻辑的第一步（在之前的脚本中以某种方式在后台发生）是创建一个配置，如清单\
+  \ 3-14 所示。\n\n```\nazdata bdc config init [--target -t] [--src -s]\n```\n*清单 3-14*\n\
+  使用 `azdata` 创建集群配置\n\n`Target` 只是你配置文件（`bdc.json` 和 `control.json`）的文件夹名称。`src`\
+  \ 是你可以开始使用的现有基础模板之一。\n\n可能的取值如下（在撰写本文时）\n*   `aks-dev-test`\n*   `aks-dev-test-ha`\n\
+  *   `kubeadm-dev-test`\n*   `kubeadm-prod`\n\n这些与你在 Azure Data Studio 中部署时看到的选项相匹配。你总是可以通过运行\
+  \ `azdata bdc config init -t <yourtarget>` 而不指定源来获取所有有效选项。请记住，这些只是模板。如果你首选的环境没有作为一个选项提供，这并不一定意味着它不受支持，只是你需要对现有模板进行一些调整，以使其匹配你的目标。输出如图\
+  \ 3-37 所示。\n\n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig37_HTML.jpg](img/480532_2_En_3_Fig37_HTML.jpg)\n\
+  *图 3-37*\n未指定源时运行 `azdata bdc config init` 的输出\n\n选择的源将取决于你的部署类型。\n\n运行 `azdata\
+  \ bdc config init` 会在一个以你的 `target` 命名的子文件夹中创建两个 `.JSON` 文件——`bdc.json` 和 `control.json`。这将基于默认值，因此我们需要对配置进行一些更改。这可以使用任何文本编辑器完成，也可以再次使用\
+  \ `azdata` 的 `config replace` 选项完成，如清单 3-15 所示，我们用它来修改 `bdc.json` 文件中的大数据集群名称。\n\
+  \n```\nazdata bdc config replace -c myfirstbigdatacluster/bdc.json -j metadata.name=myfirstbigdatacluster\n\
+  ```\n*清单 3-15*\n使用 `azdata` 修改集群配置\n\n`control` 文件定义了更通用的设置，例如你希望使用哪个版本、仓库等，而 `bdc`\
+  \ 文件配置了你的大数据集群环境的实际设置，例如每个角色的副本数量等，如清单 3-16 和 3-17 所示。\n\n```\n{\n\"apiVersion\"\
+  : \"v1\",\n\"metadata\": {\n\"kind\": \"Cluster\",\n\"name\": \"mssql-cluster\"\n\
+  },\n\"spec\": {\n\"docker\": {\n\"registry\": \"mcr.microsoft.com\",\n\"repository\"\
+  : \"mssql/bdc\",\n\"imageTag\": \"2019-CU2-ubuntu-16.04\",\n\"imagePullPolicy\"\
+  : \"Always\"\n},\n\"storage\": {\n\"data\": {\n\"className\": \"\",\n\"accessMode\"\
+  : \"ReadWriteOnce\",\n\"size\": \"15Gi\"\n},\n\"logs\": {\n\"className\": \"\",\n\
+  \"accessMode\": \"ReadWriteOnce\",\n\"size\": \"10Gi\"\n}\n},\n\"endpoints\": [\n\
+  {\n\"name\": \"Controller\",\n\"dnsName\": \"\",\n\"serviceType\": \"NodePort\"\
+  ,\n\"port\": 30080\n},\n{\n\"name\": \"ServiceProxy\",\n\"dnsName\": \"\",\n\"serviceType\"\
+  : \"NodePort\",\n\"port\": 30777\n}\n],\n\"settings\": {\n\"controller\": {\n\"\
+  logs.rotation.size\": \"5000\",\n\"logs.rotation.days\": \"7\"\n}\n}\n},\n\"security\"\
+  : {\n\"activeDirectory\": {\n\"ouDistinguishedName\": \"\",\n\"dnsIpAddresses\"\
+  : [],\n\"domainControllerFullyQualifiedDns\": [],\n\"domainDnsName\": \"\",\n\"\
+  clusterAdmins\": [],\n\"clusterUsers\": []\n}\n}\n}\n```\n*清单 3-16*\n`control.json`\
+  \ 示例\n\n```\n{\n\"apiVersion\": \"v1\",\n\"metadata\": {\n\"kind\": \"BigDataCluster\"\
+  ,\n\"name\": \"mssql-cluster\"\n},\n\"spec\": {\n\"resources\": {\n\"nmnode-0\"\
+  : {\n\"spec\": {\n\"replicas\": 2\n}\n},\n\"sparkhead\": {\n\"spec\": {\n\"replicas\"\
+  : 2\n}\n},\n\"zookeeper\": {\n\"spec\": {\n\"replicas\": 3\n}\n},\n\"gateway\":\
+  \ {\n\"spec\": {\n\"replicas\": 1,\n\"endpoints\": [\n{\n\"name\": \"Knox\",\n\"\
+  dnsName\": \"\",\n\"serviceType\": \"NodePort\",\n\"port\": 30443\n}\n]\n}\n},\n\
+  \"appproxy\": {\n\"spec\": {\n\"replicas\": 1,\n\"endpoints\": [\n{\n\"name\": \"\
+  AppServiceProxy\",\n\"dnsName\": \"\",\n\"serviceType\": \"NodePort\",\n\"port\"\
+  : 30778\n}\n]\n}\n},\n\"master\": {\n\"metadata\": {\n\"kind\": \"Pool\",\n\"name\"\
+  : \"default\"\n},\n\"spec\": {\n\"type\": \"Master\",\n\"replicas\": 3,\n\"endpoints\"\
+  : [\n{\n\"name\": \"Master\",\n\"dnsName\": \"\",\n\"serviceType\": \"NodePort\"\
+  ,\n\"port\": 31433\n},\n{\n\"name\": \"MasterSecondary\",\n\"dnsName\": \"\",\n\"\
+  serviceType\": \"NodePort\",\n\"port\": 31436\n}\n],\n\"settings\": {\n\"sql\":\
+  \ {\n\"hadr.enabled\": \"true\"\n}\n}\n}\n},\n\"compute-0\": {\n\"metadata\": {\n\
+  \"kind\": \"Pool\",\n\"name\": \"default\"\n},\n\"spec\": {\n\"type\": \"Compute\"\
+  ,\n\"replicas\": 1\n}\n},\n\"data-0\": {\n\"metadata\": {\n\"kind\": \"Pool\",\n\
+  \"name\": \"default\"\n},\n\"spec\": {\n\"type\": \"Data\",\n\"replicas\": 2\n}\n\
+  },\n\"storage-0\": {\n\"metadata\": {\n\"kind\": \"Pool\",\n\"name\": \"default\"\
+  \n},\n\"spec\": {\n\"type\": \"Storage\",\n\"replicas\": 3,\n\"settings\": {\n\"\
+  spark\": {\n\"includeSpark\": \"true\"\n}\n}\n}\n}\n},\n\"services\": {\n\"sql\"\
+  : {\n\"resources\": [\n\"master\",\n\"compute-0\",\n\"data-0\",\n\"storage-0\"\n\
+  ]\n},\n\"hdfs\": {\n\"resources\": [\n\"nmnode-0\",\n\"zookeeper\",\n\"storage-0\"\
+  ,\n\"sparkhead\"\n],\n\"settings\": {\n\"hdfs-site.dfs.replication\": \"3\"\n}\n\
+  },\n\"spark\": {\n\"resources\": [\n\"sparkhead\",\n\"storage-0\"\n],\n\"settings\"\
+  : {\n\"spark-defaults-conf.spark.driver.memory\": \"2g\",\n\"spark-defaults-conf.spark.driver.cores\"\
+  : \"1\",\n\"spark-defaults-conf.spark.executor.instances\": \"3\",\n\"spark-defaults-conf.spark.executor.memory\"\
+  : \"1536m\",\n\"spark-defaults-conf.spark.executor.cores\": \"1\",\n\"yarn-site.yarn.nodemanager.resource.memory-mb\"\
+  : \"18432\",\n\"yarn-site.yarn.nodemanager.resource.cpu-vcores\": \"6\",\n\"yarn-site.yarn.scheduler.maximum-allocation-mb\"\
+  : \"18432\",\n\"yarn-site.yarn.scheduler.maximum-allocation-vcores\": \"6\",\n\"\
+  yarn-site.yarn.scheduler.capacity.maximum-am-resource-percent\": \"0.3\"\n}\n}\n\
+  }\n}\n}\n```\n*清单 3-17*\n`bdc.json` 示例\n\n如你所见，该文件允许你更改相当多的设置。虽然你可能将许多设置保留为其默认值，但这在存储方面尤其方便。你可以更改磁盘大小以及存储类型。有关\
+  \ Kubernetes 中存储的更多信息，我们建议阅读 [`https://kubernetes.io/docs/concepts/storage/`](https://kubernetes.io/docs/concepts/storage/)。\n\
+  \n所有部署默认使用持久化存储。除非你有充分的理由更改这一点，否则应保持原样，因为在重启等情况下，非持久化存储可能会使你的集群处于无法工作的状态。\n\n在已设置环境变量的命令提示符中运行以下命令（清单\
+  \ 3-18）。\n\n```\nazdata bdc create -c myfirstbigdatacluster --accept-eula yes\n\
+  ```\n*清单 3-18*\n使用 `azdata` 创建集群\n\n现在，请坐下来放松一下，跟随 `azdata` 的输出（如图 3-38 所示），等待部署完成。\n\
+  \n![../images/480532_2_En_3_Chapter/480532_2_En_3_Fig38_HTML.jpg](img/480532_2_En_3_Fig38_HTML.jpg)\n\
+  *图 3-38*\n`azdata bdc create` 的输出\n\n根据你的机器大小，这可能需要几分钟到几小时不等。\n\n### 其他环境\n\n还有其他多种\
+  \ Kubernetes 环境可用——从树莓派到 VMWare。其中许多（但并非全部）支持 SQL Server 2019 大数据集群。支持的平台数量会随着时间的推移而增长，但没有完整的兼容环境列表。如果你正在研究一个特定的设置，最好也是最简单的方法就是亲自尝试一下！\n\
+  \n## 高级部署选项\n\n除了前面提到的配置选项外，我们还想提请你注意另外两个可以充分利用你的大数据集群的机会：Active Directory 身份验证和\
+  \ HDFS 分层。\n\n\n### 大数据集群的 Active Directory 身份验证\n\n如果您希望使用 Active Directory (AD)\
+  \ 集成而非基本身份验证，这可以通过在您的 `control.json` 和 `bdc.json` 文件中提供额外信息来实现。虽然 `bdc.json` 只需要将\
+  \ `nameservers` 设置为域控制器的 DNS，但 `control.json` 需要一些额外的参数，如清单 3-19 所示。\n\n```json\n\
+  \"security\": {\n\"activeDirectory\": {\n\"ouDistinguishedName\": \"\",\n\"dnsIpAddresses\"\
+  : [],\n\"domainControllerFullyQualifiedDns\": [],\n\"domainDnsName\": \"\",\n\"\
+  clusterAdmins\": [],\n\"clusterUsers\": []\n}\n```\n**清单 3-19** `control.json` 中的\
+  \ AD 参数\n\n截至撰写本文时，仍存在不少限制。例如，AD 身份验证仅在 `kubeadm` 上受支持，在 AKS 部署中则不行，并且每个域只能有一个大数据集群。在部署大数据集群之前，您还需要在\
+  \ AD 中设置一些非常具体的对象。有关如何启用此功能的详细步骤，请参阅官方文档 [`https://docs.microsoft.com/en-us/sql/big-data-cluster/deploy-active-directory?view=sql-server-ver15`](https://docs.microsoft.com/en-us/sql/big-data-cluster/deploy-active-directory%253Fview%253Dsql-server-ver15)。\n\
+  \n### 大数据集群中的 HDFS 分层\n\n如果您已有存储在 Azure Data Lake Store Gen2 或 Amazon S3 中的 HDFS，您可以将此存储挂载为大数据集群\
+  \ HDFS 的子目录。这将通过环境变量、`kubectl` 和 `azdata` 命令的组合来实现。由于过程因源类型略有不同，我们建议您参考官方文档，可在 [`https://docs.microsoft.com/en-us/sql/big-data-cluster/hdfs-tiering?view=sql-server-ver15`](https://docs.microsoft.com/en-us/sql/big-data-cluster/hdfs-tiering%253Fview%253Dsql-server-ver15)\
+  \ 找到。\n\n与在部署时启用 AD 身份验证不同，HDFS 分层将在现有的大数据集群上进行配置。\n\n## 总结\n\n在本章中，我们使用各种方法并安装了\
+  \ SQL Server 2019 大数据集群的不同组件。\n\n既然我们的大数据集群已经运行并准备好处理一些工作负载，让我们继续到第 4 章，我们将展示并讨论如何查询和使用该集群。\n\
+  \n脚注 1\n\n## 4. 将数据加载到大数据集群中\n\n有了我们的第一个 SQL Server 大数据集群后，我们应该看看如何使用它。因此，我们将从向其添加一些数据开始。\n\
+  \n## 为您的大数据集群全面准备好 Azure Data Studio\n\n虽然 Azure Data Studio 默认可以连接到任何大数据集群（也可以管理和部署它），但我们建议您安装\
+  \ Data Virtualization 扩展，该扩展为您提供向导，帮助创建外部（虚拟）表。\n\n要安装该扩展，首先导航到 Azure Data Studio\
+  \ 中的扩展菜单，如图 4-1 所示。\n\n![../images/480532_2_En_4_Chapter/480532_2_En_4_Fig1_HTML.jpg](img/480532_2_En_4_Fig1_HTML.jpg)\n\
+  **图 4-1** 在 ADS 中从 VSIX 包安装扩展\n\n在扩展市场中，它可能已经作为首要推荐之一显示。否则，您也可以如图 4-2 所示进行搜索。\n\n\
+  ![../images/480532_2_En_4_Chapter/480532_2_En_4_Fig2_HTML.jpg](img/480532_2_En_4_Fig2_HTML.jpg)\n\
+  **图 4-2** Azure Data Studio 中的扩展\n\n单击该扩展的绿色“安装”按钮，安装将立即触发，如图 4-3 所示。\n\n![../images/480532_2_En_4_Chapter/480532_2_En_4_Fig3_HTML.jpg](img/480532_2_En_4_Fig3_HTML.jpg)\n\
+  **图 4-3** Azure Data Studio 中正在进行的扩展安装\n\n安装通常需要几分钟，最终您会看到扩展的状态变为“已安装”，如图 4-4 所示。\n\
+  \n![../images/480532_2_En_4_Chapter/480532_2_En_4_Fig4_HTML.jpg](img/480532_2_En_4_Fig4_HTML.jpg)\n\
+  **图 4-4** Azure Data Studio 中已安装的扩展\n\n该扩展现在可以使用了！\n\n## 将一些示例文件导入安装中\n\n一切准备就绪后，在我们真正开始使用新功能之前，我们需要的只是一些示例数据！\n\
+  \n### 空数据库\n\n要将一些外部 SQL Server 表链接到您的本地 SQL Server 实例，最简单的方法是简单地创建一个空白数据库。只需通过\
+  \ SQL Server Management Studio 或 Azure Data Studio 连接到您的 SQL Server 2019 实例，并创建一个名为\
+  \ `BDC_Empty` 的新数据库。您可以通过向导完成此操作，或者简单地运行如清单 4-1 所示的 T-SQL。\n\n```sql\nUSE master\n\
+  GO\nCREATE DATABASE BDC_Empty\n```\n**清单 4-1** 通过 T-SQL 创建空数据库\n\n就是这样。\n\n### 大数据集群内的示例数据\n\
+  \n如果您选择了包含 Kubernetes 集群的完整安装，有一些简单的方法和技术可以推送一些示例数据。如果您只部署了启用 PolyBase 但没有 Kubernetes\
+  \ 集群的本地安装，您可以跳过这部分——它无论如何也无法工作。\n\n#### 将任何 SQL Server 备份还原到您的主实例\n\n假设空数据库对您来说不够，您可能想知道如何将现有数据库还原到您的主实例。让我们用\
+  \ `AdventureWorks2014` 尝试一下。\n\n如果您手头没有 `AdventureWorks2014` 的备份，您可以通过 `curl` 从\
+  \ GitHub 获取，例如（清单 4-2）。\n\n```bash\ncurl -L -G \"https://github.com/Microsoft/sql-server-samples/releases/download/adventureworks/AdventureWorks2014.bak\"\
+  \ -o AdventureWorks2014.bak\n```\n**清单 4-2** 使用 `curl` 从 GitHub 下载 `AdventureWorks2014`\n\
+  \n现在我们有了一个实际要还原的文件，我们需要先将其推送到主实例的文件系统。此任务将通过 `kubectl` 完成（清单 4-3）；您需要相应地替换集群的命名空间和主\
+  \ Pod 名称。\n\n```bash\nkubectl cp AdventureWorks2014.bak /:var/opt/mssql/data/ -c\
+  \ mssql-server\n```\n**清单 4-3** 使用 `kubectl` 将 `AdventureWorks2014` 复制到主实例\n\n最后但同样重要的是，我们需要从\
+  \ `.bak` 文件还原数据库。这可以通过常规的 T-SQL 实现。在本例中，只需连接到您的主实例并运行脚本。当然，对于更复杂的场景，您可以使用带输入文件的\
+  \ `sqlcmd` 或您熟悉的任何其他 SQL Server 机制。这里包括使用 SQL Server Management Studio 中的还原向导（清单\
+  \ 4-4）。\n\n```sql\nUSE [master]\nRESTORE DATABASE [AdventureWorks2014] FROM  DISK\
+  \ = N'/var/opt/mssql/data/AdventureWorks2014.bak' WITH  FILE = 1,  MOVE N'AdventureWorks2014_Data'\
+  \ TO N'/var/opt/mssql/data/AdventureWorks2014_Data.mdf',  MOVE N'AdventureWorks2014_Log'\
+  \ TO N'/var/opt/mssql/data/AdventureWorks2014_Log.ldf',  NOUNLOAD,  STATS = 5\n\
+  ```\n**清单 4-4** 将 `AdventureWorks2014` 还原到主实例\n\n\n\n## Microsoft 示例数据\n\n我们将从 Microsoft\
+  \ 在其 GitHub 页面上提供的示例数据开始，[`https://github.com/Microsoft/sql-server-samples/tree/master/samples/features/sql-big-data-cluster`](https://github.com/Microsoft/sql-server-samples/tree/master/samples/features/sql-big-data-cluster)。请下载文件\
+  \ `bootstrap-sample-db.sql`，并根据你的操作系统，下载 `bootstrap-sample-db.cmd`（适用于 Windows）或\
+  \ `bootstrap-sample-db.sh`（适用于 Linux）。\n\n然后，你可以使用以下参数运行 `.cmd` 或 `.sh` 文件（参见列表\
+  \ 4-5）。\n\n```\n用法: bootstrap-sample-db.cmd    [--install-extra-samples] [SQL_MASTER_PORT]\
+  \ [KNOX_PORT]\n要使用基本身份验证，请设置 AZDATA_USERNAME 和 AZDATA_PASSWORD 环境变量。\n要使用集成身份验证，请提供端点的\
+  \ DNS 名称。\n如果使用非默认值，可以单独指定端口。\n列表 4-5\n安装默认的 Microsoft 示例\n```\n\n只需传递你在安装集群时使用或提供的（IP、密码、命名空间）信息，脚本就会自动运行，并将一些示例数据导入到你的安装中。\n\
+  \n此脚本的要求是：\n\n*   `sqlcmd`\n*   `bcp`\n*   `kubectl`\n*   `curl`\n\n如果你在初始安装所用的同一台机器上运行此脚本，这些要求应该已经满足。\n\
+  \n## 航班延误示例数据集\n\n除了 Microsoft 示例，让我们再添加一些外部数据。寻找免费数据集的一个好地方是 `kaggle.com`（图 4-5）。\n\
+  \n![../images/480532_2_En_4_Chapter/480532_2_En_4_Fig5_HTML.jpg](img/480532_2_En_4_Fig5_HTML.jpg)\n\
+  \n**图 4-5** Kaggle.com 登录\n\n如果你还没有账户，只需注册一个免费账户。否则，直接登录你的账户。\n\n登录后，导航到“数据集”并搜索“Flight\
+  \ Delays”，这应该会显示出来自美国交通部的“2015 航班延误和取消”数据集，如图 4-6 所示。\n\n![../images/480532_2_En_4_Chapter/480532_2_En_4_Fig6_HTML.jpg](img/480532_2_En_4_Fig6_HTML.jpg)\n\
+  \n**图 4-6** Kaggle.com 数据集\n\n或者，你也可以直接导航到 [`www.kaggle.com/usdot/flight-delays`](http://www.kaggle.com/usdot/flight-delays)。\n\
+  \n该数据集包含三个文件：航空公司、机场和航班。你可以通过点击“下载”一次性下载所有文件，这将触发一个包含所有文件的 ZIP 文件下载，如图 4-7 所示。\n\
+  \n![../images/480532_2_En_4_Chapter/480532_2_En_4_Fig7_HTML.jpg](img/480532_2_En_4_Fig7_HTML.jpg)\n\
+  \n**图 4-7** Kaggle.com 下载航班延误数据集\n\n虽然这个数据集的大小并非不合理，但它提供了很多选项来探索和处理数据。下载文件后，我们仍然需要将这些数据导入到我们的大数据集群中。由于只有三个文件，我们将通过\
+  \ Azure Data Studio 手动上传它们来完成。\n\n因此，在 Azure Data Studio 中连接到你的大数据集群，导航到“数据服务”，打开\
+  \ HDFS 根文件夹，并创建一个名为“Flight_Delays”的新目录，如图 4-8 所示。\n\n![../images/480532_2_En_4_Chapter/480532_2_En_4_Fig8_HTML.jpg](img/480532_2_En_4_Fig8_HTML.jpg)\n\
+  \n**图 4-8** 在 ADS 的 HDFS 上创建新目录\n\n然后，你可以选择此目录，点击鼠标右键，选择“上传文件”，并上传这三个 CSV 文件。你可以多选，因此无需逐个上传。如果点击鼠标右键并刷新文件夹，文件应该可见，如图\
+  \ 4-9 所示。\n\n![../images/480532_2_En_4_Chapter/480532_2_En_4_Fig9_HTML.jpg](img/480532_2_En_4_Fig9_HTML.jpg)\n\
+  \n**图 4-9** ADS 中新文件夹内文件的显示\n\n上传进度也会在 Azure Data Studio 的页脚显示。\n\n通过前端上传的另一种方法是使用命令提示符下的\
+  \ `curl`。你可以使用它来创建目标目录和上传实际文件。\n\n对于仅 `airlines.csv`，如列表 4-6 所示（你需要替换你的 IP 地址和密码）。第一行将创建一个名为“Flight_Delays”的目录，而第二行将文件“airlines.csv”上传到其中。\n\
+  \n```\ncurl -i -L -k -u root: -X PUT \"https:// /gateway/default/webhdfs/v1/Flight_Delays?op=MKDIRS\"\
+  \ncurl -i -L -k -u root: -X PUT \"https:///gateway/default/webhdfs/v1/Flight_Delays\
+  \ /airlines.csv?op=create&overwrite=true\" -H \"Content-Type: application/octet-stream\"\
+  \ -T \"airlines.csv\"\n列表 4-6\n使用 curl 上传数据到 HDFS\n\n\n### Azure SQL Database\n\n\
+  正如第 1 章用例中所述，使用大数据集群 PolyBase 实现的一种方式是将数据延伸到 Azure（或任何其他基于云的 SQL Server）。为了更好地理解这一点，除非您已经在另一台\
+  \ SQL Server 或 Azure SQL DB 上拥有数据库，否则我们建议您在 Azure 中设置一个包含 AdventureWorks 数据库的小型数据库。\n\
+  \n为此，请再次登录 Azure 门户（图 4-10），就像您在第 3 章中所做的那样。\n\n![../images/480532_2_En_4_Chapter/480532_2_En_4_Fig10_HTML.jpg](img/480532_2_En_4_Fig10_HTML.jpg)\n\
+  \n图 4-10 在 Azure 门户中创建资源\n\n然后，在左侧面板的顶部选择“创建资源”，从列表中选取或搜索“SQL 数据库”。\n\n在下一个屏幕上，直接点击“创建”（图\
+  \ 4-11）。\n\n![../images/480532_2_En_4_Chapter/480532_2_En_4_Fig11_HTML.jpg](img/480532_2_En_4_Fig11_HTML.jpg)\n\
+  \n图 4-11 在 Azure 门户中创建 SQL 数据库\n\n将数据库名称设为“AdventureWorks”，选择合适的订阅，创建新的资源组或选择现有的，并将“示例\
+  \ (AdventureWorksLT)”选择为源（图 4-12）。\n\n![../images/480532_2_En_4_Chapter/480532_2_En_4_Fig12_HTML.jpg](img/480532_2_En_4_Fig12_HTML.jpg)\n\
+  \n图 4-12 通过 Azure 门户配置要创建的 SQL 数据库\n\n您还需要配置一个服务器（图 4-13），因此请展开“服务器”子菜单。通过提供名称（必须是唯一的）、用户名和密码来设置服务器。同样，选择离您最近的位置，并保持“允许\
+  \ Azure 服务访问服务器”复选框为选中状态。这将允许您从其他 Azure 虚拟机或服务访问此数据库，而无需担心防火墙设置。根据您的设置，您可能仍然需要允许从本地计算机访问——我们稍后会讲到这一点。\n\
+  \n![../images/480532_2_En_4_Chapter/480532_2_En_4_Fig13_HTML.jpg](img/480532_2_En_4_Fig13_HTML.jpg)\n\
+  \n图 4-13 在 Azure 门户中为新的 SQL 数据库配置服务器\n\n您现在可以将“定价层”更改为“基本”，这是最便宜的选项，但完全足以满足我们此处的目标。\n\
+  \n点击“创建”确认您的选择；这将触发服务器和数据库的部署，可能需要几分钟时间。您已完成——您刚刚创建了 AdventureWorksLT 数据库，我们可以用它来进行远程查询。\n\
+  \n尝试通过 Azure Data Studio 连接到数据库（图 4-14）。\n\n![../images/480532_2_En_4_Chapter/480532_2_En_4_Fig14_HTML.jpg](img/480532_2_En_4_Fig14_HTML.jpg)\n\
+  \n图 4-14 ADS 中的连接对话框\n\n如果您不在 Azure 虚拟机上，或者取消选中了允许从 Azure 连接的框，您可能会看到图 4-15 中所示的错误。\n\
+  \n![../images/480532_2_En_4_Chapter/480532_2_En_4_Fig15_HTML.jpg](img/480532_2_En_4_Fig15_HTML.jpg)\n\
+  \n图 4-15 Azure Data Studio – 连接错误\n\n如果发生这种情况，请返回 Azure 门户（图 4-16），导航到包含数据库服务器的资源组，并选择该服务器（确保点击的是\
+  \ SQL Server，而不是 SQL 数据库）。\n\n![../images/480532_2_En_4_Chapter/480532_2_En_4_Fig16_HTML.jpg](img/480532_2_En_4_Fig16_HTML.jpg)\n\
+  \n图 4-16 Azure SQL 数据库配置\n\n在左侧，向下滚动到“安全性”，并选择“防火墙和虚拟网络”，如图 4-17 所示。\n\n![../images/480532_2_En_4_Chapter/480532_2_En_4_Fig17_HTML.jpg](img/480532_2_En_4_Fig17_HTML.jpg)\n\
+  \n图 4-17 Azure 门户防火墙设置\n\n点击“添加客户端 IP”或手动添加您的 IP 地址。\n\n保存您的更改。\n\n现在，尝试在 Azure\
+  \ Data Studio 中再次连接到数据库。您应该能够看到 AdventureWorks 数据库，包括图 4-18 中所示的表。\n\n![../images/480532_2_En_4_Chapter/480532_2_En_4_Fig18_HTML.jpg](img/480532_2_En_4_Fig18_HTML.jpg)\n\
+  \n图 4-18 ADS 中显示的 AdventureWorksLT 表结构\n\n## 总结\n\n在本章中，我们将一些数据加载到了先前部署的 SQL Server\
+  \ 大数据集群中。现在是时候看看如何使用这些数据了！\n\n### 通过 T-SQL 查询大数据集群\n\n既然我们有一些数据可以操作了，让我们看看如何通过 Azure\
+  \ Data Studio 提供的多种选项来处理和查询这些数据。\n\n## 外部表\n\n查询大数据集群（Big Data Cluster）使用的是 T-SQL\
+  \ 通过 *外部表*（external tables）实现的，这个概念最初是在 SQL Server 2016 中随着 PolyBase 的出现而引入的。\n\n\
+  我们将通过向一个新的空数据库 `BDC_Empty`（该数据库最初位于我们的 Azure `AdventureWorksLT` 数据库中）添加一些外部表，来开始查询我们的大数据集群。\n\
+  \n首先，如图 5-1 所示，通过 Azure Data Studio 连接到你的 SQL Server 主实例（或任何其他启用了 PolyBase 的 SQL\
+  \ Server 2019 实例）。\n\n![../images/480532_2_En_5_Chapter/480532_2_En_5_Fig1_HTML.jpg](img/480532_2_En_5_Fig1_HTML.jpg)\n\
+  \n图 5-1\n连接到主实例\n\n你的连接类型将是 `Microsoft SQL Server`。服务器地址将是服务器的 IP（或 DNS 名称）（如果使用了实例名，可能需要追加实例名）以及实例的端口（用逗号分隔），除非是运行在标准端口\
+  \ `1433` 上的本地安装。\n\n展开你的连接、数据库、`BDC_Empty` 数据库以及其中的表（图 5-2）。\n\n![../images/480532_2_En_5_Chapter/480532_2_En_5_Fig2_HTML.jpg](img/480532_2_En_5_Fig2_HTML.jpg)\n\
+  \n图 5-2\nADS 中的空数据库\n\n正如预期，目前没有任何表。让我们来改变这一点！\n\n如果你在数据库上右键单击，你会看到一个名为 `Create\
+  \ External Table` 的选项。这将打开相应的向导。\n\n在第一步中，它会要求你确认要在其中创建外部表的数据库，并选择一个数据源类型。此时（图 5-3），该向导支持\
+  \ `SQL Server` 和 `Oracle`；除了 `CSV` 文件（它们有自己的向导）之外，所有其他源都需要手动编写脚本。\n\n![../images/480532_2_En_5_Chapter/480532_2_En_5_Fig3_HTML.jpg](img/480532_2_En_5_Fig3_HTML.jpg)\n\
+  \n图 5-3\nADS 中的外部表向导 – 选择数据源\n\n选择 `SQL Server` 并单击 `Next`。\n\n在下一个对话框中（图 5-4），向导将要求你为此数据库设置一个主密钥密码。这是必需的，因为我们将把凭据存储在数据库中，这些凭据需要被加密。如果你在已设有主密钥密码的数据库上运行向导，此步骤将被跳过。\n\
+  \n![../images/480532_2_En_5_Chapter/480532_2_En_5_Fig4_HTML.jpg](img/480532_2_En_5_Fig4_HTML.jpg)\n\
+  \n图 5-4\nADS 中的外部表向导 – 创建数据库主密钥\n\n输入并确认密码，然后单击 `Next`。\n\n下一个屏幕（图 5-5）要求你提供连接的名称（别名）、连接的服务器名称以及数据库名称。如果你之前配置过，也可以选择使用现有的连接。\n\
+  \n![../images/480532_2_En_5_Chapter/480532_2_En_5_Fig5_HTML.jpg](img/480532_2_En_5_Fig5_HTML.jpg)\n\
+  \n图 5-5\nADS 中的外部表向导 – 连接和凭据\n\n此外，系统会提供一个已存在的凭据列表（如果有的话）以及创建新凭据的选项。\n\n使用 `AW`\
+  \ 作为你的数据源名称和 `New Credential Name`，`AdventureWorks` 作为你的 `Database Name`，并提供你在上一步中配置的\
+  \ `Server Name`、`Username` 和 `Password`。点击 `Next`。\n\n向导现在将加载源数据库中的所有表和视图，你可以展开并浏览它们，如图\
+  \ 5-6 所示。\n\n![../images/480532_2_En_5_Chapter/480532_2_En_5_Fig6_HTML.jpg](img/480532_2_En_5_Fig6_HTML.jpg)\n\
+  \n图 5-6\nADS 中的外部表向导 – 对象映射\n\n你可以选择整个数据库、所有表或所有视图，或者选择一定数量的单个对象。\n\n你将无法更改任何列定义，并且必须始终“创建”源中存在的所有列。由于没有实际移动数据，而只是对外部模式的引用，这不是问题。\n\
+  \n唯一可以更改的两件事（如图 5-7 所示屏幕的右上角部分）是目标模式（target schema）和目标表名（target table name），因为你可能希望将所有外部表创建在一个单独的模式中，或者为它们添加前缀。\n\
+  \n![../images/480532_2_En_5_Chapter/480532_2_En_5_Fig7_HTML.jpg](img/480532_2_En_5_Fig7_HTML.jpg)\n\
+  \n图 5-7\nADS 中的外部表向导 – 表映射\n\n现在，选择表 `Address`、`Customer` 和 `CustomerAddress`，并保持其他所有表未选中以及所有设置不变。点击\
+  \ `Next`。\n\n你已到达最后一步，这是一个摘要页面，如图 5-8 所示。\n\n![../images/480532_2_En_5_Chapter/480532_2_En_5_Fig8_HTML.jpg](img/480532_2_En_5_Fig8_HTML.jpg)\n\
+  \n图 5-8\nADS 中的外部表向导 – 摘要\n\n你现在可以选择生成脚本，或者直接通过向导创建所有对象。\n\n让我们来看一下脚本（清单 5-1），所以点击\
+  \ `Generate Script`，然后点击 `Cancel` 关闭向导。你将看到脚本，它将启动一个事务，然后以正确的顺序创建所有对象：从密钥开始，然后是凭据和数据源，最后是我们的三个表。\n\
+  \n\n# 从 Azure SQL 数据库创建外部表\n\n以下 T-SQL 脚本用于从 Azure SQL 数据库生成外部表。\n\n```sql\nBEGIN\
+  \ TRY\nBEGIN TRANSACTION Tcfc2da095679401abd1ae9deb0e6eae\nUSE [BDC_Empty];\nCREATE\
+  \ MASTER KEY ENCRYPTION BY PASSWORD = '';\nCREATE DATABASE SCOPED CREDENTIAL [AW]\n\
+  WITH IDENTITY = 'bigdata', SECRET = '';\nCREATE EXTERNAL DATA SOURCE [AW]\nWITH\
+  \ (LOCATION = 'sqlserver:// .database.windows.net', CREDENTIAL = [AW]);\nCREATE\
+  \ EXTERNAL TABLE [dbo].[Address]\n(\n[AddressID] INT NOT NULL,\n[AddressLine1] NVARCHAR(60)\
+  \ COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,\n[AddressLine2] NVARCHAR(60) COLLATE\
+  \ SQL_Latin1_General_CP1_CI_AS,\n[City] NVARCHAR(30) COLLATE SQL_Latin1_General_CP1_CI_AS\
+  \ NOT NULL,\n[StateProvince] NVARCHAR(50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT\
+  \ NULL,\n[CountryRegion] NVARCHAR(50) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,\n\
+  [PostalCode] NVARCHAR(15) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,\n[rowguid]\
+  \ UNIQUEIDENTIFIER NOT NULL,\n[ModifiedDate] DATETIME2(3) NOT NULL\n)\nWITH (LOCATION\
+  \ = '[AdventureWorks].[SalesLT].[Address]', DATA_SOURCE = [AW]);\nCREATE EXTERNAL\
+  \ TABLE [dbo].[Customer]\n(\n[CustomerID] INT NOT NULL,\n[NameStyle] BIT NOT NULL,\n\
+  [Title] NVARCHAR(8) COLLATE SQL_Latin1_General_CP1_CI_AS,\n[FirstName] NVARCHAR(50)\
+  \ COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,\n[MiddleName] NVARCHAR(50) COLLATE\
+  \ SQL_Latin1_General_CP1_CI_AS,\n[LastName] NVARCHAR(50) COLLATE SQL_Latin1_General_CP1_CI_AS\
+  \ NOT NULL,\n[Suffix] NVARCHAR(10) COLLATE SQL_Latin1_General_CP1_CI_AS,\n[CompanyName]\
+  \ NVARCHAR(128) COLLATE SQL_Latin1_General_CP1_CI_AS,\n[SalesPerson] NVARCHAR(256)\
+  \ COLLATE SQL_Latin1_General_CP1_CI_AS,\n[EmailAddress] NVARCHAR(50) COLLATE SQL_Latin1_General_CP1_CI_AS,\n\
+  [Phone] NVARCHAR(25) COLLATE SQL_Latin1_General_CP1_CI_AS,\n[PasswordHash] VARCHAR(128)\
+  \ COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL,\n[PasswordSalt] VARCHAR(10) COLLATE\
+  \ SQL_Latin1_General_CP1_CI_AS NOT NULL,\n[rowguid] UNIQUEIDENTIFIER NOT NULL,\n\
+  [ModifiedDate] DATETIME2(3) NOT NULL\n)\nWITH (LOCATION = '[AdventureWorks].[SalesLT].[Customer]',\
+  \ DATA_SOURCE = [AW]);\nCREATE EXTERNAL TABLE [dbo].[CustomerAddress]\n(\n[CustomerID]\
+  \ INT NOT NULL,\n[AddressID] INT NOT NULL,\n[AddressType] NVARCHAR(50) COLLATE SQL_Latin1_General_CP1_CI_AS\
+  \ NOT NULL,\n[rowguid] UNIQUEIDENTIFIER NOT NULL,\n[ModifiedDate] DATETIME2(3) NOT\
+  \ NULL\n)\nWITH (LOCATION = '[AdventureWorks].[SalesLT].[CustomerAddress]', DATA_SOURCE\
+  \ = [AW]);\nCOMMIT TRANSACTION Tcfc2da095679401abd1ae9deb0e6eae\nEND TRY\nBEGIN\
+  \ CATCH\nIF @@TRANCOUNT > 0\nROLLBACK TRANSACTION Tcfc2da095679401abd1ae9deb0e6eae\n\
+  DECLARE @ErrorMessage NVARCHAR(4000) = ERROR_MESSAGE();\nDECLARE @ErrorSeverity\
+  \ INT = ERROR_SEVERITY();\nDECLARE @ErrorState INT = ERROR_STATE();\nRAISERROR(@ErrorMessage,\
+  \ @ErrorSeverity, @ErrorState);\nEND CATCH;\n```\n\n**清单 5-1** 用于从 Azure SQL 数据库生成外部表的\
+  \ T-SQL\n\n一旦运行该脚本（点击屏幕左上角的“Run”或直接按`F5`），它将执行并在您的数据库中创建这些对象。\n\n刷新表后，这三个新表就会显示出来，看起来如\
+  \ **图 5-9** 所示。通过表名后面的提示，您可以很容易地识别出它们是外部表。\n\n![../images/480532_2_En_5_Chapter/480532_2_En_5_Fig9_HTML.jpg](img/480532_2_En_5_Fig9_HTML.jpg)\n\
+  \n**图 5-9** 在 ADS 中创建后显示的外部表\n\n在 SSMS 中，它们可以通过位于自己的文件夹中来识别，如 **图 5-10** 所示。\n\n\
+  ![../images/480532_2_En_5_Chapter/480532_2_En_5_Fig10_HTML.jpg](img/480532_2_En_5_Fig10_HTML.jpg)\n\
+  \n**图 5-10** 在 SSMS 中创建后显示的外部表\n\n从客户端角度来看，这些表的行为类似于本地表。在 Azure Data Studio 中右键单击\
+  \ `Address` 表（**图 5-11**）并点击 “Select Top 1000”。\n\n![../images/480532_2_En_5_Chapter/480532_2_En_5_Fig11_HTML.jpg](img/480532_2_En_5_Fig11_HTML.jpg)\n\
+  \n**图 5-11** 在 ADS 中针对外部表执行 `SELECT` 语句的输出\n\n您可以看到查询基本上是 `SELECT TOP 1000 * FROM\
+  \ dbo.Address`，尽管数据位于外部数据库中。您可以将此数据与本地表或任何其他类型的本地数据源进行连接。在研究来自 CSV 文件的外部表时，我们会进一步探讨这一点。\n\
+  \n让我们从运行一个针对所有三个外部表的查询开始（**清单 5-2**），以获取总部位于爱达荷州的所有公司。\n\n```sql\nSELECT CompanyName\n\
+  FROM [Address] ADDR\nINNER JOIN CustomerAddress CADDR ON ADDR.AddressID = CADDR.AddressID\n\
+  INNER JOIN Customer CUST ON CUST.CustomerID = CADDR.CustomerID\nWHERE\nAddressType\
+  \ = 'Main Office'\nAND StateProvince = 'Idaho'\n```\n\n**清单 5-2** 连接两个外部表的 `SELECT`\
+  \ 语句\n\n同样，这看起来像是针对某些本地表的常规查询，如 **图 5-12** 所示。\n\n![../images/480532_2_En_5_Chapter/480532_2_En_5_Fig12_HTML.jpg](img/480532_2_En_5_Fig12_HTML.jpg)\n\
+  \n**图 5-12** 在 ADS 中连接 `SELECT` 语句的输出\n\n只有当您点击右上角的 **Explain** 按钮时，您才会看到执行计划（**图\
+  \ 5-13**），它揭示了查询正在远程运行（`Remote Query` 和 `External Select` 操作符）的事实。\n\n![../images/480532_2_En_5_Chapter/480532_2_En_5_Fig13_HTML.jpg](img/480532_2_En_5_Fig13_HTML.jpg)\n\
+  \n**图 5-13** 在 ADS 中针对两个外部表的执行计划\n\n\n\n### 使用 Biml 自动化创建外部表\n\n如你所见，这个向导有其局限性，但其底层的\
+  \ T-SQL 相当直接明了。因此，它是自动化的绝佳候选对象，而自动化可以通过多种方式实现，其中之一便是使用商业智能标记语言 (`Biml`)。\n\n如果你之前未曾接触过\
+  \ `Biml`，互联网上有大量资源^(³,⁴,⁵)，《The Biml Book》^(⁶) 一书内部也提供了许多资料。如果你只想使用这个具体示例，你需要做的仅仅是：\n\
+  \n*   获取免费的 `BimlExpress`^(⁷) 副本，这是一个完全集成于 Visual Studio 的免费 `Biml` 前端工具。\n*   从本书网站获取下文提供的源代码。\n\
+  *   按下文描述创建一个小型元数据存储库，并用你的元数据填充它。\n*   调整解决方案中的连接字符串。\n*   运行解决方案（只需在解决方案中右键单击 `11_Polybase_C.biml`\
+  \ 并选择 `Generate SSIS Package`）。尽管标题令人困惑，但这会将所有必需的 `.SQL` 文件写入到 `C:\\Temp\\Polybase`\
+  \ 目录。\n\n如前所述，我们将使用一个小型元数据表来管理数据源。在此示例中，我们将再次让 `Biml` 指向我们在 Azure 中的 `AdventureWorksLT`\
+  \ 数据库——你可以随意在此处添加你自己的数据源进行尝试。\n\n首先，创建一个名为 `Datasources` 的表（代码清单 5-3），例如，在你先前创建的数据库\
+  \ `BDC_Empty` 中。显然，这个表可以按你希望的任何方式命名，可以放在你偏好的任何架构或数据库中——但为了简单起见，我们先保持这样。\n\n```sql\n\
+  CREATE TABLE [dbo].Datasources NULL,\n    [Server] nvarchar NULL,\n    [UserID]\
+  \ nvarchar NULL,\n    [Password] nvarchar NULL,\n    [SRC_DB] nvarchar NULL,\n \
+  \   [SRC_Schema] nvarchar NULL,\n    [DEST_Schema] nvarchar NULL\n) ON [PRIMARY]\n\
+  ```\n*代码清单 5-3. 用于创建数据源元表的 T-SQL。*\n\n同时，只需向此表添加一条记录，指向你的 `AWLT` 数据库（根据需要修改你的 DNS\
+  \ 名称、用户名和密码），使用代码清单 5-4 中的代码。\n\n```sql\nINSERT INTO Datasources VALUES\n('AW','.database.windows.net','','','AdventureWorks','SalesLT','dbo')\n\
+  ```\n*代码清单 5-4. 填充你的数据源元表。*\n\n此解决方案要求主密钥已经设置好——这是一项一次性任务，完全没有必要或理由去自动化这一步。如果你在之前的练习中跳过了手动创建表的步骤，你可能需要在继续之前手动完成此步骤。\n\
+  \n我们的解决方案包含两个 `Biml` 文件（实际上是四个——分别对应 C# 和 VB.NET 的两个文件）：\n\n*   `11_Polybase_C.biml`\n\
+  \    这是控制文件，其中包含指向我们元数据以及目标数据库的连接字符串。它将遍历元数据，并为每一个条目调用另一个 `Biml` 文件（使用名为 `CallBimlScript()`\
+  \ 的函数），将一个 `.SQL` 文件写入到 `C:\\temp\\polybase`（因此，如果你的 `Datasources` 表中有十个条目，你最终会得到十个文件）。\n\
+  *   `12_PolybaseWriter_C.biml`\n    此文件将生成每个源架构的内容。\n\n如果你查看第一个文件，你会注意到它以声明两个（在此情况下是相同的）连接字符串开始。一个指向存放你元数据的数据库；另一个指向你希望在其中创建或更新外部表的\
+  \ PolyBase 数据库（代码清单 5-5）。\n\n```biml\n<Biml xmlns=\"http://schemas.varigence.com/biml.xsd\"\
+  >\n    <Connections>\n        <Connection Name=\"Metadata\" ConnectionString=\"\
+  Data Source=.;Initial Catalog=BDC;Provider=SQLNCLI10.1;Integrated Security=SSPI;\"\
+  />\n        <Connection Name=\"Target\" ConnectionString=\"Data Source=.;Initial\
+  \ Catalog=BDC;Provider=SQLNCLI10.1;Integrated Security=SSPI;\"/>\n    </Connections>\n\
+  \    <Packages>\n        <Package Name=\"11_Polybase_C\" AutoCreateConnections=\"\
+  false\" AutoCreateVariables=\"false\">\n            <Tasks>\n                <ForEachLoop\
+  \ Name=\"Loop Through Metadata\" CollectionName=\"Metadata.Objects[SELECT [DataSource],[Server],[UserID],[Password],[SRC_DB],[SRC_Schema],[DEST_Schema]\
+  \ FROM [dbo].[Datasources]]\">\n                    <Tasks>\n                  \
+  \      <ExecuteCallBimlScript Name=\"Generate SQL File\">\n                    \
+  \        <BimlScript File=\"12_PolybaseWriter_C.biml\" />\n                    \
+  \        <InputBindings>\n                                <Directory Path=\"C:\\\
+  temp\\polybase\\\" />\n                            </InputBindings>\n          \
+  \                  <OutputBindings>\n                                <Directory\
+  \ Path=\"C:\\temp\\polybase\\\" />\n                            </OutputBindings>\n\
+  \                        </ExecuteCallBimlScript>\n                    </Tasks>\n\
+  \                </ForEachLoop>\n            </Tasks>\n        </Package>\n    </Packages>\n\
+  </Biml>\n```\n*代码清单 5-5. 用于遍历数据源元表的 Biml 代码。*\n\n真正的魔法发生在第二个文件中。它将包含元数据的 `DataRow`\
+  \ 以及目标数据库的连接字符串作为其参数。然后它将生成 T-SQL 来：\n\n1.  `CREATE`（创建）或 `ALTER`（修改）连接凭据\n2.  `CREATE`（创建）或\
+  \ `ALTER`（修改）外部数据源\n3.  `DROP`（删除）目标数据库中每一个现有的外部表\n4.  `CREATE`（创建）源架构中每一个表对应的外部表\n\
+  \n对于前三步，它使用简单的 SQL 查询或半静态的 T-SQL。对于第四部分，它利用了 `Biml` 读取和解释数据库架构并将其存储在 `Biml` 对象模型中的能力（代码清单\
+  \ 5-6）。\n\n```sql\n-- Syncing schema <#=Target.Name#> in <#=Target.ConnectionString#>\n\
+  -- This script assumes that a master key has been set\n\n-- CREATE/ALTER CREDENTIAL\n\
+  IF NOT EXISTS(select * from sys.database_credentials WHERE NAME = '<#=Row[\"DataSource\"\
+  ]#>')\nBEGIN\n    CREATE DATABASE SCOPED CREDENTIAL [<#=Row[\"DataSource\"]#>]\n\
+  \    WITH IDENTITY = '<#=Row[\"UserID\"]#>', SECRET = '<#=Row[\"Password\"]#>';\n\
+  END\nELSE\nBEGIN\n    ALTER DATABASE SCOPED CREDENTIAL [<#=Row[\"DataSource\"]#>]\n\
+  \    WITH IDENTITY = '<#=Row[\"UserID\"]#>', SECRET = '<#=Row[\"Password\"]#>';\n\
+  END\nGO\n\n-- CREATE DATASOURCE\nIF NOT EXISTS(SELECT * FROM sys.external_data_sources\
+  \ WHERE NAME = '<#=Row[\"DataSource\"]#>')\nBEGIN\n    CREATE EXTERNAL DATA SOURCE\
+  \ [<#=Row[\"DataSource\"]#>]\n    WITH (LOCATION = 'sqlserver://<#=Row[\"Server\"\
+  ]#>', CREDENTIAL = [<#=Row[\"DataSource\"]#>]);\nEND\nELSE\nBEGIN\n    ALTER EXTERNAL\
+  \ DATA SOURCE [<#=Row[\"DataSource\"]#>] SET LOCATION = N'sqlserver://<#=Row[\"\
+  Server\"]#>', CREDENTIAL = [<#=Row[\"DataSource\"]#>]\nEND\nGO\n\n-- DROP EXISTING\
+  \ TABLES\n<#\nforeach (AstTableNode tbl in RootNode.Tables.Where(t => t.Database.Name\
+  \ == Row[\"SRC_DB\"].ToString() && t.Schema.Name == Row[\"SRC_Schema\"].ToString()))\
+  \ {\n    string targetTable = \"[\" + Row[\"DEST_Schema\"].ToString() + \"].[\"\
+  \ + tbl.Name + \"]\";\n#>\nIF EXISTS(select * from sys.external_tables WHERE object_id\
+  \ = OBJECT_ID('<#=targetTable#>'))\nBEGIN\n    DROP EXTERNAL TABLE <#=targetTable#>\n\
+  END\nGO\n<#\n}\n#>\n\n-- CREATE TABLES\n<#\nforeach (AstTableNode tbl in RootNode.Tables.Where(t\
+  \ => t.Database.Name == Row[\"SRC_DB\"].ToString() && t.Schema.Name == Row[\"SRC_Schema\"\
+  ].ToString())) {\n    string targetTable = \"[\" + Row[\"DEST_Schema\"].ToString()\
+  \ + \"].[\" + tbl.Name + \"]\";\n#>\nIF NOT EXISTS(SELECT * FROM sys.external_tables\
+  \ WHERE NAME = '<#=tbl.Name#>')\nBEGIN\n    CREATE EXTERNAL TABLE <#=targetTable#>\
+  \ (\n    <#=String.Join(\",\" + Environment.NewLine, tbl.Columns.Where(c => !c.IsComputed).Select(i\
+  \ => \"    \" + i.Name + \" \" + TSqlTypeTranslator.Translate(i.DataType, i.Length,\
+  \ i.Precision, i.Scale, i.CustomType) + (i.IsNullable ? \" NULL\" : \" NOT NULL\"\
+  )))#>\n    )\n    WITH (LOCATION = '[<#=Row[\"SRC_Schema\"]#>].<# =tbl.Name#>',\
+  \ DATA_SOURCE = [<#=Row[\"DataSource\"]#>]);\nEND\nGO\n<#\n}\n#>\n```\n*代码清单 5-6.\
+  \ 被前一个 Biml 脚本调用的 Biml `12_PolybaseWriter_C.biml`。*\n\n由于本书的重点是大数据集群，而非 `Biml`，因此我们不会深入探讨这个小助手的更多细节。主要目的是向你展示多种自动化处理外部表的方法之一。\n\
+  \n顺便说一下，调整此代码以适用于其他关系型数据源（如 Teradata 或 Oracle）并自动化这些源上的外部表也会非常容易！\n\n\n# 来自 HDFS\
+  \ 中 CSV 文件的外部表\n\n正如您已经了解到的，除了其他关系型数据库外，您还可以使用 T-SQL 和 PolyBase 查询平面文件。由于分隔符等原因，平面文件没有一种“放之四海而皆准”的通用格式，因此我们至少需要定义一种格式。这个定义驻留在您的数据库中，因此同一个定义可以被多个文件共享，但您需要为希望该格式可用的每个数据库重新创建此定义。\n\
+  \n让我们从 `sales` 数据库（包含在 Microsoft 示例中）的一个简单示例（清单 5-7）开始。\n\n```sql\nCREATE EXTERNAL\
+  \ FILE FORMAT csv_file\nWITH (\nFORMAT_TYPE = DELIMITEDTEXT,\nFORMAT_OPTIONS(\n\
+  FIELD_TERMINATOR = ',',\nSTRING_DELIMITER = '\"',\nFIRST_ROW = 2,\nUSE_TYPE_DEFAULT\
+  \ = TRUE)\n);\n```\n**清单 5-7** 创建外部文件格式的 T-SQL 代码\n\n此 T-SQL 代码将创建一个名为 `csv_file`\
+  \ 的格式；该文件将是一个以双引号作为文本限定符、逗号作为分隔符的分隔文本文件。第一行将被跳过。参数 `USE_TYPE_DEFAULT` 将决定如何处理缺失的字段。如果为\
+  \ `false`，文件中缺失的字段将为 `NULL`；否则，数值型字段为 `0`，基于字符的列为空字符串，任何日期列为 `01/01/1900`。\n\n在本例中，我们将使用\
+  \ `StoragePool`，它是大数据集群内置的 HDFS 存储。要能够访问 `StoragePool`，您需要创建一个指向它的外部数据源，如清单 5-8\
+  \ 所示。\n\n```sql\nIF NOT EXISTS(SELECT * FROM sys.external_data_sources WHERE name\
+  \ = 'SqlStoragePool')\nCREATE EXTERNAL DATA SOURCE SqlStoragePool\nWITH (LOCATION\
+  \ = 'sqlhdfs://controller-svc/default');\n```\n**清单 5-8** 创建指向存储池指针的 T-SQL 代码\n\n\
+  格式和数据源准备就绪后，我们现在可以创建一个引用此格式以及文件位置的外部表（清单 5-9）。\n\n```sql\nCREATE EXTERNAL TABLE\
+  \ [web_clickstreams_hdfs_csv]\n(\"wcs_click_date_sk\" BIGINT , \"wcs_click_time_sk\"\
+  \ BIGINT , \"wcs_sales_sk\" BIGINT , \"wcs_item_sk\" BIGINT , \"wcs_web_page_sk\"\
+  \ BIGINT , \"wcs_user_sk\" BIGINT)\nWITH\n(\nDATA_SOURCE = SqlStoragePool,\nLOCATION\
+  \ = '/clickstream_data',\nFILE_FORMAT = csv_file\n);\n```\n**清单 5-9** 基于 CSV 文件创建外部表的\
+  \ T-SQL 代码\n\n与基于 SQL Server 的外部表一样，第一步是定义列，包括其名称和数据类型。此外，我们需要提供一个 `DATA_SOURCE`，即我们的\
+  \ `SqlStoragePool`，基本上就是我们大数据集群的 HDFS（之前我们也在此上传了航班延误样本）；该源内的一个 `LOCATION`（在本例中是\
+  \ `clickstream_data` 子文件夹）；以及一个 `FILE_FORMAT`，即我们在上一步创建的 `csv_file` 格式。\n\n同样，此时没有传输任何数据。我们所做的只是创建了对驻留在其他地方的数据的引用——在本例中是存储池内。\n\
+  \n我们现在可以通过一个简单的查询实时查询此文件，如清单 5-10 所示。\n\n```sql\nSELECT * FROM [dbo].[web_clickstreams_hdfs_csv]\n\
+  ```\n**清单 5-10** 针对基于 CSV 的外部表的 SELECT 语句\n\n但是，我们也可以将来自 CSV 的数据与此数据库中常规表中的数据进行连接，如清单\
+  \ 5-11 所示。\n\n```sql\nSELECT\nwcs_user_sk,\nSUM( CASE WHEN i_category = 'Books'\
+  \ THEN 1 ELSE 0 END) AS book_category_clicks,\nSUM( CASE WHEN i_category_id = 1\
+  \ THEN 1 ELSE 0 END) AS [Home & Kitchen],\nSUM( CASE WHEN i_category_id = 2 THEN\
+  \ 1 ELSE 0 END) AS [Music],\nSUM( CASE WHEN i_category_id = 3 THEN 1 ELSE 0 END)\
+  \ AS [Books],\nSUM( CASE WHEN i_category_id = 4 THEN 1 ELSE 0 END) AS [Clothing\
+  \ & Accessories],\nSUM( CASE WHEN i_category_id = 5 THEN 1 ELSE 0 END) AS [Electronics],\n\
+  SUM( CASE WHEN i_category_id = 6 THEN 1 ELSE 0 END) AS [Tools & Home Improvement],\n\
+  SUM( CASE WHEN i_category_id = 7 THEN 1 ELSE 0 END) AS [Toys & Games],\nSUM( CASE\
+  \ WHEN i_category_id = 8 THEN 1 ELSE 0 END) AS [Movies & TV],\nSUM( CASE WHEN i_category_id\
+  \ = 9 THEN 1 ELSE 0 END) AS [Sports & Outdoors]\nFROM [dbo].[web_clickstreams_hdfs_csv]\n\
+  INNER JOIN item it ON (wcs_item_sk = i_item_sk\nAND wcs_user_sk IS NOT NULL)\nGROUP\
+  \ BY  wcs_user_sk;\n```\n**清单 5-11** 将常规表与基于 CSV 的外部表连接的 SELECT 语句\n\n让我们看一下这个查询的执行计划（图\
+  \ 5-14）。\n\n![../images/480532_2_En_5_Chapter/480532_2_En_5_Fig14_HTML.jpg](img/480532_2_En_5_Fig14_HTML.jpg)\n\
+  **图 5-14** ADS 中前一个 SELECT 语句的执行计划\n\n如您所见，正如预期的那样，这是熟悉的操作（如聚集列存储索引扫描）与新功能（如最终合并在一起的外部选择）的组合。\n\
+  \n当然，我们也可以连接来自多个 CSV 的数据。为此，我们首先为每个航班延误 CSV 文件创建一个外部表。为此，有另一个向导（图 5-15）。\n\n![../images/480532_2_En_5_Chapter/480532_2_En_5_Fig15_HTML.jpg](img/480532_2_En_5_Fig15_HTML.jpg)\n\
+  **图 5-15** ADS 中的“从 CSV 创建外部表”菜单\n\n在 Azure Data Studio 中右键单击文件 `\"airlines.csv\"\
+  `，然后选择 `\"Create External Table From CSV Files\"`。\n\n这将启动向导。\n\n在第一个屏幕（图 5-16）中，它将要求您输入\
+  \ SQL Server 主实例的连接详细信息，如果您当前已连接到该实例，也可以从活动连接下拉列表中选择。\n\n![../images/480532_2_En_5_Chapter/480532_2_En_5_Fig16_HTML.jpg](img/480532_2_En_5_Fig16_HTML.jpg)\n\
+  **图 5-16** ADS 中的创建外部表向导 (CSV) – 选择主实例\n\n填写它们或选择您的连接，然后单击 `\"Next\"`。\n\n在下一步（图\
+  \ 5-17）中，向导将建议目标数据库以及外部表的名称和架构。如果需要，所有三项都可以修改。\n\n![../images/480532_2_En_5_Chapter/480532_2_En_5_Fig17_HTML.jpg](img/480532_2_En_5_Fig17_HTML.jpg)\n\
+  **图 5-17** ADS 中的创建外部表向导 (CSV) – 目标表详细信息\n\n目前，只需点击 `\"Next\"` 确认。\n\n下一个屏幕（图 5-18）为您提供了表中数据的预览（前\
+  \ 50 行），以便您了解文件所表示的内容。显然，对于较宽的文件，这并不是特别有用。\n\n![../images/480532_2_En_5_Chapter/480532_2_En_5_Fig18_HTML.jpg](img/480532_2_En_5_Fig18_HTML.jpg)\n\
+  **图 5-18** ADS 中的创建外部表向导 (CSV) – 预览数据\n\n此屏幕上实际上无法执行任何操作，因此只需再次单击 `\"Next\"`。\n\n\
+  在第四步（图 5-19）中，向导会建议列名和数据类型。两者都可以覆盖。除非您有充分的理由，否则在许多情况下，实际上建议保持不变，因为目前的检测机制相当可靠。\n\
+  \n![../images/480532_2_En_5_Chapter/480532_2_En_5_Fig19_HTML.jpg](img/480532_2_En_5_Fig19_HTML.jpg)\n\
+  **图 5-19** ADS 中的创建外部表向导 (CSV) – 修改列\n\n## 使用向导创建 CSV 外部表\n\n点击“下一步”（`Next`）后，我们会看到一个如图\
+  \ 5-20 所示的摘要界面，这与 SQL Server 表向导之后的情况类似。\n\n![../images/480532_2_En_5_Chapter/480532_2_En_5_Fig20_HTML.jpg](img/480532_2_En_5_Fig20_HTML.jpg)\n\
+  \n**图 5-20** ADS 中创建外部表向导（CSV）- 摘要\n\n选择“生成脚本”（`Generate Script`）并点击“取消”（`Cancel`）。查看生成的脚本（清单\
+  \ 5-12）。\n\n```sql\nBEGIN TRY\nBEGIN TRANSACTION Td436a09bbb9a472298de35f6f88d889\n\
+  USE [sales];\nCREATE EXTERNAL FILE FORMAT [FileFormat_dbo_airlines]\nWITH (FORMAT_TYPE\
+  \ = DELIMITEDTEXT, FORMAT_OPTIONS (FIELD_TERMINATOR = ',', STRING_DELIMITER = '\"\
+  ', FIRST_ROW = 2));\nCREATE EXTERNAL TABLE [dbo].[airlines]\n(\n[IATA_CODE] nvarchar(50)\
+  \ NOT NULL,\n[AIRLINE] nvarchar(50) NOT NULL\n)\nWITH (LOCATION = '/Flight_Delays/airlines.csv',\
+  \ DATA_SOURCE = [SqlStoragePool], FILE_FORMAT = [FileFormat_dbo_airlines]);\nCOMMIT\
+  \ TRANSACTION Td436a09bbb9a472298de35f6f88d889\nEND TRY\nBEGIN CATCH\nIF @@TRANCOUNT\
+  \ > 0\nROLLBACK TRANSACTION Td436a09bbb9a472298de35f6f88d889\nDECLARE @ErrorMessage\
+  \ NVARCHAR(4000) = ERROR_MESSAGE();\nDECLARE @ErrorSeverity INT = ERROR_SEVERITY();\n\
+  DECLARE @ErrorState INT = ERROR_STATE();\nRAISERROR(@ErrorMessage, @ErrorSeverity,\
+  \ @ErrorState);\nEND CATCH;\n```\n**清单 5-12** ADS 中创建外部表向导（CSV）的 T-SQL 输出\n\n如你所见，该向导不会复用相同的文件格式，而是为每个文件创建一个格式。这显然有利有弊。最大的好处是，你最终不会得到数百个格式。最大的缺点是你可能开始在不需要的地方构建文件之间的依赖关系。是否要修改脚本以使用之前创建的`csv_file`格式，或者仅为本次练习继续创建新格式，这取决于你。\n\
+  \n对另外两个文件重复这些步骤。\n\n然后，我们就可以像查询 SQL 表一样查询并连接它们（见清单 5-13），以获取取消次数最高的十个航空公司/目的地城市组合。\n\
+  \n```sql\nSELECT TOP 10 ap.CITY, al.AIRLINE, COUNT(*)\nFROM flights fl\nINNER JOIN\
+  \ airlines al\nON fl.AIRLINE = al.IATA_CODE\nINNER JOIN airports ap\nON fl.DESTINATION_AIRPORT\
+  \ = ap.IATA_CODE\nWHERE cancelled = 1\nGROUP BY ap.CITY,\nal.AIRLINE\nORDER BY COUNT(*)\
+  \ DESC;\n```\n**清单 5-13** 针对先前创建的外部表的`SELECT`语句\n\n这将导致一个错误。\n\n原因是该向导只查看你数据的前 50\
+  \ 行，所以如果你的数据在这些行中没有显示某种模式，它就不会被检测到。不过，错误信息（图 5-21）清楚地告诉了我们问题所在。\n\n![../images/480532_2_En_5_Chapter/480532_2_En_5_Fig21_HTML.png](img/480532_2_En_5_Fig21_HTML.png)\n\
+  \n**图 5-21** 查询外部表时的错误信息\n\n在第 14500 行（远超过前 50 行），`AIR_SYSTEM_DELAY`列发生了溢出。\n\n\
+  如果我们查看该表的脚本（清单 5-14），会注意到此列被检测为`tinyint`。\n\n```sql\nCREATE EXTERNAL TABLE [dbo].[flights]\n\
+  (\n[YEAR] smallint NOT NULL,\n[MONTH] tinyint NOT NULL,\n[DAY] tinyint NOT NULL,\n\
+  [DAY_OF_WEEK] tinyint NOT NULL,\n[AIRLINE] nvarchar(50) NOT NULL,\n[FLIGHT_NUMBER]\
+  \ smallint NOT NULL,\n[TAIL_NUMBER] nvarchar(50),\n[ORIGIN_AIRPORT] nvarchar(50)\
+  \ NOT NULL,\n[DESTINATION_AIRPORT] nvarchar(50) NOT NULL,\n[SCHEDULED_DEPARTURE]\
+  \ time NOT NULL,\n[DEPARTURE_TIME] time,\n[DEPARTURE_DELAY] smallint,\n[TAXI_OUT]\
+  \ tinyint,\n[WHEELS_OFF] time,\n[SCHEDULED_TIME] smallint NOT NULL,\n[ELAPSED_TIME]\
+  \ smallint,\n[AIR_TIME] smallint,\n[DISTANCE] smallint NOT NULL,\n[WHEELS_ON] time,\n\
+  [TAXI_IN] tinyint,\n[SCHEDULED_ARRIVAL] time NOT NULL,\n[ARRIVAL_TIME] time,\n[ARRIVAL_DELAY]\
+  \ smallint,\n[DIVERTED] bit NOT NULL,\n[CANCELLED] bit NOT NULL,\n[CANCELLATION_REASON]\
+  \ nvarchar(50),\n[AIR_SYSTEM_DELAY] tinyint,\n[SECURITY_DELAY] tinyint,\n[AIRLINE_DELAY]\
+  \ smallint,\n[LATE_AIRCRAFT_DELAY] smallint,\n[WEATHER_DELAY] tinyint\n)\nWITH (LOCATION\
+  \ = N'/Flight_Delays/flights.csv', DATA_SOURCE = [SqlStoragePool], FILE_FORMAT =\
+  \ [FileFormat_flights]);\n```\n**清单 5-14** 外部表`flights`的原始`CREATE`语句\n\n让我们将其改为`int`（或`bigint`），同时，一并修改其他延迟列（清单\
+  \ 5-15）。\n\n```sql\nCREATE EXTERNAL TABLE [dbo].[flights]\n(\n[YEAR] smallint NOT\
+  \ NULL,\n[MONTH] tinyint NOT NULL,\n[DAY] tinyint NOT NULL,\n[DAY_OF_WEEK] tinyint\
+  \ NOT NULL,\n[AIRLINE] nvarchar(50) NOT NULL,\n[FLIGHT_NUMBER] smallint NOT NULL,\n\
+  [TAIL_NUMBER] nvarchar(50),\n[ORIGIN_AIRPORT] nvarchar(50) NOT NULL,\n[DESTINATION_AIRPORT]\
+  \ nvarchar(50) NOT NULL,\n[SCHEDULED_DEPARTURE] time NOT NULL,\n[DEPARTURE_TIME]\
+  \ time,\n[DEPARTURE_DELAY] smallint,\n[TAXI_OUT] tinyint,\n[WHEELS_OFF] time,\n\
+  [SCHEDULED_TIME] smallint NOT NULL,\n[ELAPSED_TIME] smallint,\n[AIR_TIME] smallint,\n\
+  [DISTANCE] smallint NOT NULL,\n[WHEELS_ON] time,\n[TAXI_IN] tinyint,\n[SCHEDULED_ARRIVAL]\
+  \ time NOT NULL,\n[ARRIVAL_TIME] time,\n[ARRIVAL_DELAY] smallint,\n[DIVERTED] bit\
+  \ NOT NULL,\n[CANCELLED] bit NOT NULL,\n[CANCELLATION_REASON] nvarchar(50),\n[AIR_SYSTEM_DELAY]\
+  \ bigint,\n[SECURITY_DELAY] bigint,\n[AIRLINE_DELAY] bigint,\n[LATE_AIRCRAFT_DELAY]\
+  \ bigint,\n[WEATHER_DELAY] bigint\n)\nWITH (LOCATION = N'/Flight_Delays/flights.csv',\
+  \ DATA_SOURCE = [SqlStoragePool], FILE_FORMAT = [FileFormat_flights]);\n```\n**清单\
+  \ 5-15** 更新后的外部表`flights`的`CREATE`语句\n\n注意，你需要先删除外部表（清单 5-16），然后才能重新创建它。\n\n```sql\n\
+  DROP EXTERNAL TABLE [dbo].[flights]\n```\n**清单 5-16** `DROP`语句\n\n删除并重新创建表后，再次尝试运行取消查询。\n\
+  \n错误消失了！太好了！\n\n现在尝试从这些数据中获取另一种视图：只是前的十行（清单 5-17），包含来自所有三个表的匹配列。\n\n```sql\nSELECT\
+  \ TOP 10 *\nFROM flights fl\nINNER JOIN airlines al\nON fl.AIRLINE = al.IATA_CODE\n\
+  INNER JOIN airports ap\nON fl.DESTINATION_AIRPORT = ap.IATA_CODE;\n```\n**清单 5-17**\
+  \ 针对这些外部表的另一个`SELECT`语句\n\n不幸的是，这导致了一个新的错误（图 5-22）。\n\n![../images/480532_2_En_5_Chapter/480532_2_En_5_Fig22_HTML.png](img/480532_2_En_5_Fig22_HTML.png)\n\
+  \n**图 5-22** 查询外部表时的不同错误信息\n\n一个好的做法是将所有平面文件列设为可为空（`nullable`）。\n\n因此，让我们再次重新创建我们的表（清单\
+  \ 5-18），这次不使用任何“`NOT NULL`”提示。\n\n## 查询外部表与问题修复\n\n# 访问 Azure Blob 存储中的数据\n\n如果您将数据存储在\
+  \ Azure Blob 存储中，除了可能的网络延迟外，无需将数据复制到您的 `SqlStoragePool` 中。您还可以通过将其定义为外部数据源来访问 Blob\
+  \ 存储（清单 5-20）。\n\n```sql\nCREATE EXTERNAL DATA SOURCE AzureStorage with (\nTYPE\
+  \ = HADOOP,\nLOCATION ='wasbs://@.blob.core.windows.net',\nCREDENTIAL = AzureStorageCredential\n\
+  );\n```\n清单 5-20\n使用 Azure Blob 存储创建外部数据源\n\n# 来自其他数据源的外部表\n\n## 基于文件的数据源\n\n其他基于文件的数据源变体包括\
+  \ Parquet、Hive RCFile 和 Hive ORC；但是，如果您使用的是存储池，目前仅支持分隔符文件和 Parquet 文件。\n\n由于这些是压缩文件类型，我们需要提供\
+  \ `DATA_COMPRESSION`，对于 RCFile，还需要提供 `SERDE_METHOD`（清单 5-21）。\n\n```sql\n-- 为 PARQUET\
+  \ 文件创建外部文件格式。\nCREATE EXTERNAL FILE FORMAT file_format_name\nWITH (\nFORMAT_TYPE\
+  \ = PARQUET\n[ , DATA_COMPRESSION = {\n'org.apache.hadoop.io.compress.SnappyCodec'\n\
+  | 'org.apache.hadoop.io.compress.GzipCodec'      }\n]);\n--为 ORC 文件创建外部文件格式。\nCREATE\
+  \ EXTERNAL FILE FORMAT file_format_name\nWITH (\nFORMAT_TYPE = ORC\n[ , DATA_COMPRESSION\
+  \ = {\n'org.apache.hadoop.io.compress.SnappyCodec'\n| 'org.apache.hadoop.io.compress.DefaultCodec'\
+  \      }\n]);\n--为 RCFILE 创建外部文件格式。\nCREATE EXTERNAL FILE FORMAT file_format_name\n\
+  WITH (\nFORMAT_TYPE = RCFILE,\nSERDE_METHOD = {\n'org.apache.hadoop.hive.serde2.columnar.LazyBinaryColumnarSerDe'\n\
+  | 'org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe'\n}\n[ , DATA_COMPRESSION\
+  \ = 'org.apache.hadoop.io.compress.DefaultCodec' ]);\n```\n清单 5-21\n其他外部表类型的 CREATE\
+  \ 语句示例\n\n（摘自官方 Microsoft 文档，[`https://docs.microsoft.com/en-us/sql/t-sql/statements/create-external-file-format-transact-sql`](https://docs.microsoft.com/en-us/sql/t-sql/statements/create-external-file-format-transact-sql)）\n\
+  \n## ODBC\n\n当尝试通过通用 ODBC 连接到外部数据源时，您需要提供服务器（以及可选的端口），就像添加 SQL Server 一样，但此外，您还需要指定驱动程序（清单\
+  \ 5-22），以便 SQL Server 知道如何连接到该源。\n\n```sql\nCREATE EXTERNAL DATA SOURCE \nWITH (\n\
+  LOCATION = odbc://[:],\nCONNECTION_OPTIONS = 'Driver={};\nServerNode = :',\nPUSHDOWN\
+  \ = ON,\nCREDENTIAL = credential_name\n);\n```\n清单 5-22\n针对 ODBC 源创建外部数据源\n\n`PUSHDOWN`\
+  \ 标志定义是否将计算下推到源，默认值为 `ON`。\n\n## 其他\n\n对于其他内置连接器，语法遵循通用模式（清单 5-23）。\n\n```sql\n\
+  CREATE EXTERNAL DATA SOURCE \nWITH (\nLOCATION = ://[:],\nCREDENTIAL = credential_name\n\
+  );\n```\n清单 5-23\n外部数据源的通用 CREATE 语句\n\n其中，您将 `<vendor>` 替换为您尝试使用的内置连接器的供应商名称。\n\
+  \n对于 Oracle，将如清单 5-24 所示。\n\n```sql\nCREATE EXTERNAL DATA SOURCE \nWITH (\nLOCATION\
+  \ = oracle://[:],\nCREDENTIAL = credential_name\n```\n清单 5-24\n针对 Oracle 中的外部数据源的\
+  \ CREATE 语句\n\n相同的逻辑适用于 Teradata 和 MongoDB，我们期望所有未来的供应商都将以相同的方式实现。\n\n\n### SqlDataPool\n\
+  \n`SqlDataPool` 是用于处理大数据集群的数据池，它允许你将来自 SQL 表的数据分布到整个池中。\n\n就像存储池一样，首先需要在你想要使用的每个数据库中创建一个相应的指针，如清单\
+  \ 5-25 所示。\n\n```sql\nIF NOT EXISTS(SELECT * FROM sys.external_data_sources WHERE\
+  \ name = 'SqlDataPool')\nCREATE EXTERNAL DATA SOURCE SqlDataPool\nWITH (LOCATION\
+  \ = 'sqldatapool://controller-svc/default');\n-- 清单 5-25\n-- 用于创建指向 SQL 数据池指针的 T-SQL\
+  \ 代码\n```\n\n我们将在销售数据库中再次执行此操作。\n\n首先，我们再次创建一个外部表（清单 5-26）。请注意，与之前的示例不同，之前我们指定的是特定文件或位置，而在这里，我们只提供提示，表明此表应存储在\
+  \ `SqlDataPool` 中并使用轮询（`ROUND_ROBIN`）方式进行分布。\n\n```sql\nCREATE EXTERNAL TABLE [web_clickstream_clicks_data_pool]\n\
+  (\"wcs_user_sk\" BIGINT , \"i_category_id\" BIGINT , \"clicks\" BIGINT)\nWITH\n\
+  (\nDATA_SOURCE = SqlDataPool,\nDISTRIBUTION = ROUND_ROBIN\n);\n-- 清单 5-26\n-- 在\
+  \ SqlDataPool 上为外部表创建的 CREATE 语句\n```\n\n你现在可以使用常规的 `INSERT INTO` 语句将数据插入此表，如清单\
+  \ 5-27 所示。\n\n```sql\nINSERT INTO web_clickstream_clicks_data_pool\nSELECT wcs_user_sk,\
+  \ i_category_id, COUNT_BIG(*) as clicks\nFROM sales.dbo.web_clickstreams_hdfs_parquet\n\
+  INNER JOIN sales.dbo.item it ON (wcs_item_sk = i_item_sk\nAND wcs_user_sk IS NOT\
+  \ NULL)\nGROUP BY wcs_user_sk, i_category_id\n-- 清单 5-27\n-- 从 SQL 查询填充 SqlDataPool\
+  \ 中的表\n```\n\n与之前的所有示例一样，这个外部表现在可以像任何其他表一样进行查询和联接（清单 5-28）。\n\n```sql\nSELECT count(*)\
+  \ FROM [dbo].[web_clickstream_clicks_data_pool]\nSELECT TOP 10 * FROM [dbo].[web_clickstream_clicks_data_pool]\n\
+  SELECT TOP (100)\nw.wcs_user_sk,\nSUM( CASE WHEN i.i_category = 'Books' THEN 1 ELSE\
+  \ 0 END) AS book_category_clicks,\nSUM( CASE WHEN w.i_category_id = 1 THEN 1 ELSE\
+  \ 0 END) AS [Home & Kitchen],\nSUM( CASE WHEN w.i_category_id = 2 THEN 1 ELSE 0\
+  \ END) AS [Music],\nSUM( CASE WHEN w.i_category_id = 3 THEN 1 ELSE 0 END) AS [Books],\n\
+  SUM( CASE WHEN w.i_category_id = 4 THEN 1 ELSE 0 END) AS [Clothing & Accessories],\n\
+  SUM( CASE WHEN w.i_category_id = 5 THEN 1 ELSE 0 END) AS [Electronics],\nSUM( CASE\
+  \ WHEN w.i_category_id = 6 THEN 1 ELSE 0 END) AS [Tools & Home Improvement],\nSUM(\
+  \ CASE WHEN w.i_category_id = 7 THEN 1 ELSE 0 END) AS [Toys & Games],\nSUM( CASE\
+  \ WHEN w.i_category_id = 8 THEN 1 ELSE 0 END) AS [Movies & TV],\nSUM( CASE WHEN\
+  \ w.i_category_id = 9 THEN 1 ELSE 0 END) AS [Sports & Outdoors]\nFROM [dbo].[web_clickstream_clicks_data_pool]\
+  \ as w\nINNER JOIN (SELECT DISTINCT i_category_id, i_category FROM item) as i\n\
+  ON i.i_category_id = w.i_category_id\nGROUP BY w.wcs_user_sk;\n-- 清单 5-28\n-- 对\
+  \ SqlDataPool 中的表执行 SELECT（独立查询及与其他表联接）\n```\n\n执行计划（图 5-23）与我们之前查询存储池时看到的情况类似。\n\
+  \n![../images/480532_2_En_5_Chapter/480532_2_En_5_Fig23_HTML.jpg](img/480532_2_En_5_Fig23_HTML.jpg)\n\
+  \n**图 5-23**\n\n**在 ADS 中的执行计划**\n\n请注意，与 `SqlStoragePool` 不同，位于数据池中的数据在 Azure Data\
+  \ Studio 的 HDFS 文件夹中不显示为文件，因为其数据存储在常规的 SQL 表中！\n\n### SqlDataPool 上的索引\n\n`SqlDataPool`\
+  \ 与其他外部数据源的一个主要区别在于它由常规的 SQL Server 表组成，这意味着你可以直接控制这些表上的索引。\n\n默认情况下，`SqlDataPool`\
+  \ 中的每个表都会使用聚集列存储索引创建。由于扩展（scale out）以及数据池的主要使用场景是分析工作负载，这很可能开箱即用地满足许多查询需求。\n\n如果你仍然想创建或更改索引，这需要在数据池内部进行，可以使用\
+  \ `EXECUTE AT` 开关来实现，如清单 5-29 所示。\n\n```sql\nexec () AT Data_Source SqlDataPool\n\
+  -- 清单 5-29\n-- 带有 EXECUTE AT 的 EXEC\n```\n\n你可以使用它在数据池上运行任何类型的查询，它将为数据池中的每个节点返回一个结果网格。例如，要获取数据池中所有表的列表，运行清单\
+  \ 5-30。\n\n```sql\nexec ('SELECT * FROM sys.tables') AT Data_Source SqlDataPool\n\
+  -- 清单 5-30\n-- 获取数据池中的表列表\n```\n\n结果如图 5-24 所示。\n\n![../images/480532_2_En_5_Chapter/480532_2_En_5_Fig24_HTML.jpg](img/480532_2_En_5_Fig24_HTML.jpg)\n\
+  \n**图 5-24**\n\n**数据池中表列表的结果**\n\n你可能会感到有点惊讶，因为你可能期望不同的表。原因在于，就像你的主实例一样，数据池也会有多个数据库，因此上下文很重要。让我们通过切换当前数据库上下文再试一次，如清单\
+  \ 5-31 所示。这仅适用于在 `SqlDataPool` 中至少有一个表的数据库，因为数据库是在那时创建的。\n\n```sql\nexec ('USE sales;\
+  \ SELECT * FROM sys.tables') AT Data_Source SqlDataPool\n-- 清单 5-31\n-- 从销售数据库获取数据池中的表列表\n\
+  ```\n\n这次的结果（见图 5-25）看起来更符合我们的预期。\n\n![../images/480532_2_En_5_Chapter/480532_2_En_5_Fig25_HTML.jpg](img/480532_2_En_5_Fig25_HTML.jpg)\n\
+  \n**图 5-25**\n\n**从销售数据库查询数据池中表列表的结果**\n\n要添加索引，你只需在 `EXEC` 语句中添加相应的 `CREATE INDEX`\
+  \ 语句，如清单 5-32 所示。\n\n```sql\nEXEC ('USE Sales; CREATE NONCLUSTERED INDEX [CI_wcs_user_sk]\
+  \ ON [dbo].[web_clickstream_clicks_data_pool] ([wcs_user_sk] ASC)') AT DATA_SOURCE\
+  \ SqlDataPool\n-- 清单 5-32\n-- 在数据池中创建索引\n```\n\n## 总结\n\n在本章中，我们使用了先前加载的数据，并通过多种技术对其进行了查询，包括使用\
+  \ T-SQL、从另一个 SQL Server 查询以及查询平面文件。我们还了解了如何自动化该方面的某些任务。\n\n正如你之前所学的，T-SQL 并不是查询大数据集群的唯一方式：另一种方式是\
+  \ Spark。第 6 章将引导你完成该过程！\n\n脚注 1   2   3   4   5\n\n\n\n# 第 6 章 在大数据集群中使用 Spark\n\
+  \n到目前为止，我们一直在使用外部表和 T-SQL 代码查询 SQL Server 大数据集群中的数据。然而，我们还有另一种方法可用于查询存储在大数据集群 HDFS\
+  \ 文件系统中的数据。正如你在第[2]章中所读到的，大数据集群的架构中也包含了 Spark，这意味着我们可以利用 Spark 的强大功能来查询存储在大数据集群中的数据。\n\
+  \nSpark 是分析和查询大数据集群内部数据的一个非常强大的选项，主要是因为 Spark 是作为一个分布式和并行框架构建的，这意味着它在处理超大规模数据集时速度非常快，当你需要处理大型数据集时，它比\
+  \ SQL Server 高效得多。Spark 在支持的编程语言方面也提供了很大的灵活性，最突出的是 `Scala` 和 `PySpark`（尽管 Spark\
+  \ 也支持 `R` 和 `Java`）。\n\n在大多数我们示例中使用的命令中，`PySpark` 和 `Scala` 的语法非常相似。不过，也有一些细微的差别。\n\
+  \n代码清单 [6-1] 和 [6-2] 展示了如何使用 `PySpark` 和 `Scala` 将 CSV 文件读入数据帧（不用担心，我们很快会详细介绍数据帧）。\n\
+  \n```scala\n// 从 HDFS 导入 airports.csv 文件 (Scala)\nval df_airports = spark.read.format(\"\
+  csv\").option(\"header\", \"true\").option(\"inferSchema\", \"true\").load(\"/Flight_Delays/airports.csv\"\
+  )\n清单 6-2\n使用 Scala 从 HDFS 导入 CSV\n```\n\n```python\n"
+- '# 从 HDFS 导入 airports.csv 文件 (PySpark)
+
+  df_airports = spark.read.format(''csv'').options(header=''true'', inferSchema="true").load(''/Flight_Delays/airports.csv'')
+
+  清单 6-1
+
+  使用 PySpark 从 HDFS 导入 CSV
+
+  ```
+
+
+  如你所见，`PySpark` 和 `Scala` 的示例代码看起来非常相似，但也存在一些小差异。例如，用于注释的字符，在 `PySpark` 中注释用 `#`
+  号标记，而在 `Scala` 中我们使用 `//`。另一个区别在于引号。在 `PySpark` 代码中，我们可以同时使用单引号和双引号，而 `Scala` 则更挑剔，只接受双引号。此外，在
+  `PySpark` 中我们不需要显式定义变量（在 `Scala` 中称为值），但在使用 `Scala` 时，我们需要明确指定这一点。
+
+
+  尽管本书的重点是大数据集群，但我们相信，介绍如何编写 `PySpark` 对于使用 SQL Server 大数据集群将非常有用，因为它为你提供了除了 SQL 之外，处理大数据集群内部数据的不同方法。
+
+
+  ## 加载数据并创建 Spark 笔记本
+
+
+  如果你按照第[4]章的“将一些示例文件导入安装”部分的步骤操作，你应该已经将 Kaggle 的“2015 Flight Delays and Cancellations”数据集导入到了大数据集群的
+  HDFS 文件系统中。如果你还没有这样做，并且想跟随本节中的示例操作，我们建议你按照“将一些示例文件导入安装”部分概述的步骤进行操作，然后再继续。如果你正确导入了数据集，你应该能够通过
+  Azure Data Studio 在 HDFS 文件系统中看到“Flight_Delays”文件夹及其内部的三个 CSV 文件，如图 6-1 所示。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig1_HTML.jpg](img/480532_2_En_6_Fig1_HTML.jpg)
+
+  图 6-1
+
+  HDFS 存储中的航班延误文件
+
+
+  随着我们的示例数据集在 HDFS 上可用，让我们开始探索一下数据。
+
+
+  我们需要做的第一件事是通过 SQL 大数据集群选项卡中的“任务”窗口（图 6-2）中的“新建笔记本”选项创建一个新的笔记本。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig2_HTML.jpg](img/480532_2_En_6_Fig2_HTML.jpg)
+
+  图 6-2
+
+  Azure Data Studio 中的任务
+
+
+  创建新笔记本后，我们可以通过笔记本顶部的“内核”下拉框选择我们想要使用的语言，如图 6-3 所示。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig3_HTML.jpg](img/480532_2_En_6_Fig3_HTML.jpg)
+
+  图 6-3
+
+  ADS 笔记本中的内核选择
+
+
+  在本章的剩余部分，我们将使用 `PySpark` 作为所有示例的语言。如果你想跟随本章中的示例操作，我们建议选择“`PySpark`”语言。
+
+
+  笔记本已创建，语言也已配置好，现在让我们来看看航班延误的示例数据吧！
+
+
+
+
+  ## 使用 Spark 数据框
+
+
+  现在我们有了数据，也有了一个 notebook，我们要做的是将 CSV 数据加载到一个数据框（data frame）中。可以将数据框想象为在 Spark 内部创建的一种类似表格的结构。从概念上讲，数据框等同于
+  SQL Server 中的表格，但与通常存储在单台计算机上的表格不同，数据框由分布在（潜在地）Spark 集群中所有节点上的数据组成。
+
+
+  将“airports.csv”文件中的数据加载到 Spark 数据框中的代码见清单 6-3。您可以将代码复制到 notebook 的一个单元格中。本章中展示的所有示例代码最好作为
+  notebook 中独立的单元格使用。包含所有代码的完整示例笔记本可在本书的 GitHub 页面上找到。
+
+
+  ```python
+
+  '
+- '# 从 HDFS 导入 airports.csv 文件 (PySpark)
+
+  df_airports = spark.read.format(''csv'').options(header=''true'', inferSchema="true").load(''/Flight_Delays/airports.csv'')
+
+  ```
+
+
+  **清单 6-3** 将 CSV 数据导入数据框
+
+
+  如果一切顺利，您应该会得到一个包含来自 airports.csv 文件数据的 Spark 数据框。
+
+
+  从示例代码中可以看出，我们向 `spark.read.format` 命令提供了许多选项。最重要的一个是我们正在读取的文件类型；在我们的例子中，这是一个 CSV
+  文件。我们提供的其他选项告诉 Spark 如何处理该 CSV 文件。通过设置选项 `header=''true''`，我们指定 CSV 文件有一个包含列名的标题行。选项
+  `inferSchema=''true''` 帮助我们自动检测每一列中使用的数据类型。如果我们不指定此选项，或者将其设置为 false，所有列都将被设置为字符串数据类型，而不是我们期望的数据类型（例如，数值数据的整数数据类型）。如果您不使用
+  `inferSchema=''true''` 选项，或者 `inferSchema` 配置了错误的数据类型，则必须在导入 CSV 文件之前定义模式，并将其作为选项提供给
+  `spark.read.format` 命令，如清单 6-4 的示例代码所示。
+
+
+  ```python
+
+  '
+- '# 手动设置模式并提供给 spark.read 函数
+
+  '
+- "# 我们需要导入 pyspark.sql.types 库\nfrom pyspark.sql.types import *\ndf_schema = StructType([\n\
+  \    StructField(\"IATA_CODE\", StringType(), True),\n    StructField(\"AIRPORT\"\
+  , StringType(), True),\n    StructField(\"CITY\", StringType(), True),\n    StructField(\"\
+  STATE\", StringType(), True),\n    StructField(\"COUNTRY\", StringType(), True),\n\
+  \    StructField(\"LATITUDE\", DoubleType(), True),\n    StructField(\"LONGITUDE\"\
+  , DoubleType(), True)\n])\n"
+- '# 模式声明后，我们可以将其提供给 spark.read 函数
+
+  df_airports = spark.read.format(''csv'').options(header=''true'').schema(df_schema).load(''/Flight_Delays/airports.csv'')
+
+  ```
+
+
+  **清单 6-4** 定义模式并提供给 `spark.read.format`
+
+
+  如果这是您对 Spark 集群执行的第一个 notebook 命令，您将收到一些关于创建 Spark 会话的信息，如图 6-4 所示。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig4_HTML.jpg](img/480532_2_En_6_Fig4_HTML.jpg)
+
+
+  **图 6-4** `spark.read.format` 的输出
+
+
+  Spark 会话（Spark session）是与 Spark 函数交互的入口点。过去，我们必须定义一个 Spark 上下文（Spark context）来连接到
+  Spark 集群，并且根据我们需要的功能，我们必须为该特定功能（如 Spark SQL 或流功能）创建单独的上下文。从 Spark 2.0 开始，Spark 会话作为入口点可用，它默认包含了过去我们必须为其创建单独上下文的所有各种功能，使使用它们变得更加容易。当我们在
+  notebook 中运行第一个针对 Spark 集群的命令时，需要创建一个 Spark 会话，以便我们能够向集群发送命令。运行后续命令将使用最初创建的 Spark
+  会话。
+
+
+  现在我们的 CSV 数据已经加载到数据框中，我们可以运行各种命令来获取有关数据框的信息。例如，清单 6-5 中的示例返回数据框中的行数。
+
+
+  ```python
+
+  '
+- '# 显示 df_airports 数据框中的行数
+
+  df_airports.count()
+
+  ```
+
+
+  **清单 6-5** 检索数据框的行数
+
+
+  结果应该是 322 行，如图 6-5 所示，它返回了行数。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig5_HTML.jpg](img/480532_2_En_6_Fig5_HTML.jpg)
+
+
+  **图 6-5** 行数输出
+
+
+  另一个非常有用的命令是返回数据框的模式（schema）。这向我们展示了哪些列组成了数据框以及它们的数据类型。清单 6-6 中的代码获取 `df_airports`
+  数据框的模式并将其作为输出返回（图 6-6）。
+
+
+  ```python
+
+  '
+- '# 显示 df_flights 数据框的模式 (PySpark)
+
+  df_airports.printSchema()
+
+  ```
+
+
+  **清单 6-6** 检索数据框的模式
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig6_HTML.jpg](img/480532_2_En_6_Fig6_HTML.jpg)
+
+
+  **图 6-6** `df_airports` 数据框的模式输出
+
+
+  现在我们知道了数据框的模式，让我们从中返回一些数据。一种简单的方法是使用 `head()` 函数。此函数将从数据框中返回前 *n* 行。在以下示例中，我们将返回数据框的第一行。命令的输出显示在示例下方（清单
+  6-7 后面是图 6-7）。
+
+
+  ```python
+
+  '
+- '# 让我们返回第一行
+
+  df_airports.head(1)
+
+  ```
+
+
+  **清单 6-7** 检索数据框的第一行
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig7_HTML.jpg](img/480532_2_En_6_Fig7_HTML.jpg)
+
+
+  **图 6-7** `df_airports` 数据框的第一行
+
+
+  如图 6-7 所示，默认情况下结果不是以类似表格的结构返回的。这是因为 `head()` 仅以类似字符串的结构返回输出。
+
+
+  要从数据集中获取数据时以表格结构返回，您可以使用 `show()` 函数，如下面的示例所示。`show()` 接受一个整数作为参数，以指示应返回多少行。在示例中（清单
+  6-8），我们提供了一个值为 10，表示我们希望该函数返回前十行（图 6-8）。
+
+
+  ```python
+
+  '
+- '# 选择前十行，以表格结构返回
+
+  df_airports.show(10)
+
+  ```
+
+
+  **清单 6-8** 以表格结构检索数据框的前十行
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig8_HTML.jpg](img/480532_2_En_6_Fig8_HTML.jpg)
+
+
+  **图 6-8** 显示 `df_airports` 数据框的前十行
+
+
+
+
+  与返回整个数据框类似，我们也可以像在 SQL 中一样，根据我们感兴趣的列来选择数据的子集。以下示例（代码清单 `6-9`）仅返回 `df_airports` 数据框的
+  AIRPORT 和 CITY 列的前十行（图 `6-9`）。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig9_HTML.jpg](img/480532_2_En_6_Fig9_HTML.jpg)
+
+
+  图 6-9
+
+  `df_airports` 数据框的 AIRPORT 和 CITY 列的前十行
+
+
+  ```
+
+  '
+- '# 我们也可以从数据框中选择特定的列
+
+  df_airports.select(''AIRPORT'',''CITY'').show(10)
+
+  代码清单 6-9
+
+  选择数据框前十行的特定列
+
+  ```
+
+
+  就像在 SQL 中一样，我们也能够根据一个或多个列对数据进行排序。在以下示例（代码清单 `6-10`）中，我们检索 `df_airports` 数据框的前十行，首先按
+  STATE 降序排序，然后按 CITY 降序排序（图 `6-10`）。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig10_HTML.jpg](img/480532_2_En_6_Fig10_HTML.jpg)
+
+
+  图 6-10
+
+  按 STATE 和 CITY 列排序的 `df_airports` 数据框
+
+
+  ```
+
+  '
+- '# 我们也可以在一个或多个列上进行排序
+
+  df_airports.orderBy(df_airports.STATE.desc(), df_airports.CITY.desc()).show(10)
+
+  代码清单 6-10
+
+  使用排序检索数据框的前十行
+
+  ```
+
+
+  到目前为止，从数据框获取数据时，我们一直在选择前 *n* 行，但我们也可以根据特定的列值来过滤数据框。为此，我们可以添加 `filter` 函数并提供一个谓词。以下示例（代码清单
+  `6-11`）过滤数据框，并仅返回位于城市 Jackson 的机场信息（图 `6-11`）。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig11_HTML.jpg](img/480532_2_En_6_Fig11_HTML.jpg)
+
+
+  图 6-11
+
+  根据 CITY 列过滤后的 `df_airports`
+
+
+  ```
+
+  '
+- '# 根据列值过滤结果
+
+  df_airports.filter(df_airports.CITY == ''Jackson'').show()
+
+  代码清单 6-11
+
+  过滤数据框
+
+  ```
+
+
+  除了过滤单个值，我们还可以提供一个要过滤的值列表，这与在 SQL 中使用 IN 子句的方式非常相似。代码清单 `6-12` 中显示的代码产生了图 `6-12`。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig12_HTML.jpg](img/480532_2_En_6_Fig12_HTML.jpg)
+
+
+  图 6-12
+
+  根据列表中存储的多个值进行过滤
+
+
+  ```
+
+  '
+- '# 除了过滤单个值，我们还可以使用 IN 来提供多个过滤项
+
+  '
+- '# 我们需要从 pyspark.sql.functions 导入 col 函数
+
+  from pyspark.sql.functions import col
+
+  '
+- '# 声明一个包含城市名称的列表
+
+  city_list = [''Jackson'',''Charleston'',''Cody'']
+
+  '
+- '# 过滤数据框
+
+  df_airports.where(col("CITY").isin(city_list)).show()
+
+  代码清单 6-12
+
+  数据框的多重过滤
+
+  ```
+
+
+  在图 `6–12` 的示例中，我们声明了一个要过滤的值列表，并使用 `isin` 函数将列表提供给 where 函数。
+
+
+  除了使用 `==` 运算符表示值应该相等之外，在过滤数据框时还有多个可用的运算符，你可能已经熟悉了，最常用的如表 `6-1` 所示。
+
+
+  表 6-1
+
+  PySpark 中的比较运算符
+
+
+  | 运算符 | 含义 |
+
+  | --- | --- |
+
+  | == | 等于 |
+
+  | != | 不等于 |
+
+  | < | 小于 |
+
+  | <= | 小于或等于 |
+
+  | > | 大于 |
+
+  | >= | 大于或等于 |
+
+
+  到目前为止，我们一直专注于从数据框中获取数据。然而，也可能存在你想要从数据框中删除一行，或者更新某个特定值的情况。一般来说，在 Spark 数据框中更新值并不像，例如，在
+  SQL 中写一条 UPDATE 语句那样直接，后者会直接更新实际表中的值。在大多数情况下，在数据框内部更新行涉及创建某种映射数据框，并将原始数据框与该映射数据框连接，然后将其存储为一个新的数据框。这样，你的最终数据框就包含了更新。
+
+
+  简单来说，你对要更新的数据执行选择（如图 `6-13` 所示），并返回要更新的行的更新值，然后将其保存到一个新的数据框中，如代码清单 `6-13` 的示例代码所示。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig13_HTML.jpg](img/480532_2_En_6_Fig13_HTML.jpg)
+
+
+  图 6-13
+
+  将值从 Jackson 更新为 Cody
+
+
+  ```
+
+  '
+- '# 更新一行
+
+  '
+- '# 我们需要从 pyspark.sql.functions 导入 col 和 when 函数
+
+  from pyspark.sql.functions import col, when
+
+  '
+- '# 选择整个数据框，但在 IATA_CODE = "COD" 的地方，将 CITY 值设置为 "Cody" 而不是 "Jackson"
+
+  '
+- '# 将结果存储在新的 df_airports_updated 数据框中
+
+  df_airports_updated = df_airports.withColumn("CITY", when(col("IATA_CODE") == "COD",
+  "Jackson"))
+
+  '
+- '# 返回结果，过滤 IATA_CODE == "COD" 的行
+
+  df_airports_updated = df_airports_updated.filter(df_airports_updated.IATA_CODE ==
+  ''COD'').show()
+
+  代码清单 6-13
+
+  在数据框上执行多个操作
+
+  ```
+
+
+  如果我们有兴趣删除行，同样的推理也适用，我们不是从数据框中物理删除行；而是执行一个不包含要删除行的选择，并将其存储为一个单独的数据框（图 `6-14` 展示了使用代码清单
+  `6-14` 的结果）。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig14_HTML.jpg](img/480532_2_En_6_Fig14_HTML.jpg)
+
+
+  图 6-14
+
+  当 IATA_CODE == “COD” 时没有数据存在
+
+
+  ```
+
+  '
+- '# 移除一行
+
+  '
+- '# 选择整个数据框，除了 IATA_CODE = "COD" 的行
+
+  '
+- '# 将结果存储在新的 df_airports_removed 数据框中
+
+  df_airports_removed = df_airports.filter(df_airports.IATA_CODE  "COD")
+
+  '
+- '# 返回结果，过滤 IATA_CODE == "COD" 的行
+
+  df_airports_removed.filter(df_airports_removed.IATA_CODE == "COD").show()
+
+  代码清单 6-14
+
+  从数据框中移除一行
+
+  ```
+
+
+  不删除或更新物理数据本身，而是通过选择来执行更新或删除操作（然后将它们存储在新数据框中）的概念在使用 Spark 中的数据框时非常重要，这与数据框只是 Spark
+  集群内存储数据的逻辑表示这一事实密切相关。数据框的行为更像是对存储在 Spark 集群中一个或多个文件内的数据的视图。虽然我们可以过滤和修改视图返回数据的方式，但我们无法通过视图本身来修改数据。
+
+
+  在继续介绍一些更高级的数据框处理示例之前，我们想展示的最后一个例子是数据分组。当你想要基于数据框列内的数据执行聚合或计算时，根据数据框中的列对数据进行分组非常有用。例如，在以下示例代码（代码清单
+  `6-15`）中，我们计算了 `df_airports` 数据框中每个不同城市拥有的机场数量（图 `6-15`）。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig15_HTML.jpg](img/480532_2_En_6_Fig15_HTML.jpg)
+
+
+  图 6-15
+
+  计算每个唯一城市的机场数量
+
+
+
+  ```
+
+  '
+- '# 按城市统计机场数量并按计数降序排序
+
+  df_airports.groupby("City").count().sort(col("count").desc()).show(10)
+
+  ```
+
+  代码清单 6-15
+
+  对数据框进行分组
+
+
+  在此示例中，我们使用了 `sort` 函数，而不是本节前面使用的 `orderBy` 来对结果进行排序。这两个函数本质上是相同的（`orderBy` 实际上是
+  `sort` 的别名），在功能上没有任何区别。
+
+
+  ## 更高级的数据框处理
+
+
+  到目前为止，我们已经研究了可以对数据框执行的——相对——简单的操作，例如选择特定行、对数据分组以及对数据框进行排序。
+
+
+  然而，当涉及到数据框时，在 Spark 中我们可以做的远不止于此，例如，将多个数据框连接在一起形成一个新的数据框。在本节中，我们将重点进行一些更高级的数据框处理。
+
+
+  首先，到目前为止，我们一直在处理导入到数据框中的单个数据集，该数据框包含美国各个机场的信息。在许多情况下，你并不会拥有一个包含所有所需内容的单一数据集，这意味着你最终会得到多个数据框。使用
+  PySpark，我们可以根据数据框共享的键将这些数据框连接起来，并构建一个新的、连接后的数据框。
+
+
+  在开始连接数据框之前，我们需要从正在使用的 2015 年航班延误和取消示例中导入其他示例数据集。如果你正在跟随本章中的示例操作，你应该已经拥有一个名为 `df_airports`
+  的数据框，其中包含 `airports.csv` 文件的数据。如果还没有，你可以运行以下代码（代码清单 6-16）将文件中的数据导入到数据框中。
+
+
+  ```
+
+  df_airports = spark.read.format(''csv'').options(header=''true'', inferSchema="true").load(''/Flight_Delays/airports.csv'')
+
+  ```
+
+  代码清单 6-16
+
+  将 airports.csv 导入数据框
+
+
+  我们可以使用相同的命令（代码清单 6-17）导入另外两个 CSV 文件：`airlines.csv` 和 `flights.csv`。
+
+
+  ```
+
+  '
+- '# 同样将其他 CSV 文件导入数据框
+
+  df_airlines = spark.read.format(''csv'').options(header=''true'', inferSchema="true").load(''/Flight_Delays/airlines.csv'')
+
+  df_flights = spark.read.format(''csv'').options(header=''true'', inferSchema="true").load(''/Flight_Delays/flights.csv'')
+
+  ```
+
+  代码清单 6-17
+
+  将 airlines.csv 和 flights.csv 导入数据框
+
+
+  执行代码清单 6-17 后，我们应该在 PySpark 笔记本中拥有三个独立的数据框：`df_airports`、`df_airlines` 和 `df_flights`。
+
+
+  要连接两个数据框，我们必须提供用于连接这两个数据框的键。如果此键在两个数据框上相同，我们不必在连接中显式设置映射（我们只需要将列名作为参数提供）。然而，我们认为始终描述连接映射是一个好习惯，以使代码更易于理解。另外，在我们使用的示例数据集中，我们需要连接的列在数据框上具有不同的列名，这就需要显式的连接映射。
+
+
+  代码清单 6-18 的示例代码将使用内连接将 `df_flights` 和 `df_airlines` 数据框连接在一起，并输出一个名为 `df_flightinfo`
+  的新数据框。我们返回新创建数据框的模式，以查看两个数据框是如何连接在一起的（图 6-16）。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig16_HTML.jpg](img/480532_2_En_6_Fig16_HTML.jpg)
+
+  图 6-16
+
+  df_flightinfo 数据框的模式，它是 df_flights 和 df_airlines 的连接结果
+
+
+  ```
+
+  from pyspark.sql.functions import *
+
+  '
+- '# 让我们使用内连接在航空公司代码上连接 df_airlines 和 df_flights 数据框
+
+  df_flightinfo = df_flights.join(df_airlines, df_flights.AIRLINE == df_airlines.IATA_CODE,
+  how="inner")
+
+  '
+- '# 打印连接后数据框的模式
+
+  df_flightinfo.printSchema()
+
+  ```
+
+  代码清单 6-18
+
+  连接两个数据框并获取结果的模式
+
+
+  如图 6-16 所示，组成 `df_airlines` 数据框的两个列（`IATA_CODE` 和 `AIRLINE`）被添加到了新的 `df_flightinfo`
+  数据框的右侧。由于我们在 `df_flights` 数据框中已经有了 `IATA_CODE`，我们最终在新数据框中有了重复的列（更有趣的是：在这个示例数据集中，`df_flights`
+  数据框使用列“AIRLINE”来表示我们连接 `df_airlines` 数据框所依据的 IATA 代码。`df_airlines` 数据框也有 `AIRLINE`
+  列，但它显示的是完整的航空公司名称。这实质上意味着 `df_flightinfo` 数据框中的两个 `AIRLINE` 列包含不同的数据）。
+
+
+  我们可以在连接两个数据框时轻松地删除重复列，通过在连接命令中指定它（代码清单 6-19 和图 6-17）。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig17_HTML.jpg](img/480532_2_En_6_Fig17_HTML.jpg)
+
+  图 6-17
+
+  删除重复 AIRLINE 列后的 df_flightinfo 模式
+
+
+  ```
+
+  from pyspark.sql.functions import *
+
+  '
+- '# 我们将再次连接两个数据框，但这次删除 df_flights 数据框的 AIRLINE 列
+
+  df_flightinfo = df_flights.join(df_airlines, df_flights.AIRLINE == df_airlines.IATA_CODE,
+  how="inner").drop(df_flights.AIRLINE)
+
+  '
+- '# 打印连接后数据框的模式
+
+  df_flightinfo.printSchema()
+
+  ```
+
+  代码清单 6-19
+
+  连接两个数据框的同时删除一列
+
+
+  从图 6-17 所示的模式可以看出，我们现在只剩下一个 `AIRLINE` 列，其中包含我们想要的数据（完整的航空公司名称）。
+
+
+  删除重复列后，让我们从新的 `df_flightinfo` 数据框中选择一些信息。对于此示例，假设我们有兴趣查看每个航班的计划和实际已用旅行时间，以及执行该航班的航空公司。我们可以像本章前面已经做过多次的那样，简单地选择我们感兴趣的列。这次使用代码清单
+  6-20 所示的代码，会得到如图 6-18 所示的表格。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig18_HTML.jpg](img/480532_2_En_6_Fig18_HTML.jpg)
+
+  图 6-18
+
+  每个航班号的计划和已用飞行时间
+
+
+  ```
+
+  '
+- '# 从连接后的数据框中选择若干列
+
+  df_flightinfo.select("FLIGHT_NUMBER", "AIRLINE", "SCHEDULED_TIME", "ELAPSED_TIME").show()
+
+  ```
+
+  代码清单 6-20
+
+  从连接后的数据框中选择若干列
+
+
+  现在假设我们正在分析这些数据，因为我们对航班的计划时间和航班实际花费时间之间的差异感兴趣。虽然我们可以手动查看数据框中的每一行来弄清楚两个时间列之间的差异是什么，但让
+  Spark 为你执行这个计算要容易得多。对于此场景，我们使用以下代码（代码清单 6-21）创建一个新的数据框，该数据框选择原始 `df_flightinfo`
+  数据框列的子集，并在 `SCHEDULE_TIME` 和 `ELAPSED_TIME` 列之间进行简单的计算（图 6-19）。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig19_HTML.jpg](img/480532_2_En_6_Fig19_HTML.jpg)
+
+  图 6-19
+
+  显示旅行时间信息的 df_flightinfo_times 数据框
+
+
+
+
+  ```python
+
+  '
+- '# 从 df_flightinfo 创建一个新的 df_flightinfo_times 数据框
+
+  '
+- '# 增加一个新列，该列通过计划时间和实际耗时进行计算
+
+  df_flightinfo_times = df_flightinfo.withColumn("Time_diff", df_flightinfo.ELAPSED_TIME
+  - df_flightinfo.SCHEDULED_TIME).select("FLIGHT_NUMBER", "AIRLINE", "SCHEDULED_TIME",
+  "ELAPSED_TIME", "Time_diff")
+
+  '
+- '# 返回前十行
+
+  df_flightinfo_times.show(10)
+
+  代码清单 6-21
+
+  向数据框添加计算列
+
+  ```
+
+
+  从图 6-19 中可以看出，我们所选的十行数据中的大多数航班，其实际飞行时间实际上比计划时间要短。
+
+
+  虽然查看单个航班的这类信息非常有用，但了解我们样本中所有航班的表现也会非常有趣。为了了解诸如平均值、最大值（代码清单 6-22 生成图 6-20）、或最小值（代码清单
+  6-23 生成图 6-21）等信息，我们可以调用 PySpark 中的一些函数来计算计划飞行时间与实际耗时之间的时间差（代码清单 6-24 生成图 6-22）。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig22_HTML.jpg](img/480532_2_En_6_Fig22_HTML.jpg)
+
+  **图 6-22** 计划时间与实际耗时之间的平均差值
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig21_HTML.jpg](img/480532_2_En_6_Fig21_HTML.jpg)
+
+  **图 6-21** 计划时间与实际耗时之间的最小差值
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig20_HTML.jpg](img/480532_2_En_6_Fig20_HTML.jpg)
+
+  **图 6-20** 计划时间与实际耗时之间的最大差值
+
+
+  ```python
+
+  '
+- '# 显示最大时间差值
+
+  df_flightinfo_times.select([max("Time_diff")]).show()
+
+  代码清单 6-22
+
+  检索单个聚合值
+
+  ```
+
+
+  ```python
+
+  '
+- '# 显示最小时间差值
+
+  df_flightinfo_times.select([min("Time_diff")]).show()
+
+  代码清单 6-23
+
+  检索单个聚合值
+
+  ```
+
+
+  ```python
+
+  '
+- '# 显示平均时间差值
+
+  df_flightinfo_times.select([mean("Time_diff")]).show()
+
+  代码清单 6-24
+
+  检索单个聚合值
+
+  ```
+
+
+  虽然了解用于获取数据集多个汇总统计信息的独立命令无疑是有帮助的，但 Spark 还有一个单独的函数（代码清单 6-25），可以直接为你完成这项工作，并将多个结果合并为一个输出（图
+  6-23）。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig23_HTML.jpg](img/480532_2_En_6_Fig23_HTML.jpg)
+
+  **图 6-23** `df_flightinfo_times` 数据框中 `Time_diff` 列的汇总统计信息
+
+
+  ```python
+
+  '
+- '# 我们可以使用单个命令生成特定列的汇总统计信息
+
+  df_flightinfo_times.select("Time_diff").describe().show()
+
+  代码清单 6-25
+
+  从特定列生成汇总统计信息
+
+  ```
+
+
+  从前面的汇总统计信息（图 6–23）中可以看出，平均而言，航班的实际飞行时间比原计划快了近 5 分钟。我们还可以看到数据中存在一些异常值；最快的航班比计划提前了
+  201 分钟到达，而有一个航班的实际飞行时间比计划长了 330 分钟。
+
+
+  或许通过查看延误超过 180 分钟的航班数据，我们可以对延误情况有更深入的了解。代码清单 6-26 的代码选择了其中的前 20 行，并根据延误时间降序排序，这意味着延误最严重的航班位于结果的顶部（图
+  6-24）。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig24_HTML.jpg](img/480532_2_En_6_Fig24_HTML.jpg)
+
+  **图 6-24** 延误最严重的前 20 个航班
+
+
+  ```python
+
+  '
+- '# 选择所有延误超过 60 分钟的航班
+
+  df_flightinfo_times.filter(df_flightinfo_times.Time_diff < -60).sort(desc("Time_diff")).show(20)
+
+  代码清单 6-26
+
+  基于单列进行选择和排序
+
+  ```
+
+
+  从这些结果中我们可以看到，根据这个数据集，"美国航空公司"这个航空公司遇到了相当多的航班延误。但它们是否也是平均延误最严重的航空公司呢？要弄清楚这一点，一种方法是计算每家航空公司的平均时间差并返回结果。我们可以通过按航空公司对数据进行分组，并计算每个不同航空公司的平均延误来实现这一点。代码清单
+  6-27 的示例代码正是这样做的，它使用了 `groupby` 函数和一个聚合选项（写作 `agg`），来指定数据需要按哪个方法分组以及按哪一列计算（图 6-25）。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig25_HTML.jpg](img/480532_2_En_6_Fig25_HTML.jpg)
+
+  **图 6-25** 各航空公司所有航班的计划时间与实际耗时之间的平均差值
+
+
+  ```python
+
+  '
+- '# 按航空公司对 Time_diff 数据进行分组，并返回计划时间与实际耗时之间的平均差值
+
+  df_flightinfo_times.groupby("AIRLINE").agg({"Time_diff": "mean"}).sort(desc("avg(Time_diff)")).show()
+
+  代码清单 6-27
+
+  按另一列分组聚合一列
+
+  ```
+
+
+  当你想跨整个数据框计算值并按特定函数进行分组时，`groupby` 函数非常有用。除了我们通过 `agg` 参数提供的 `mean` 选项外，我们还可以使用其他计算方法，例如
+  `sum` 来计算每个分组列的总和，或者 `count` 来计算每个列值的出现次数（图 6-26）。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig26_HTML.jpg](img/480532_2_En_6_Fig26_HTML.jpg)
+
+  **图 6-26** 各航空公司所有航班的计划时间与实际耗时之间的总差值
+
+
+  另一件值得指出的事情是，我们如何将 `groupby` 函数返回的列传递给 `sort` 函数。每当一个计算列被添加到数据框中时，它也会变得可用于选择和排序，你可以将该列名传递给这些函数。
+
+
+  如果我们继续进行航班延误调查，从分组的平均值和总值结果中可以看出，美国航空公司（American Airlines）在延误方面的表现并不像我们最初预期的那样糟糕。事实上，平均而言，它们的航班比计划提前了
+  5 分钟到达！
+
+
+  我们将在第 7 章回到这个数据集，对其进行进一步探索，甚至对航班延误做出一些预测。
+
+  ```
+
+
+
+
+  ## 在 Spark 数据帧上使用 SQL 查询
+
+
+  到目前为止，在本章中我们已经使用了与数据帧处理相关的函数来执行操作，例如选择特定列、排序和分组数据。我们在数据帧内部处理数据的另一个选项是直接在 Spark 中通过
+  SQL 查询来访问它。对于熟悉编写 SQL 代码的人来说，这种方法可能比学习所有之前介绍的新函数（以及我们尚未涉及的更多函数）要简单得多。
+
+
+  在我们可以针对数据帧编写 SQL 查询之前，必须先将其注册为一个表结构，这可以通过清单 6-28 中的代码完成。
+
+
+  ```python
+
+  # 将 df_flightinfo 数据帧注册为（临时）表，以便我们可以对其运行 SQL 查询
+
+  df_flightinfo.registerTempTable("FlightInfoTable")
+
+  ```
+
+
+  *清单 6-28 注册一个临时表*
+
+
+  既然我们已经将数据帧注册为（临时）表，就可以使用 `sqlContext` 命令（清单 6-29）针对它运行 SQL 查询了，该命令会调用 Spark 引擎中包含的
+  Spark SQL 模块（图 6-27）。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig27_HTML.jpg](img/480532_2_En_6_Fig27_HTML.jpg)
+
+
+  *图 6-27 使用 Spark SQL 查询的 FlightInfoTable 前十行*
+
+
+  ```python
+
+  # 从 FlightInfoTable 中选择前十个选定列的数据行
+
+  sqlContext.sql("SELECT FLIGHT_NUMBER, ORIGIN_AIRPORT, DESTINATION_AIRPORT, ELAPSED_TIME
+  FROM FlightInfoTable").show(10)
+
+  ```
+
+
+  *清单 6-29 使用 SQL 选择表的前十行*
+
+
+  正如你在前面的示例中所见，我们执行了一个简单的 SELECT SQL 查询，指定了想要返回的若干列。Spark SQL 模块处理 SQL 查询，并针对我们之前创建的表结构执行它。就像我们之前展示的示例一样，我们仍然需要提供
+  `.show()` 函数以表格形式返回结果。
+
+
+  几乎所有你使用 SQL 代码能做的事情，在 Spark 中同样可以应用。例如，上一节中的最后一个示例（清单 6-30）展示了如何对数据进行分组并计算平均值。我们可以使用
+  SQL 查询进行相同的处理，如图 6-28 中的示例所示。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig28_HTML.jpg](img/480532_2_En_6_Fig28_HTML.jpg)
+
+
+  *图 6-28 按每家航空公司分组的平均飞行距离*
+
+
+  ```python
+
+  # 按每家航空公司分组飞行距离，并返回每家航空公司的平均飞行距离
+
+  sqlContext.sql("SELECT AIRLINE, AVG(DISTANCE) FROM FlightInfoTable GROUP BY AIRLINE
+  ORDER BY ''avg(Distance)'' DESC").show()
+
+  ```
+
+
+  *清单 6-30 使用 SQL 按另一列分组对列进行聚合*
+
+
+  ## 从 SQL Server 主实例读取数据
+
+
+  SQL Server 大数据集群的一个巨大优势是，我们可以访问存储在 SQL Server 实例和 HDFS 中的数据。到目前为止，我们主要处理的是存储在 HDFS
+  文件系统上的数据集，通过 Spark 直接访问它们，或者在 SQL Server 内部使用 PolyBase 创建外部表。然而，我们也可以直接从 Spark 访问存储在大数据集群内
+  SQL Server 数据库中的数据。这在数据一部分存储在 SQL Server 中、另一部分存储在 HDFS 上，并且希望将两者结合起来的情况下非常有用。或者，也许你希望利用
+  Spark 的分布式处理能力，从性能角度处理你的 SQL 表数据。
+
+
+  获取存储在你大数据集群的 SQL Server 主实例中的数据相对简单，因为我们可以使用 Spark 原生支持的 SQL Server JDBC 驱动程序进行连接。我们可以使用
+  `master-0.master-svc` 服务器名称来指示我们要连接到 SQL Server 主实例（清单 6-31）。
+
+
+  ```python
+
+  # 连接到大数据集群内的 SQL Server 主实例
+
+  # 并将表中的数据读入数据帧
+
+  df_sqldb_sales = spark.read.format("jdbc") \
+
+  .option("url", "jdbc:sqlserver://master-0.master-svc;databaseName=AdventureWorks2014")
+  \
+
+  .option("dbtable", "Sales.SalesOrderDetail") \
+
+  .option("user", "sa") \
+
+  .option("password", "[your SA password]").load()
+
+  ```
+
+
+  *清单 6-31 针对主实例执行 SQL 查询*
+
+
+  前面的代码建立了与我们的 SQL Server 主实例的连接，并连接到了我们在本书前面创建的 `AdventureWorks2014` 数据库。使用 “dbtable”
+  选项，我们可以直接将 SQL 表映射到使用前面代码将要创建的数据帧。
+
+
+  执行代码后，我们就有了 SQL 表数据的副本，它存储在我们 Spark 集群内的一个数据帧中，我们可以像之前展示的那样访问它（清单 6-31 导致图 6-30）。
+
+
+  要仅检索前十行，请运行清单 6-32。这将产生图 6-29 的结果。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig29_HTML.jpg](img/480532_2_En_6_Fig29_HTML.jpg)
+
+
+  *图 6-29 从 SQL Server 主实例中的表创建的数据帧*
+
+
+  ```python
+
+  df_sqldb_sales.show(10)
+
+  ```
+
+
+  *清单 6-32 检索前十行*
+
+
+  关于这个过程需要指出的一个有趣之处是，Spark 会自动将每列的数据类型设置为与 SQL Server 数据库中配置的类型相同（在数据类型命名上有一些例外，SQL
+  中的 `datetime` 在 Spark 中是 `timestamp`，以及 Spark 不直接支持的数据类型，如 `uniqueidentifier`），你可以在图
+  6-30 所示的数据帧模式中看到这一点。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig30_HTML.jpg](img/480532_2_En_6_Fig30_HTML.jpg)
+
+
+  *图 6-30 我们从 SQL Server 主实例导入的数据帧的模式*
+
+
+  除了从 SQL 表创建数据帧之外，我们还可以提供查询来仅选择我们关心的列，或者执行一些其他的 SQL 函数，比如对数据进行分组。清单 6-33 中的示例展示了如何使用
+  SQL 查询加载数据帧（图 6-31）。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig31_HTML.jpg](img/480532_2_En_6_Fig31_HTML.jpg)
+
+
+  *图 6-31 df_sqldb_query 数据帧的模式*
+
+
+  ```python
+
+  # 虽然我们可以将表映射到数据帧，但也可以执行 SQL 查询
+
+  df_sqldb_query = spark.read.format("jdbc") \
+
+  .option("url", "jdbc:sqlserver://master-0.master-svc;databaseName=AdventureWorks2014")
+  \
+
+  .option("query", "SELECT SalesOrderID, OrderQty, UnitPrice, UnitPriceDiscount FROM
+  Sales.SalesOrderDetail") \
+
+  .option("user", "sa") \
+
+  .option("password", "[your SA password]").load()
+
+  df_sqldb_query.printSchema()
+
+  ```
+
+
+  *清单 6-33 使用 SQL 查询代替映射表来创建数据帧*
+
+
+
+
+  ## 绘制图表
+
+
+  到目前为止，我们主要处理的是在 PySpark notebook 中执行代码时以文本类格式返回的结果。然而，在执行诸如数据探索等任务时，以更图形化的方式查看数据往往要有用得多。例如，绘制数据框的直方图可以提供关于数据分布的丰富信息，而散点图可以帮助你直观地理解不同列之间如何相互关联。
+
+
+  幸运的是，我们可以轻松地通过 Azure Data Studio 安装和管理软件包，这些包能帮助我们绘制存储在 Spark 集群内部数据的图表，并将这些图表显示在
+  notebook 中。这并不是说绘制存储在数据框中的数据的图表是件容易的事。事实上，在我们开始绘制数据之前，有许多事情需要考虑。
+
+
+  首先，也是最重要的一点，数据框是我们数据的逻辑表示。实际的物理数据本身分布在构成 Spark 集群的工作节点上。这意味着，如果我们想通过数据框绘制数据，事情会很快变得复杂，因为我们需要将来自各个节点的数据组合成一个单一的数据集，才能在其上创建图表。这不仅会导致非常糟糕的性能，因为我们基本上移除了数据的分布式特性，而且还可能因为需要将所有数据装入单个节点的内存中而导致错误。虽然这些问题在小数据集上可能不会出现，但数据集越大，你遇到这些问题的速度就越快。
+
+
+  为了解决这些问题，我们通常采用不同的数据分析方法。例如，我们不是分析整个数据集，而是从数据集中抽取一个样本——它能代表整个数据集——并在这个较小的样本数据集上绘制图表。另一种方法可以是只过滤出你需要的数据，也许预先对其进行一些计算，然后将其另存为一个独立、较小的数据集，再进行绘制。
+
+
+  无论你选择哪种方法来创建用于图形探索的较小数据集，我们都必须做的一件事是，将数据集传输到我们提交代码的主要 Spark 主节点上。Spark 主节点需要能够将数据集加载到内存中，这意味着主节点需要有足够的物理内存来加载数据集，而不会因内存不足而崩溃。实现这一点的一种方法是将我们的
+  Spark 数据框转换为 Pandas 数据框。Pandas 是 `pan`el `da`ta 的缩写，在统计学界是一个用于描述多维数据集的术语。Pandas
+  是一个为数据分析和操作而编写的 Python 库，如果你曾在 Python 中处理过数据，那你肯定使用过它。Pandas 还通过 `matplotlib` 库引入了一些绘图功能。虽然
+  Pandas 默认包含在大数据集群的库中，但 `matplotlib` 并不包含。不过，通过使用连接到你的大数据集群的 notebook 中的“管理包”选项，安装
+  `matplotlib` 包是非常直接和容易实现的（图 6-32）。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig32_HTML.jpg](img/480532_2_En_6_Fig32_HTML.jpg)
+
+
+  图 6-32
+
+
+  Notebook 标题栏中的“管理包”选项
+
+
+  点击“管理包”按钮后，我们可以看到已安装的软件包，并可以通过“新建”选项卡来安装额外的包（图 6-33）。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig33_HTML.jpg](img/480532_2_En_6_Fig33_HTML.jpg)
+
+
+  图 6-33
+
+
+  管理包
+
+
+  在本例中，我们将安装 `matplotlib` 包，以便我们能继续学习本章后续的示例。在图 6-34 中，我在“新建软件包”选项卡中搜索了 `matplotlib`
+  包，并选择了当前可用的最新稳定版本。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig34_HTML.jpg](img/480532_2_En_6_Fig34_HTML.jpg)
+
+
+  图 6-34
+
+
+  Matplotlib 包安装
+
+
+  选择好软件包和正确版本后，你可以点击“安装”按钮，将该包安装到你的大数据集群上。安装过程可以通过 Azure Data Studio 底部区域的“任务”控制台查看，如图
+  6-35 所示。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig35_HTML.jpg](img/480532_2_En_6_Fig35_HTML.jpg)
+
+
+  图 6-35
+
+
+  Matplotlib 安装任务
+
+
+  安装好 `matplotlib` 库后，我们就准备好为数据框创建一些图表了！
+
+
+  当我们想要绘制数据框中的数据时，第一件需要做的事就是将数据框转换为 Pandas 数据框。这移除了 Spark 数据框的分布式特性，并在 Spark 主节点的内存中创建一个数据框。我没有转换现有的数据框，而是使用了另一种方法来获取数据到我们的
+  Pandas 数据框中。为了创建一些更有趣的图表，我从一个 GitHub 仓库中可用的 CSV 文件中读取数据，并将其加载到 Pandas 数据框中。该数据集本身包含了汽车的各种特性，包括价格，并且经常被用作机器学习数据集，以根据重量、马力、品牌等特征来预测汽车价格。
+
+
+  我想指出的另一件事是清单 6-34 中示例代码的第一行。如果你想返回图表，`%matplotlib inline` 命令必须是 notebook 单元格中的第一条命令。这个命令是一个所谓的“魔法”命令，它会影响
+  `matplotlib` 库的行为以返回图表。如果我们不包含这个命令，Pandas 库在被要求绘制图表时会返回错误，我们将看不到图像本身。
+
+
+  ```python
+
+  %matplotlib inline
+
+  import pandas as pd
+
+  # 通过 URL 从 csv 创建本地 Pandas 数据框
+
+  pd_data_frame = pd.read_csv("https://github.com/Evdlaar/Presentations/raw/master/Advanced%20Analytics%20in%20the%20Cloud/automobiles.csv")
+
+  ```
+
+  清单 6-34
+
+  从 GitHub 导入数据到数据框
+
+
+  运行上述代码后，我们可以开始使用 `pd_data_frame` 作为来源来创建图表。
+
+
+  清单 6-35 中的代码将使用 Pandas 的 `hist()` 函数创建我们 Pandas 数据框中 `horsepower` 列的直方图（图 6-36）。直方图对于查看数据的分布情况极其有用。在进行任何形式的数据探索时，数据分布都非常重要，因为你可以看到，例如，影响你平均值的数据中的异常值。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig36_HTML.jpg](img/480532_2_En_6_Fig36_HTML.jpg)
+
+
+  图 6-36
+
+
+  pd_data_frame Pandas 数据框中马力列的直方图
+
+
+  ```python
+
+  %matplotlib inline
+
+  # 例如，我们可以为马力列创建一个直方图
+
+  pd_data_frame.hist("horsepower")
+
+  ```
+
+  清单 6-35
+
+  为单列创建直方图
+
+
+
+  ## Pandas 可视化概览
+
+
+  除了直方图，我们基本上可以创建任何感兴趣的图表类型。Pandas 支持多种不同的图表类型，并提供了许多自定义图表外观的选项。关于可实现功能的详细参考，可以在 Pandas
+  文档页面找到：[`https://pandas.pydata.org/pandas-docs/stable/user_guide/visualization.html`](https://pandas.pydata.org/pandas-docs/stable/user_guide/visualization.html)。
+
+
+  ## 箱线图示例
+
+
+  为了展示另一种语法示例，清单 6-36 中的代码在 Pandas 数据框（`pd_data_frame`）中创建了 `price` 列的箱线图（图 6-37）。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig37_HTML.jpg](img/480532_2_En_6_Fig37_HTML.jpg)
+
+
+  图 6-37：`pd_data` 数据框中 `price` 列的箱线图
+
+
+  ```python
+
+  %matplotlib inline
+
+  # Also other graphs like boxplots are supported
+
+  # In this case we create a boxplot for the "price" column
+
+  pd_data_frame.price.plot.box()
+
+  Listing 6-36
+
+  Generate a boxplot based on a single column
+
+  ```
+
+
+  ## 箱线图解读
+
+
+  与直方图类似，箱线图以图形方式展示数据的分布情况。箱线图（也称为箱须图）相比直方图能提供更多关于数据分布的细节。箱线图的“箱体”称为四分位距（IQR），包含了我们数据中间的
+  50%。在我们的例子中，可以看到价格数据中间的 50%大约在 7,500 到 17,500 之间。IQR 下方的线（或须）显示了数据底部的 25%，而 IQR
+  上方的须则显示了顶部的 25%。顶部须上方的圆圈显示了数据集中的离群值，在本例中用于标示价格高于 `1.5 * IQR` 的汽车。离群值可能对平均价格产生巨大影响，值得调查以确保它们不是错误。最后，IQR
+  内部的绿色条表示 `price` 列的平均值。
+
+
+  ## 比较多个箱线图
+
+
+  箱线图常用于比较多个数据集之间的数据分布。我们也可以在 PySpark 笔记本中通过设置 `matplotlib` 库的 `subplot()` 函数来实现这一点。我们为
+  `subplot()` 设置的参数决定了 `subplot()` 函数之后的图应显示的位置（以行和列表示）。在清单 6-37 的例子中，`price` 列的箱线图显示在位置
+  `1,2,1`，即 1 行、2 列、第一列。马力的图显示在 1 行、2 列、第二列的位置，从而有效地将两个箱线图并排绘制（图 6-38）。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig38_HTML.jpg](img/480532_2_En_6_Fig38_HTML.jpg)
+
+
+  图 6-38：两个不同的箱线图并排显示
+
+
+  ```python
+
+  %matplotlib inline
+
+  # Boxplots are frequently used to compare the distribution of datasets
+
+  # We can plot multiple boxplots together and return them as one image using the
+  following code
+
+  import matplotlib.pyplot as plt
+
+  plt.subplot(1, 2, 1)
+
+  pd_data frame.price.plot.box()
+
+  plt.subplot(1, 2, 2)
+
+  pd_data frame.horsepower.plot.box()
+
+  plt.show()
+
+  Listing 6-37
+
+  Generate multiple boxplots to compare two values
+
+  ```
+
+
+  我们不会深入探讨箱线图的更多细节，因为它们超出了本书的范围。但如果您有兴趣了解更多，网上有大量关于如何解读箱线图的资源。
+
+
+  ## 散点矩阵图示例
+
+
+  最后一个示例展示了 Pandas 图形功能的强大之处。使用清单 6-38 中的代码，我们将创建一个所谓的散点矩阵图（图 6-39）。散点矩阵由许多不同的图表组合成一个大的单一图表。散点矩阵会为我们提供的列之间每一次交互返回一个散点图；如果交互发生在相同的列上，则返回直方图。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig39_HTML.jpg](img/480532_2_En_6_Fig39_HTML.jpg)
+
+
+  图 6-39：在 `pd_data` 数据框的各种列上绘制的散点矩阵图
+
+
+  ```python
+
+  %matplotlib inline
+
+  import matplotlib.pyplot as plt
+
+  from pandas.plotting import scatter_matrix
+
+  # Only select a number of numerical columns from our data frame
+
+  pd_num_columns = pd_data frame[[''length'',''width'',''height'',''curb-weight'',''horsepower'',''price'']]
+
+  # More advanced plots, like a scatter matrix plot
+
+  scatter_matrix(pd_num_columns, alpha=0.5, figsize=(10, 10), diagonal="hist")
+
+  plt.show()
+
+  Listing 6-38
+
+  Create scatter matrix
+
+  ```
+
+
+  ## 散点矩阵图解读
+
+
+  当您想要检测数据集中各列之间的相关性时，散点矩阵图非常有用。每个散点图都在 X 轴（例如 `length`）和 Y 轴（例如 `price`）上为每个值绘制一个点。如果这些点倾向于聚集在一起，如上图中形成较深的点，则这些列内的数据可能相互相关，这意味着如果一个值较高或较低，另一个值通常也会朝相同方向移动。一个更实际的例子是
+  `price`（前图左下角）和 `curb weight`（前图右数第四）之间的图。随着 Y 轴上显示的 `price` 上升，汽车的 `curb weight`
+  也趋于增加。这是非常有用的信息，特别是如果我们有兴趣根据代表汽车特征的列值来预测汽车价格时。如果一辆车的 `curb weight` 很高，那么它的价格很可能也会很高。
+
+
+
+  '
+- '# 数据框执行
+
+
+  在本章中，我多次提到数据框只是对您导入数据的逻辑表示。在数据框的底层，实际的物理数据存储在大数据集群的 Spark 节点上。因为数据框是一种逻辑表示，所以处理数据框内的数据或修改数据框本身的操作方式可能与您的预期有所不同。
+
+
+  Spark 在处理任何命令之前，会使用一种称为“惰性求值”的方法。就 Spark 处理而言，惰性求值的基本含义是，Spark 会延迟对数据框执行几乎所有操作，直到触发一个动作。这些操作被称为转换，例如连接数据框。我们在
+  Spark 数据框上执行的每个转换都会被添加到一个执行计划中，但不会直接执行。执行计划只会在针对数据框执行动作时才会运行。动作包括诸如 `count()` 或
+  `top()` 之类的操作。
+
+
+  简单来说，我们对数据框执行的所有转换，如连接、排序等，都会以执行计划的形式添加到转换列表中。每当我们在数据框上执行像 `count()` 这样的动作时，执行计划就会被处理，并显示
+  `count()` 的结果。
+
+
+  从性能角度来看，Spark 使用的惰性求值模型在处理大型数据集时非常有效。通过将转换分组在一起，执行所需操作所需的数据遍历次数更少。此外，将转换分组在一起还为优化创造了空间。如果
+  Spark 知道需要对数据执行的所有操作，它就可以决定执行最终结果所需动作的最佳方法，也许某些操作可以避免，或者可以将其他操作合并在一起。
+
+
+  在我们的 PySpark notebook 内部，我们可以非常轻松地使用 `explain()` 命令查看执行计划。在清单 6-39 的示例中，我们将把航班和机场信息导入两个独立的数据框，并查看其中一个数据框的执行计划（图
+  6-40）。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig40_HTML.jpg](img/480532_2_En_6_Fig40_HTML.jpg)
+
+
+  图 6-40：新导入数据框的执行计划
+
+
+  ```python
+
+  # 如果尚未导入，请再次导入航班和航空公司数据
+
+  df_flights = spark.read.format(''csv'').options(header=''true'', inferSchema="true").load(''/Flight_Delays/flights.csv'')
+
+  df_airlines = spark.read.format(''csv'').options(header=''true'', inferSchema="true").load(''/Flight_Delays/airlines.csv'')
+
+  # 与 SQL Server 类似，Spark 使用执行计划，您可以通过 .explain() 查看
+
+  df_flights.explain()
+
+  清单 6-39：解释单表数据框的执行计划
+
+  ```
+
+
+  如图 6-40 所示，目前只有一个操作，即 FileScan，它负责将 CSV 内容读取到 `df_flights` 数据框中。事实上，当我们执行该命令时，数据并未加载到数据框中；但每当我们执行动作以触发实际加载数据时，它将是执行计划中的第一步。
+
+
+  为了展示执行计划发生的变化，我们将把之前创建的两个数据框连接在一起（清单 6-40）并查看该计划（图 6-41）。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig41_HTML.jpg](img/480532_2_En_6_Fig41_HTML.jpg)
+
+
+  图 6-41：数据框连接的执行计划
+
+
+  ```python
+
+  # 让我们再次连接两个数据框，看看计划发生了什么变化
+
+  from pyspark.sql.functions import *
+
+  df_flightinfo = df_flights.join(df_airlines, df_flights.AIRLINE == df_airlines.IATA_CODE,
+  how="inner").drop(df_flights.AIRLINE)
+
+  df_flightinfo.explain()
+
+  清单 6-40：解释多表数据框的执行计划
+
+  ```
+
+
+  从执行计划中，我们可以看到两个 FileScan 操作，它们将读取两个源 CSV 文件的内容到各自的数据框中。然后我们可以看到，Spark 决定基于我们在前面代码中提供的关键列，对两个数据框执行哈希连接。
+
+
+  再次强调，我们针对数据框执行的动作并未实际执行。我们可以通过执行一个简单的 `count()` 动作（清单 6-41）来触发执行。
+
+
+  ```python
+
+  # 即使我们连接了数据框并看到这反映在执行计划中，
+
+  # 该计划也尚未被执行。
+
+  # 执行计划仅在执行 count() 或 top() 等动作时才会执行。
+
+  df_flightinfo.count()
+
+  清单 6-41：执行一个动作以运行执行计划
+
+  ```
+
+
+  执行计划仍将附加在数据框上，我们随后执行的任何转换都将被添加到其中。无论何时我们在后续时间点执行动作，执行计划连同其包含的所有转换都将被执行。
+
+
+
+
+  ## 数据框缓存
+
+
+  优化数据框操作性能的一种方法是缓存它们。通过缓存数据框，我们将其置于 Spark 工作节点的内存中，从而在每次对数据框执行操作时，避免从磁盘读取数据的开销。何时需要缓存数据框取决于众多因素，但一般来说，如果你在单个脚本中对一个数据框执行多次操作，缓存该数据框通常是加速后续操作性能的好方法。
+
+
+  我们可以通过调用 `storageLevel` 函数来检索有关数据框是否被缓存的信息，如图 6-42 和代码清单 6-42 所示。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig42_HTML.jpg](img/480532_2_En_6_Fig42_HTML.jpg)
+
+  *图 6-42：`df_flightinfo` 数据框的缓存信息*
+
+
+  ```
+
+  df_flightinfo.storageLevel
+
+  ```
+
+  *代码清单 6-42：检索数据框的存储级别*
+
+
+  该函数返回多个布尔值，表示此数据框当前激活的缓存级别：`Disk`、`Memory`、`OffHeap` 和 `Deserialized`。默认情况下，每当缓存一个数据框时，它将同时被缓存到
+  `Disk` 和 `Memory` 中。
+
+
+  如图 6-43 所示，`df_flightinfo` 数据框此时并未被缓存。我们可以通过调用 `cache()` 函数来改变这一点，如代码清单 6-43 中的代码所示。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig43_HTML.jpg](img/480532_2_En_6_Fig43_HTML.jpg)
+
+  *图 6-43：`df_flightinfo` 数据框的缓存信息*
+
+
+  ```python
+
+  # 要缓存我们的数据框，我们只需使用 .cache() 函数
+
+  # 默认的缓存级别是 Disk 和 Memory
+
+  df_flightinfo.cache()
+
+  df_flightinfo.storageLevel
+
+  ```
+
+  *代码清单 6-43：在数据框上启用缓存*
+
+
+  如果我们查看 `storageLevel` 函数的结果，如图 6-43 所示，我们可以看到数据框现在已被缓存。
+
+
+  尽管 `storageLevel` 函数返回数据框已被缓存的信息，但实际上它尚未缓存。我们仍然需要执行一个操作，组成数据框的实际数据才会被检索并能够被缓存。操作的一个例子是
+  `count()`，如代码清单 6-44 中的代码所示。
+
+
+  ```python
+
+  # 即使我们收到数据框已缓存的信息，我们也必须
+
+  # 执行一个操作，它才会真正被缓存
+
+  df_flightinfo.count()
+
+  ```
+
+  *代码清单 6-44：通过对数据框执行计数操作来初始化缓存*
+
+
+  除了返回有关数据框缓存有限信息的 `storageLevel()` 命令外，我们还可以通过 Yarn 门户获取更详细的信息。
+
+
+  要访问 Yarn 门户，你可以使用 `Spark 诊断和监控仪表板` 的 Web 链接，该链接会在你通过 Azure Data Studio 连接或管理大数据集群时，显示在
+  SQL Server 大数据集群选项卡中（图 6-44）。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig44_HTML.jpg](img/480532_2_En_6_Fig44_HTML.jpg)
+
+  *图 6-44：Azure Data Studio 中的服务终结点*
+
+
+  登录 Yarn Web 门户后，我们会看到如图 6-45 所示的所有应用程序概览。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig45_HTML.jpg](img/480532_2_En_6_Fig45_HTML.jpg)
+
+  *图 6-45：Yarn Web 门户*
+
+
+  将 Spark 中的应用程序视为一个计算单元。例如，一个应用程序可以是通过 Notebook 与 Spark 进行的交互式会话，也可以是一个 Spark 作业。我们在本章
+  PySpark Notebook 中所做的一切，都是在 Spark 中作为一个或多个应用程序处理的。
+
+
+  事实上，我们对 Spark 集群执行的第一个命令会返回有关我们 Spark 应用程序的信息，如图 6-46 所示。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig46_HTML.jpg](img/480532_2_En_6_Fig46_HTML.jpg)
+
+  *图 6-46：Spark 应用程序信息*
+
+
+  对我们来说，要寻找的最重要的信息是 `YARN Application ID`。此 ID 应显示在 Yarn 所有应用程序页面上，如果你仍通过此应用程序 ID
+  连接到 Spark，它应标记为 `RUNNING`，如我们的会话在图 6-47 中所示。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig47_HTML.jpg](img/480532_2_En_6_Fig47_HTML.jpg)
+
+  *图 6-47：来自 Yarn Web 门户的 Spark 应用程序概览*
+
+
+  我们寻找的有关数据框缓存的信息存储在应用程序日志记录中。我们可以通过点击 ID 页面中的链接来访问有关该应用程序的更多详细信息。这会将我们带到该特定应用程序的更详细视图，如图
+  6-48 所示。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig48_HTML.jpg](img/480532_2_En_6_Fig48_HTML.jpg)
+
+  *图 6-48：Yarn Web 门户内的应用程序详细视图*
+
+
+  要查看我们寻找的信息，我们必须点击 `Tracking URL:` 选项处的 `ApplicationMaster` 链接。这将打开一个网页，显示由该特定应用程序处理过或正在处理的
+  Spark 作业。如果你将应用程序视为你与 Spark 集群的连接，那么作业就是你通过应用程序发送以执行工作的命令，例如计算数据框中的行数。图 6-49 显示了我们通过
+  PySpark Notebook 当前连接的应用程序中的 Spark 作业概览。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig49_HTML.jpg](img/480532_2_En_6_Fig49_HTML.jpg)
+
+  *图 6-49：Spark 作业概览*
+
+
+  你可以通过点击 `Description` 列中的链接来打开作业的详细信息，并访问有关作业处理的大量信息，包括作业如何被每个工作节点处理，以及作业的图形化执行计划在
+  Spark 中的等价物，称为 `DAG`（有向无环图），其中包含一个示例，如图 6-50 所示。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig50_HTML.jpg](img/480532_2_En_6_Fig50_HTML.jpg)
+
+  *图 6-50：跨数据框执行 `count()` 函数的 DAG*
+
+
+  要查看有关数据框缓存的信息，我们不必打开作业详细信息（尽管如果我们只想查看特定作业的存储处理，可以这样做）；相反，我们可以通过点击网页顶部菜单栏中的 `Storage`
+  菜单项来查看常规存储概览。
+
+
+  在此页面上，我们可以看到当前正在使用存储的所有数据框，无论是磁盘上的物理存储还是内存中的存储。图 6-51 显示了在我们的环境中，执行了本节开头进行的 `cache()`
+  和 `count()` 命令后的网页。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig51_HTML.jpg](img/480532_2_En_6_Fig51_HTML.jpg)
+
+  *图 6-51：数据框的存储使用情况*
+
+
+  从图 6-51 中我们可以看到，我们的数据框完全存储在内存中，使用了 345.6 MB 的内存，分布在五个分区中。我们甚至可以通过点击 `RDD Name` 列下方的链接，查看数据缓存和分区在哪些
+  Spark 节点上。在我们的例子中，我们得到如图 6-52 所示的信息。
+
+
+  ![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig52_HTML.jpg](img/480532_2_En_6_Fig52_HTML.jpg)
+
+  *图 6-52*
+
+
+
+  '
+- "# 我们的数据框在 Spark 节点上的存储使用情况\n\n我们可以看到，我们的数据框实际上缓存在三个 Spark 工作节点上，每个节点缓存的数据量不同。我们还可以看到数据框是如何分区的，以及这些分区是如何分布在各工作节点上的。分区是\
+  \ Spark 自动处理的功能，对于平台的分布式处理至关重要。\n\n## 数据框分区\n\n正如我们在上一节末尾提到的，Spark 会自动处理数据框的分区。一旦我们创建了一个数据框，它就会自动被分区，并且这些分区会分布到各个工作节点上。\n\
+  我们可以通过清单 6-45 所示的函数查看一个数据框被分成了多少个分区。\n\n```\n# Spark 将我们的数据切割成分区\n# 我们可以使用以下命令查看数据框的分区数\n\
+  df_flightinfo.rdd.getNumPartitions()\n清单 6-45\n获取数据框的分区数\n```\n\n在我们的例子中，本章一直使用的\
+  \ `df_flightinfo` 数据框已被划分为五个分区 `–` 这一点我们在上一节中也注意到了，当时我们通过 Yarn Web 门户查看了数据是如何分布到组成我们集群的\
+  \ Spark 节点上的。\n如果我们愿意，我们也可以自己设置分区数量（清单 6-46）。一个简单的方法是将你想要的分区数提供给 `repartition()`\
+  \ 函数。\n\n```\n# 如果需要，我们可以将数据框重新分区到更多或更少的分区\ndf_flightinfo = df_flightinfo.repartition(1)\n\
+  清单 6-46\n对数据框进行重新分区\n```\n\n在清单 6-46 的示例代码中，我们会将 `df_flightinfo` 数据框重新分区为单个分区。一般来说，这不是最佳做法，因为只有一个分区意味着对数据框的所有处理最终都会集中在一个工作节点上。理想情况下，你希望将数据框分区为大小尽可能相等的分区。每当对数据框执行一个操作时，它可以被拆分成大小相等的操作，从而获得最大的计算效率。\n\
+  为了确保你的数据框分区效率尽可能高，在许多情况下，仅仅提供你感兴趣的分区数并不是很高效。在大多数情况下，你会希望根据特定的键/值对数据进行分区，确保数据框中具有相同键/值的所有行都被分区在一起。Spark\
+  \ 也允许按特定列进行分区，如清单 6-47 的示例代码所示。\n\n```\ndf_flights_partitioned = df_flightinfo.repartition(\"\
+  AIRLINE\")\n清单 6-47\n创建分区后的数据框\n```\n\n在这个具体的例子中，我们正在按 `AIRLINE` 列对 `df_flights_partitioned`\
+  \ 数据框进行分区。尽管我们的数据框中只有 14 个不同的航空公司，但如果我们查看新创建数据框的分区计数，最终仍然会得到 200 个分区。这是因为，默认情况下，当我们按列分区时，Spark\
+  \ 使用最小分区数 200。对我们的例子来说，这意味着 200 个分区中的 14 个实际包含数据，而其余的是空的。\n让我们看看数据是如何被分区和处理的。然而，在此之前，我们需要对数据框执行一个操作，以便它实际进行分区（清单\
+  \ 6-48）。\n\n```\n# 让我们运行一个 count 操作，以便我们可以通过 Web 门户获取一些分区信息\ndf_flights_partitioned.count()\n\
+  清单 6-48\n从分区后的数据框获取计数\n```\n\n运行此命令后，我们将返回到上一节中查看数据框缓存时访问过的 Yarn Web 门户。如果你没有打开它，你需要导航到\
+  \ Yarn Web 门户，打开当前运行的应用程序，最后点击 `ApplicationMaster` URL 来查看应用程序内部的作业，如图 6-53 所示。\n\
+  \n![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig53_HTML.jpg](img/480532_2_En_6_Fig53_HTML.jpg)\n\
+  图 6-53\n我们活动应用程序中的 Spark 作业\n\n我们将重点关注图 6-53 所示列表中最顶部的作业（图 6-54）。这是我们手动按 `AIRLINE`\
+  \ 列对数据框进行分区后执行的计数操作，你也可以在执行的操作名称中看到这一点。\n\n![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig54_HTML.jpg](img/480532_2_En_6_Fig54_HTML.jpg)\n\
+  图 6-54\n我们 `count()` 操作的 Spark 作业\n\n通过点击“描述”中的链接，我们会进入一个页面，该页面显示了有关该特定作业的更多信息，如图\
+  \ 6-55 所示。\n\n![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig55_HTML.jpg](img/480532_2_En_6_Fig55_HTML.jpg)\n\
+  图 6-55\nSpark 作业详情\n\n非常有趣的是，作业本身也被划分为称为“阶段（Stages）”的子步骤。作业中的每个阶段执行特定的功能。为了展示我们的分区是如何处理的，最有趣的阶段是中间的那个，我们在图\
+  \ 6-56 中对其进行放大查看。\n\n![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig56_HTML.jpg](img/480532_2_En_6_Fig56_HTML.jpg)\n\
+  图 6-56\nSpark 作业内部的一个阶段\n\n在这个阶段，实际跨数据框的所有分区执行了计数操作；请记住，当我们基于 `AIRLINE` 列创建分区键时，创建了\
+  \ 200 个分区。在“任务：成功/总计（Tasks: Succeeded/Total）”列中，你可以看到返回的那个数字。\n如果我们进一步深入这个阶段的详细信息，点击“描述”列中的链接，我们会收到另一个页面，该页面向我们确切展示了该特定阶段的数据处理方式。虽然这个页面提供了丰富的信息，包括事件时间线、另一个\
+  \ `DAG` 可视化图，以及所有 200 个步骤（在此级别上也称为任务）的摘要指标，但我主要想关注页面底部的表格，该表格返回了此阶段下 200 个任务的处理信息。\n\
+  如果我们按“洗牌读取/记录数（Shuffle Read / Records）”列对表格进行降序排序，我们就可以确切地看到每个任务从每个分区读取了多少条记录，以及从哪台主机读取的，如图\
+  \ 6-57 所示。该图显示了处理行的总共 14 个任务中的前几个任务（其余 186 个分区是空的；因此没有从它们处理行）。\n\n![../images/480532_2_En_6_Chapter/480532_2_En_6_Fig57_HTML.jpg](img/480532_2_En_6_Fig57_HTML.jpg)\n\
+  图 6-57\n计数步骤下发生的任务，按洗牌读取大小/记录数排序\n\n从图 6-57 的结果中，我们立即也能看出按列值设置分区的一个缺点。最大的分区包含的行数（1,261,855）远多于最小的分区（61,903），这意味着我们将执行的大多数操作都会发生在包含最大分区的\
+  \ Spark 工作节点上。理想情况下，你应该使分区尽可能均匀，并以这种方式分布，使得工作能均匀地分散在你的 Spark 工作节点上。\n\n## 总结\n\n\
+  在本章中，我们详细探讨了在 SQL Server 大数据集群中可用的 Spark 架构内处理数据的方法。\n\n除了探索用于在 Spark 内处理数据帧的编程语言\
+  \ PySpark，我们还研究了像数据可视化这样的更高级方法。最后，通过查看执行计划、缓存和分区，我们浅析了 Spark 数据帧处理的内部机制，同时介绍了能提供关于\
+  \ Spark 如何处理数据帧的丰富信息的 Yarn Web 界面。\n\n现在，所有这些数据都已存放在我们的大数据集群中，让我们继续学习第 7 章，来看看大数据集群环境中的机器学习吧！\n\
+  \n## 7. 大数据集群上的机器学习\n\n在之前的章节中，我们花了大量时间探讨如何通过 Spark 查询存储在 SQL Server 实例或 HDFS 中的数据。能够访问不同格式存储的数据的一个优势在于，它允许你在大规模、分布式的环境中进行数据分析。我们可以在大数据集群中利用的一个更强大的选项是，能够在我们的数据上实施机器学习解决方案。因为大数据集群允许我们以各种格式和大小存储海量数据，所以跨所有这些数据来训练和使用机器学习模型变得容易得多。\n\
+  \n在许多涉及机器学习的工作场景中，将构建模型所需的所有数据汇集到一处的挑战占据了大部分工作。如果你能直接访问所需的所有数据，而无需将其从不同数据源移动到一个地方，那么构建机器学习模型（在数据科学领域通常称为训练）就会变得容易得多。除了能从单点访问数据外，大数据集群还允许你在数据驻留的同一位置将你的机器学习模型投入实际运营。这意味着，从技术上讲，你可以使用你的机器学习模型来为存储在大数据集群内的新数据进行评分。这极大地提升了在组织内部实施机器学习的能力，因为大数据集群让你能够在一个解决方案中训练、利用和存储机器学习模型，而无需为执行组织高级分析平台中的特定操作而部署各种平台。\n\
+  \n在本章中，我们将更深入地研究大数据集群中可用的各种选项，用于训练、存储和部署机器学习模型。一般来说，我们将涵盖两个方向：SQL Server 内置的数据库内机器学习服务，以及基于\
+  \ Spark 平台的机器学习。这两个领域涵盖不同的用例，但也存在重叠。正如你在前一章所见，如果需要，我们可以轻松地将存储在 SQL Server 实例中的数据引入\
+  \ Spark，反之亦然。在这种情况下，选择在哪个领域执行你的机器学习过程，更多地基于你个人偏好使用哪种解决方案。我们将在本章的各个章节中讨论大数据集群内这两个机器学习平台的各种技术优势和劣势。这将使你更好地理解每个解决方案的工作原理，并希望能帮助你选择最适合你需求的方案。\n\
+  \n## SQL Server 内置数据库内机器学习服务\n\n随着 SQL Server 2016 的发布，微软引入了一项名为“数据库内 R 服务”的新功能。这项新功能允许你使用新的\
+  \ `sp_execute_external_script` 存储过程或 `sp_rxPredict` CLR 过程，在 SQL Server 查询中直接执行\
+  \ R 编程代码。数据库内 R 服务的引入是一个新的方向，它允许组织通过让用户直接在 SQL Server 内部训练、评分和存储模型，将机器学习模型直接集成到他们的\
+  \ SQL Server 数据库中。虽然 R 是 SQL Server 2016 中唯一可用于 `sp_execute_external_script` 的语言，但随着\
+  \ SQL Server 2017 的发布，Python 被添加进来，这也导致该功能被重命名为“机器学习服务”。随着大数据集群所基于的 SQL Server 2019\
+  \ 的发布，Java 也被添加为第三种可直接从 T-SQL 代码访问的编程语言。\n\n虽然数据库内机器学习服务存在一些限制（例如，某些可用功能如 `PREDICT`\
+  \ 只接受由 Revolution Analytics 机器学习模型开发的算法），但如果你想在非常接近数据存储位置的地方训练和评分你的机器学习模型，这是一个非常有用的功能。这也是我们认为数据库内机器学习服务大放异彩的领域。通过利用该功能，数据移动几乎为零（考虑到你的机器学习模型所需的数据也可直接在\
+  \ SQL Server 实例中获得），模型管理通过将模型存储在 SQL Server 表中得到解决，并且它为（接近）实时的模型评分打开了大门——方法是在数据存储到数据库表中之前，就将其传递给你的机器学习模型。\n\
+  \n本章中的所有示例代码均可在本书的 GitHub 页面上以 T-SQL notebook 的形式获取。对于本节中的示例，我们选择使用 R 作为首选语言，而不是我们在前一章中使用的\
+  \ Python。\n\n## 在 SQL Server 主实例中训练机器学习模型\n\n在 SQL Server 大数据集群的主实例中开始训练机器学习模型之前，我们必须先启用允许使用\
+  \ `sp_execute_external_script` 函数的选项。如果在 SQL 实例中没有启用运行外部脚本的选项，数据库内机器学习服务的大部分功能将被禁用。\n\
+  \n即使禁用了外部脚本，部分数据库内机器学习功能仍然可用。例如，你仍然可以结合预训练的机器学习模型使用 `PREDICT` 函数对数据进行评分。然而，你将无法运行训练模型所需的代码，因为这通常需要通过外部脚本功能来实现。\n\
+  \n如果未启用外部脚本，并尝试使用 `sp_execute_external_script` 运行一段 R 代码，你将遇到如下错误消息（图 7-1）。\n\n\
+  ![../images/480532_2_En_7_Chapter/480532_2_En_7_Fig1_HTML.jpg](img/480532_2_En_7_Fig1_HTML.jpg)\n\
+  \n**图 7-1**\n禁用外部脚本时运行 `sp_execute_external_script` 出错\n\n启用 `sp_execute_external_script`\
+  \ 简单直接。连接到你的 SQL Server 主实例，并运行代码清单 7-1 中的代码以立即启用该选项。\n\n```\n-- 在开始之前，我们需要启用外部脚本\n\
+  EXEC sp_configure 'external scripts enabled',1\nRECONFIGURE WITH OVERRIDE\nGO\n\
+  ```\n**代码清单 7-1**\n启用外部脚本\n\n在启用外部脚本后，我们可以直接通过 `sp_execute_external_script` 存储过程运行\
+  \ R、Python 或 Java 代码。正如本节引言中提到的，我们选择 R 作为本书本节部分的语言，代码清单 7-2 展示了一个简单的 R 命令，用于返回 R\
+  \ 的版本信息。\n\n```\nEXEC sp_execute_external_script\n@language =N'R',\n@script=N'print\
+  \ (version)'\n```\n**代码清单 7-2**\n使用 `sp_execute_external_script` 的示例 R 代码\n\n运行代码清单\
+  \ 7-2 中的代码，应返回如图 7-2 所示的结果。\n\n![../images/480532_2_En_7_Chapter/480532_2_En_7_Fig2_HTML.jpg](img/480532_2_En_7_Fig2_HTML.jpg)\n\
+  \n**图 7-2**\n通过 `sp_execute_external_script` 返回的 R 版本结果\n\n从代码中可以看到，`sp_execute_external_script`\
+  \ 存储过程接受多个参数。我们的示例展示了调用该过程时需要提供的最小参数集，即 `@language` 和 `@script`。`@language` 参数设置在\
+  \ `@script` 部分中使用的语言。在我们的例子中，这是 R。通过 `@script` 参数，我们可以运行要执行的 R 代码，本例中是 `print (version)`\
+  \ 命令。\n\n虽然 `sp_execute_external_script` 总是返回有关其执行机器的信息，但 `print (version)` R 命令的输出从第\
+  \ 5 行的 `_ platform x86_64` 开始。\n\n虽然我们直接在消息窗口中处理 R 输出是可以的，但也可以向 `sp_execute_external_script`\
+  \ 提供额外的参数，将 R 生成的输出以表格格式返回。我们通过将 R 中定义的变量（使用下面所示的 `@output_data_1_name` 参数）映射到 T-SQL\
+  \ 中定义的变量，并在调用存储过程时使用 `WITH RESULT SETS` 语句来实现这一点，如代码清单 7-3 中的示例所示。\n\n```\nEXEC\
+  \ sp_execute_external_script\n@language =N'R',\n@script=N'\nr_hi <- \"Hello World!\"\
+  \nr_hello <- as.data.frame(r_hi)',\n@output_data_1_name = N'r_hello'\nWITH RESULT\
+  \ SETS (([hello] nvarchar(250)));\nGO\n```\n**代码清单 7-3**\n使用 `WITH RESULT SETS`\
+  \ 返回数据\n\n运行代码清单 7-3 中的代码，你应获得文本 \"Hello World!\"，并以表格结果返回，如图 7-3 所示。\n\n![../images/480532_2_En_7_Chapter/480532_2_En_7_Fig3_HTML.jpg](img/480532_2_En_7_Fig3_HTML.jpg)\n\
+  \n**图 7-3**\n以表格格式返回的输出\n\n正如我们可以通过 `sp_execute_external_script` 存储过程定义和映射输出结果一样，我们也可以定义输入数据集。这当然非常有用，因为它允许我们将查询定义为\
+  \ R 会话的输入数据集，并将其映射到 R 变量。能够将存储在 SQL Server 数据库中的数据用于数据库内机器学习服务功能，为执行高级分析（如训练或评分机器学习模型）打开了大门。\n\
+  \n我们将在 “Iris” 数据集上训练一个机器学习模型。该数据集在 R 中直接可用，展示了鸢尾花的各种特征以及特定鸢尾花所属的种类。我们可以使用这些数据创建一个分类机器学习模型，用于预测鸢尾花属于哪个种类。\n\
+  \n由于数据集已经在 R 中存在，我们可以使用一些 R 脚本结合 `sp_execute_external_script` 存储过程将该数据集作为 SQL 表返回。代码清单\
+  \ 7-4 创建了一个名为 “InDBML” 的新数据库和一个名为 “Iris” 的新表，并从 R 会话中的 Iris 数据集填充该表。\n\n```\n--\
+  \ 创建一个新数据库来保存 Iris 数据\nCREATE DATABASE InDBML\nGO\nUSE [InDBML]\nGO\n-- 创建一个表来保存\
+  \ Iris 数据\nCREATE TABLE Iris\n(\nSepal_Length FLOAT,\nSepal_Width FLOAT,\nPetal_Length\
+  \ FLOAT,\nPetal_Width FLOAT,\nSpecies VARCHAR(50)\n)\n-- 从 R 会话获取 Iris 数据集并插入到我们的表中\n\
+  INSERT INTO Iris\nEXEC sp_execute_external_script\n@language =N'R',\n@script=N'\n\
+  r_iris <- iris',\n@output_data_1_name = N'r_iris'\n-- 从新表中获取数据\nSELECT * FROM Iris\n\
+  ```\n**代码清单 7-4**\n创建新数据库并用测试数据填充\n\n如果一切处理正确，你将收到如图 7-4 所示的结果，其中显示了存储在 Iris 表中的值。\n\
+  \n![../images/480532_2_En_7_Chapter/480532_2_En_7_Fig4_HTML.jpg](img/480532_2_En_7_Fig4_HTML.jpg)\n\
+  \n**图 7-4**\nIris 表中的值\n\n现在我们有了一些数据来创建机器学习模型，我们可以开始训练模型了。但在那之前，我们将执行两个额外的任务。我们将创建一个\
+  \ “Model” 表。数据库内机器学习服务的一个非常有用的功能是能够将模型“序列化”为二进制字符串，然后将其存储在 SQL 表中。当模型存储在表中时，我们可以通过\
+  \ SQL 查询在任何需要的时候检索它。代码清单 7-5 在 InDBML 数据库中创建一个模型表。\n\n```\n-- 创建一个表来保存我们训练好的 ML\
+  \ 模型\nCREATE TABLE models\n(\nmodel_name nvarchar(100) not null,\nmodel_version\
+  \ nvarchar(100) not null,\nmodel_object varbinary(max) not null\n)\nGO\n```\n**代码清单\
+  \ 7-5**\n创建模型表\n\n除了将存储序列化模型的 `model_object` 列，我们还创建了另外两个列来存储模型的名称和版本。这在你将多个模型存储在\
+  \ SQL Server 数据库中并希望选择特定模型版本或名称的情况下非常有用。\n\n## 数据集分割：训练集与测试集\n\n接下来我们要做的是将鸢尾花数据集分割为训练集和测试集。在训练机器学习模型时，分割数据集是一项常见的任务。训练集是用来喂给你正在训练的模型的数据；测试集是你在模型训练过程中“隐藏”起来的一部分数据。这样一来，模型从未接触过测试数据，这意味着我们可以使用测试集内的数据来验证模型在面对从未见过的数据时表现如何。因此，确保训练集和测试集都能很好地代表完整数据集非常重要。例如，如果我们仅在数据集中“Setosa”鸢尾花品种的特征上训练模型，然后通过测试集向它展示另一个品种的数据，它就会预测错误（预测为\
+  \ Setosa），因为它在训练过程中从未见过另一个品种。\n\n代码清单 7-6 从鸢尾花表中随机选取 80%的行，并将它们插入一个新的 `Iris_train`\
+  \ 表中。另外 20%的数据则进入一个新的 `Iris_test` 表。\n\n```sql\n-- 随机选择 80%的数据到单独的训练表\nSELECT TOP\
+  \ 80 PERCENT *\nINTO Iris_train\nFROM Iris\nORDER BY NEWID()\n-- 选择剩余的行到测试表\nSELECT\
+  \ *\nINTO Iris_test\nFROM Iris\nEXCEPT\nSELECT * FROM Iris_train\n代码清单 7-6\n将数据集分割为训练集和测试集\n\
+  ```\n\n## 训练并存储机器学习模型\n\n现在我们有了模型表，并且已经将训练和测试数据分开了，我们准备好训练我们的机器学习模型，并在训练后将其存储到模型表中。这正是代码清单\
+  \ 7-7 所做的。\n\n```sql\nDECLARE @model VARBINARY(MAX)\n-- 基于我们的训练数据集训练一个决策树\nEXEC\
+  \ sp_execute_external_script\n@language = N'R',\n@script = N'\niris.dtree <- rxDTree(Species\
+  \ ~ Sepal_Length + Sepal_Width + Petal_Length + Petal_Width, data = iris_sqldata)\n\
+  trained_model <- rxSerializeModel(iris.dtree, realtimeScoringOnly = FALSE)',\n@input_data_1\
+  \ = N'SELECT * FROM Iris_train',\n@input_data_1_name = N'iris_sqldata',\n@params\
+  \ = N'@trained_model VARBINARY(MAX) OUTPUT',\n@trained_model = @model OUTPUT\n--\
+  \ 将模型插入到我们的模型表中\nINSERT INTO models\n(\nmodel_name,\nmodel_version,\nmodel_object\n\
+  )\nVALUES\n(\n'iris.dtree',\n'v1.0',\n@model\n)\n代码清单 7-7\n使用 sp_execute_external_script\
+  \ 训练机器学习模型\n```\n\n## 代码步骤详解\n\n前面的代码执行了一系列步骤来训练和存储机器学习模型。为了确保你理解如何使用 `sp_execute_external_script`\
+  \ 在你的 SQL Server 主实例中训练和存储模型，我们将描述前面代码中执行的每个步骤。\n\n1.  脚本的第一行 `DECLARE @model VARBINARY(MAX)`\
+  \ 声明了一个 `VARBINARY` 数据类型的 T-SQL 变量，该变量将在训练后保存我们的模型。\n\n2.  在第二步中，我们执行 `sp_execute_external_script`\
+  \ 存储过程，并提供训练模型所需的 R 代码。注意我们使用了一个名为 `rxDTree` 的算法。`rxDTree` 是由 Revolution Analytics（微软于\
+  \ 2015 年收购的一家公司）构建的决策树算法，为机器学习提供并行和基于分块的算法。模型训练的语法非常直观；我们根据训练数据集的其他列（或称为：特征）来预测品种。\n\
+  \n    代码行 `trained_model <- rxSerializeModel(iris.dtree, realtimeScoringOnly = FALSE)`\
+  \ 是用来序列化我们的模型并将其存储到 R 变量 `trained_model` 中的命令。在调用 `sp_execute_external_script` 存储过程时，我们将该变量映射为\
+  \ T-SQL 变量 `@model` 的输出参数。我们将从训练数据集中选择所有记录的查询映射为 R 的输入变量，以供算法使用。\n\n3.  最后，在最后一步中，我们将训练好的模型插入到之前创建的模型表中。我们提供了一些附加数据，如名称和版本，以便在下一步使用该模型预测鸢尾花品种时能够轻松地选择它。\n\
+  \n## 训练结果\n\n运行这段代码（应该只需要几秒钟）后，我们应该会得到一个以二进制字符串形式存储在模型表中的模型，如图 7-5 所示。\n\n![../images/480532_2_En_7_Chapter/480532_2_En_7_Fig5_HTML.jpg](img/480532_2_En_7_Fig5_HTML.jpg)\n\
+  \n**图 7-5**\n模型表中的已训练决策树模型\n\n\n"
+- '# 使用数据库内机器学习模型为数据评分
+
+
+  既然我们已经训练好了模型，就可以用它来对存储在 `Iris_test` 表中的数据进行评分或预测。为此，我们可以采用两种方法：一种是使用我们之前用于训练模型的
+  `sp_execute_external_script` 存储过程；另一种是使用 SQL Server 中可用的 `PREDICT` 函数。
+
+
+  清单 7-8 展示了第一种方法；请注意其语法与该方法之前的示例基本相同，但这次我们是将训练好的模型作为输入参数，连同从 `Iris_test` 表中选择数据的查询一起提供的。
+
+
+  ```sql
+
+  -- 从模型表中检索模型
+
+  DECLARE @model VARBINARY(MAX) = (SELECT model_object FROM models WHERE model_name
+  = ''iris.dtree'')
+
+  -- 使用 Iris_test 数据作为输入运行预测
+
+  -- 返回所有列，包括每个物种的概率
+
+  EXEC sp_execute_external_script
+
+  @language = N''R'',
+
+  @script = N''
+
+  model = rxUnserializeModel(model);
+
+  Iris_prediction = rxPredict(model, data=Iris_test)
+
+  Iris_pred_results <- cbind(Iris_test, Iris_prediction)
+
+  str(Iris_pred_results)
+
+  '',
+
+  @input_data_1 = N''
+
+  SELECT
+
+  Sepal_Length,
+
+  Sepal_Width,
+
+  Petal_Length,
+
+  Petal_Width,
+
+  Species
+
+  FROM Iris_test'',
+
+  @input_data_1_name = N''Iris_test'',
+
+  @output_data_1_name = N''Iris_pred_results'',
+
+  @params = N''@model varbinary(max)'',
+
+  @model = @model
+
+  WITH RESULT SETS (("Sepal_Length" FLOAT, "Sepal_Width" FLOAT, "Petal_Length" FLOAT,
+  "Petal_Width" FLOAT, Species VARCHAR(50), setosa_Pred FLOAT, versicolor_Pred FLOAT,
+  verginica_Pred FLOAT))
+
+  清单 7-8
+
+  使用数据库内存储的模型运行预测
+
+  ```
+
+
+  在 `sp_execute_external_script` 代码中，R 脚本的第一部分，我们必须再次使用 `rxUnserializeModel` 来反序列化我们的模型。模型反序列化后，我们就可以对输入数据进行预测。R
+  代码的最后一行将每个鸢尾花物种的概率列添加到了输入数据集中。这意味着我们最终得到一个包含所有输入列以及评分过程生成的列的输出表。
+
+
+  本书不会深入探讨机器学习或机器学习算法，但我们在此案例中尝试使用机器学习解决的问题称为**分类**。机器学习算法基本上可以分为三类：回归、分类和聚类。回归尝试预测一个数值，例如汽车的价格。分类通常处理预测分类值，就像我们在本章中所经历的示例：这是什么物种的鸢尾花？聚类算法尝试通过根据特征将类别分组在一起来预测结果。在鸢尾花示例中，我们也可以选择使用聚类算法，因为可能存在基于物种而趋于分组在一起的明显鸢尾花物种特征。
+
+
+  运行清单 7-8 中的代码后，我们看到如图 7-6 所示的结果。如果您自己运行代码，可能会看到一些不同的结果，因为我们是基于随机选择的行来分割训练和测试数据的。
+
+
+  ![../images/480532_2_En_7_Chapter/480532_2_En_7_Fig6_HTML.jpg](img/480532_2_En_7_Fig6_HTML.jpg)
+
+
+  **图 7-6**
+
+
+  使用我们训练的机器学习模型对 `Iris_test` 表中的数据进行评分的结果
+
+
+  使用 `sp_execute_external_script` 方法执行预测效果很好，并且在您可以使用 R 代码执行的操作方面提供了最大的灵活性。然而，它确实会导致相当多的代码行数。我们在
+  SQL Server 中可用的另一种方法是使用 `PREDICT` 函数；`PREDICT` 使用起来要容易得多，语法更简单，并且通常比 `sp_execute_external_script`
+  执行得更快。但它也有缺点，例如，您不能编写自定义 R 代码来对数据执行额外步骤，并且您必须使用通过 Revolution Analytics 算法训练的序列化模型（而通过使用
+  `sp_execute_external_script`，您基本上可以使用 R 或 R 库中可用的每种算法）。
+
+
+  我们在清单 7-9 的代码中使用 `PREDICT` 函数对 `Iris_test` 表中的数据执行了相同的评分。
+
+
+  ```sql
+
+  DECLARE @model VARBINARY(MAX) = (SELECT model_object FROM models WHERE model_name
+  = ''iris.dtree'')
+
+  -- 另一种方法是使用 PREDICT 函数
+
+  SELECT
+
+  Iris_test.*,
+
+  pred.*
+
+  FROM PREDICT(MODEL = @model, DATA = dbo.Iris_test as Iris_test)
+
+  WITH(setosa_Pred FLOAT, versicolor_Pred FLOAT, virginica_Pred FLOAT) AS pred
+
+  清单 7-9
+
+  使用 PREDICT 函数运行模型预测
+
+  ```
+
+
+  正如您可以直接看到的，`PREDICT` 比 `sp_execute_external_script` 可读性更高，对于那些更熟悉 T-SQL 的人来说，也更容易理解。在某种意义上，我们是在将模型及其输出连接到
+  `Iris_test` 表中的数据。我们需要在 `WITH` 子句中提供预测输出的列名和数据类型，并可以使用 `SELECT` 语句选择我们想要返回的内容。在本例中，我们选择了
+  `Iris_test` 表的所有列以及预测返回的所有列，结果应如图 7-7 所示。
+
+
+  ![../images/480532_2_En_7_Chapter/480532_2_En_7_Fig7_HTML.jpg](img/480532_2_En_7_Fig7_HTML.jpg)
+
+
+  **图 7-7**
+
+
+  使用 PREDICT 进行鸢尾花物种预测
+
+
+  现在我们已经在 SQL Server 机器学习服务中训练了一个机器学习模型并使用它对数据进行了评分，您应该对这些方法的功能有了一个大致的了解。总的来说，我们认为数据库内机器学习服务在您的所有或大部分数据都存储在
+  SQL Server 数据库中时特别有用。模型也存储在 SQL Server 数据库中，您可以构建能够（近）实时对存储在 SQL Server 数据库中的数据进行评分的解决方案（例如，通过使用调用
+  `PREDICT` 函数的触发器）。如果您愿意，您并不局限于仅使用 SQL Server 表。正如您在前面的章节中所看到的，我们可以使用外部表映射存储在 Spark
+  集群（或其他系统）中的数据，并将该数据传递给数据库内机器学习服务。
+
+
+  然而，在某些情况下，您无法使用数据库内机器学习服务，可能是因为您的数据不适合放入 SQL Server（无论是大小还是数据类型），或者您更熟悉在 Spark 上工作。在任何这些情况下，我们总是可以选择在
+  Spark 部分的大数据集群上执行机器学习任务，我们将在下一节中更详细地探讨这一点。
+
+
+
+  ## Spark 中的机器学习
+
+
+  ### Spark 机器学习概述
+
+
+  由于大数据集群由 SQL Server 和 Spark 节点组成，我们可以轻松选择在 Spark 平台内运行从训练到评分的机器学习流程。我们可以列出许多选择 Spark
+  而非 SQL 作为机器学习平台的原因（反之亦然）。然而，当您拥有一个非常大的数据集，将其加载到数据库中并不合理时，您或多或少只能使用 Spark，因为 Spark
+  能很好地处理大型数据集，并且可以以与处理数据相同的*分布式特性*来训练各种机器学习算法。
+
+
+  正如在一个开放、分布式数据处理平台上所期望的那样，有许多库可用于满足您的机器学习需求。在本书中，我们决定使用内置的 Spark ML 库，这些库提供了大量不同的算法选择，应该能满足您的大多数高级分析需求。
+
+
+  ### 准备数据：加载 Iris 数据集
+
+
+  就像我们为 SQL Server 的数据库内机器学习服务部分所做的那样，我们需要将一些数据导入 Spark 中以供使用。为了简单起见，我们决定重用在 SQL Server
+  部分也使用过的 Iris 数据集。就像我们在上一章中所做的那样，我们在 Spark 中进行的所有数据处理、整理和操作都发生在数据框上。假设您已经完成了前一章 SQL
+  Server 部分的示例，我们将使用代码清单 7-10 中的代码从 SQL Server 主实例中提取 Iris 数据集，并将其加载到 Spark 的数据框中。如果您不熟悉通过
+  Spark 连接到 SQL Server 主实例，建议阅读上一章的最后一节，其中详细介绍了如何实现此场景。
+
+
+  ```
+
+  # Before we get started, let''s get the Iris data from the database/table we
+
+  # created in the previous section
+
+  df_Iris = spark.read.format("jdbc") \
+
+  .option("url", "jdbc:sqlserver://master-0.master-svc;databaseName=InDBMl") \
+
+  .option("dbtable", "dbo.Iris") \
+
+  .option("user", "[username]") \
+
+  .option("password", "[password]").load()
+
+  ```
+
+
+  清单 7-10 从 SQL Server 主实例读取数据
+
+
+  如果我们查看 `df_Iris` 数据框的部分内容，使用 `df_Iris.show(10)` 命令，我们应该能看到所有鸢尾花物种的特征以及物种本身都存在于数据框中（图
+  7-8）。
+
+
+  ![../images/480532_2_En_7_Chapter/480532_2_En_7_Fig8_HTML.jpg](img/480532_2_En_7_Fig8_HTML.jpg)
+
+
+  图 7-8 df_Iris 数据框的前 10 行
+
+
+  ### 导入机器学习库
+
+
+  数据位于 Spark 的数据框中后，我们几乎准备好开始进行一些机器学习了。但首先我们需要处理的是加载一些 Spark ML 库，如代码清单 7-11 所示。
+
+
+  ```
+
+  # To perform machine learning tasks, we need to import a number of libraries
+
+  # In this case we are going to perform classification
+
+  from pyspark.ml.classification import *
+
+  from pyspark.ml.evaluation import *
+
+  from pyspark.ml.feature import *
+
+  ```
+
+
+  清单 7-11 加载机器学习库
+
+
+  在这种情况下，由于我们正在处理一个所谓的分类问题，我们只需要导入 `pyspark.ml.classification` 库，以及我们需要对数据框特征（在此上下文中是数据框列的另一个名称）进行一些修改和评估模型性能所需的库。
+
+
+  ### 数据处理：特征工程
+
+
+  加载库之后，我们将对数据框进行一些修改，使其适合我们的机器学习算法使用。不同的机器学习算法对数据有不同的要求，例如，有些算法只适用于数值输入，就像我们正在使用的分类算法一样。代码清单
+  7-12 在我们的 `df_Iris` 数据框上执行了一系列任务。
+
+
+  ```
+
+  # We are going to combine all the features we need to predict the Iris species
+
+  # into a single vector feature
+
+  feature_cols = df_Iris.columns[:-1]
+
+  assembler = VectorAssembler(inputCols=feature_cols, outputCol="features")
+
+  df_Iris = assembler.transform(df_Iris)
+
+  df_Iris = df_Iris.select("features", "Species")
+
+  # Since we are going to perform logistic regression, we are going to convert
+
+  # the string values inside species to a numerical value
+
+  label_indexer = StringIndexer(inputCol="Species", outputCol="label").fit(df_Iris)
+
+  df_Iris = label_indexer.transform(df_Iris)
+
+  ```
+
+
+  清单 7-12 处理数据以使其适合机器学习
+
+
+  第一部分代码将不同的特征组合到一个名为 `"features"` 的新列中。所有这些特征都是鸢尾花物种的特征，它们被组合成一种称为向量的单一格式（我们将在本书稍后部分直观地了解其外观）。代码行
+  `feature_cols = df_Iris.columns[:-1]` 选择了数据框除最右侧一列（即鸢尾花实际物种）之外的所有列。
+
+
+  在第二部分中，我们将不同的鸢尾花物种映射到一个数值。我们用来预测鸢尾花物种的算法需要数值输入，这意味着我们必须执行转换。这在机器学习和数据科学领域并不罕见。在许多情况下，您必须将字符串值转换为数值，以便算法能够处理它。从字符串转换为数值后，我们添加了一个名为
+  `"label"` 的新列，其中包含物种的数值。
+
+
+  在下一步中，我们只从 `df_Iris` 数据框中选择特征和标签列，并返回前 10 行（代码清单 7-13 的结果如图 7-9 所示），让您了解我们在前一段代码中执行转换后的数据是什么样子。
+
+
+  ![../images/480532_2_En_7_Chapter/480532_2_En_7_Fig9_HTML.jpg](img/480532_2_En_7_Fig9_HTML.jpg)
+
+
+  图 7-9 修改后的 `df_Iris` 数据框
+
+
+  ```
+
+  # We only need the feature column and the label column
+
+  df_Iris = df_Iris.select("features", "label")
+
+  df_Iris.show(10)
+
+  ```
+
+
+  清单 7-13 仅选择数据框的特征和标签列
+
+
+  从图 7-9 中可以看出，所有特征（`Petal_Length`、`Petal_Width` 等）都已被转换到数据框单个列内的一个向量中。`label` 列现在返回物种的数值，2.0
+  代表山鸢尾，1.0 代表维吉尼亚鸢尾，0.0 代表变色鸢尾。
+
+
+  ### 数据分割：训练集与测试集
+
+
+  现在我们的整个数据框已经转换成适合机器学习分类算法的格式，我们可以像上一节一样将数据分割为训练数据框和测试数据框。代码清单 7-14 处理了分割，其中 80%
+  的数据进入 `Iris_train` 数据框，剩余的 20% 进入 `Iris_test` 数据框。
+
+
+  ```
+
+  # Split the dataset
+
+  (Iris_train, Iris_test) = df_Iris.randomSplit([0.8, 0.2])
+
+  ```
+
+
+  清单 7-14 将数据框分割为训练和测试数据框
+
+
+
+  '
+- '# 7. 机器学习模型训练与评估
+
+
+  现在我们的数据集已经准备好用于训练，可以开始实际的机器学习阶段了。首先需要做的是初始化机器学习算法（见清单 7-15）。在这一步中，我们可以指定要使用的算法以及在机器学习模型训练阶段配置的各种参数（也称为**超参数**）。
+
+
+  ```python
+
+  # Initiate the classifier, in this case LogisticRegression
+
+  lr = LogisticRegression(maxIter=10, tol=1E-6, fitIntercept=True)
+
+  清单 7-15
+
+  初始化分类器
+
+  ```
+
+
+  在这个例子中，我们选择了逻辑回归算法，试图根据植物的特征预测它属于哪种鸢尾花。我们现在将忽略算法参数。当你处于尝试优化和调整模型的阶段时，你会经常返回去修改参数（手动或通过程序），以找到最优设置。
+
+
+  训练模型实际上非常简单直接，并且在本例中，可以通过一行 PySpark 代码实现（见清单 7-16）。
+
+
+  ```python
+
+  # Train the multiclass model
+
+  model = lr.fit(Iris_train)
+
+  清单 7-16
+
+  训练模型
+
+  ```
+
+
+  在前面的代码（清单 7-16）运行完成后，我们就获得了一个训练好的机器学习模型，其形式是变量 `model`。然后我们可以使用这个训练好的模型在测试数据集上进行预测，以分析其表现如何。使用清单
+  7-17 中的代码，我们将把训练好的模型“拟合”到我们的测试数据集上，并返回前 20 个结果，这些结果如图 7-10 所示。
+
+
+  ![../images/480532_2_En_7_Chapter/480532_2_En_7_Fig10_HTML.jpg](img/480532_2_En_7_Fig10_HTML.jpg)
+
+
+  图 7-10
+
+  测试数据集上的预测结果
+
+
+  ```python
+
+  # Predict on our test dataset using the model we trained
+
+  # and return the predictions
+
+  Iris_pred = model.transform(Iris_test)
+
+  Iris_pred.show(20)
+
+  清单 7-17
+
+  执行预测
+
+  ```
+
+
+  如图 7-10 所示，我们的模型在测试数据集上表现良好。在返回的前 20 行中，只有一行预测的物种与实际物种不同（我们预测的是 virginica，但实际应该是
+  versicolor）。虽然我们可以逐行分析实际物种和预测物种之间的差异，但查看模型性能的一个更快的方法是使用我们之前加载的 Spark ML 评估库。
+
+
+  清单 7-18 中的代码针对我们的测试数据集评估了模型性能，并在性能指标“准确率”上进行了度量。准确率常用于衡量分类模型的表现，它是正确预测的数量与总预测数量的比值。
+
+
+  ```python
+
+  # How good did our model perform?
+
+  evaluator = MulticlassClassificationEvaluator(metricName=''accuracy'')
+
+  accuracy = evaluator.evaluate(Iris_pred)
+
+  print("Accuracy: " + format(accuracy))
+
+  清单 7-18
+
+  衡量模型性能
+
+  ```
+
+
+  前面代码返回的结果每次运行时可能会有所不同。这是因为我们使用的数据集相当小，并且我们进行了随机拆分，这意味着最终进入训练和测试数据集的唯一物种数量对模型性能有很大影响。我们得到的结果如图
+  7-11 所示，这是一个相当不错的准确率水平。
+
+
+  ![../images/480532_2_En_7_Chapter/480532_2_En_7_Fig11_HTML.jpg](img/480532_2_En_7_Fig11_HTML.jpg)
+
+
+  图 7-11
+
+  训练后模型的准确率
+
+
+  我们的模型经过训练和测试后，可以根据我们计划用模型做什么来采取进一步的步骤。如果我们对进一步优化模型性能感兴趣，可以返回去调整算法参数，然后再次训练模型。也许在这种情况下，查看训练集和测试集之间的拆分质量也是有用的，因为这对模型准确率有很大影响。如果我们愿意，还有一百多件事情可以做来进一步优化我们的模型（甚至可以选择不同的算法，看看是否比当前算法预测得更好）。
+
+
+  我们可以做的另一件事是存储模型。在这个领域，我们比在 SQL Server 内置机器学习服务中灵活得多，在那里模型必须被序列化并存储在表中。对于 Spark，我们可以选择不同的方法和库来存储我们的模型。例如，我们可以使用一个名为
+  `Pickle` 的库将模型存储在文件系统上，或者使用模型变量上的 `.save` 函数将其存储在我们选择的 HDFS 位置。每当我们需要使用训练好的模型对新数据进行评分时，我们可以直接从文件系统加载它并用于评分新数据。
+
+
+  ## 总结
+
+
+  在本章中，我们探讨了在 SQL Server 大数据集群中执行机器学习任务的各种可用方法。我们研究了 SQL Server 内置机器学习服务，它允许我们使用 T-SQL
+  查询和新的 `sp_execute_external_script` 存储过程的组合，在 SQL Server 主实例中直接训练、利用和存储机器学习模型。在 Spark
+  方面，我们也有广泛的机器学习能力可供使用。我们使用了 Spark ML 库在数据帧上训练模型，并用它来对新数据进行评分。这两种方法各有优缺点，但在单个解决方案中提供这两种选择，为我们所有的机器学习需求提供了最佳的灵活性。
+
+
+  ## 8. 创建和消费大数据集群应用
+
+
+  SQL Server 大数据集群的功能之一是能够在它上面构建和运行自定义应用程序。这实际上是一个非常强大的功能，因为它允许你在大数据集群上编写和运行各种解决方案的脚本。例如，你可以创建一个应用程序（或简称
+  app，在本章剩余部分我们将这样称呼它）来执行各种数据维护任务，比如数据库备份。另一个例子是能够通过 REST API 为你的机器学习过程创建一个入口点，这个用例我们将在本章后面探讨。
+
+
+  在撰写本书时，在大数据集群上创建的应用程序可以用 R 和 Python 编写，此外还有一个额外的选项可以运行 SQL Server 集成服务（SSIS）包。通过创建应用程序，你可以利用大数据集群内所有可用的计算资源，并访问存储在其中的所有数据。
+
+
+  大数据集群中的应用程序在专用容器中运行，并且可以在集群中复制和扩展。这意味着你可以让你的应用程序处理并行工作负载，成为高性能的解决方案。
+
+
+  在本章中，我们将创建一个应用程序，它将使用一个预训练的机器学习模型对鸢尾花植物的物种进行分类，这与我们在上一章中专注于在大数据集群内开发机器学习解决方案时所做的非常相似。通过构建一个应用程序来使用机器学习解决方案对数据进行评分，我们可以通过
+  REST API 轻松地将该模型投入运营。这意味着你使用或自己构建的应用程序可以直接通过 JSON 消息从大数据集群接收预测，从而实现从你的应用程序直接进行近实时评分，而无需先在大数据集群内存储和处理数据。
+
+
+
+
+  ## 创建大数据集群应用
+
+
+  有两种方法可以将应用部署到大数据集群：通过 Visual Studio Code 的应用部署扩展，或者通过 `azdata` 命令行工具。我们将专注于使用后一种方法来创建和部署我们的应用。
+
+
+  在部署应用之前，我们首先需要编写它。正如本章引言中提到的，应用可以用 R 或 Python 编写，我们选择了 R 作为应用的编程语言。虽然要跟随本章的示例，严格来说并不需要访问
+  R，但如果你想自己训练应用内部使用的机器学习模型，那将会很有用。无论如何，预训练的模型以及应用部署所需的其他文件都可以在本书的 GitHub 页面下载。
+
+
+  由于我们将创建一个使用机器学习模型为新数据评分的大数据集群应用，我们需要先创建并存储模型。清单 8-1 中的代码将使用内置的 Iris 数据集通过决策树创建一个机器学习模型，并将其存储在一个
+  `.RDS` 文件中（运行代码前请确保设置好目录路径）。我们稍后将使用存储在 `.RDS` 文件中的模型为新数据评分。你可以从本地计算机的 R 会话中执行以下代码。你可以从
+  [`www.r-project.org/`](http://www.r-project.org/) 下载并安装 R。
+
+
+  ```r
+
+  # Read the Iris data into a new dataframe
+
+  Iris_Data <- iris
+
+  # Change the column names
+
+  colnames(Iris_Data) <- c(''Sepal_Length'', ''Sepal_Width'', ''Petal_Length'', ''Petal_Width'',
+  ''Species'')
+
+  # Sample a number of rows for splitting training and testing datasets
+
+  sample_size <- floor(0.75 ∗ nrow(Iris_Data))
+
+  set.seed(1234)
+
+  train_id <- sample(seq_len(nrow(Iris_Data)), size = sample_size)
+
+  Iris_train <- Iris_Data[train_id, ]
+
+  Iris_test <- Iris_Data[-train_id, ]
+
+  # Train the model, a decision tree, on the training data
+
+  Iris_Dtree <- rpart(Species~., data = Iris_train, method = ''class'')
+
+  # Save the model to disk
+
+  saveRDS(Iris_Dtree, "[folder path]/iris_dtree.rds")
+
+  ```
+
+  **清单 8-1** 在 R 中构建预测模型
+
+
+  如清单 8-1 所示，我们增加了将数据拆分为训练集和测试集的步骤。然而，在前面的代码中，我们只使用训练数据集来训练模型，并未使用测试数据集来测试其准确性。本章中我们并不特别关注模型性能，而是关注使用预训练模型通过我们的大数据集群应用为新数据评分的能力。如果你想查看模型训练的效果，可以运行清单
+  8-2 中的代码行，它将基于我们训练好的模型进行 Iris 品种预测，并将这些预测与原始测试数据集结合起来。
+
+
+  ```r
+
+  Iris_Predict <- predict(Iris_Dtree, Iris_test, method = ''class'')
+
+  Prediction_results <- cbind(Iris_test, Iris_Predict)
+
+  ```
+
+  **清单 8-2** 使用我们训练好的模型进行预测
+
+
+  现在我们有了一个存储在 RDS 文件中的预训练模型，可以来看看创建大数据集群应用所需的实际代码了。
+
+
+  一个大数据集群应用至少包含两个文件：我们将在应用内部运行的实际代码，以及一个保存应用配置的 YAML 文件。这两个文件，以及任何你想上传到应用容器的附加文件（例如我们的预训练机器学习模型），都必须全部存储在一个单独的目录中，如图
+  8-1 所示。
+
+
+  ![../images/480532_2_En_8_Chapter/480532_2_En_8_Fig1_HTML.jpg](img/480532_2_En_8_Fig1_HTML.jpg)
+
+  **图 8-1** 应用文件
+
+
+  除了 “`spec.yaml`” 文件，你可以自由地以任何你想要的方式命名其他文件。
+
+
+  首先让我们看看 “`Predict_Iris.R`” 文件的内容。该文件将包含从 “`iris_dtree.rds`” 文件加载预训练模型，并根据我们传递给脚本文件的输入变量执行预测所需的代码。该文件的内容见清单
+  8-3。
+
+
+  ```r
+
+  library(rpart)
+
+  runpredict <- function(SepalLength, SepalWidth, PetalLength, PetalWidth) {
+
+  input_dataframe = data.frame(Sepal_Length = SepalLength, Sepal_Width = SepalWidth,
+  Petal_Length = PetalLength, Petal_Width = PetalWidth)
+
+  Iris_Dtree <- readRDS("iris_dtree.rds")
+
+  Iris_Predict <- predict(Iris_Dtree, input_dataframe, method = ''class'')
+
+  result <- as.data.frame(Iris_Predict)
+
+  }
+
+  ```
+
+  **清单 8-3** Predict_Iris.R 文件的内容
+
+
+  在前面的代码中，我们首先加载了基于决策树进行预测所需的 R 库。我们最初也是使用 `rpart` 库来训练模型的；因此，当我们想要执行预测时，也需要加载该库。
+
+
+  通过脚本文件的整个处理过程由一个 R 函数处理。这是必要的，因为我们将在 `spec.yaml` 文件中定义一个入口点，该入口点在运行应用时会被调用。在函数定义中，我定义了四个输入变量：`SepalLength`、`SepalWidth`、`PetalLength`
+  和 `PetalWidth`。当我们调用应用时，会将这些变量作为输入参数提供给模型以执行预测。在函数内的第一行代码中，我将输入变量分组并将它们存储在一个名为 `input_dataframe`
+  的 R 数据框中，同时注意将列名重命名为与我们训练模型时使用的格式相同。这是必需的，否则预测将不知道哪一列是哪种数据。
+
+
+  下一步，我们从 RDS 文件加载预训练模型，该文件我们也上传到了应用容器，之后调用 R 的 `predict` 函数，使用模型和输入数据框执行预测。最后，我们将预测结果转换为数据框格式并映射到
+  `result` 变量。
+
+
+  现在我们已经完成了应用程序脚本，必须创建 `spec.yaml` 文件。对于本章中我们要部署到大数据集群的示例应用，`spec.yaml` 文件内容如清单 8-4
+  所示。
+
+
+  ```yaml
+
+  name: predictiris
+
+  version: v1
+
+  runtime: R
+
+  src: ./Predict_Iris.R
+
+  entrypoint: runpredict
+
+  replicas: 1
+
+  poolsize: 1
+
+  inputs:
+
+  SepalLength: numeric
+
+  SepalWidth: numeric
+
+  PetalLength: numeric
+
+  PetalWidth: numeric
+
+  output:
+
+  out: data.frame
+
+  ```
+
+  **清单 8-4** spec.yaml 文件的内容
+
+
+  `spec.yaml` 文件的大部分内容是不言自明的。我们提供了应用的名称和版本、运行时语言，以及运行应用时调用的文件。在底部部分，我们定义了输入参数（与我们在
+  R 函数中定义的参数相同）及其数据类型，以及输出参数的数据类型。在这种情况下，我们没有显式设置输出参数名称。这是因为 R 在调用函数时自动使用最后设置的变量（在我们的例子中是
+  `result`）作为输出。
+
+
+
+
+  '
+- '# YAML 参数配置与应用部署
+
+
+  ## 1. 理解关键参数
+
+  YAML 文件中比较有趣的参数是 `replicas` 和 `poolsize`。这些是我们可以配置以实现应用副本和伸缩的参数。`replicas` 参数的输入值决定了应为应用部署多少个
+  Pod，而 `poolsize` 则配置了一个 Pod 内应存在多少个应用实例。您的应用能够执行的并行操作数量是 `replicas x poolsize` 的计算结果。例如，将
+  `replicas` 配置为 4，`poolsize` 设置为 2，将使您的应用能够处理 8 个并行请求。在我们的 `spec.yaml` 中，我们将这两个设置都配置为
+  1，意味着我们一次只能处理一个请求。
+
+
+  ## 2. 部署前的准备
+
+  所有应用部署所需的文件都已准备就绪并存储在一个文件夹中，我们已经可以将应用部署到大数据集群。如前所述，我们使用 `azdata` 程序来执行部署。
+
+
+  在连接到大数据集群之前，我们需要获取 `controller-svc-external` 服务的外部 IP。为此，您可以运行以下命令：`kubectl get
+  svc controller-svc-external -n [clustername]`，其中 `[clustername]` 是您的集群名称。如果您使用 AKS
+  托管大数据集群，则需要先使用 `az` 命令登录到 Azure。
+
+
+  ## 3. 连接到管理服务
+
+  现在我们有了管理服务的 IP 和端口号，需要使用管理员用户名和密码通过 `azdata` 连接到它。您在部署大数据集群时提供了这两者。下面的代码（清单 8-5）用于建立到大数据集群的连接。请务必将
+  `[ ]` 之间的变量替换为您的集群对应的值。
+
+
+  ```
+
+  azdata login –-controller-endpoint https://[IP address]:30080 –-controller-username
+  [username]
+
+  ```
+
+  *清单 8-5：登录到控制器端点*
+
+
+  系统会要求您输入管理员用户的密码。如果一切顺利，您应该会收到一条成功登录的消息。
+
+
+  ## 4. 部署应用程序
+
+  现在我们通过 `azdata` 连接到了大数据集群，可以部署我们的应用程序了。为此，我们可以使用清单 8-6 所示的代码。请务必将 `[directory path]`
+  更改为存放您的应用程序文件（如 `spec.yaml`）的目录路径。
+
+
+  ```
+
+  azdata app create --spec [directory path]
+
+  ```
+
+  *清单 8-6：部署大数据集群应用*
+
+
+  在我们的例子中，我们调用了以下命令（清单 8-7）。
+
+
+  ```
+
+  azdata app create --spec /Users/enricovandelaar/Documents/BDC.
+
+  ```
+
+  *清单 8-7：部署我们的大数据集群应用*
+
+
+  运行上述命令时，会发生一系列验证，以检查 `spec.yaml` 文件是否存在以及输入是否正确。如果一切正确，您应该会收到如图 8-2 所示的消息。
+
+
+  ![../images/480532_2_En_8_Chapter/480532_2_En_8_Fig2_HTML.jpg](img/480532_2_En_8_Fig2_HTML.jpg)
+
+  *图 8-2：大数据集群应用已创建*
+
+
+  ## 5. 检查应用状态
+
+  即使您收到应用已成功创建的消息，它也不会立即可用。创建应用后，通常需要大约一分钟才能实际运行您的应用程序。如果您想了解应用创建的状态，可以运行清单 8-8 中的命令。
+
+
+  ```
+
+  azdata app list -n predictiris
+
+  ```
+
+  *清单 8-8：通过 `azdata` 检索应用状态*
+
+
+  这将返回应用部署的当前状态，如图 8-3 所示。
+
+
+  ![../images/480532_2_En_8_Chapter/480532_2_En_8_Fig3_HTML.jpg](img/480532_2_En_8_Fig3_HTML.jpg)
+
+  *图 8-3：应用创建状态*
+
+
+  大约一分钟后，我们再次运行该命令，收到了“就绪”状态（如图 8-4 所示），这意味着我们可以继续下一步来测试我们的应用。
+
+
+  ![../images/480532_2_En_8_Chapter/480532_2_En_8_Fig4_HTML.jpg](img/480532_2_En_8_Fig4_HTML.jpg)
+
+  *图 8-4：应用部署完成，应用处于就绪状态*
+
+
+  ## 6. 测试应用功能
+
+  当应用处于“就绪”状态时，我们可以通过 `azdata` 程序测试其功能。如果我们定义了任何参数，则需要在调用应用时提供它们，同时提供我们在 `spec.yaml`
+  文件中提供的应用名称和版本。清单 8-9 中的命令调用我们的 `predictiris` 应用，并附带了一些我们在 R 脚本和 YAML 文件中定义的输入参数。
+
+
+  ```
+
+  azdata app run -n predictiris -v v1 --inputs PetalLength=1.4,PetalWidth=0.2,SepalLength=5.1,SepalWidth=3.5
+
+  ```
+
+  *清单 8-9：通过 `azdata` 运行应用*
+
+
+  如果一切顺利完成，我们应该会得到图 8-5 所示的 JSON 格式结果。
+
+
+  ![../images/480532_2_En_8_Chapter/480532_2_En_8_Fig5_HTML.jpg](img/480532_2_En_8_Fig5_HTML.jpg)
+
+  *图 8-5：应用预测结果*
+
+
+  由于我们从 R 脚本文件中返回的输出位于一个数据框中，因此输出会自动转换为 JSON 数组。在 `predictiris` 应用的例子中，预测返回三个输出参数，其中包含每种可能的鸢尾花物种的概率。在这种情况下，考虑到我们提供的输入参数值，`virginica`
+  物种似乎是最可能的，其确定性为 0.97 或 97%。
+
+
+  当您的应用出现问题时，在大多数情况下，您可以在返回的 JSON 的 “errorMessage” 或 “consoleOutput” 部分看到错误。在我们的例子中，应用成功执行，我们没有遇到任何错误。
+
+
+  ## 7. 后续使用
+
+  现在我们的应用已经部署并测试完毕，我们可以继续使用 `azdata` 方法来按需或以编程方式调用该应用。另一种执行应用的方法（我认为更加优雅）是通过部署应用时自动创建的
+  REST API。
+
+
+
+  ## 通过 REST API 使用大数据集群应用
+
+
+  当我们部署应用时，会创建一个专用的容器，其中包含我们的应用以及通过应用文件夹提供的所有附加文件。在部署过程中，容器内还会创建一个 RESTful Web 服务，作为调用应用的附加方法。RESTful
+  API 使用 HTTP 请求来执行任务。在我们的案例中，可以使用 REST API 来调用我们创建的应用，并在 JSON 消息中返回输出。这在您创建了大数据集群上的应用并希望从（例如）您的应用程序直接访问时非常有用。由于所有代码和数据都驻留在大数据集群上，您的应用程序只需要能够发送
+  REST API 调用并处理返回的消息，即可立即将数据返回到您的应用程序中。
+
+
+  为了利用我们应用的 REST API，我们需要执行一系列步骤。其中最重要的是我们需要生成一个令牌以安全地调用 REST API。其中一些步骤需要通过一个可以发送
+  REST API 调用并处理其结果的工具来执行。在我们的案例中，我们使用 Postman ([`www.getpostman.com/`](http://www.getpostman.com/))
+  作为我们的首选工具。
+
+
+  在能够连接到属于我们应用的 REST API 之前，我们需要做的第一件事是生成一个所谓的“持有者令牌”。只有在我们的 REST API 调用中提供此令牌，我们才能访问应用。
+
+
+  要生成持有者令牌，我们需要连接到令牌 URL。您可以通过运行清单 8-10 中的命令找到需要连接的 URL 和端口号。
+
+
+  ```
+
+  azdata app describe --name predictiris -v v1
+
+  ```
+
+
+  清单 8-10
+
+  通过 `azdata` 检索应用 URL 和端口号
+
+
+  运行前面的命令会返回有关您应用的信息，在我们的案例中是 `predictiris` 应用，如图 8-6 所示。我们需要的那一行信息在“links”部分返回，是“swagger”属性的
+  URL 和端口号。
+
+
+  ![../images/480532_2_En_8_Chapter/480532_2_En_8_Fig6_HTML.jpg](img/480532_2_En_8_Fig6_HTML.jpg)
+
+
+  图 8-6
+
+  `predictiris` 应用的 `app describe` 命令输出
+
+
+  现在，请复制或记下 URL 和端口号，然后启动 Postman（或您喜欢的任何其他 REST API 调用应用）。Postman 启动后，我们必须更改一个设置以避免错误。由于大数据集群在其端点上配置了自签名证书，当我们在之后执行
+  REST API 调用时，可能会遇到安全问题。在 Postman 中，您可以在“首选项”菜单项中找到 SSL 证书验证，如图 8-7 所示。请确保在向大数据集群执行
+  REST API 调用之前禁用此设置。
+
+
+  ![../images/480532_2_En_8_Chapter/480532_2_En_8_Fig7_HTML.jpg](img/480532_2_En_8_Fig7_HTML.jpg)
+
+
+  图 8-7
+
+  Postman 中的请求选项
+
+
+  禁用设置后，您可以在 Postman 中打开一个新标签页。将我们从 `app describe` 命令收到的 URL 和端口字符串粘贴或输入到请求 URL 字段中，并在
+  URL 后追加 `/api/v1/token`，然后将方法更改为 POST。最后，打开 Authorization（授权）选项卡，将 Type（类型）更改为“Basic
+  Auth”（基本身份验证），并在正确的字段中输入您的大数据集群管理员用户名和密码。图 8-8 显示了 Postman 的截图，其中为我们大数据集群和应用 URL
+  填写了所有这些项目。
+
+
+  ![../images/480532_2_En_8_Chapter/480532_2_En_8_Fig8_HTML.jpg](img/480532_2_En_8_Fig8_HTML.jpg)
+
+
+  图 8-8
+
+  用于生成持有者令牌的 Postman 设置
+
+
+  在 Postman 中配置好所有内容后，单击 Send（发送）按钮将请求发送到该 URL。如果一切处理正确，您应该会收到一条返回消息，其中包含 JSON 响应的
+  `access_token` 属性中的持有者令牌，如图 8-9 所示（我们在图 8-9 中删除了 `access_token` 和 `token_id` 属性的内容）。
+
+
+  ![../images/480532_2_En_8_Chapter/480532_2_En_8_Fig9_HTML.jpg](img/480532_2_En_8_Fig9_HTML.jpg)
+
+
+  图 8-9
+
+  包含持有者令牌的 JSON 返回消息
+
+
+  现在我们已经生成了持有者令牌，我们可以用它来实际调用应用本身的 REST API。应用 REST API 的 URL 默认是隐藏的，可以在 `swagger.json`
+  文件中找到，我们可以通过访问运行 `azdata app describe --name predictiris -v v1` 命令时收到的“swagger”属性中的
+  URL 来打开该文件。
+
+
+  当您打开 URL（在我们的案例中是 `https://104.46.56.134:30080/docs/swagger.json`）时，可以在 JSON 文件中找到一个名为“host”的属性，如图
+  8-10 所示。
+
+
+  ![../images/480532_2_En_8_Chapter/480532_2_En_8_Fig10_HTML.jpg](img/480532_2_En_8_Fig10_HTML.jpg)
+
+
+  图 8-10
+
+  `swagger.json` 文件的 Host 属性
+
+
+  复制或记下“host”属性的值，并在 Postman 中启动一个新的会话。将请求方法更改为“POST”，并将“host”属性的内容复制到请求 URL 字段中，前面加上
+  `HTTPS://`。在 URL 的端口号之后，我们可以复制图 8-10 所示的“basePath”属性的内容，最后为了使 URL 完整，添加一个 `/run`。
+
+
+  转到 Authorization（授权）选项卡，这次选择“Bearer Token”（持有者令牌）选项，并在令牌字段中添加我们在上一步中收到的令牌。
+
+
+  现在我们还剩一步，即生成 REST API 调用的正文内容，并提供执行鸢尾花物种预测所需的输入参数。在 Postman 中，单击 Body（正文）选项卡，选中“raw”（原始）选项，并从下拉按钮中选择“JSON
+  (application/json)”。将清单 8-11 中的代码部分的内容复制到正文文本区域中，以提供 `predictiris` 应用所需的输入参数。
+
+
+  ```
+
+  {
+
+  "PetalLength": 1.4,
+
+  "PetalWidth": 0.2,
+
+  "SepalLength": 5.1,
+
+  "SepalWidth": 3.5
+
+  }
+
+  ```
+
+
+  清单 8-11
+
+  `predictiris` 应用的输入参数（JSON）
+
+
+  填写完所有这些区域后，Postman 屏幕应如图 8-11 所示。
+
+
+  ![../images/480532_2_En_8_Chapter/480532_2_En_8_Fig11_HTML.jpg](img/480532_2_En_8_Fig11_HTML.jpg)
+
+
+  图 8-11
+
+  调用 `predictiris` 应用的 REST API 的正文
+
+
+  现在剩下的就是单击“Send”按钮，将 JSON 消息发送到 `predictiris` 大数据集群应用。
+
+
+  如果一切配置正确，我们应该会收到一条返回消息，其输出类似于我们使用 `azdata` 执行 `predictiris` 应用时的结果，其中包含每种鸢尾花植物的预测概率。我们收到的返回消息如图
+  8-12 所示。
+
+
+  ![../images/480532_2_En_8_Chapter/480532_2_En_8_Fig12_HTML.jpg](img/480532_2_En_8_Fig12_HTML.jpg)
+
+
+  图 8-12
+
+  包含每种鸢尾花植物物种概率的 REST API 响应正文
+
+
+
+  ## 本章摘要
+
+
+  在本章中，我们了解了如何创建和访问大数据集群应用程序。大数据集群应用是一种在**大数据集群**内部运行容器化自定义代码的方法，例如，可作为访问点来对存储在大数据集群内部的模型执行机器学习评分。我们创建了自己的应用，它能够预测鸢尾花植物的种类，将其上传到大数据集群，并使用
+  `azdata` 来执行该应用。然而，应用并非只能通过 `azdata` 访问；通过使用 RESTful Web 服务，我们能够访问该应用并向其发送数据，应用会使用我们训练的机器学习模型，以
+  JSON 消息的形式返回一个评分结果。
+
+
+  在本书接下来的最后一章中，我们将探讨如何管理和维护一个现有的大数据集群。
+
+
+  ## 9. 大数据集群的维护
+
+
+  最后但同样重要的是，我们将探讨如何检查大数据集群的健康状况、如何将现有大数据集群升级到更新的版本，以及如果不再需要，如何删除一个大数据集群实例。
+
+
+  ## 检查大数据集群的状态
+
+
+  大数据集群为您提供了两个不同的门户来了解其当前状态和健康状况。这些门户提供有关节点状态以及相关日志文件的指标和见解。除了显示信息外，`azdata` 还能为您提供集群健康状况的高级概览。
+
+
+  ### 使用 azdata 检索大数据集群的状态
+
+
+  要从命令行检查集群状态，请使用命令 `azdata login` 登录到您的集群。如图 9-1 所示，`azdata` 将询问您的命名空间（您的集群名称）、用户名和密码。使用部署期间提供的值。
+
+
+  ![../images/480532_2_En_9_Chapter/480532_2_En_9_Fig1_HTML.jpg](img/480532_2_En_9_Fig1_HTML.jpg)
+
+  *图 9-1 `azdata login` 的输出*
+
+
+  成功登录后，您可以运行命令 `azdata bdc status show`。这将为您提供所有服务的概览，希望它们都报告为“健康”。示例输出如图 9-2 所示。
+
+
+  ![../images/480532_2_En_9_Chapter/480532_2_En_9_Fig2_HTML.jpg](img/480532_2_En_9_Fig2_HTML.jpg)
+
+  *图 9-2 `azdata bdc status show` 的输出*
+
+
+  之后，您可以使用 `azdata logout` 退出集群登录。
+
+
+  ### 使用 ADS 管理大数据集群
+
+
+  Azure Data Studio (ADS) 为您提供了大数据集群状态和布局的更广泛视图。首先，您需要连接到集群的控制器端点，该端点在部署时已提供给您。
+
+
+  为此，请在 ADS 连接中找到“大数据集群”部分，然后点击如图 9-3 中指示的“+”符号。
+
+
+  ![../images/480532_2_En_9_Chapter/480532_2_En_9_Fig3_HTML.jpg](img/480532_2_En_9_Fig3_HTML.jpg)
+
+  *图 9-3 ADS 中的大数据集群连接*
+
+
+  在下一步中，提供端点 URL 以及您的凭据以登录集群，如图 9-4 所示。
+
+
+  ![../images/480532_2_En_9_Chapter/480532_2_En_9_Fig4_HTML.jpg](img/480532_2_En_9_Fig4_HTML.jpg)
+
+  *图 9-4 在 ADS 中添加新的大数据集群连接*
+
+
+  这将带您进入大数据集群概览页面，该页面将显示每个服务的状态和运行状况以及您的端点，如图 9-5 所示。
+
+
+  ![../images/480532_2_En_9_Chapter/480532_2_En_9_Fig5_HTML.jpg](img/480532_2_En_9_Fig5_HTML.jpg)
+
+  *图 9-5 ADS 中的大数据集群概览*
+
+
+  虽然端点更多是用作参考，但概览本身对于检索集群内每个服务和实例的更多详细信息非常有用。
+
+
+  例如，如果您点击 `SQL Server` 服务，这将带您进入所有 SQL 实例（主实例、计算、数据和存储）的概览页面，如图 9-6 所示。
+
+
+  ![../images/480532_2_En_9_Chapter/480532_2_En_9_Fig6_HTML.jpg](img/480532_2_En_9_Fig6_HTML.jpg)
+
+  *图 9-6 ADS 中大数据集群 SQL Server 实例的详细信息*
+
+
+  这还将为您提供指向每个组件的指标和日志的具体链接。
+
+
+  ### 指标 (Grafana)
+
+
+  Grafana 门户提供有关节点本身状态的指标和见解，以及在适用时提供更多与 SQL 相关的指标。登录门户的凭据与您在 Azure Data Studio 中连接集群所使用的凭据相同。
+
+
+  #### 节点指标
+
+
+  节点指标是典型的性能指标，如 CPU、RAM 和磁盘使用率，如图 9-7 所示。
+
+
+  ![../images/480532_2_En_9_Chapter/480532_2_En_9_Fig7_HTML.jpg](img/480532_2_En_9_Fig7_HTML.jpg)
+
+  *图 9-7 Grafana 门户 – 节点指标*
+
+
+  除了“全局概览”外，您还可以获取每个单独组件（如特定磁盘或网络接口）的详细信息。
+
+
+  当遇到性能问题时，这总是一个很好的起点。显然，这也是判断您是否过度配置集群的一个重要指标。
+
+
+  #### SQL 指标
+
+
+  节点指标侧重于节点的物理层面，而 SQL 指标（如图 9-8 所示）则提供诸如按等待类型划分的等待时间或等待任务数、每秒事务数和请求数等信息，以及其他有价值的指标，以帮助您更深入地了解集群内
+  SQL 组件的状态。
+
+
+  ![../images/480532_2_En_9_Chapter/480532_2_En_9_Fig8_HTML.jpg](img/480532_2_En_9_Fig8_HTML.jpg)
+
+  *图 9-8 Grafana 门户 – SQL 指标*
+
+
+  除了主实例（也可以通过 SSMS 或 Azure Data Studio 访问）之外，您通常不会直接连接到任何其他节点，因此请将这些指标视为您替代活动监视器的工具。
+
+
+  ### 日志搜索分析 (Kibana)
+
+
+  另一方面，如图 9-9 所示的 Kibana 仪表板让您能够深入了解所选 Pod/节点的日志文件。
+
+
+  ![../images/480532_2_En_9_Chapter/480532_2_En_9_Fig9_HTML.jpg](img/480532_2_En_9_Fig9_HTML.jpg)
+
+  *图 9-9 Kibana 门户 – 概览*
+
+
+  Kibana 是 Elastic Stack 的一部分。它还提供选项，可在您的日志文件基础上创建可视化效果和仪表板。如果您想了解更多关于它的信息，其网站 [`www.elastic.co/products/kibana`](http://www.elastic.co/products/kibana)
+  是一个很好的起点！
+
+
+
+  '
+- "# 大数据集群故障排除、升级与删除\n\n## 故障排除大数据集群\n\n在某个时刻，您的**大数据集群**很可能会遇到问题——从磁盘空间不足到组件故障。Azure\
+  \ Data Studio 也提供了关于如何查找并可能修复此类错误原因的指导和工具。\n\n如果您返回到大数据集群的概览页面，您将看到一个“**故障排除**”按钮，如图\
+  \ 9-10 所示。\n\n![图 9-10](img/480532_2_En_9_Fig10_HTML.jpg)\n*图 9-10：ADS 中的故障排除链接*\n\
+  \n该按钮背后是一系列用于排查集群中每个组件的笔记本。首先打开的笔记本是“**TSG100 – 大数据集群故障排除程序**”，它将引导您完成对大数据集群的全面调试。如果您已经缩小了导致问题的服务范围，也可以直接在左侧导航到该特定组件的分析器笔记本，如图\
+  \ 9-11 所示。\n\n![图 9-11](img/480532_2_En_9_Fig11_HTML.jpg)\n*图 9-11：ADS 中的故障排除*\n\
+  \n这些笔记本按类别分组，如图 9-12 所示，当您遇到大数据集群问题时，它们始终是您的第一个起点。\n\n![图 9-12](img/480532_2_En_9_Fig12_HTML.jpg)\n\
+  *图 9-12：ADS 中的故障排除类别*\n\n## 升级大数据集群\n\n就像任何其他版本的 SQL Server 一样，大数据集群在其版本的维护时间框架内会接收定期的累积更新（CU）。要检查您的安装版本，您只需在\
+  \ SQL Server Management Studio 或 Azure Data Studio 中运行 `SELECT @@VERSION`。让我们假设您当前的版本是\
+  \ CU1，如图 9-13 所示。\n\n![图 9-13](img/480532_2_En_9_Fig13_HTML.jpg)\n*图 9-13：`SELECT\
+  \ @@VERSION` 的输出*\n\n如果您想将大数据集群升级到新版本，请首先确保您拥有最新版本的 `azdata`。为此，请运行清单 9-1 中的代码，就像您首次安装\
+  \ `azdata` 时一样。\n\n```\npip3 install -r https://aka.ms/azdata\n```\n*清单 9-1：将 azdata\
+  \ 更新到最新版本*\n\n现在您可以使用 `azdata` 来升级您的集群。命令是 `azdata bdc upgrade`，后面至少跟上您的集群名称和目标版本。\n\
+  \n例如，要升级到大数据集群 2019 CU3，您将使用清单 9-2 中显示的命令。\n\n```\nazdata bdc upgrade --name mybdc\
+  \ --tag 2019-CU3-ubuntu-16.04\n```\n*清单 9-2：使用 azdata 将 BDC 升级到 CU3*\n\n这将需要一些时间，因为首先需要拉取所有单独的镜像，然后升级集群中的每个组件。就像安装过程一样，升级过程会持续为您提供它当前正在处理的组件的状态更新，直到升级过程完成（参见图\
+  \ 9-14）。\n\n![图 9-14](img/480532_2_En_9_Fig14_HTML.jpg)\n*图 9-14：`azdata bdc upgrade`\
+  \ 的输出*\n\n如果您遇到超时问题（这被报告为一个常见问题），您可以在运行 `azdata bdc upgrade` 时添加可选参数 `controller-timeout`\
+  \ 和 `component-timeout`。它们的值以分钟为单位，因此如果您将它们都设置为 60，应该绰绰有余。\n\n如果您现在再次运行 `SELECT\
+  \ @@VERSION`，您将看到您的大数据集群的当前版本反映为 CU3，如图 9-15 所示。\n\n![图 9-15](img/480532_2_En_9_Fig15_HTML.jpg)\n\
+  *图 9-15：升级后的 `SELECT @@VERSION` 输出*\n\n## 删除大数据集群实例\n\n如果您想删除大数据集群的一个实例，您只需再次使用\
+  \ `azdata`。您只需提供实例的名称，如清单 9-3 所示，集群组件就会被删除。\n\n```\nazdata bdc delete –-name <instance-name>\n\
+  ```\n*清单 9-3：删除大数据集群实例*\n\n您可以跟踪进度，直到实例被完全删除，如图 9-16 所示。\n\n![图 9-16](img/480532_2_En_9_Fig16_HTML.jpg)\n\
+  *图 9-16：`azdata bdc delete` 的输出*\n\n就这样——您的实例现在已被删除。这只会删除大数据集群组件，因此如果您部署到 Azure\
+  \ Kubernetes Service，您可能还需要考虑删除该集群，除非您需要它用于其他应用程序，以避免其产生费用。\n\n## 总结\n\n在这最后一章中，我们探讨了获取大数据集群健康状况快速状态的选项、当某些功能未按预期工作时该怎么办的选项，以及如何将现有集群升级到更高版本。\n\
+  \n## 索引\n\n### A\n\n- Active Directory (AD)身份验证集成\n- AdventureWorksLT 数据库\n- Apache\
+  \ Spark\n- 人工智能 (AI)\n- 自动化外部表，Biml\n  - AdventureWorksLT 数据库\n  - `DataRow`数据源元表\n\
+  \  - PolyBase\n- 数据库 `12_PolybaseWriter_C.biml` T-SQL\n- `azdata bdc config init`\
+  \ `bdc.json`\n- `azdata bdc status show cluster config`\n- 群集，创建命令行工具\n- `control\
+  \ file` `control.json`输出\n- Azure Blob Storage\n- Azure Data Studio (ADS)\n  - AdventureWorksLT，表结构\n\
+  \  - 经典 T-SQL 查询/命令\n  - 群集设置\n  - 连接对话框\n  - 连接错误\n  - 部署模板\n  - 扩展安装\n  - 安装\n\
+  \  - 安装 Python，笔记本\n  - 新部署\n  - 笔记本\n  - 部署后笔记本\n  - 预部署脚本转笔记本\n  - 服务设置\n  - 设置版本\n\
+  - Azure Kubernetes Service (AKS)\n  - `azdata bdc config`\n  - `azure-cli`，安装\n\
+  \  - 大数据群集先决条件，安装脚本\n  - 部署脚本，下载\n  - 安装 `IP.py`\n  - 登录确认\n  - 登录屏幕\n  - Python\
+  \ 部署脚本\n  - 用于检索端点的 Python 脚本\n  - 检索 Kubernetes\n  - 触发登录\n- Azure Portal\n  -\
+  \ 防火墙设置\n  - 资源，创建\n- 服务器配置\n- SQL 数据库，配置\n- SQL 数据库，创建\n\n### B\n\n- `BDC_Empty`数据库\n\
+  - Bearer 令牌\n- 大数据群集\n  - 应用\n    - 应用创建状态\n    - 应用文件\n  - `azdata`创建\n  - `controller-svc-external`服务\n\
+  \  - `deploy` `errorMessage`函数定义\n  - `input_dataframe`\n  - 登录到控制器端点\n  - 机器学习模型名称和版本\n\
+  \  - 参数，YAML 文件\n  - R 中的预测模型\n  - 预测结果\n  - `Predict_Iris.R`文件\n  - 预训练的机器学习模型\n\
+  \  - 预训练模型\n  - 副本和`poolsize`参数\n  - REST API (参见 REST API)\n  - R 库\n  - R 或 Python\n\
+  \  - `spec.yaml`文件\n  - 训练好的模型\n  - 训练和测试数据集\n- Visual Studio Code\n- 大数据群集\n  -\
+  \ 架构\n  - 数据湖\n  - 环境\n  - 数据虚拟化 (参见 数据虚拟化)\n  - 功能集\n  - 移除\n- 箱线图\n\n### C\n\n\
+  - `cache()`函数\n- 集中式 AI 平台\n- Chocolatey\n- 块\n- 分类\n- 聚类\n- 逗号分隔值 (CSV) 文件\n  -\
+  \ `DROP`和`CREATE`外部表\n  - `flights`错误消息\n  - 外部表向导\n  - 主实例，选择\n  - 预览数据\n  - 目标表详情\n\
+  \  - T-SQL 输出\n  - `SELECT`语句\n  - 存储数据\n- 计算区域\n- 计算池\n- 容器\n  - 优势\n  - 应用程序数据，存储\n\
+  \  - 应用程序服务\n  - Docker/Minikube\n  - 基础设施即代码\n  - Kubernetes Pod\n  - “无状态”应用程序\n\
+  \  - 虚拟机\n- 控制器端点\n  - `controller-svc-external`服务\n- 控制平面\n- `csv-based`外部表，`SELECT`语句\n\
+  - `csv_file`\n- 累积更新 (CU)\n\n### D\n\n- 数据框处理\n  - `aggregate`选项\n  - 应用程序日志记录\n\
+  \  - 平均时间差\n  - `cache()`和`count()`命令\n  - `cache()`函数\n  - 计算列，添加\n  - `count()`函数\n\
+  \  - `df_airports`、`df_airlines`和`df_flights`\n  - `df_flightinfo`数据框\n  - `df_flightinfo`模式\n\
+  \  - 启用缓存执行\n  - `count()`执行计划\n  - 转换\n  - `groupby`函数\n  - 导入`airlines.csv`和`flights.csv`\n\
+  \  - 导入`airports.csv`\n  - 连接后的数据框\n  - 分区`count()`操作\n  - 创建`df_flightinfo`数据框\n\
+  \  - `repartition()`函数\n  - 检索到的计数\n  - Spark 作业任务\n  - 工作节点\n  - PySpark\n  - 计划和已用飞行时间\n\
+  \  - 模式\n  - 基于选择和排序\n  - 检索单个聚合值\n  - Spark 应用程序信息\n  - Spark 作业概览\n  - `storageLevel`函数\n\
+  \  - 存储使用摘要统计，生成\n  - Yarn Web 门户\n- 数据集成\n- 数据平面架构\n- 数据冗余\n- 数据源\n- 数据类型\n- 数据虚拟化\n\
+  \  - *对比*数据集成\n  - 减少数据冗余\n  - 索引策略\n  - 链接服务器和 PolyBase\n  - PolyBase 延伸数据库\n \
+  \ - 传统的基于 ETL 的暂存过程\n- 部署\n  - ADS (参见 Azure Data Studio (ADS))\n  - AKS (参见 Azure\
+  \ Kubernetes Service (AKS))\n  - 使用`kubeadm`的 Linux\n  - `df_airlines`数据框\n  - `df_airports`数据框\n\
+  \  - `df_flightinfo`数据框\n  - `df_flightinfo_times`数据框\n  - `df_flights`和`df_airlines`数据框\n\
+  \  - `df_sqldb_query`数据框\n- Docker\n- Drawbridge\n- `DROP`语句\n\n### E\n\n- 空数据库，ADS\n\
+  - 通过 T-SQL 创建空数据库\n- 错误消息\n- `explain()`命令\n- 外部数据源\n- 外部表\n  - `CREATE`语句\n  -\
+  \ CSV 文件 (参见 逗号分隔值 (CSV) 文件)\n  - 执行计划\n  - 执行计划，`SELECT`语句\n  - 连接的`SELECT`语句\n\
+  \  - 主实例，连接`SELECT`语句\n  - SSMS\n  - T-SQL\n  - 向导，ADS\n    - 连接和凭据\n    - 数据库主密钥，创建\n\
+  \    - 数据源选择\n    - 对象映射\n    - 表映射\n\n### F\n\n- 基于文件的数据源\n- `FileScan`\n- 航班延误文件\n\
+  - 航班延误示例数据集\n  - 在 HDFS 上创建目录\n  - 显示文件\n  - Kaggle.com 数据集\n  - Kaggle.com 下载\n\
+  \  - Kaggle.com 登录\n  - 上传数据到 HDFS\n- `FlightInfoTable`查询\n\n### G\n\n- 通用`CREATE`语句\n\
+  - GitHub 仓库\n- `groupby`函数\n- 数据分组\n\n### H\n\n- Hadoop\n- Hadoop 分布式文件系统 (HDFS)\n\
+  \  - 数据节点\n  - 文件系统分层\n- `hist()`函数\n\n### I\n\n- 数据库内机器学习服务\n  - `model_object`列\n\
+  \  - 模型表，创建\n  - `PREDICT`\n  - 限制\n  - 评分数据\n  - `sp_execute_external_script`\n\
+  \  - 拆分数据集\n  - SQL Server 主实例\n  - `WITH RESULT SETS`\n- 安装，SQL Server 2019\n \
+  \ - 数据库引擎配置\n  - 下载介质对话框\n  - 版本选择\n  - 通过 T-SQL 启用 PolyBase\n  - 功能选择\n  - 实例配置\n\
+  \  - Java 安装位置\n  - 主屏幕\n  - 挂载 ISO\n  - 概述\n  - PolyBase 配置\n  - 启用 PolyBase\n\
+  \  - 重启 SQL Server 实例\n  - 服务器配置\n  - 安装规则\n  - 类型选择\n- 四分位距 (IQR)\n- 鸢尾花种类预测\n\
+  \  - 鸢尾花表值\n  - `Iris_test`表\n\n### J\n\n- JSON 消息\n\n### K\n\n- 内核选择\n- Kibana\n\
+  - Linux 上的`kubeadm`\n  - 部署\n  - 下载并执行部署脚本\n  - 修补 Ubuntu\n  - Kubernetes\n    -\
+  \ 群集\n    - 节点\n    - Pod\n\n### L\n\n- 惰性求值\n- 链接服务器\n- Linux\n- 逻辑架构\n  - 计算区域\n\
+  \  - 控制平面\n  - 数据区域\n  - 概述\n  - SQL Server 主实例\n  - 存储池\n- 逻辑 Spark 架构\n- 日志搜索分析\
+  \ (Kibana)\n\n### M\n\n- 机器学习\n  - 内置 Spark ML 库\n  - 分类算法\n  - 分类器\n  - 数据框数据处理\n\
+  \  - `df_Iris`数据框\n  - 特征\n  - 文件系统加载\n  - 机器学习库\n  - 衡量模型性能\n  - 模型分类\n    - 鸢尾花数据集\n\
+  \    - 模型表，创建\n    - 先前的代码\n    - `sp_execute_external_script`\n    - 测试数据\n   \
+  \ - 训练\n  - 修改后的`df_Iris`数据框\n  - 预测结果处理\n  - `pyspark.ml.classification`库\n  -\
+  \ 读取数据\n  - 服务\n  - 训练好的模型\n  - 训练和测试数据框\n- 管理\n  - 管理包\n- MapReduce 框架\n- MapReduce\
+  \ 编程模型\n- 主实例\n  - 复制`AdventureWorks2014`\n  - 现有数据库\n  - 还原`AdventureWorks2014`\n\
+  - `Matplotlib`安装任务\n- `Matplotlib`库\n- `Matplotlib`包安装\n- 指标 (Grafana)\n  - 节点指标\n\
+  \  - SQL 指标\n- Microsoft 示例数据\n- Minikube\n\n### N\n\n- 节点指标\n\n### O\n\n- ODBC\
+  \ 源\n\n### P\n\n- Pandas\n- 分区\n  - `pd_data`框\n- 物理基础设施\n  - 容器 (参见 容器)\n  - HDFS\n\
+  \  - spark (参见 Spark)\n  - SQL Server 大数据群集\n  - Linux 上的 SQL Server\n- 平台抽象层 (PAL)\n\
+  - 绘制图形\n  - ADS\n    - 基于单列的箱线图\n    - 箱线图数据框\n    - GitHub\n    - 创建直方图\n    -\
+  \ 管理包选项\n    - `matplotlib`库方法，分析数据\n    - 生成多个箱线图\n    - Pandas\n    - Pandas 库\n\
+  \    - `pd_data`框\n    - 散点图矩阵\n- Pod\n- PolyBase\n  - HDFS 连接器\n  - SQL Server\
+  \ 内部的 PolyBase\n- `PREDICT`函数\n- 预测\n- 预训练的机器学习模型\n- `PUSHDOWN`标志\n- PySpark\n\n\
+  ### Q\n\n- 通过 T-SQL 查询大数据群集\n  - 外部表 (参见 外部表)\n\n### R\n\n- 回归\n- 关系数据库\n- `repartition()`函数\n\
+  - REST API\n  - `azdata`\n  - bearer 令牌\n  - 主机属性，`swagger.json`文件\n  - 输入参数，`predictiris`应用\
+  \ JSON 返回消息\n  - `predictiris`应用请求选项\n  - 检索应用 URL 和端口号\n  - 返回消息\n  - 令牌\n- RESTful\
+  \ API\n- RESTful Web 服务\n\n### S\n\n- Scala\n- 散点图矩阵\n- 读取时模式\n- 写入时模式方法\n- `SELECT`语句\n\
+  - `show()`函数\n- 排序\n- Spark\n  - 大数据分析\n    - `cache`命令\n    - 翻译\n  - 分布式和并行框架\n\
+  \  - 包含驱动程序进程\n  - 逻辑架构\n  - 机器学习 (参见 机器学习)\n  - MapReduce 框架\n  - Spark 应用程序\n\
+  \  - Spark 群集\n  - Spark 数据框\n    - `airports.csv`文件\n    - CSV 数据\n    - `df_airports`数据框\n\
+  \    - 过滤后的`df_airports`\n    - 过滤\n    - 基于列对数据分组\n    - 导入 CSV 数据\n    - 多重过滤\n\
+  \    - 多个操作\n    - 无删除/更新\n    - 删除行\n    - 检索第一行\n    - 检索行数\n    - 检索模式\n    -\
+  \ 模式\n    - 选择特定列\n    - 排序\n    - `spark.read.format`命令\n    - SQL 查询\n    - 表结构\n\
+  - Spark 函数\n- Spark 主节点\n- `spark.read.format`命令\n- Spark 会话\n- Spark 工作节点\n- `spec.yaml`文件\n\
+  - `sp_execute_external_script`函数\n- `sp_execute_external_script`方法\n- `SqlDataPool`\n\
+  \  - `CREATE`语句\n  - 索引\n  - 对表执行`SELECT`\n- `SQL 查询`\n- T-SQL 代码\n- SQL 数据池\n-\
+  \ SQL 指标\n- SQL 平台抽象层 (SQLPAL)\n- 基于 SQL Server 的外部表\n- Linux 上的 SQL Server 2019\n\
+  - SQL Server Integration Services (SSIS)\n- SQL Server Management Studio (SSMS)\n\
+  - SQL Server 主实例\n  - 数据框，创建\n  - 数据框模式\n  - 存储的数据类型\n  - `df_sqldb_query`数据框\n\
+  \  - 启用外部脚本\n  - 执行`SQL 查询`\n  - 先前的代码设置\n  - `sp_execute_external_script` `SQL\
+  \ 查询`\n- Linux 上的 SQL Server\n- SQL Server 操作系统 (SOS)\n- `SqlStoragePool`\n- 状态，大数据群集\n\
+  - `storageLevel()`命令\n- 存储池\n- `subplot()`函数\n\n### T\n\n- 表结构\n- TensorFlow\n-\
+  \ 训练好的决策树模型\n- 训练数据集\n- 转换\n- 故障排除\n  - ADS 链接\n  - T-SQL 代码\n    - 外部文件格式\n   \
+  \ - 创建外部表\n    - 指向存储池的指针\n    - T-SQL 查询\n\n### U\n\n- `UPDATE`语句\n- 升级\n\n###\
+  \ V, W, X, Y, Z\n\n- 虚拟机 (VMs)"

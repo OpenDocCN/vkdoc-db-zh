@@ -1,0 +1,6 @@
++   [SQL Server 数据自动化框架指南](README.md)
++   [引言](sql-server-data-automation-through-frameworks_1.md)
++   [第一部分](sql-server-data-automation-through-frameworks_2.md)
++   [第二部分 SSIS 框架](sql-server-data-automation-through-frameworks_3.md)
++   [9. 部署一个简单的、自定义的、基于文件的 Azure-SSIS 框架](sql-server-data-automation-through-frameworks_4.md)
++   [索引](sql-server-data-automation-through-frameworks_5.md)
