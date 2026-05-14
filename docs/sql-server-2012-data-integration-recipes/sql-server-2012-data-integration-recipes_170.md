@@ -1,0 +1,720 @@
+# 1079)
+
+-   数据流窗格
+-   数据流任务
+-   删除数据
+-   检测数据
+-   主过程替换
+-   OLEDB 源
+-   SELECT 子句
+-   源数据库
+-   SQL 语句
+-   技巧提示
+-   `ValidateExternalMetadata` 属性
+-   变量
+-   工作流程
+-   链接服务器
+-   提示、技巧与陷阱
+-   源数据库
+-   T-SQL `MERGE` 函数
+-   工作原理
+-   加载和检测增量数据
+-   `CarSales_OLEDB`
+-   在源上创建临时表
+-   数据流窗格
+-   删除数据
+-   增量检测
+-   `检测哈希增量`
+-   ETL 元数据表
+-   执行 SQL 任务
+-   `InsertSQL`
+-   隔离变更数据
+-   OLEDB 目标
+-   流程
+-   源和目标数据库
+-   SSIS 包
+-   技巧提示
+-   更新
+-   `ValidateExternalMetadata` 属性
+-   变量
+-   工作流程
+-   概述
+-   SQL 数据库
+-   控制流窗格
+-   数据流窗格
+-   数据源
+-   Oracle 数据源
+-   技巧提示
+-   工作流程
+-   结构化 ETL 流程
+-   条件拆分
+-   数据流窗格
+-   数据加载
+-   删除数据
+-   目标数据库
+-   提示、技巧与陷阱
+-   `ID` 列
+-   映射列
+-   多播和查找转换
+-   OLEDB 目标
+-   示意图概述
+-   小型源表
+-   软删除
+-   截断临时表
+-   T-SQL `MERGE` 函数
+-   更新和删除逻辑
+-   更新插入
+-   `VersionStamp_Destination`
+-   工作原理
+-   技术
+
+## 1107)
+
+-   目录结构，文件
+-   ![images](img/square1.jpg) `E`
+-   ETL 流程
+-   批量加载优化
+-   `API`
+-   备份数据库
+-   批量加载
+-   聚集索引
+-   数据流
+-   `DDL`
+-   堆表
+-   最小日志记录
+-   `OLEDB`
+-   并行化
+-   `SQL` 语句
+-   SSIS 性能
+-   `TABLOCK`
+-   约束管理
+-   数据库更新
+-   外键
+-   重新创建，检查
+-   脚本
+-   `T-SQl`
+-   `CREATE` 语句
+-   程序集，脚本
+-   执行
+-   元数据
+-   编写脚本
+-   数据库索引
+-   代码，元数据
+-   `DROP` 和 `CREATE`
+-   要存储的字段
+-   元数据
+-   重新生成
+-   `DROP` 语句
+-   执行
+-   非聚集
+-   编写脚本
+-   外键约束
+-   代码片段
+-   `DDL`
+-   `DROP` 语句
+-   元数据
+-   性能
+-   更新数据库
+-   缺失索引
+-   数据库调优
+-   `DMV`
+-   `STATISTICS`
+-   `T-SQL` 片段
+-   非聚集索引，表
+-   `ALTER INDEX_REBUILD`
+-   数据库禁用
+-   数据流
+-   `dbo.pr_RebuildIndexes`
+-   禁用
+-   列表，禁用
+-   OLEDB 连接
+-   性能
+-   重建
+-   `sp_foreachtable`
+-   SQL 任务
+-   SSIS 加速
+-   缓存
+-   配置，OLEDB
+-   连接管理器
+-   数据库
+-   `DDL`
+-   索引列，缓存
+-   映射列
+-   OLEDB 源
+-   选项
+
+
+
+-   性能
+-   任务, `OLEDB`
+-   转换编辑器
+-   加速步骤
+-   XML 索引
+-   数据库选择
+-   字段
+-   管理
+-   性能
+-   脚本, 元数据
+-   暂存
+-   事件和计数器
+-   在 `SSIS` 目录中
+-   可执行文件
+-   执行阶段
+-   日志记录级别
+-   包执行
+-   包
+-   `SSISDB` 数据库
+-   任务
+-   在 `SSMS` 中
+-   报表
+-   详细级别
+-   导出数据, SQL Server
+-   访问数据安全性
+-   访问, `T-SQL`
+-   使用 `SSIS` 访问
+-   以及压缩表
+-   执行进程任务
+-   参数
+-   性能
+-   `记录集`
+-   运行 `BCP`
+-   脚本设计
+-   脚本任务
+-   设置变量, 记录集
+-   `SSIS`, 表达式
+-   变量
+-   方法
+-   无追索的 `BCP`, 命令行
+-   `BCP` 导出
+-   启用命令
+-   从 `SSIS`
+-   SQL Server 代理
+-   数据集作为 `XML`
+-   代码片段
+-   扁平化的
+-   小型数据集
+-   数据, `XML`
+-   添加根元素
+-   `ADO.NET`
+-   块
+-   数据流任务
+-   数据覆盖
+-   数据集
+-   执行任务
+-   映射
+-   参数映射
+-   `pr_GetChunkedXML`
+-   分段
+-   `SSIS` 包
+-   变量
+-   变量
+-   `XML` 块
+-   分隔文本文件
+-   连接管理器
+-   数据转换
+-   平面文件
+-   从 SQL Server 表
+-   设置平面文件
+-   `SSIS` 文本
+-   文本文件
+-   `T-SQL` 语句
+-   到 Excel, `T-SQL`
+-   服务器中的文件
+-   文件格式
+-   `FILESTREAM`
+-   定宽文本文件
+-   从命令行
+-   `BCP`
+-   分隔符
+-   选项, `BCP`
+-   `pr_OutputClients`
+-   `xp_cmdshell`
+-   较大的数据集作为 `XML`
+-   客户端表
+-   代码调整
+-   存储过程
+-   塑形
+-   源表
+-   临时表
+-   `T-SQL` 片段
+-   到新数据库
+-   `BCP` 本机格式
+-   目标表
+-   导出选项
+-   映射、排除和添加
+-   本机格式
+-   源表
+-   `MDX` 查询
+-   `ADO.NET`
+-   `CubeOutput`
+-   扩展属性
+-   `OLEDB` 连接管理器
+-   离线应用程序
+-   数据导入, PowerPivot
+-   Excel 到 SQL
+-   已导入的表
+-   PowerPivot
+-   查询以导入
+-   选择表
+-   Word 到 SQL Server
+-   关系数据库
+-   `OLEDB` 警告
+-   Oracle 导出
+-   `SSIS`
+-   `T-SQL`
+-   安全数据, Excel
+-   小型数据集
+-   平面文件
+-   `FOR XML` 输出
+-   `OLEDB` 源
+-   SQL Server Azure
+-   `BCP`
+-   导出/导入
+-   `SSIS`
+-   `SSAS` 维度
+-   数据类型警告
+-   `OLAP_Source`
+-   重命名
+-   `SSASOutFlatFile`
+-   `SSAS`, `T-SQL`
+-   `MDX`
+-   `OPENROWSET`
+-   `SSAS T-SQL`, 定期基础
+-   `SSIS`, Excel
+-   数据转换
+-   工作表警告
+-   存储在服务器中的文件
+-   `BLOB`
+-   在 SQL Server 中
+-   文本文件, `T-SQL`
+-   限制
+
+
+
+### 索引
+
+## MSDASQL 与 T-SQL
+- `MSDASQL`
+- `使用脚本`
+- `文本文件，T-SQLMS.Jet.OLEDB.4.0`
+- `T-SQL，文本文件`
+- `INSERT`
+- `sp_addlinkedserver`
+- `XML 架构`
+- `属性`
+- `元素名称`
+- `嵌套 XML`
+- `无最高级元素名称`
+- `路径选项`
+- `ROOT 元素`
+- `以各种格式`
+- `列映射`
+- `数据源窗格`
+- `数据类型映射`
+- `数据库访问`
+- `目标窗格`
+- `DTSWizard.exe`
+- `excel`
+- `平面文件`
+- `导入/导出向导`
+- `向导的局限性`
+- `OLEDB`
+- `关系数据库`
+- `SQL 语句`
+- `SSIS 包生成器`
+- `表 DDL`
+- `表或视图`
+- `向导的主题变化`
+- `到新数据库`
+- `向导选项`
+
+![images](img/square1.jpg)
+
+## F, G, H, I, J, K
+- `文件 DSN`
+- `在 SSIS 2005/2008 中`
+- `在 SSIS 2012 中`
+- `ODBC/SSIS 2005/2008`
+- `系统和用户 DSN`
+- `平面文件数据源`
+- `优点和缺点`
+- `自动确定数据类型`
+- `列类型`
+- `平面文件连接管理器高级窗格选项`
+- `SSIS`
+- `工作流程`
+- `从 SSIS 执行 BULK INSERT`
+- `连接详细信息`
+- `连接选项`
+- `工作流程`
+- `BULK INSERT，使用格式文件`
+- `从文本文件快速加载数据`
+- `工作流程`
+- `FORMATFILE 参数`
+- `CarSales_Staging`
+- `目标表创建`
+- `记录类型`
+- `命令行`
+- `BCP`
+- `使用 T-SQL 导入大型文本文件`
+- `参数`
+- `工作流程`
+- `使用 T-SQL 命令行导入大型文本文件`
+- `BULK INSERT 选项`
+- `大容量加载错误文件`
+- `数据类型转换`
+- `InvoicesErr 错误文件`
+- `行终止符`
+- `工作流程`
+- `使用 T-SQLZ 命令行导入大型文本文件`
+- `带行前缀的复杂平面文件格式`
+- `列标识符`
+- `复杂的文本文件分隔`
+- `条件性拆分转换`
+- `数据流`
+- `派生列转换`
+- `平面文件连接管理器`
+- `多格式文本文件`
+- `两阶段方法`
+- `工作流程`
+- `复杂的平面文件加载`
+- `BULK INSERT`
+- `Database.Schema.Table 参数`
+- `字段元素，BCP XML 格式文件`
+- `格式文件创建`
+- `工作流程`
+- `导入 CSV 文件`
+- `ETL 过程`
+- `AnETLQuery.Txt`
+- `执行过程任务`
+- `LogParser 参数`
+- `工作流程`
+- `分隔文本文件`
+- `列名`
+- `SSIS 中的数据类型`
+- `平面文件连接管理器常规窗格选项`
+- `源编辑器`
+- `创建 SSIS 包`
+- `文本限定符`
+- `工作流程`
+- `预解析和暂存文件子集`
+- `CSV 规范`
+- `嵌入的限定符`
+- `导入 CSV 文件`
+- `LogParser`
+- `SELECT 语句`
+- `导入定宽文本文件`
+- `设置列宽`
+- `数据源`
+- `设置行宽`
+- `工作流程`
+- `使用 SQL Server 2005 和 2008 处理不规则列数`
+- `列数据类型和长度`
+- `自定义脚本`
+- `平面文件连接管理器`
+- `输出列`
+- `工作流程`
+- `确定列数`
+- `LogParser`
+- `SSIS 脚本`
+- `工作流程`
+- `预解析和暂存文件子集`
+- `ColData`
+- `ColIdentifier`
+- `复杂的源文本文件导入`
+- `平面文件连接管理器`
+- `InvoiceHeader 和 InvoiceLine`
+- `大型机风格的文本文件`
+
+
+## **L**
+
+工作流程，RFC 规范，源文件映射，Microsoft 文本驱动程序，ODBC 数据源管理员，架构信息创建，`Schema.ini`文件，Schema.ini 文件选项，工作流程，链接服务器表中的文本文件访问，ODBC 数据源设置，T-SQL 代码片段，工作流程，文本文件导入，数据类型，导入/导出向导，工作流程，使用 T-SQL 和链接服务器，`Schema.ini`文件，工作流程，使用 T-SQL 导入文本文件，WHERE 子句，工作流程。
+
+![images](img/square1.jpg)  日志记录，集中式日志记录框架，优缺点，从 SSIS 进行日志记录，从 T-SQL 进行日志记录，原则，SSIS 目录，SSIS 容器，SSIS 脚本任务和组件，步骤和流程，T-SQL 和 SSIS，控制框架，子包参数，执行包任务，包参数，使用的表，ETL 流程，审计，建立基线，删除操作审计，元素，插入操作审计，参考表，更新操作审计，文件，来自 SSIS，配置，自定义，日志目标选择，记录的事件，LogParser，日志提供程序配置，进度或执行，保存和应用，脚本任务，SQL Server 目标，T-SQL，日志和审计架构，日志目标，在分布式服务器上，在 SQL Server 上，流程，SQL Server 表，SSIS，目录和部署，数据流，错误重定向，事件和计数器，错误处理，日志计数器，系统日志，来自 T-SQL，CATCH 块，ETL 存储过程，错误处理，链接 SSIS 目录，日志计数器，流程状态元素，记录事件的存储过程，文本或 XML。
+
+## **M, N**
+
+元数据，分析 SQL Server，列数据，数据类型限制，列脚本，表数据，系统视图表，临时表，使用链接服务器的列，参数，`sp_columns_ex`，系统存储过程，DB2 显示，数据流，SQL 命令，SSIS 包，表，平面文件发现，`sp_tables_ex`，T-SQL，Microsoft Access 显示，文档生成器，MySysObjects 表，文档生成器输出，MySQL，代码片段，DSN，DSN 选择，`MySQLMetadata`，ODBC 连接管理器，ODBC 源，选择，SSIS，表和字段，Oracle 数据字典，列数据，约束，索引，主键，参照完整性，触发器，Oracle 显示，OLEDB，SSIS 对话框，系统字典，使用 T-SQL 查询 Oracle，数据字典，结果集，`TestOracle`，SQL Server，`INFORMATION_SCHEMA`，架构视图，使用.NET 访问 SQL Server 数据，列，[DDL](#9781430247913_Ch08.xhtml。
+
+
+- `GetSchema 类`
+- `GetSchema, SSIS`
+- `索引`
+- `元数据输出`
+- `脚本转换编辑器`
+- `源脚本`
+- `System.Data.SQLClient`
+- `视图`
+- `构建数据结构`
+- `来自链接服务器的表`
+- `参数`
+- `sp_tables_ex`
+- `存储过程`
+- `定制的 SQL Server`
+- `数据集成`
+- `数据输出`
+- `数据类型映射`
+- `SSIS 包`
+- `技术`
+- `获取`
+- `MS Office 应用程序`
+- `Access 与 Excel 连接性`
+- `Access Connectivity Engine (ACE) 驱动程序`
+- `MS Office 驱动程序`
+- `工作流程`
+- `Access 数据导入 SQL Server`
+- `Access 升迁向导`
+- `自动递增字段`
+- `超链接字段`
+- `工作流程`
+- `即席导入，Access 数据`
+- `OPENROWSET 参数`
+- `T-SQL`
+- `工作流程`
+- `自动读取数据，Excel 工作表`
+- `复杂的 Access 数据库到 SQL Server 的转换`
+- `Access 元数据窗口`
+- `自定义数据类型映射`
+- `数据转换`
+- `目标数据库元数据`
+- `增强功能`
+- `查找数据库向导`
+- `迁移数据库`
+- `问题区域`
+- `要求`
+- `源元数据`
+- `SSMA`
+- `T-SQL 脚本`
+- `工作流程`
+- `复杂的 Access 数据库转换，使用 SSMA`
+- `更改数据类型`
+- `迁移数据，针对单个表`
+- `创建表报告`
+- `数据访问，常规 ETL 过程`
+- `64 位运行时设置`
+- `导入和转换 Access 数据`
+- `Jet 驱动程序`
+- `SQL 命令`
+- `SSIS 连接管理器`
+- `工作流程`
+- `数据访问，无需常规导入`
+- `Access 链接服务器`
+- `SQL Server Management Studio`
+- `工作流程`
+- `数据导入，从 Excel`
+- `数据源`
+- `目标`
+- `实现`
+- `源表`
+- `SQL Server Data Tools (SSDT)`
+- `SQL Server 导入和导出向导`
+- `表复制或查询规范`
+- `工作流程`
+- `自动读取数据，Excel 工作表`
+- `Excel 链接服务器表`
+- `Excel 电子表格配置`
+- `@PROVSTR 参数`
+- `@SRVPRODUCT 参数`
+- `工作流程`
+- `Excel 数据规范，即席导入`
+- `链接服务器规划`
+- `Excel 2007/2010 数据导入，使用 SSIS 2005`
+- `数据源`
+- `延迟验证`
+- `扩展属性`
+- `工作流程`
+- `修改 Excel 数据`
+- `调整列映射`
+- `数据替换`
+- `更改目标表名`
+- `启用标识符插入`
+- `字段类型`
+- `查询源数据`
+- `创建 SSIS 包`
+- `工作流程`
+- `Excel 数据规范，即席导入`
+- `Jet 和 ACE 扩展属性`
+- `工作流程`
+- `链接服务器规划`
+- `错误消息`
+- `工作流程`
+- `导入多个 Access 表`
+- `解析按钮`
+- `SQL Server 导入向导`
+- `工作流程`
+- `源数据问题`
+- `修改数据源类型`
+- `Excel 到 SSIS 的数据类型映射`
+- `SSIS Excel 源属性`
+- `工作流程`
+- `结构化 ETL 过程`
+- `数据加载`
+- `目标连接管理器`
+- `Excel 连接管理器`
+- `Excel 工作表，SSIS`
+- `SSIS 目标任务`
+- `工作流程`
+- `技术`
+- `多维表达式 (MDX)`
+![images](img/square1.jpg)  **O, P, Q, R**
+- `OLAP 多维数据集`
+- `OLAP 源`
+- `即席数据加载`
+- `OPENROWSET`
+- `工作原理`
+- `Oracle 源数据库`
+- `ARCHIVELOG 模式`
+- `创建 CDC 服务`
+- `凭据`
+
+
+
+### 索引
+
+## SQL Server 相关工具
+- `xhtml#cXXX.1209`
+- 最终对话框
+- 实例窗格
+- 实例向导
+- 日志对话框
+- 修改
+- 监视器
+- 点
+- 选择“开始”
+- 源窗格
+- 源表
+- SQL Server 对话框
+- 表选择
+- 工作进程
+- ![images](img/square1.jpg) `S`
+
+## SQL 数据库与连接
+- SQL 数据库
+- 即席查询，导入数据
+- 代码片段
+- 外部数据库
+- T-SQL 和 `OPENROWSET`
+- 工作原理
+- `Ad Hoc` 上的 ASE 数据
+- 配置 ODBC DSN
+- 连接字符串
+- 导入数据
+- `OPENROWSET`
+- 解决方案
+- 工作方式
+- 数据连接
+- 数据导入加速
+- Attunity 组件
+- Attunity 连接管理器
+- 解决方案
+- 使用 Attunity 的 SSIS 数据流
+- 工作方式
+- 数据导入加速 SSIS 数据流源
+- DB2 数据
+- 配置面板
+- 连接管理器
+- 数据链接，MS OLEDB
+- 在 SSIS 中，OLEDB 源
+- 提供程序
+- 解决方案
+- 工作方式
+- 导入，DB2 数据
+- 不使用 SSIS
+- 工作方式
+
+## 数据导入与迁移
+- 导入 ASE 数据
+- OLEDB 提供程序
+- 使用 SSIS
+- 从 Oracle 导入数据
+- OLEDB 源编辑器
+- Oracle 连接管理器
+- 为 OLEDB 选择提供程序
+- 解决方案
+- 源数据库
+- SSIS 连接管理器
+- SSIS 实现
+- 工作方式
+- 导入 MySQL，SSIS 2005 和 2008
+- ADO.NET 连接
+- 方法
+- 从 MySQL 迁移
+- 连接对话框
+- 性能
+- 使用 SSMA
+- MySQL 数据，`Ad Hoc` 导入
+- 配置链接服务器
+- Microsoft OLEDB 提供程序
+- 属性，链接服务器
+- 安全上下文
+- OLEDB 和 ODBC
+- 数据库安全
+- 数据类型映射
+- `INFORMATION_SCHEMA`
+- 网络和防火墙
+- 提供程序
+- Oracle 连接到服务器
+- 解决方案
+- 透明网络底层
+- 工作方式
+- Oracle 表和视图迁移
+- 迁移前
+- SSMA 的连接
+- 数据类型映射
+- 基础知识
+- Oracle SSMA
+- `SSMA`
+- 工作方式
+- `PostgreSQL`
+- 安装与配置
+- ODBC 配置
+- ODBC 驱动程序
+- `OPENQUERY`
+- 数据源，MYSQL
+- 添加 ODBC 连接管理器
+- 配置 ODBC DSN
+- ODBC 连接管理器
+- ODBC 数据源管理器
+- ODBC 驱动程序
+- ODBC DSN
+- 系统 DSN，添加
+- 工作方式
+- Sybase adaptive server enterprise
+- 连接到 SSMA
+- 数据迁移报告
+- 数据传输
+- 扩展包测试器
+- 新建 SSMA 项目
+- 密码，扩展包
+- 性能
+- 选择源表
+- 服务器端迁移
+- SQL server 架构
+- SSMA 安装
+- SSMA，元数据窗格
+- `SybaseImport`
+- 同步，数据库
+- 目标架构
+- `Teradata`
+- 为 SSIS 添加源
+- Attunity SSIS
+- 配置连接管理器
+- 连接管理器
+- 数据流
+
+## SQL Server Analysis Services
+- SQL Server Analysis Services
+- 即席数据加载
+- 分析中的错误
+- 直通查询
+- 到 Server 关系表
+- MDX 查询
+- OLAP 数据转换
+- OLAP 警告
+- OLEDB 连接
+- SQL 服务表
+- 工作原理
+
+
+
