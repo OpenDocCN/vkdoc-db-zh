@@ -38,7 +38,7 @@ drwxrwxrwx 3 oracle oinstall      4096 Jul  2 14:56 .cgrep
 
 ```
 Searching for running databases . . . . .
-. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+.
 List of running databases registered in OCR
 1. ACSTBY
 2. BDT
@@ -135,7 +135,7 @@ Node enkx4db02 is configured for ssh user equivalency for root user
 Node enkx4db03 is configured for ssh user equivalency for root user
 Node enkx4db04 is configured for ssh user equivalency for root user
 Searching for running databases . . . . .
-. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+. .
 List of running databases registered in OCR
 1. dbm01
 2. demo
@@ -144,9 +144,9 @@ List of running databases registered in OCR
 5. None of above
 Select databases from list for checking best practices. For multiple databases, select 4 for All or comma separated number like 1,2 etc [1-5][4]. 1
 Searching out ORACLE_HOME for selected databases.
-. . . . . . . . . . . . . . . . . . . . . .
+. .
 Checking Status of Oracle Software Stack - Clusterware, ASM, RDBMS
-. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+.
 --------------------------------------------------------------------------------------------
 Oracle Stack Status
 --------------------------------------------------------------------------------------------
@@ -159,7 +159,7 @@ enkx4db04   Yes             Yes             Yes        Yes      Yes      dbm014
 --------------------------------------------------------------------------------------------
 Skipping version checks merge as RAT_SKIP_MERGE_INTERNAL is set
 Copying plug-ins
-. . . . . .
+.
 root user equivalence is not setup between enkx4db01 and STORAGE SERVER enkx4cel02 (192.168.12.12).
 1. Enter 1 if you will enter root password for each STORAGE SERVER when prompted.
 2. Enter 2 to exit and configure root user equivalence manually and re-run exachk.
@@ -168,7 +168,7 @@ Please indicate your selection from one of the above options for STORAGE SERVER[
 Is root password same on all STORAGE SERVER[y/n][y] y
 Enter root password for STORAGE SERVER :-
 Verifying root password.
-. . . . . . . . . . . . . . . . . . . . . . . . .
+. . . . .
 9 of the included audit checks require root privileged data collection on INFINIBAND SWITCH .
 1. Enter 1 if you will enter root password for each INFINIBAND SWITCH when prompted
 2. Enter 2 to exit and to arrange for root access and run the exachk later.

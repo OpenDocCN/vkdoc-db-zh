@@ -4332,7 +4332,7 @@ Listing 7-16. ODA Check Execution
 
 `Searching for running databases . . . . .`
 
-`. . . . . . . . . .`
+`. . . . .`
 
 `List of running databases registered in OCR`
 
@@ -4350,11 +4350,11 @@ Listing 7-16. ODA Check Execution
 
 `Searching out ORACLE_HOME for selected databases.`
 
-`. . . . . . . . . .`
+`. . . . .`
 
 `Checking Status of Oracle Software Stack - Clusterware, ASM, RDBMS`
 
-`. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .`
+`. .`
 
 `----------------------------------------------------------------------------------------------`
 

@@ -25044,7 +25044,7 @@ Now that the files have been staged, you are ready to execute your first `exachk
 
 `Searching for running databases . . . . .`
 
-`. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .`
+`.`
 
 `List of running databases registered in OCR`
 
@@ -25145,7 +25145,7 @@ Many organizations protect the root password for their Exadata racks (as they sh
 
 `Searching for running databases . . . . .`
 
-`. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .`
+`. .`
 
 `List of running databases registered in OCR`
 
@@ -25163,11 +25163,11 @@ Many organizations protect the root password for their Exadata racks (as they sh
 
 `Searching out ORACLE_HOME for selected databases.`
 
-`. . . . . . . . . . . . . . . . . . . . . .`
+`. .`
 
 `Checking Status of Oracle Software Stack - Clusterware, ASM, RDBMS`
 
-`. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .`
+`.`
 
 `--------------------------------------------------------------------------------------------`
 
@@ -25193,7 +25193,7 @@ Many organizations protect the root password for their Exadata racks (as they sh
 
 `Copying plug-ins`
 
-`. . . . . .`
+`.`
 
 `root user equivalence is not setup between enkx4db01 and STORAGE SERVER enkx4cel02 (192.168.12.12).`
 
@@ -25211,7 +25211,7 @@ Many organizations protect the root password for their Exadata racks (as they sh
 
 `Verifying root password.`
 
-`. . . . . . . . . . . . . . . . . . . . . . . . .`
+`. . . . .`
 
 `9 of the included audit checks require root privileged data collection on INFINIBAND SWITCH .`
 

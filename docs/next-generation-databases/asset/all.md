@@ -3835,7 +3835,7 @@ We can drill into subdocuments using a notation that is similar to the N1QL arra
 
 `0: jdbc:drill:zk=local>` `SELECT` `` Actors[2].`First name`, Actors[2].`Last name` ``
 
-`. . . . . . . . . . . >`   `FROM` `films` `WHERE` `Title='WEST LION';`
+`. >`   `FROM` `films` `WHERE` `Title='WEST LION';`
 
 `+---------+-----------+`
 
@@ -3851,7 +3851,7 @@ The `FLATTEN` function returns one row for every document in an embedded array. 
 
 `0: jdbc:drill:zk=local> SELECT Title, FLATTEN(Actors)`
 
-`. . . . . . . . . . . >   FROM films WHERE Rating='G' LIMIT 5;`
+`. >   FROM films WHERE Rating='G' LIMIT 5;`
 
 `+-----------------+---------------------------------------------------------`
 

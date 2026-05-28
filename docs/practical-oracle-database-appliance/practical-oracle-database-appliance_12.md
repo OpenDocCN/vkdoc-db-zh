@@ -773,7 +773,7 @@ odachk found that oracle software owner exists and its being run by root.
 Checking ssh user equivalency settings on all nodes in cluster
 Node odax322 is configured for ssh user equivalency for oracle user
 Searching for running databases . . . . .
-. . . . . . . . . .
+. . . . .
 List of running databases registered in OCR
 1. dodx32
 ......
@@ -782,9 +782,9 @@ List of running databases registered in OCR
 10. None of above
 Select databases from list for checking best practices. For multiple databases, select 9 for All or comma separated number like 1,2 etc [1-10][9].1
 Searching out ORACLE_HOME for selected databases.
-. . . . . . . . . .
+. . . . .
 Checking Status of Oracle Software Stack - Clusterware, ASM, RDBMS
-. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+. .
 ----------------------------------------------------------------------------------------------
 Oracle Stack Status
 ----------------------------------------------------------------------------------------------

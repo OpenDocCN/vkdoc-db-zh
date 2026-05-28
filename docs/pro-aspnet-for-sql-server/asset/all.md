@@ -66,437 +66,437 @@ Contents
 
 ■**CHAPTER 1**
 
-**Getting Started** . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 1
+**Getting Started** . 1
 
-Preparing Your Environment . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 1
+Preparing Your Environment . . . . 1
 
-Project Organization . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 2
+Project Organization . 2
 
-Common Folders . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+Common Folders . . . . 4
 
-Datasource Configuration . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 5
+Datasource Configuration . 5
 
-Code and Database Separation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+Code and Database Separation . 7
 
-Managing Provider Services . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+Managing Provider Services . . . . 7
 
-Using the Command Line . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8
+Using the Command Line . 8
 
-Mixing and Matching Providers . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 11
+Mixing and Matching Providers 11
 
-Configuring Providers . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 11
+Configuring Providers . . . 11
 
-Membership Configuration . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 13
+Membership Configuration . . . . 13
 
-Roles Configuration . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 14
+Roles Configuration 14
 
-Profile Configuration . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 15
+Profile Configuration 15
 
-Creating Users and Roles . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 18
+Creating Users and Roles 18
 
-Securing the Admin Section . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 34
+Securing the Admin Section . . . 34
 
-Creating the Admin User . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 35
+Creating the Admin User . 35
 
-Summary . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 36
+Summary . . . . 36
 
 ■**CHAPTER 2**
 
-**Data Model Choices** . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 37
+**Data Model Choices** 37
 
-The Data Access Application Block . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 37
+The Data Access Application Block . . 37
 
-Data Access Code Snippets . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 39
+Data Access Code Snippets . . . 39
 
-Sample Database . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 46
+Sample Database . . 46
 
-Trivial Data Examples . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 47
+Trivial Data Examples . . . 47
 
-Nontrivial Data Examples . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 49
+Nontrivial Data Examples 49
 
-Typed DataSet . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 49
+Typed DataSet 49
 
-Nontyped DataSet . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 51
+Nontyped DataSet . 51
 
-DataReader . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 53
+DataReader . . 53
 
-DataObject . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 53
+DataObject . . . 53
 
-What’s the Downside? . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 54
+What’s the Downside? . . . 54
 
-Summary . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 54
+Summary . . . . 54
 
 ■**CHAPTER 3**
 
-**Database Management** . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 55
+**Database Management** . 55
 
-Using Database Projects . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 55
+Using Database Projects . 55
 
-Visual Studio . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 56
+Visual Studio . 56
 
-SQL Server Management Studio . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 57
+SQL Server Management Studio . . . . 57
 
-Managing Stored Procedures . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 57
+Managing Stored Procedures . . 57
 
-Managing Indexes and Constraints . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 62
+Managing Indexes and Constraints . . 62
 
-Performance Considerations . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 65
+Performance Considerations . . 65
 
-Stability Considerations . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 70
+Stability Considerations . . 70
 
-Unit Tests for Data . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 70
+Unit Tests for Data . 70
 
-Continuous Integration . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 71
+Continuous Integration . . 71
 
-Summary . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 71
+Summary . . . . 71
 
 ■**CHAPTER 4**
 
-**Databound Controls** . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 73
+**Databound Controls** 73
 
-DetailsView . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 73
+DetailsView . . 73
 
-FormView . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 74
+FormView . . . . 74
 
-GridView . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 76
+GridView 76
 
-Editing and Validating Fields . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 77
+Editing and Validating Fields . . . 77
 
-Binding Input Parameters . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 81
+Binding Input Parameters 81
 
-Binding Input Parameters with a Control . . . . . . . . . . . . . . . . . . . . . . 81
+Binding Input Parameters with a Control . . 81
 
-Binding Input Parameters Programmatically . . . . . . . . . . . . . . . . . . . 82
+Binding Input Parameters Programmatically . . . . 82
 
-Binding a User Control . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 83
+Binding a User Control . . . 83
 
-Embedding Databound Controls . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 84
+Embedding Databound Controls . . . . 84
 
-ViewState and Databinding . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 87
+ViewState and Databinding . . . . 87
 
-Session and ViewState . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 87
+Session and ViewState . . . 87
 
-Paging . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 88
+Paging . . 88
 
-Disabling ViewState . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 89
+Disabling ViewState 89
 
-ControlState vs. ViewState . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 89
+ControlState vs. ViewState . . . . 89
 
-Creating a Databound Control . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 91
+Creating a Databound Control . 91
 
-Getting the Data . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 94
+Getting the Data . . . 94
 
-Getting the Total Rows Count . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 97
+Getting the Total Rows Count . . 97
 
-Wiring the Pager Events . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 98
+Wiring the Pager Events . 98
 
-Creating PersonRow . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 101
+Creating PersonRow . . . . 101
 
-Persisting ViewState Manually . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 105
+Persisting ViewState Manually 105
 
-Working Without ViewState . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 107
+Working Without ViewState . . . 107
 
-Walking the Debugger . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 109
+Walking the Debugger . . 109
 
-Summary . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 110
+Summary . . . 110
 
 ■**CHAPTER 5**
 
-**SQL Providers** . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 111
+**SQL Providers** . 111
 
-The SqlMembershipProvider . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 112
+The SqlMembershipProvider . 112
 
-Using XML Implementations . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 113
+Using XML Implementations . . 113
 
-Setting the Database Connection . . . . . . . . . . . . . . . . . . . . . . . . . . . . 113
+Setting the Database Connection . . . 113
 
-Creating a Password Policy . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 114
+Creating a Password Policy . . . 114
 
-The SqlRoleProvider . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 115
+The SqlRoleProvider . . . . 115
 
-Controlling Access by Role . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 115
+Controlling Access by Role . . . 115
 
-Controlling Behavior by Role . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 117
+Controlling Behavior by Role . . 117
 
-The SqlProfileProvider . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 118
+The SqlProfileProvider . . 118
 
-Why Anonymous Profiles? . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 119
+Why Anonymous Profiles? . . . . 119
 
-Configuring Anonymous Profiles . . . . . . . . . . . . . . . . . . . . . . . . . . . . 119
+Configuring Anonymous Profiles . . . 119
 
-Managing Anonymous Profiles . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 120
+Managing Anonymous Profiles 120
 
-Anonymous and Authenticated Profile Differences . . . . . . . . . . . . . 121
+Anonymous and Authenticated Profile Differences . . . 121
 
-Migrating from Anonymous to Authenticated . . . . . . . . . . . . . . . . . 121
+Migrating from Anonymous to Authenticated . . 121
 
-Creating a User . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 122
+Creating a User . . . 122
 
-Dynamic Profiles and Profiles as BLOBs . . . . . . . . . . . . . . . . . . . . . . 124
+Dynamic Profiles and Profiles as BLOBs . . 124
 
-Using the Provider-Powered ASP.NET Controls . . . . . . . . . . . . . . . . . . . . . 126
+Using the Provider-Powered ASP.NET Controls . 126
 
-Building a SQL Photo Album Provider . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 129
+Building a SQL Photo Album Provider . . . . 129
 
-Provider Requirements . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 130
+Provider Requirements . 130
 
-Configuration Section Class . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 130
+Configuration Section Class . . 130
 
-Provider Collection Class . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 131
+Provider Collection Class 131
 
-Abstract Provider Class . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 132
+Abstract Provider Class . 132
 
-The Provider Implementation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 134
+The Provider Implementation . 134
 
-Provider Service Class . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 135
+Provider Service Class . . 135
 
-Unit Testing . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 137
+Unit Testing . 137
 
-The Finished Product . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 138
+The Finished Product . . . 138
 
-Building a SQL SiteMap Provider . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 139
+Building a SQL SiteMap Provider . . . 139
 
-SiteMap Requirements . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 140
+SiteMap Requirements . 140
 
-Implementing SiteMapProvider . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 140
+Implementing SiteMapProvider . . . . 140
 
-Summary . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 145
+Summary . . . 145
 
 ■**CHAPTER 6**
 
-**Caching** . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 147
+**Caching** . . 147
 
-Alternatives to Caching . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 148
+Alternatives to Caching . 148
 
-Application State . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 149
+Application State . . 149
 
-Session . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 150
+Session 150
 
-ViewState . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 150
+ViewState . . . 150
 
-Current Context . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 150
+Current Context . . . 150
 
-Caching Options . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 153
+Caching Options . . 153
 
-Output Caching . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 153
+Output Caching . . . 153
 
-Data Caching . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 159
+Data Caching 159
 
-Invalidating Cached Data . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 164
+Invalidating Cached Data . . . . 164
 
-Absolute Expiration . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 164
+Absolute Expiration 164
 
-Sliding Expiration . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 164
+Sliding Expiration . 164
 
-Cache Dependency . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 165
+Cache Dependency 165
 
-Manual Removal . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 165
+Manual Removal . . 165
 
-SQL Cache Dependencies . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 165
+SQL Cache Dependencies . . . . 165
 
-Using the SqlDependency and SqlCacheDependency . . . . . . . . . . 165
+Using the SqlDependency and SqlCacheDependency 165
 
-Polling . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 168
+Polling . 168
 
-Query Notifications . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 172
+Query Notifications 172
 
-Troubleshooting Query Notifications . . . . . . . . . . . . . . . . . . . . . . . . . 176
+Troubleshooting Query Notifications 176
 
-Problems with Caching . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 186
+Problems with Caching . 186
 
-Performance Strategies . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 187
+Performance Strategies . 187
 
-Data Warehousing . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 187
+Data Warehousing 187
 
-Lazy Loading . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 188
+Lazy Loading 188
 
-Summary . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 189
+Summary . . . 189
 
 ■**CHAPTER 7**
 
-**Manual Data Access Layer** . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 191
+**Manual Data Access Layer** . 191
 
-Using DataSets, Inline SQL, and Stored Procedures . . . . . . . . . . . . . . . . . 191
+Using DataSets, Inline SQL, and Stored Procedures . . 191
 
-DataSets . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 192
+DataSets . . . . 192
 
-Inline SQL . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 196
+Inline SQL . . . 196
 
-Stored Procedures . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 198
+Stored Procedures 198
 
-Using DataObjects and the ObjectDataSource . . . . . . . . . . . . . . . . . . . . . 199
+Using DataObjects and the ObjectDataSource . 199
 
-Design Contract . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 200
+Design Contract . . 200
 
-Data Contract . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 201
+Data Contract . . . . 201
 
-Testing the Design and Data Contracts . . . . . . . . . . . . . . . . . . . . . . . 203
+Testing the Design and Data Contracts . . . 203
 
-Building the Database . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 203
+Building the Database . . 203
 
-Creating the Database Structure . . . . . . . . . . . . . . . . . . . . . . . . . . . . 203
+Creating the Database Structure . . . 203
 
-Consolidating the Data . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 204
+Consolidating the Data . . 204
 
-Managing Relationships . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 204
+Managing Relationships 204
 
-Created and Modified . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 205
+Created and Modified . . . 205
 
-What About Nulls? . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 206
+What About Nulls? 206
 
-Using Database Projects . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 208
+Using Database Projects 208
 
-The Data Access Layer . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 217
+The Data Access Layer . 217
 
-Building the Website . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 225
+Building the Website . . . 225
 
-Connecting the Data Access Layer . . . . . . . . . . . . . . . . . . . . . . . . . . 225
+Connecting the Data Access Layer . 225
 
-Creating User Controls . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 226
+Creating User Controls . . 226
 
-Creating the Pages . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 229
+Creating the Pages 229
 
-Summary . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 231
+Summary . . . 231
 
 ■**CHAPTER 8**
 
-**Generated Data Access Layer** . . . . . . . . . . . . . . . . . . . . . . . . . . . . 233
+**Generated Data Access Layer** . . . 233
 
-Code Generation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 233
+Code Generation . . 233
 
-Build Providers . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 234
+Build Providers . . . 234
 
-CodeDom Namespace . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 237
+CodeDom Namespace . . 237
 
-Templating . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 241
+Templating . . 241
 
-SubSonic . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 242
+SubSonic . . . 242
 
-SubSonic Templating . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 243
+SubSonic Templating . . . 243
 
-Partial Classes . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 245
+Partial Classes . . . . 245
 
-Query Tool . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 247
+Query Tool . . 247
 
-Scaffolding . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 248
+Scaffolding . . 248
 
-Blinq . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 249
+Blinq . . 249
 
-Summary . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 253
+Summary . . . 253
 
 ■**CHAPTER 9**
 
-**Deployment** . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 255
+**Deployment** . . . 255
 
-Automation with MSBuild . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 256
+Automation with MSBuild . . . . 256
 
-Deploying the Website . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 261
+Deploying the Website . . 261
 
-Website Deployment Projects . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 261
+Website Deployment Projects . 261
 
-Automating Configuration Changes . . . . . . . . . . . . . . . . . . . . . . . . . . 262
+Automating Configuration Changes . 262
 
-PostBuild Deployments . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 264
+PostBuild Deployments . 264
 
-Deploying the Database . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 271
+Deploying the Database 271
 
-Generating Change Scripts . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 272
+Generating Change Scripts . . . 272
 
-Automating Database Updates . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 274
+Automating Database Updates 274
 
-Custom Configuration Sections . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 285
+Custom Configuration Sections . . . . 285
 
-Summary . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 288
+Summary . . . 288
 
-■**CHAPTER 10 A Sample Application** . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 289
+■**CHAPTER 10 A Sample Application** . . 289
 
-Understanding Performance and Scalability . . . . . . . . . . . . . . . . . . . . . . . 289
+Understanding Performance and Scalability . . . 289
 
-Concurrent Requests . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 290
+Concurrent Requests . . . 290
 
-Bottlenecks . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 291
+Bottlenecks . 291
 
-Traffic Spikes . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 291
+Traffic Spikes 291
 
-Distributing Traffic . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 293
+Distributing Traffic 293
 
-Distributing Content . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 294
+Distributing Content . . . . 294
 
-Distributing Services . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 295
+Distributing Services . . . 295
 
-Distributing the Back End . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 296
+Distributing the Back End . . . . 296
 
-Planning for Scalability . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 298
+Planning for Scalability . 298
 
-The Sample Application . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 298
+The Sample Application . 298
 
-Creating the Database . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 299
+Creating the Database . . 299
 
-Get, Save, and Delete . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 300
+Get, Save, and Delete . . . 300
 
-Creating Data Access Providers . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 303
+Creating Data Access Providers . . . . 303
 
-EventProvider Object . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 303
+EventProvider Object . . . 303
 
-Revised DomainObject . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 307
+Revised DomainObject . . 307
 
-Managing Relationships . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 310
+Managing Relationships 310
 
-Using Locations . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 311
+Using Locations . . . 311
 
-Custom Configuration . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 314
+Custom Configuration . . 314
 
-Configuration Grouping . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 315
+Configuration Grouping . 315
 
-Declaring the Custom Configuration . . . . . . . . . . . . . . . . . . . . . . . . . 317
+Declaring the Custom Configuration 317
 
-Configuring the Providers . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 318
+Configuring the Providers . . . . 318
 
-Creating New Providers . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 321
+Creating New Providers . 321
 
-Implementing a LINQ Provider . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 321
+Implementing a LINQ Provider 321
 
-Implementing a WCF Provider . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 332
+Implementing a WCF Provider 332
 
-WCF Service Requirements . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 333
+WCF Service Requirements . . 333
 
-Hosting the Service . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 335
+Hosting the Service . . . . 335
 
-Defining the DataContracts . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 336
+Defining the DataContracts . . . 336
 
-Configuring the Provider . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 336
+Configuring the Provider 336
 
-Using the Providers . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 337
+Using the Providers . . . . 337
 
-Summary . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 341
+Summary . . . 341
 
 ■**APPENDIX**
 
-**Photo Album** . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 343
+**Photo Album** . . 343
 
-Photo Album Provider . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 343
+Photo Album Provider . . 343
 
-Configuration . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 343
+Configuration 343
 
-Classes . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 344
+Classes 344
 
-Table Scripts . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 371
+Table Scripts 371
 
-Constraints Scripts . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 372
+Constraints Scripts 372
 
-Stored Procedure Scripts . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 373
+Stored Procedure Scripts . . . . 373
 
-Website Classes . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 379
+Website Classes . . 379
 
-SQL SiteMap Provider . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 385
+SQL SiteMap Provider . . 385
 
-Classes . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 385
+Classes 385
 
-Table Scripts . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 394
+Table Scripts 394
 
-Stored Procedure Scripts . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 394
+Stored Procedure Scripts . . . . 394
 
-■**INDEX** . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 399
+■**INDEX** . 399
 
 8601Ch01CMP2 8/22/07 7:56 PM Page 1
 
