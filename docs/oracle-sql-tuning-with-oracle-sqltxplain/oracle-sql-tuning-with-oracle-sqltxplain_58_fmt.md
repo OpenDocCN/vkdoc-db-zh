@@ -1,0 +1,151 @@
+# 术语索引
+
+## 来自第 1 章
+
+-   `equality predicate selectivity`（等式谓词选择性）
+-   `execution plan`（执行计划）
+-   `expandings`（展开）
+-   `hovering`（悬停）
+-   `hyperlinks`（超链接）
+-   `indented operations`（缩进操作）
+-   `indexes section`（索引部分）
+-   `links`（链接）
+-   `main section`（主要部分）
+-   `metadata hyperlink`（元数据超链接）
+-   `navigation`（导航）
+-   `operations lining`（操作对齐）
+-   `options, table`（选项，表）
+-   `Oracle engine execution`（Oracle 引擎执行）
+-   `read, execution plan`（读取，执行计划）
+-   `sources, execution plan`（来源，执行计划）
+-   `statistics, index`（统计信息，索引）
+-   `table column`（表列）
+-   `truncate`（截断）
+-   `starting with`（起始于）
+-   `copy of, get`（副本，获取）
+-   `install`（安装）
+-   `report`（报告）
+-   `SQLTXECUTE`
+-   `SQLTXRACT`
+-   `steps`（步骤）
+-   `tuning`（调优）
+-   `to know`（了解）
+
+## 来自第 15 章
+
+-   `SQLT tuning`（SQLT 调优）
+-   `data gaurd`（数据卫士）
+-   `methodology`（方法学）
+-   `anamoly investigation`（异常调查）
+-   `AWR report`（AWR 报告）
+-   `COMPARE`（比较）
+-   `information gathering`（信息收集）
+-   `ordered SQL`（有序 SQL）
+-   `scrutinizing information`（信息审查）
+-   `waits in AWR`（AWR 中的等待）
+-   `XECUTE`
+-   `XTRACT`
+-   `parsing`（解析）
+-   `skewness`（偏斜度）
+-   `statistics`（统计信息）
+-   `utility for SQLT`（SQLT 实用程序）
+-   `archived records`（存档记录）
+-   `blogs for`（相关博客）
+-   `metalinks`（金属链接）
+-   `platforms`（平台）
+-   `resources`（资源）
+
+## 来自附录 A
+
+-   `SQLTXPLAIN`（另请参见 `Data Guard`）
+-   `license level`（许可级别）
+-   `modifying command`（修改命令）
+-   `packs for`（相关组件包）
+-   `SQLTXECUTE report`（SQLTXECUTE 报告）
+-   `tuning pack`（调优组件包）
+-   `remote installation`（远程安装）
+-   `repository`（知识库）
+-   `running a report`（运行报告）
+-   `removing SQLT`（移除 SQLT）
+-   `SQLT installation`（SQLT 安装）
+-   `directory`（目录）
+-   `errors in`（错误）
+-   `license levels`（许可级别）
+-   `messages, errors`（消息，错误）
+-   `methods`（方法）
+-   `remote connection`（远程连接）
+-   `sections of`（部分）
+
+![images](img/square1.jpg) T, U, V, W
+
+## 来自第 11 章
+
+-   `Test case building`（测试用例构建）
+-   `environmental needs`（环境需求）
+-   `execution plan`（执行计划）
+-   `adding and removing hints`（添加和移除提示）
+-   `debugging, optimizer`（调试，优化器）
+-   `EXPLAIN PLAN`
+-   `extensive testing`（广泛测试）
+-   `hint inclusion`（提示包含）
+-   `indexes`（索引）
+-   `object statistics`（对象统计信息）
+-   `optimizer parameters`（优化器参数）
+-   `plan`（计划）
+-   `running test case`（运行测试用例）
+-   `set autotrace`
+-   `SQL structure`（SQL 结构）
+-   `system statistics set`（系统统计信息集）
+-   `unchanged code`（未更改的代码）
+-   `version, optimizer`（版本，优化器）
+-   `in-process`（过程中的）
+-   `use case execution`（用例执行）
+-   `CBO statistics`（CBO 统计信息）
+-   `data dictionary information`（数据字典信息）
+-   `data import`（数据导入）
+-   `directory creation`（目录创建）
+-   `dump files`（转储文件）
+-   `environment, CBO`（环境，CBO）
+-   `test environment`（测试环境）
+-   `execution plan`（执行计划）
+-   `files in use case`（用例中的文件）
+-   `fix_control parameter`（`fix_control` 参数）
+-   `refresh`（刷新）
+-   `histograms`（直方图）
+-   `import scripts`（导入脚本）
+-   `log files`（日志文件）
+-   `metadata objects`（元数据对象）
+-   `schema`（模式）
+-   `SQLT repository`（SQLT 存储库）
+-   `running report`（运行报告）
+-   `scripts`（脚本的）
+-   `sel_aux.sql`
+-   `SQL investigation`（SQL 调查）
+-   `SQL statement`（SQL 语句）
+-   `sqlt_snnnnn_purge.sql`
+-   `SQLTXTRACT`
+-   `subdirectory creation`（子目录创建）
+-   `system statistics`（系统统计信息）
+-   `TC schema`（TC 方案）
+-   `trace`（跟踪）
+-   `user and object creation`（用户和对象创建）
+-   `user creation`（用户创建）
+-   `utility installation`（实用程序安装）
+-   `validity testing`（有效性测试）
+-   `collaborative processing`（协作处理）
+-   `XPRESS.sql`
+-   `production environment`（生产环境）
+-   `run settings`（运行设置）
+-   `SQLT report`（SQLT 报告）
+-   `utility`（实用程序）
+-   `code snippets`（代码片段）
+-   `data inclusion`（数据包含）
+-   `estimates, statistics`（估算，统计信息）
+-   `pack_tcx.sql`
+-   `plan_table`
+-   `sel_aux`
+-   `sel.sql`
+-   `SH schema`（SH 方案）
+-   `sqlt_s11996_tcx`
+-   `sqlt_snnnnn_del_hgrm.sql`
+-   `sqlt_snnnnn_tcx.zip`
