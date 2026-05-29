@@ -1,0 +1,3 @@
+# ExitCleanly
+
+`ExitCleanly` 在脚本被指示退出时调用，无论脚本是成功还是失败结束。
